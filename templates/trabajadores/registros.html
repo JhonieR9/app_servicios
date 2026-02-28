@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registros Guardados</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px 0;
+        }
+        
+        .container {
+            max-width: 1400px;
+        }
+        
+        .card {
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            border: none;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        .card-title {
+            color: #2d3748;
+            font-weight: 700;
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title::before {
+            content: '👤';
+            font-size: 1.5rem;
+        }
+        
+        .card-subtitle {
+            color: #718096;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .page-header {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .page-header h1 {
+            color: #2d3748;
+            font-weight: 800;
+            font-size: 2.5rem;
+            margin-bottom: 0;
+        }
+        
+        .search-filters {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .search-filters h5 {
+            color: #2d3748;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stats-card h3 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .stats-card p {
+            margin: 10px 0 0 0;
+            opacity: 0.95;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        .list-group-item {
+            border: none;
+            padding: 12px 0;
+            background: transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-group-item span:first-child {
+            color: #718096;
+            font-weight: 500;
+        }
+        
+        .list-group-item strong {
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        .badge {
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border-radius: 20px;
+        }
+        
+        .badge.bg-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+            color: white;
+        }
+        
+        .badge.bg-success {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+            color: white;
+        }
+        
+        .badge.bg-warning {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%) !important;
+            color: white;
+        }
+        
+        .badge.bg-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white;
+        }
+        
+        .alert-light {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .btn {
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #868f96 0%, #596164 100%);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+        }
+        
+        .btn-outline-danger {
+            border: 2px solid #f56565;
+            color: #f56565;
+            background: transparent;
+        }
+        
+        .btn-outline-danger:hover {
+            background: #f56565;
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+        
+        .btn-outline-info {
+            border: 2px solid #4facfe;
+            color: #4facfe;
+            background: transparent;
+        }
+        
+        .btn-outline-info:hover {
+            background: #4facfe;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .img-thumbnail {
+            border-radius: 12px;
+            border: 3px solid #e2e8f0;
+            padding: 8px;
+            transition: transform 0.3s ease;
+        }
+        
+        .img-thumbnail:hover {
+            transform: scale(1.05);
+            border-color: #667eea;
+        }
+        
+        .text-muted {
+            color: #718096 !important;
+        }
+        
+        .small {
+            font-size: 0.875rem;
+        }
+        
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 20px;
+            }
+            
+            .page-header h1 {
+                font-size: 1.8rem;
+                margin-bottom: 20px;
+            }
+            
+            .page-header .d-flex {
+                flex-direction: column;
+                align-items: stretch !important;
+            }
+            
+            .page-header .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .card-body {
+                padding: 20px;
+            }
+            
+            .list-group-item {
+                padding: 10px 0;
+                font-size: 0.9rem;
+            }
+            
+            .card-title {
+                font-size: 1.2rem;
+            }
+            
+            .stats-card h3 {
+                font-size: 2.5rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            body {
+                padding: 10px 0;
+            }
+            
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            .alert {
+                font-size: 0.9rem;
+                padding: 12px;
+            }
+            
+            .stats-card {
+                padding: 20px;
+            }
+            
+            .stats-card h3 {
+                font-size: 2rem;
+            }
+        }
+        
+        /* Animaciones */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Spinner personalizado */
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            border-width: 0.3rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4 mb-5">
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1><i class="bi bi-people-fill"></i> Panel de Administración</h1>
+                <div>
+                    <a href="/trabajador/registro" class="btn btn-primary me-2">
+                        <i class="bi bi-plus-circle"></i> Nuevo Registro
+                    </a>
+                    <a href="/trabajador/eliminados" class="btn btn-secondary me-2">
+                        <i class="bi bi-trash"></i> Ver Eliminados
+                    </a>
+                    <button onclick="exportarExcel()" class="btn btn-success me-2">
+                        <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+                    </button>
+                    <a href="/trabajador/admin/logout" class="btn btn-outline-danger">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 id="totalProfesionales">0</h3>
+                    <p><i class="bi bi-people"></i> Total Profesionales</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3 id="totalCategorias">0</h3>
+                    <p><i class="bi bi-tags"></i> Categorías Activas</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h3 id="tarifaPromedio">$0</h3>
+                    <p><i class="bi bi-cash"></i> Tarifa Promedio</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <h3 id="totalCiudades">0</h3>
+                    <p><i class="bi bi-geo-alt"></i> Ciudades</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Búsqueda y Filtros -->
+        <div class="search-filters">
+            <h5 class="mb-3"><i class="bi bi-funnel"></i> Búsqueda y Filtros</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Buscar</label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Nombre, documento o ciudad...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Categoría</label>
+                    <select id="categoriaFilter" class="form-select">
+                        <option value="">Todas las categorías</option>
+                        <option value="Construcción">Construcción</option>
+                        <option value="Electricidad">Electricidad</option>
+                        <option value="Plomería">Plomería</option>
+                        <option value="Carpintería">Carpintería</option>
+                        <option value="Pintura">Pintura</option>
+                        <option value="Jardinería">Jardinería</option>
+                        <option value="Limpieza">Limpieza</option>
+                        <option value="Mecánica">Mecánica</option>
+                        <option value="Tecnología">Tecnología</option>
+                        <option value="Educación">Educación</option>
+                        <option value="Salud">Salud</option>
+                        <option value="Belleza">Belleza</option>
+                        <option value="Gastronomía">Gastronomía</option>
+                        <option value="Transporte">Transporte</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Tarifa Mín (COP)</label>
+                    <input type="number" id="tarifaMin" class="form-control" placeholder="5000" step="1000">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Tarifa Máx (COP)</label>
+                    <input type="number" id="tarifaMax" class="form-control" placeholder="1000000" step="1000">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button onclick="limpiarFiltros()" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="mt-3">
+                <span class="badge bg-info" id="resultadosCount">0 resultados</span>
+            </div>
+        </div>
+
+        <div id="registrosContainer" class="row">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="noResultados" class="alert alert-warning text-center" style="display: none;">
+            <h4>No se encontraron resultados</h4>
+            <p>Intenta ajustar los filtros de búsqueda.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let todosLosRegistros = [];
+
+        // Cargar datos al iniciar
+        cargarRegistros();
+        cargarEstadisticas();
+
+        // Event listeners para filtros
+        document.getElementById('searchInput').addEventListener('input', aplicarFiltros);
+        document.getElementById('categoriaFilter').addEventListener('change', aplicarFiltros);
+        document.getElementById('tarifaMin').addEventListener('input', aplicarFiltros);
+        document.getElementById('tarifaMax').addEventListener('input', aplicarFiltros);
+
+        async function cargarRegistros() {
+            try {
+                console.log('Cargando registros...');
+                const response = await fetch('/trabajador/registros/listar');
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Data recibida:', data);
+                console.log('Número de registros:', data.registros ? data.registros.length : 0);
+                
+                todosLosRegistros = data.registros;
+                renderizarRegistros(todosLosRegistros);
+            } catch (error) {
+                console.error('Error al cargar registros:', error);
+                mostrarAlerta('danger', 'Error al cargar registros');
+            }
+        }
+
+        function aplicarFiltros() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const categoria = document.getElementById('categoriaFilter').value;
+            const tarifaMin = parseFloat(document.getElementById('tarifaMin').value) || 0;
+            const tarifaMax = parseFloat(document.getElementById('tarifaMax').value) || Infinity;
+
+            let registrosFiltrados = todosLosRegistros.filter(reg => {
+                // Filtro de búsqueda
+                const matchSearch = !search || 
+                    reg.nombre_completo.toLowerCase().includes(search) ||
+                    reg.numero_documento.includes(search) ||
+                    reg.ciudad.toLowerCase().includes(search);
+
+                // Filtro de categoría
+                let matchCategoria = true;
+                if (categoria) {
+                    matchCategoria = reg.servicios && reg.servicios.length > 0 && 
+                                   reg.servicios.some(s => s.categoria === categoria);
+                }
+
+                // Filtro de tarifa
+                let matchTarifa = true;
+                if (tarifaMin > 0 || tarifaMax < Infinity) {
+                    if (reg.servicios && reg.servicios.length > 0) {
+                        matchTarifa = reg.servicios.some(s => {
+                            const valor = parseFloat(s.valor_hora) || 0;
+                            return valor >= tarifaMin && valor <= tarifaMax;
+                        });
+                    } else {
+                        matchTarifa = false;
+                    }
+                }
+
+                return matchSearch && matchCategoria && matchTarifa;
+            });
+
+            renderizarRegistros(registrosFiltrados);
+            document.getElementById('resultadosCount').textContent = `${registrosFiltrados.length} resultados`;
+        }
+
+        function renderizarRegistros(registros) {
+            const container = document.getElementById('registrosContainer');
+            const noResultados = document.getElementById('noResultados');
+
+            if (registros.length === 0) {
+                container.innerHTML = '';
+                noResultados.style.display = 'block';
+                return;
+            }
+
+            noResultados.style.display = 'none';
+            container.innerHTML = registros.map(reg => crearCardRegistro(reg)).join('');
+        }
+
+        function crearCardRegistro(reg) {
+            const serviciosHTML = reg.servicios ? reg.servicios.map(serv => `
+                <div class="alert alert-light mb-2" style="padding: 8px 12px;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div style="flex: 1;">
+                            <span class="badge bg-info text-dark me-2">${serv.categoria}</span>
+                            <small class="text-muted">${serv.descripcion.substring(0, 70)}${serv.descripcion.length > 70 ? '...' : ''}</small>
+                        </div>
+                        <div class="text-end ms-2">
+                            <span class="badge bg-warning text-dark">$${serv.valor_hora.toLocaleString('es-CO')} COP/h</span>
+                            <small class="d-block text-muted">${serv.anios_experiencia} años exp.</small>
+                            ${serv.tiene_ayudante == 1 ? `<small class="d-block text-success"><i class="bi bi-person-plus"></i> Con ayudante: $${serv.costo_ayudante.toLocaleString('es-CO')} COP/h</small>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('') : '';
+
+            const fechaRegistro = reg.fecha_registro ? new Date(reg.fecha_registro).toLocaleString('es-CO') : 'N/A';
+
+            return `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">${reg.nombre_completo}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">${reg.tipo_documento}: ${reg.numero_documento}</h6>
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Ciudad:</span><strong>${reg.ciudad}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Código DANE:</span><strong>${reg.codigo_dane}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Teléfono:</span><strong>${reg.telefono}</strong>
+                                </li>
+                                ${reg.correo ? `<li class="list-group-item d-flex justify-content-between"><span>Correo:</span><strong>${reg.correo}</strong></li>` : ''}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Experiencia:</span><strong>${reg.anios_experiencia} años</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Género:</span><span class="badge bg-info">${reg.genero}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Disponibilidad:</span><span class="badge bg-success">${reg.horario} (${reg.dias_disponibles})</span>
+                                </li>
+                            </ul>
+                            <div class="mb-3">
+                                <strong>Servicios y Tarifas:</strong>
+                                <span class="badge bg-primary mb-2">${reg.servicio_tipo}</span>
+                                <div class="mt-2">${serviciosHTML}</div>
+                            </div>
+                            ${reg.foto_identificacion || reg.antecedentes_pdf || reg.recomendaciones_archivo ? `
+                            <div class="mb-3">
+                                <strong>Documentos:</strong>
+                                <div class="mt-2">
+                                    ${reg.foto_identificacion ? `
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block">Foto de Identificación:</small>
+                                        <img src="/static/uploads/${reg.foto_identificacion}" class="img-thumbnail" style="max-width: 200px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
+                                    </div>` : ''}
+                                    ${reg.antecedentes_pdf ? `
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark-check"></i> Antecedentes:</small>
+                                        ${reg.antecedentes_pdf.endsWith('.pdf') ? 
+                                            `<a href="/static/uploads/${reg.antecedentes_pdf}" target="_blank" download class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-file-pdf"></i> Descargar PDF
+                                            </a>` : 
+                                            `<a href="/static/uploads/${reg.antecedentes_pdf}" target="_blank" download>
+                                                <img src="/static/uploads/${reg.antecedentes_pdf}" class="img-thumbnail" style="max-width: 200px; cursor: pointer;">
+                                            </a>`
+                                        }
+                                    </div>` : ''}
+                                    ${reg.recomendaciones_archivo ? `
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark-text"></i> Recomendaciones:</small>
+                                        <a href="/static/uploads/${reg.recomendaciones_archivo}" target="_blank" download class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-download"></i> Descargar Archivo
+                                        </a>
+                                    </div>` : ''}
+                                    ${reg.recomendaciones ? `
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block">Comentarios:</small>
+                                        <small>${reg.recomendaciones.substring(0, 100)}${reg.recomendaciones.length > 100 ? '...' : ''}</small>
+                                    </div>` : ''}
+                                </div>
+                            </div>` : ''}
+                            <div class="small text-muted mb-3">
+                                <i class="bi bi-calendar-check"></i> Registrado por: <strong>${reg.registrado_por}</strong><br>
+                                <i class="bi bi-clock"></i> Fecha: ${fechaRegistro}
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-sm btn-outline-info" onclick="verDetalles(${reg.id_persona})">
+                                    <i class="bi bi-eye"></i> Ver Detalles
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="eliminarRegistro(${reg.id_persona})">
+                                    <i class="bi bi-trash"></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoriaFilter').value = '';
+            document.getElementById('tarifaMin').value = '';
+            document.getElementById('tarifaMax').value = '';
+            aplicarFiltros();
+        }
+
+        function exportarExcel() {
+            window.location.href = '/trabajador/exportar-excel';
+        }
+
+        async function eliminarRegistro(idPersona) {
+            if (!confirm('¿Está seguro de eliminar este registro?')) return;
+
+            try {
+                const formData = new FormData();
+                formData.append('id_persona', idPersona);
+
+                const response = await fetch('/trabajador/eliminar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    mostrarAlerta('success', data.mensaje);
+                    cargarRegistros();
+                    cargarEstadisticas();
+                } else {
+                    mostrarAlerta('danger', data.error || 'Error al eliminar');
+                }
+            } catch (error) {
+                mostrarAlerta('danger', 'Error de conexión');
+            }
+        }
+
+        function verDetalles(idPersona) {
+            const reg = todosLosRegistros.find(r => r.id_persona === idPersona);
+            if (reg) {
+                let detalles = `ID: ${reg.id_persona}\n`;
+                detalles += `Nombre: ${reg.nombre_completo}\n`;
+                detalles += `Documento: ${reg.tipo_documento} ${reg.numero_documento}\n`;
+                detalles += `Ciudad: ${reg.ciudad} (DANE: ${reg.codigo_dane})\n`;
+                detalles += `Teléfono: ${reg.telefono}\n`;
+                if (reg.correo) detalles += `Correo: ${reg.correo}\n`;
+                detalles += `Experiencia: ${reg.anios_experiencia} años\n`;
+                detalles += `\nServicios:\n`;
+                if (reg.servicios) {
+                    reg.servicios.forEach((s, i) => {
+                        detalles += `${i+1}. ${s.categoria}: ${s.descripcion}\n`;
+                        detalles += `   Tarifa: $${s.valor_hora.toLocaleString('es-CO')} COP/h\n`;
+                        if (s.tiene_ayudante == 1) {
+                            detalles += `   Con ayudante: $${s.costo_ayudante.toLocaleString('es-CO')} COP/h\n`;
+                        }
+                    });
+                }
+                alert(detalles);
+            }
+        }
+
+        async function cargarEstadisticas() {
+            try {
+                const response = await fetch('/trabajador/estadisticas');
+                const data = await response.json();
+
+                document.getElementById('totalProfesionales').textContent = data.total_profesionales;
+                document.getElementById('totalCategorias').textContent = data.total_categorias;
+
+                if (data.tarifa_promedio > 0) {
+                    document.getElementById('tarifaPromedio').textContent = `$${Math.round(data.tarifa_promedio).toLocaleString('es-CO')}`;
+                }
+
+                document.getElementById('totalCiudades').textContent = data.total_ciudades;
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        function mostrarAlerta(tipo, mensaje) {
+            const alertContainer = document.getElementById('alert-container');
+            alertContainer.innerHTML = `
+                <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                    ${mensaje}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

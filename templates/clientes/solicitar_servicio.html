@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Solicitar Servicio - TalentHub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .back-button {
+            display: inline-block;
+            color: #666;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: 14px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .back-button:hover {
+            color: #4CAF50;
+        }
+
+        h2 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        h3 {
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border 0.3s;
+            -webkit-appearance: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .category-option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .category-option:active {
+            transform: scale(0.95);
+        }
+
+        .category-option:hover {
+            border-color: #4CAF50;
+            background: #f1f8f4;
+        }
+
+        .category-option.selected {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+
+        .category-icon {
+            font-size: 30px;
+            margin-bottom: 5px;
+        }
+
+        .category-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Responsive para móviles pequeños */
+        @media (max-width: 380px) {
+            .container {
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 22px;
+            }
+
+            h3 {
+                font-size: 15px;
+            }
+
+            .category-icon {
+                font-size: 26px;
+            }
+
+            .category-name {
+                font-size: 12px;
+            }
+
+            input, select, textarea {
+                padding: 11px;
+                font-size: 13px;
+            }
+
+            button {
+                padding: 13px;
+                font-size: 15px;
+            }
+        }
+
+        /* Responsive para tablets y desktop */
+        @media (min-width: 768px) {
+            body {
+                padding: 30px;
+            }
+
+            .container {
+                max-width: 600px;
+                padding: 35px;
+            }
+
+            h2 {
+                font-size: 28px;
+            }
+
+            .categories-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .category-option {
+                padding: 18px;
+            }
+
+            .category-icon {
+                font-size: 34px;
+            }
+
+            input, select, textarea {
+                padding: 14px;
+                font-size: 15px;
+            }
+
+            button {
+                padding: 16px;
+                font-size: 17px;
+            }
+        }
+
+        /* Mejoras para touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .category-option {
+                padding: 18px;
+            }
+
+            input, select, textarea {
+                padding: 14px;
+                font-size: 16px;
+            }
+
+            button {
+                padding: 16px;
+                font-size: 17px;
+            }
+        }
+    </style>        .category-icon {
+            font-size: 30px;
+            margin-bottom: 5px;
+        }
+
+        .category-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="/" class="back-button">← Volver al inicio</a>
+    
+    <h2>🔍 Solicitar Servicio</h2>
+    <p class="subtitle" id="subtitle">Describe lo que necesitas y encuentra al profesional ideal</p>
+
+    <div id="alert" class="alert"></div>
+    
+    <div id="trabajadorSeleccionado" class="hidden" style="background:#e8f5e9;padding:15px;border-radius:10px;margin-bottom:20px;border:2px solid #4CAF50">
+        <h4 style="margin-bottom:8px;color:#2e7d32">✅ Trabajador seleccionado</h4>
+        <p style="margin:4px 0;font-size:14px"><strong>Nombre:</strong> <span id="nombreTrabajador"></span></p>
+        <p style="margin:4px 0;font-size:14px"><strong>Categoría:</strong> <span id="categoriaTrabajador"></span></p>
+    </div>
+
+    <form id="formSolicitud">
+        <h3>Selecciona el tipo de servicio</h3>
+        
+        <div class="categories-grid" id="categoriesGrid">
+            <!-- Se llenarán dinámicamente -->
+        </div>
+
+        <input type="hidden" id="id_categoria" name="id_categoria" required>
+        <input type="hidden" id="id_cliente" name="id_cliente">
+        <input type="hidden" id="id_trabajador" name="id_trabajador">
+
+        <h3>Detalles del servicio</h3>
+
+        <div class="form-group">
+            <label>Título breve</label>
+            <input type="text" name="titulo" placeholder="Ej: Reparación de tubería en cocina" required>
+        </div>
+
+        <div class="form-group">
+            <label>Descripción detallada</label>
+            <textarea name="descripcion" placeholder="Describe el problema o trabajo que necesitas..." required></textarea>
+        </div>
+
+        <h3>📍 Ubicación del servicio</h3>
+
+        <div class="form-group">
+            <label>Dirección completa</label>
+            <input type="text" name="direccion_servicio" placeholder="Calle, número, barrio" required>
+        </div>
+
+        <div class="form-group">
+            <label>Ciudad</label>
+            <input type="text" name="ciudad" placeholder="Ciudad" required>
+        </div>
+
+        <div class="form-group">
+            <label>Departamento</label>
+            <input type="text" name="departamento" placeholder="Departamento" required>
+        </div>
+
+        <div class="form-group">
+            <label>Fecha programada (opcional)</label>
+            <input type="datetime-local" name="fecha_programada">
+        </div>
+
+        <button type="submit">Publicar Solicitud</button>
+    </form>
+</div>
+
+<script>
+    const categoriesData = [
+        {id: 1, nombre: 'Plomería', icono: '🔧'},
+        {id: 2, nombre: 'Electricidad', icono: '⚡'},
+        {id: 3, nombre: 'Limpieza', icono: '🧹'},
+        {id: 4, nombre: 'Carpintería', icono: '🪚'},
+        {id: 5, nombre: 'Pintura', icono: '🎨'},
+        {id: 6, nombre: 'Jardinería', icono: '🌱'},
+        {id: 7, nombre: 'Cerrajería', icono: '🔑'},
+        {id: 8, nombre: 'Mudanza', icono: '📦'}
+    ];
+
+    const categoriesGrid = document.getElementById('categoriesGrid');
+    const idCategoriaInput = document.getElementById('id_categoria');
+    const idTrabajadorInput = document.getElementById('id_trabajador');
+    const form = document.getElementById('formSolicitud');
+    const alert = document.getElementById('alert');
+    
+    // Obtener parámetros de URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const trabajadorId = urlParams.get('trabajador_id');
+    const trabajadorNombre = urlParams.get('trabajador_nombre');
+    const categoriaPreseleccionada = urlParams.get('categoria');
+    
+    // Obtener ID del cliente desde URL o localStorage
+    const idCliente = urlParams.get('id_cliente') || localStorage.getItem('id_cliente') || 1;
+    document.getElementById('id_cliente').value = idCliente;
+
+    // Cargar categorías
+    categoriesData.forEach(cat => {
+        const div = document.createElement('div');
+        div.className = 'category-option';
+        div.dataset.id = cat.id;
+        div.innerHTML = `
+            <div class="category-icon">${cat.icono}</div>
+            <div class="category-name">${cat.nombre}</div>
+        `;
+        
+        div.addEventListener('click', () => {
+            document.querySelectorAll('.category-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            div.classList.add('selected');
+            idCategoriaInput.value = cat.id;
+        });
+        
+        categoriesGrid.appendChild(div);
+        
+        // Pre-seleccionar categoría si viene de URL
+        if (categoriaPreseleccionada && cat.nombre === categoriaPreseleccionada) {
+            div.classList.add('selected');
+            idCategoriaInput.value = cat.id;
+        }
+    });
+    
+    // Mostrar trabajador pre-seleccionado si viene de URL
+    if (trabajadorId && trabajadorNombre) {
+        document.getElementById('trabajadorSeleccionado').classList.remove('hidden');
+        document.getElementById('nombreTrabajador').textContent = trabajadorNombre;
+        document.getElementById('categoriaTrabajador').textContent = categoriaPreseleccionada || 'No especificada';
+        document.getElementById('subtitle').textContent = `Solicitar servicio a ${trabajadorNombre}`;
+        idTrabajadorInput.value = trabajadorId;
+    }
+
+    // Enviar formulario
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!idCategoriaInput.value) {
+            alert.className = 'alert error';
+            alert.textContent = '❌ Por favor selecciona una categoría';
+            alert.style.display = 'block';
+            return;
+        }
+        
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/cliente/solicitud/crear', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert.className = 'alert success';
+                alert.textContent = '✅ ' + data.mensaje;
+                alert.style.display = 'block';
+                
+                setTimeout(() => {
+                    window.location.href = '/cliente/mis_solicitudes?id_cliente=' + formData.get('id_cliente');
+                }, 2000);
+            } else {
+                alert.className = 'alert error';
+                alert.textContent = '❌ Error: ' + (data.error || 'No se pudo crear la solicitud');
+                alert.style.display = 'block';
+            }
+        } catch (error) {
+            alert.className = 'alert error';
+            alert.textContent = '❌ Error de conexión. Intenta nuevamente.';
+            alert.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>

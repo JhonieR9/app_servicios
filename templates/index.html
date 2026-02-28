@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>TalentHub - Inicio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #8b5cf6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: rgba(139, 92, 246, 0.15);
+            border-radius: 50%;
+            top: -250px;
+            right: -250px;
+            animation: float 6s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            background: rgba(37, 99, 235, 0.15);
+            border-radius: 50%;
+            bottom: -200px;
+            left: -200px;
+            animation: float 8s ease-in-out infinite reverse;
+            z-index: 0;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(20px); }
+        }
+
+        .app-container {
+            max-width: 420px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.4);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #8b5cf6 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.03) 10px,
+                rgba(255,255,255,0.03) 20px
+            );
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            padding: 30px 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .button {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #2563eb;
+            color: white;
+            text-align: center;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+        }
+
+        .button.primary {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+        }
+
+        .button.secondary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+        }
+
+        .button.secondary:hover {
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5);
+        }
+
+        .button.outline {
+            background: white;
+            color: #2563eb;
+            border: 2px solid #2563eb;
+        }
+
+        .button.outline:hover {
+            background: #eff6ff;
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.2);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .category-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+            border: 1px solid #e2e8f0;
+        }
+
+        .category-card:active {
+            transform: scale(0.95);
+        }
+
+        .category-card:hover {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
+            border-color: #3b82f6;
+        }
+
+        .category-icon {
+            font-size: 30px;
+            margin-bottom: 5px;
+        }
+
+        .category-name {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Responsive para móviles pequeños */
+        @media (max-width: 380px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 20px 15px;
+            }
+
+            .button {
+                padding: 14px;
+                font-size: 14px;
+            }
+
+            .category-icon {
+                font-size: 26px;
+            }
+
+            .category-name {
+                font-size: 11px;
+            }
+        }
+
+        /* Responsive para tablets */
+        @media (min-width: 768px) {
+            body {
+                padding: 30px;
+            }
+
+            .app-container {
+                max-width: 480px;
+            }
+
+            .header {
+                padding: 40px 30px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .content {
+                padding: 40px 30px;
+            }
+
+            .button {
+                padding: 18px;
+                font-size: 16px;
+            }
+
+            .categories {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .category-card {
+                padding: 20px;
+            }
+
+            .category-icon {
+                font-size: 36px;
+            }
+
+            .category-name {
+                font-size: 13px;
+            }
+        }
+
+        /* Mejoras para touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .button {
+                padding: 18px;
+                font-size: 16px;
+            }
+
+            .category-card {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <h1>🚀 TalentHub</h1>
+        <p>Conectamos talento con oportunidades</p>
+    </div>
+
+    <div class="content">
+        <div class="section-title">¿Qué deseas hacer?</div>
+        
+        <a href="/cliente/login" class="button primary">
+            🔐 Iniciar Sesión (Cliente)
+        </a>
+
+        <a href="/cliente/registro" class="button outline">
+            📝 Registrarme como Cliente
+        </a>
+
+        <div class="divider">───── o ─────</div>
+
+        <a href="/trabajador/login" class="button secondary">
+            🔐 Iniciar Sesión (Trabajador)
+        </a>
+
+        <a href="/trabajador/registro" class="button secondary">
+            💼 Registrarme como Trabajador
+        </a>
+
+        <div class="section-title" style="margin-top: 30px;">Servicios Populares</div>
+        
+        <div class="categories">
+            <a href="/cliente/solicitar_servicio?categoria=1" class="category-card">
+                <div class="category-icon">🔧</div>
+                <div class="category-name">Plomería</div>
+            </a>
+            <a href="/cliente/solicitar_servicio?categoria=2" class="category-card">
+                <div class="category-icon">⚡</div>
+                <div class="category-name">Electricidad</div>
+            </a>
+            <a href="/cliente/solicitar_servicio?categoria=3" class="category-card">
+                <div class="category-icon">🧹</div>
+                <div class="category-name">Limpieza</div>
+            </a>
+            <a href="/cliente/solicitar_servicio?categoria=4" class="category-card">
+                <div class="category-icon">🪚</div>
+                <div class="category-name">Carpintería</div>
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

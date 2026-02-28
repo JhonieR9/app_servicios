@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Trabajadores - TalentHub</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; height: 100vh; overflow: hidden; }
+        
+        #map { width: 100%; height: 100%; }
+        
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+        
+        .btn-back {
+            background: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .filters-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .filters-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .filter-group input, .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        
+        .btn-search {
+            padding: 10px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .filters-content { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="btn-back">← Volver</a>
+    </div>
+    
+    <div class="status-badge" id="statusBadge">🔍 Cargando...</div>
+    
+    <div id="map"></div>
+    
+    <div class="filters-panel">
+        <div class="filters-content">
+            <div class="filter-group">
+                <label>📏 Radio (km)</label>
+                <input type="number" id="radio" value="10" min="1" max="50">
+            </div>
+            <div class="filter-group">
+                <label>🔧 Categoría</label>
+                <select id="categoria">
+                    <option value="">Todas</option>
+                    <option value="Plomería">Plomería</option>
+                    <option value="Electricidad">Electricidad</option>
+                    <option value="Limpieza">Limpieza</option>
+                    <option value="Carpintería">Carpintería</option>
+                    <option value="Pintura">Pintura</option>
+                    <option value="Jardinería">Jardinería</option>
+                </select>
+            </div>
+            <div>
+                <button class="btn-search" onclick="aplicarFiltros()">🔍 Buscar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map, userMarker;
+        let workerMarkers = [];
+        let userLat = 3.431608;
+        let userLng = -76.522041;
+
+        function initMap() {
+            map = L.map('map').setView([userLat, userLng], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            const userIcon = L.divIcon({
+                html: '<div style="background:#4285F4;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            userMarker = L.marker([userLat, userLng], { icon: userIcon })
+                .addTo(map)
+                .bindPopup('<b>📍 Tu ubicación</b>');
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        userLat = pos.coords.latitude;
+                        userLng = pos.coords.longitude;
+                        map.setView([userLat, userLng], 13);
+                        userMarker.setLatLng([userLat, userLng]);
+                        buscarTrabajadores();
+                    },
+                    () => buscarTrabajadores()
+                );
+            } else {
+                buscarTrabajadores();
+            }
+        }
+
+        function addWorkerMarkers(trabajadores) {
+            workerMarkers.forEach(m => map.removeLayer(m));
+            workerMarkers = [];
+
+            trabajadores.forEach((t, i) => {
+                const icon = L.divIcon({
+                    html: `<div style="background:#10b981;width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold">${i+1}</div>`,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+
+                const marker = L.marker([t.latitud, t.longitud], { icon }).addTo(map);
+                
+                marker.bindPopup(`
+                    <div style="padding:10px;min-width:220px">
+                        <h4 style="margin-bottom:8px;color:#667eea">${t.nombre}</h4>
+                        <p style="margin:4px 0;font-size:13px"><strong>📍</strong> ${t.distancia} km</p>
+                        <p style="margin:4px 0;font-size:13px"><strong>📞</strong> ${t.telefono}</p>
+                        <p style="margin:4px 0;font-size:13px"><strong>⭐</strong> ${t.experiencia} años</p>
+                        <p style="margin:4px 0;font-size:13px"><strong>🔧</strong> ${t.categoria}</p>
+                        <hr style="margin:10px 0;border:none;border-top:1px solid #eee">
+                        <button onclick="solicitarServicio(${t.id}, '${t.nombre}', '${t.categoria}')" 
+                                style="width:100%;padding:10px;background:#1e3a8a;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;margin-bottom:5px">
+                            📋 Solicitar Servicio
+                        </button>
+                        <button onclick="contactarTrabajador('${t.telefono}', '${t.nombre}')" 
+                                style="width:100%;padding:10px;background:#25D366;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;margin-bottom:5px">
+                            💬 WhatsApp
+                        </button>
+                        <button onclick="llamarTrabajador('${t.telefono}')" 
+                                style="width:100%;padding:10px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600">
+                            📞 Llamar
+                        </button>
+                    </div>
+                `);
+                
+                workerMarkers.push(marker);
+            });
+
+            if (trabajadores.length > 0) {
+                const bounds = L.latLngBounds(trabajadores.map(t => [t.latitud, t.longitud]));
+                bounds.extend([userLat, userLng]);
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
+        async function buscarTrabajadores() {
+            const radio = document.getElementById('radio').value;
+            const categoria = document.getElementById('categoria').value;
+            
+            document.getElementById('statusBadge').textContent = '🔍 Buscando...';
+
+            try {
+                const url = `/cliente/trabajadores-cercanos?lat=${userLat}&lng=${userLng}&radio=${radio}${categoria ? '&categoria=' + categoria : ''}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.trabajadores && data.trabajadores.length > 0) {
+                    addWorkerMarkers(data.trabajadores);
+                    document.getElementById('statusBadge').textContent = `✅ ${data.trabajadores.length} encontrados`;
+                } else {
+                    document.getElementById('statusBadge').textContent = '❌ No hay trabajadores';
+                }
+            } catch (error) {
+                document.getElementById('statusBadge').textContent = '❌ Error';
+            }
+        }
+
+        function aplicarFiltros() {
+            buscarTrabajadores();
+        }
+
+        function contactarTrabajador(telefono, nombre) {
+            const mensaje = encodeURIComponent(`Hola ${nombre}, vi tu perfil en TalentHub y me gustaría solicitar tus servicios.`);
+            window.open(`https://wa.me/57${telefono}?text=${mensaje}`, '_blank');
+        }
+
+        function llamarTrabajador(telefono) {
+            window.location.href = `tel:+57${telefono}`;
+        }
+
+        function solicitarServicio(idTrabajador, nombreTrabajador, categoria) {
+            // Obtener ID del cliente desde localStorage
+            const idCliente = localStorage.getItem('id_cliente') || 1;
+            // Redirigir al formulario de solicitud con datos pre-cargados
+            window.location.href = `/cliente/solicitar_servicio?id_cliente=${idCliente}&trabajador_id=${idTrabajador}&trabajador_nombre=${encodeURIComponent(nombreTrabajador)}&categoria=${encodeURIComponent(categoria)}`;
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>

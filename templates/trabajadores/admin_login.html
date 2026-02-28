@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso de Administrador - TalentHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #4cc9f0;
+            --success: #4ade80;
+            --error: #f87171;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .login-container {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .logo {
+            margin-bottom: 30px;
+        }
+        .logo i {
+            font-size: 4rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+        h1 {
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+        .password-container {
+            position: relative;
+        }
+        input[type="password"], input[type="text"] {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background-color: var(--light);
+        }
+        input[type="password"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+            transform: translateY(-2px);
+        }
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--dark);
+            cursor: pointer;
+            font-size: 1.1rem;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        .toggle-password:hover {
+            opacity: 1;
+        }
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(67, 97, 238, 0.3);
+        }
+        .login-btn:active {
+            transform: translateY(-1px);
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 25px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .back-link:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+        .flash-messages {
+            margin-bottom: 25px;
+        }
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .alert-danger, .alert-error {
+            background: linear-gradient(135deg, var(--error), #dc2626);
+            color: white;
+            animation: shake 0.5s ease-in-out;
+        }
+        .alert-success {
+            background: linear-gradient(135deg, var(--success), #22c55e);
+            color: white;
+        }
+        .alert-warning {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .security-notice {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .security-notice i {
+            color: #f59e0b;
+            margin-right: 8px;
+        }
+        @media (max-width: 576px) {
+            body {
+                padding: 10px;
+            }
+            .login-container {
+                padding: 30px 20px;
+                border-radius: 15px;
+            }
+            .logo i {
+                font-size: 3rem;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .subtitle {
+                font-size: 0.95rem;
+            }
+            input[type="password"], input[type="text"] {
+                padding: 12px 45px 12px 15px;
+                font-size: 14px;
+            }
+            .login-btn {
+                padding: 14px;
+                font-size: 16px;
+            }
+            .security-notice {
+                font-size: 0.85rem;
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-lock"></i>
+            <h1>Acceso Administrativo</h1>
+            <p class="subtitle">Panel de Control TalentHub</p>
+        </div>
+
+        <div class="flash-messages" id="alert-container"></div>
+
+        <form method="POST" action="/trabajador/admin/login" id="loginForm">
+            <div class="input-group">
+                <label for="password">
+                    <i class="fas fa-key"></i> Contraseña de Administrador
+                </label>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" 
+                           placeholder="Ingrese la contraseña de administrador" required>
+                    <button type="button" class="toggle-password" onclick="togglePassword()">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Acceder al Panel
+            </button>
+        </form>
+
+        <div class="security-notice">
+            <i class="fas fa-shield-alt"></i>
+            <strong>Acceso Restringido:</strong> Esta área es solo para personal autorizado.
+        </div>
+
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            Volver al formulario público
+        </a>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.querySelector('.toggle-password i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.className = 'fas fa-eye';
+            }
+        }
+
+        // Efecto de focus en el input
+        document.getElementById('password').addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+        });
+
+        document.getElementById('password').addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+
+        // Manejar envío del formulario
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const alertContainer = document.getElementById('alert-container');
+            
+            try {
+                const response = await fetch('/trabajador/admin/login', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    alertContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            ${data.mensaje}
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        window.location.href = '/trabajador/registros';
+                    }, 1000);
+                } else {
+                    alertContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            ${data.error || 'Contraseña incorrecta'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Error de conexión
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
