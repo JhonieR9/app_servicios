@@ -18,6 +18,34 @@ def conectar_bd():
 # TEMPLATES - Aquí conectarás tu formulario de hoja de vida
 # ============================================
 
+@router.get("/crear_password", response_class=HTMLResponse)
+def mostrar_crear_password(request: Request):
+    """Pantalla para crear contraseña después del registro"""
+    return templates.TemplateResponse("trabajadores/crear_password.html", {"request": request})
+
+@router.get("/panel", response_class=HTMLResponse)
+def mostrar_panel_trabajador(request: Request):
+    """Panel principal del trabajador"""
+    return templates.TemplateResponse("trabajadores/panel.html", {"request": request})
+
+@router.get("/mi-perfil")
+def obtener_mi_perfil(request: Request):
+    """Obtiene datos del trabajador autenticado"""
+    token = request.cookies.get("session_token")
+    if not token:
+        from fastapi.responses import JSONResponse as JR
+        return JR({"error": "No autenticado"}, status_code=401)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'trabajador':
+        return JSONResponse({"error": "Sesión inválida"}, status_code=401)
+    conexion = conectar_bd()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("SELECT id_persona, nombre_completo, numero_documento, ciudad FROM personas WHERE id_persona = %s", (sesion['id_usuario'],))
+    trabajador = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+    return JSONResponse(trabajador or {"error": "No encontrado"})
+
 @router.get("/registro", response_class=HTMLResponse)
 def mostrar_registro_trabajador(request: Request):
     return templates.TemplateResponse("trabajadores/registro_trabajador.html", {"request": request})
@@ -29,7 +57,10 @@ async def crear_trabajador(
     numero_documento: str = Form(...),
     genero: int = Form(...),
     nombre_completo: str = Form(...),
+    fecha_nacimiento: str = Form(None),
+    nacionalidad: str = Form(None),
     ciudad: str = Form(...),
+    departamento: str = Form(None),
     codigo_dane: str = Form(...),
     celular: str = Form(...),
     correo: str = Form(None),
@@ -37,8 +68,8 @@ async def crear_trabajador(
     disponibilidad: int = Form(...),
     disponibilidad_dias: int = Form(...),
     foto_identificacion: UploadFile = File(...),
-    foto_antecedentes: UploadFile = File(None),
-    recomendaciones_archivo: UploadFile = File(None),
+    foto_antecedentes: UploadFile = File(...),
+    recomendaciones_archivo: UploadFile = File(...),
     antecedentes: str = Form(None),
     recomendaciones: str = Form(None),
     acepta_terminos: str = Form(None),
@@ -95,10 +126,9 @@ async def crear_trabajador(
         # 1. Insertar persona
         cursor.execute("""
             INSERT INTO personas 
-            (id_tipo_documento, numero_documento, id_genero, nombre_completo, ciudad, codigo_dane, registrado_por)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (tipo_documento, numero_documento, genero, nombre_completo, ciudad, codigo_dane, nombre_completo))
-        
+            (id_tipo_documento, numero_documento, id_genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, registrado_por)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (tipo_documento, numero_documento, genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, nombre_completo))        
         id_persona = cursor.lastrowid
         
         # 2. Insertar teléfono
@@ -175,7 +205,8 @@ async def crear_trabajador(
         
         return {
             "mensaje": f"✅ Registro exitoso: {nombre_completo} fue registrado",
-            "id_persona": id_persona
+            "id_persona": id_persona,
+            "redirect": f"/trabajador/crear_password?id_persona={id_persona}"
         }
         
     except Exception as e:
@@ -189,13 +220,6 @@ async def crear_trabajador(
         if conexion and conexion.is_connected():
             conexion.close()
 
-@router.get("/solicitudes", response_class=HTMLResponse)
-def mostrar_solicitudes_disponibles(request: Request):
-    return templates.TemplateResponse("trabajadores/solicitudes_disponibles.html", {"request": request})
-
-@router.get("/mis_servicios", response_class=HTMLResponse)
-def mostrar_mis_servicios(request: Request):
-    return templates.TemplateResponse("trabajadores/mis_servicios.html", {"request": request})
 
 # ============================================
 # API ENDPOINTS
@@ -602,9 +626,14 @@ def listar_registros():
         if conexion:
             conexion.close()
 
+@router.get("/dashboard", response_class=HTMLResponse)
+def mostrar_dashboard(request: Request):
+    """Dashboard principal del administrador"""
+    return templates.TemplateResponse("trabajadores/dashboard.html", {"request": request})
+
 @router.get("/estadisticas")
 def obtener_estadisticas():
-    """API para obtener estadísticas de trabajadores"""
+    """API para obtener estadísticas completas del dashboard"""
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión"}, status_code=500)
@@ -612,30 +641,106 @@ def obtener_estadisticas():
     try:
         cursor = conexion.cursor(dictionary=True)
         
-        # Total de profesionales activos
-        cursor.execute("SELECT COUNT(*) as total FROM personas WHERE estado = 'activo'")
-        total_profesionales = cursor.fetchone()['total']
+        # Totales generales
+        cursor.execute("SELECT COUNT(*) as total FROM personas WHERE estado = 'activo' OR estado IS NULL")
+        total_activos = cursor.fetchone()['total']
         
-        # Total de categorías únicas
-        cursor.execute("SELECT COUNT(DISTINCT categoria) as total FROM servicios_persona")
-        total_categorias = cursor.fetchone()['total']
+        cursor.execute("SELECT COUNT(*) as total FROM personas WHERE estado = 'eliminado'")
+        total_eliminados = cursor.fetchone()['total']
         
+        cursor.execute("SELECT COUNT(*) as total FROM personas")
+        total_todos = cursor.fetchone()['total']
+
+        # Registros hoy
+        cursor.execute("SELECT COUNT(*) as total FROM personas WHERE DATE(fecha_registro) = CURDATE()")
+        row = cursor.fetchone()
+        registros_hoy = row['total'] if row else 0
+
+        # Registros esta semana
+        cursor.execute("SELECT COUNT(*) as total FROM personas WHERE fecha_registro >= DATE_SUB(NOW(), INTERVAL 7 DAY)")
+        row = cursor.fetchone()
+        registros_semana = row['total'] if row else 0
+
+        # Por categoría de servicio
+        cursor.execute("""
+            SELECT categoria, COUNT(*) as total 
+            FROM servicios_persona 
+            GROUP BY categoria 
+            ORDER BY total DESC
+            LIMIT 10
+        """)
+        por_categoria = cursor.fetchall()
+
+        # Por ciudad (top 10)
+        cursor.execute("""
+            SELECT ciudad, COUNT(*) as total 
+            FROM personas 
+            WHERE (estado = 'activo' OR estado IS NULL) AND ciudad IS NOT NULL AND ciudad != ''
+            GROUP BY ciudad 
+            ORDER BY total DESC
+            LIMIT 10
+        """)
+        por_ciudad = cursor.fetchall()
+
+        # Por departamento (top 10)
+        cursor.execute("""
+            SELECT departamento, COUNT(*) as total 
+            FROM personas 
+            WHERE (estado = 'activo' OR estado IS NULL) AND departamento IS NOT NULL AND departamento != ''
+            GROUP BY departamento 
+            ORDER BY total DESC
+            LIMIT 10
+        """)
+        por_departamento = cursor.fetchall()
+
+        # Registros por mes (últimos 6 meses)
+        cursor.execute("""
+            SELECT DATE_FORMAT(fecha_registro, '%Y-%m') as mes, COUNT(*) as total
+            FROM personas
+            WHERE fecha_registro >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+            GROUP BY mes ORDER BY mes ASC
+        """)
+        por_mes = cursor.fetchall()
+
         # Tarifa promedio
         cursor.execute("SELECT AVG(valor_hora) as promedio FROM servicios_persona WHERE valor_hora > 0")
-        tarifa_promedio = cursor.fetchone()['promedio'] or 0
-        
-        # Total de ciudades
-        cursor.execute("SELECT COUNT(DISTINCT ciudad) as total FROM personas WHERE estado = 'activo'")
-        total_ciudades = cursor.fetchone()['total']
-        
+        row = cursor.fetchone()
+        tarifa_promedio = float(row['promedio']) if row and row['promedio'] else 0
+
+        # Últimos 5 registros
+        cursor.execute("""
+            SELECT p.id_persona, p.nombre_completo, p.ciudad, p.departamento,
+                   p.fecha_registro,
+                   GROUP_CONCAT(DISTINCT sp.categoria SEPARATOR ', ') as servicios
+            FROM personas p
+            LEFT JOIN servicios_persona sp ON p.id_persona = sp.id_persona
+            WHERE p.estado = 'activo' OR p.estado IS NULL
+            GROUP BY p.id_persona
+            ORDER BY p.id_persona DESC
+            LIMIT 5
+        """)
+        ultimos_registros = cursor.fetchall()
+        for r in ultimos_registros:
+            if r.get('fecha_registro'):
+                r['fecha_registro'] = str(r['fecha_registro'])
+
         return JSONResponse({
-            "total_profesionales": total_profesionales,
-            "total_categorias": total_categorias,
-            "tarifa_promedio": float(tarifa_promedio),
-            "total_ciudades": total_ciudades
+            "total_activos": total_activos,
+            "total_eliminados": total_eliminados,
+            "total_todos": total_todos,
+            "registros_hoy": registros_hoy,
+            "registros_semana": registros_semana,
+            "tarifa_promedio": tarifa_promedio,
+            "por_categoria": por_categoria,
+            "por_ciudad": por_ciudad,
+            "por_departamento": por_departamento,
+            "por_mes": por_mes,
+            "ultimos_registros": ultimos_registros
         })
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
     finally:
         if conexion and conexion.is_connected():
@@ -909,9 +1014,38 @@ def mostrar_login_trabajador(request: Request):
 @router.post("/login")
 async def login_trabajador(
     response: Response,
-    correo: str = Form(...),
+    numero_documento: str = Form(...),
     password: str = Form(...)
 ):
+    """Login de trabajador con número de documento + contraseña"""
+    try:
+        conexion = conectar_bd()
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT p.*, tp.telefono
+            FROM personas p
+            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+            WHERE p.numero_documento = %s AND (p.estado = 'activo' OR p.estado IS NULL)
+            LIMIT 1
+        """, (numero_documento,))
+        trabajador = cursor.fetchone()
+        cursor.close()
+        conexion.close()
+
+        if not trabajador:
+            return JSONResponse({"error": "Documento no registrado"}, status_code=401)
+        if not trabajador.get('password_hash'):
+            return JSONResponse({"error": "Debes crear tu contraseña primero", "redirect": f"/trabajador/crear_password?id_persona={trabajador['id_persona']}"}, status_code=401)
+        if not auth.verificar_password(password, trabajador['password_hash']):
+            return JSONResponse({"error": "Contraseña incorrecta"}, status_code=401)
+
+        token = auth.crear_sesion('trabajador', trabajador['id_persona'])
+        response.set_cookie(key="session_token", value=token, httponly=True, max_age=86400, samesite="lax")
+
+        return JSONResponse({"mensaje": f"Bienvenido, {trabajador['nombre_completo'].split()[0]}", "redirect": "/trabajador/panel"})
+
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
     """
     Endpoint de login para trabajadores
     Verifica credenciales y opcionalmente envía código SMS

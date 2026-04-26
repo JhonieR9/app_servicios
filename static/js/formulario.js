@@ -1,24 +1,38 @@
 // Script limpio para formulario de trabajadores
 console.log('Formulario JS cargado correctamente');
 
-// Funcion para actualizar codigo DANE
+// Funcion para actualizar codigo DANE y departamento
 function actualizarDane() {
     const select = document.getElementById('ciudad_select');
     const daneInput = document.getElementById('codigo_dane');
+    const deptoInput = document.getElementById('departamento_field');
     
     if (!select || !daneInput) return;
     
     const selectedOption = select.options[select.selectedIndex];
     const daneCode = selectedOption.getAttribute('data-dane');
     
+    // Extraer departamento del texto: "CIUDAD - DEPARTAMENTO"
+    const texto = selectedOption.text || '';
+    const partes = texto.split(' - ');
+    const depto = partes.length > 1 ? partes[partes.length - 1].trim() : '';
+
     if (daneCode && daneCode !== '') {
         daneInput.value = daneCode;
-        daneInput.readOnly = true;
-        daneInput.style.backgroundColor = '#f8f9fa';
+        if (deptoInput) deptoInput.value = depto;
     } else {
         daneInput.value = '';
+        if (deptoInput) deptoInput.value = '';
     }
 }
+
+// Escuchar el evento change directamente en el select
+document.addEventListener('DOMContentLoaded', function() {
+    const ciudadSelect = document.getElementById('ciudad_select');
+    if (ciudadSelect) {
+        ciudadSelect.addEventListener('change', actualizarDane);
+    }
+});
 
 // Contador de servicios
 let contadorHabilidades = 1;

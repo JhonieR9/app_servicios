@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Panel - TalentHub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',sans-serif; background:#f0f2f5; min-height:100vh; }
+
+        .topbar {
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            color: white; padding: 16px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .topbar h1 { font-size: 1.1rem; font-weight: 700; }
+        .topbar small { opacity: 0.8; font-size: 0.8rem; }
+        .logout-btn {
+            background: rgba(255,255,255,0.15); border: none;
+            color: white; padding: 8px 14px; border-radius: 8px;
+            cursor: pointer; font-size: 0.82rem; text-decoration: none;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.25); }
+
+        .content { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
+
+        .profile-card {
+            background: white; border-radius: 16px;
+            padding: 24px; margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex; align-items: center; gap: 16px;
+        }
+        .avatar {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; color: white; flex-shrink: 0;
+        }
+        .profile-info h3 { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+        .profile-info p { color: #64748b; font-size: 0.85rem; margin-top: 2px; }
+        .badge-activo {
+            display: inline-block; padding: 3px 10px;
+            background: #dcfce7; color: #16a34a;
+            border-radius: 99px; font-size: 0.75rem; font-weight: 600;
+            margin-top: 6px;
+        }
+
+        .section-title {
+            font-size: 0.8rem; font-weight: 700; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin: 20px 0 10px;
+        }
+
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .menu-item {
+            background: white; border-radius: 14px;
+            padding: 20px 16px; text-align: center;
+            text-decoration: none; color: #0f172a;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.2s;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .menu-item:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .menu-icon {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+        }
+        .menu-icon.blue   { background: #dbeafe; }
+        .menu-icon.green  { background: #dcfce7; }
+        .menu-icon.purple { background: #ede9fe; }
+        .menu-icon.orange { background: #ffedd5; }
+        .menu-label { font-size: 0.85rem; font-weight: 600; }
+        .menu-sub   { font-size: 0.75rem; color: #94a3b8; }
+
+        .disponibilidad-card {
+            background: white; border-radius: 14px;
+            padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .disponibilidad-card .info h4 { font-size: 0.95rem; font-weight: 700; color: #0f172a; }
+        .disponibilidad-card .info p  { font-size: 0.8rem; color: #64748b; margin-top: 2px; }
+        .toggle-switch {
+            position: relative; width: 52px; height: 28px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; inset: 0;
+            background: #e2e8f0; border-radius: 99px;
+            cursor: pointer; transition: 0.3s;
+        }
+        .slider:before {
+            content: ''; position: absolute;
+            width: 22px; height: 22px; border-radius: 50%;
+            background: white; left: 3px; top: 3px;
+            transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input:checked + .slider { background: #22c55e; }
+        input:checked + .slider:before { transform: translateX(24px); }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div>
+        <h1>💼 Mi Panel</h1>
+        <small id="bienvenida">TalentHub</small>
+    </div>
+    <a href="/trabajador/logout" class="logout-btn">
+        <i class="bi bi-box-arrow-left"></i> Salir
+    </a>
+</div>
+
+<div class="content">
+
+    <!-- Perfil -->
+    <div class="profile-card" id="profileCard">
+        <div class="avatar">👤</div>
+        <div class="profile-info">
+            <h3 id="nombreTrabajador">Cargando...</h3>
+            <p id="docTrabajador"></p>
+            <span class="badge-activo">✅ Activo</span>
+        </div>
+    </div>
+
+    <!-- Disponibilidad -->
+    <div class="section-title">Estado</div>
+    <div class="disponibilidad-card">
+        <div class="info">
+            <h4>Disponibilidad</h4>
+            <p id="estadoDisp">Activa tu disponibilidad para recibir solicitudes</p>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="toggleDisp" onchange="cambiarDisponibilidad()">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- Menú -->
+    <div class="section-title">Opciones</div>
+    <div class="menu-grid">
+        <a href="/trabajador/disponibilidad" class="menu-item">
+            <div class="menu-icon green"><i class="bi bi-geo-alt-fill" style="color:#16a34a"></i></div>
+            <div>
+                <div class="menu-label">Mi Ubicación</div>
+                <div class="menu-sub">Activar GPS</div>
+            </div>
+        </a>
+        <a href="#" class="menu-item" onclick="verPerfil()">
+            <div class="menu-icon blue"><i class="bi bi-person-fill" style="color:#2563eb"></i></div>
+            <div>
+                <div class="menu-label">Mi Perfil</div>
+                <div class="menu-sub">Ver mis datos</div>
+            </div>
+        </a>
+        <a href="#" class="menu-item">
+            <div class="menu-icon purple"><i class="bi bi-briefcase-fill" style="color:#7c3aed"></i></div>
+            <div>
+                <div class="menu-label">Solicitudes</div>
+                <div class="menu-sub">Ver trabajos</div>
+            </div>
+        </a>
+        <a href="/trabajador/logout" class="menu-item">
+            <div class="menu-icon orange"><i class="bi bi-box-arrow-left" style="color:#ea580c"></i></div>
+            <div>
+                <div class="menu-label">Cerrar Sesión</div>
+                <div class="menu-sub">Salir</div>
+            </div>
+        </a>
+    </div>
+
+</div>
+
+<script>
+    // Cargar datos del trabajador desde la sesión
+    async function cargarPerfil() {
+        try {
+            const res = await fetch('/trabajador/mi-perfil');
+            if (!res.ok) { window.location.href = '/trabajador/login'; return; }
+            const data = await res.json();
+            document.getElementById('nombreTrabajador').textContent = data.nombre_completo || 'Trabajador';
+            document.getElementById('docTrabajador').textContent = 'Doc: ' + (data.numero_documento || '');
+            document.getElementById('bienvenida').textContent = 'Bienvenido, ' + (data.nombre_completo || '').split(' ')[0];
+        } catch(e) {
+            window.location.href = '/trabajador/login';
+        }
+    }
+
+    function cambiarDisponibilidad() {
+        const activo = document.getElementById('toggleDisp').checked;
+        document.getElementById('estadoDisp').textContent = activo
+            ? '🟢 Estás disponible para recibir solicitudes'
+            : 'Activa tu disponibilidad para recibir solicitudes';
+    }
+
+    function verPerfil() {
+        alert('Próximamente: Ver y editar tu perfil completo');
+    }
+
+    cargarPerfil();
+</script>
+</body>
+</html>

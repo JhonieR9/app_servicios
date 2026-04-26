@@ -22,19 +22,11 @@ app.include_router(trabajadores.router)
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    # Redirigir directamente al formulario de registro
-    return RedirectResponse(url="/trabajador/registro", status_code=302)
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/inicio", response_class=HTMLResponse)
 def mostrar_solo_formulario(request: Request):
-    """Página alternativa que solo muestra acceso al formulario"""
     return templates.TemplateResponse("solo_formulario.html", {"request": request})
-
-# Bloquear acceso a rutas de clientes (opcional)
-@app.get("/cliente/{path:path}")
-def bloquear_clientes(path: str):
-    """Redirige cualquier ruta de cliente al formulario"""
-    return RedirectResponse(url="/trabajador/registro", status_code=302)
 
 # ============================================
 # HEALTH CHECK

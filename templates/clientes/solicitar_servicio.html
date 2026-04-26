@@ -2,506 +2,432 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Solicitar Servicio - TalentHub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <title>Solicitar Servicio - TalentHub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', sans-serif;
+            background: #f8fafc;
             min-height: 100vh;
-            padding: 15px;
+            padding-bottom: 40px;
         }
 
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
+        /* Header */
+        .top-bar {
             background: white;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
-
-        .back-button {
-            display: inline-block;
-            color: #666;
+        .back-btn {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
             text-decoration: none;
-            margin-bottom: 20px;
-            font-size: 14px;
-            -webkit-tap-highlight-color: transparent;
+            color: #374151;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .top-bar h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .top-bar p {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            margin-top: 1px;
         }
 
-        .back-button:hover {
-            color: #4CAF50;
+        /* Contenido */
+        .content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px 16px;
         }
 
-        h2 {
-            color: #2e7d32;
-            margin-bottom: 10px;
-            font-size: 24px;
+        /* Sección */
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
-
-        .subtitle {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 25px;
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+        .section-title i { color: #2563eb; font-size: 1rem; }
 
-        h3 {
-            margin-top: 25px;
-            margin-bottom: 15px;
-            font-size: 16px;
-            color: #333;
-            font-weight: 600;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            font-family: inherit;
-            transition: border 0.3s;
-            -webkit-appearance: none;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #4CAF50;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .categories-grid {
+        /* Grid de categorías */
+        .cat-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
-            margin-bottom: 20px;
         }
-
-        .category-option {
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+        .cat-item {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 6px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
-            -webkit-tap-highlight-color: transparent;
+            transition: all 0.18s;
+            background: white;
         }
-
-        .category-option:active {
-            transform: scale(0.95);
+        .cat-item:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
         }
-
-        .category-option:hover {
-            border-color: #4CAF50;
-            background: #f1f8f4;
+        .cat-item.selected {
+            border-color: #2563eb;
+            background: #eff6ff;
         }
-
-        .category-option.selected {
-            border-color: #4CAF50;
-            background: #e8f5e9;
-        }
-
-        .category-icon {
-            font-size: 30px;
-            margin-bottom: 5px;
-        }
-
-        .category-name {
-            font-size: 13px;
+        .cat-item .icon { font-size: 1.6rem; margin-bottom: 4px; }
+        .cat-item .name {
+            font-size: 0.72rem;
             font-weight: 600;
-            color: #333;
+            color: #374151;
+            line-height: 1.2;
         }
+        .cat-item.selected .name { color: #1d4ed8; }
 
-        button {
+        /* Inputs */
+        .form-group { margin-bottom: 14px; }
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
             width: 100%;
-            padding: 14px;
-            margin-top: 20px;
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            padding: 12px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: #0f172a;
+            background: white;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #2563eb;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: #cbd5e1; }
+
+        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* Alerta */
+        .alert {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .alert.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .alert.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+        /* Botón */
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s;
-            -webkit-tap-highlight-color: transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 16px rgba(37,99,235,0.3);
         }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        button:hover {
+        .btn-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+            box-shadow: 0 8px 24px rgba(37,99,235,0.4);
         }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .alert {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        /* Chip de categoría seleccionada */
+        .selected-chip {
             display: none;
-            font-size: 14px;
-        }
-
-        .alert.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Responsive para móviles pequeños */
-        @media (max-width: 380px) {
-            .container {
-                padding: 20px;
-            }
-
-            h2 {
-                font-size: 22px;
-            }
-
-            h3 {
-                font-size: 15px;
-            }
-
-            .category-icon {
-                font-size: 26px;
-            }
-
-            .category-name {
-                font-size: 12px;
-            }
-
-            input, select, textarea {
-                padding: 11px;
-                font-size: 13px;
-            }
-
-            button {
-                padding: 13px;
-                font-size: 15px;
-            }
-        }
-
-        /* Responsive para tablets y desktop */
-        @media (min-width: 768px) {
-            body {
-                padding: 30px;
-            }
-
-            .container {
-                max-width: 600px;
-                padding: 35px;
-            }
-
-            h2 {
-                font-size: 28px;
-            }
-
-            .categories-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-
-            .category-option {
-                padding: 18px;
-            }
-
-            .category-icon {
-                font-size: 34px;
-            }
-
-            input, select, textarea {
-                padding: 14px;
-                font-size: 15px;
-            }
-
-            button {
-                padding: 16px;
-                font-size: 17px;
-            }
-        }
-
-        /* Mejoras para touch devices */
-        @media (hover: none) and (pointer: coarse) {
-            .category-option {
-                padding: 18px;
-            }
-
-            input, select, textarea {
-                padding: 14px;
-                font-size: 16px;
-            }
-
-            button {
-                padding: 16px;
-                font-size: 17px;
-            }
-        }
-    </style>        .category-icon {
-            font-size: 30px;
-            margin-bottom: 5px;
-        }
-
-        .category-name {
-            font-size: 13px;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: #333;
+            margin-bottom: 12px;
         }
+        .selected-chip.show { display: inline-flex; }
 
-        button {
-            width: 100%;
-            padding: 14px;
-            margin-top: 20px;
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .alert {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .alert.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .hidden {
-            display: none;
+        @media (max-width: 400px) {
+            .cat-grid { grid-template-columns: repeat(3, 1fr); }
+            .row-2 { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <a href="/" class="back-button">← Volver al inicio</a>
-    
-    <h2>🔍 Solicitar Servicio</h2>
-    <p class="subtitle" id="subtitle">Describe lo que necesitas y encuentra al profesional ideal</p>
+<!-- Top bar -->
+<div class="top-bar">
+    <a href="/" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+    <div>
+        <h1>Solicitar Servicio</h1>
+        <p>Describe lo que necesitas y encuentra al profesional ideal</p>
+    </div>
+</div>
+
+<div class="content">
 
     <div id="alert" class="alert"></div>
-    
-    <div id="trabajadorSeleccionado" class="hidden" style="background:#e8f5e9;padding:15px;border-radius:10px;margin-bottom:20px;border:2px solid #4CAF50">
-        <h4 style="margin-bottom:8px;color:#2e7d32">✅ Trabajador seleccionado</h4>
-        <p style="margin:4px 0;font-size:14px"><strong>Nombre:</strong> <span id="nombreTrabajador"></span></p>
-        <p style="margin:4px 0;font-size:14px"><strong>Categoría:</strong> <span id="categoriaTrabajador"></span></p>
-    </div>
 
     <form id="formSolicitud">
-        <h3>Selecciona el tipo de servicio</h3>
-        
-        <div class="categories-grid" id="categoriesGrid">
-            <!-- Se llenarán dinámicamente -->
-        </div>
-
-        <input type="hidden" id="id_categoria" name="id_categoria" required>
-        <input type="hidden" id="id_cliente" name="id_cliente">
+        <input type="hidden" id="id_categoria" name="id_categoria">
+        <input type="hidden" id="id_cliente" name="id_cliente" value="1">
         <input type="hidden" id="id_trabajador" name="id_trabajador">
 
-        <h3>Detalles del servicio</h3>
+        <!-- SECCIÓN 1: Tipo de servicio -->
+        <div class="section">
+            <div class="section-title">
+                <i class="bi bi-grid-1x2-fill"></i> Selecciona el tipo de servicio
+            </div>
 
-        <div class="form-group">
-            <label>Título breve</label>
-            <input type="text" name="titulo" placeholder="Ej: Reparación de tubería en cocina" required>
+            <span class="selected-chip" id="selectedChip">
+                <i class="bi bi-check-circle-fill"></i>
+                <span id="selectedName"></span>
+            </span>
+
+            <div class="cat-grid">
+                <div class="cat-item" onclick="selCat(this, 1, 'Plomería')">
+                    <div class="icon">🔧</div>
+                    <div class="name">Plomería</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 2, 'Electricidad')">
+                    <div class="icon">⚡</div>
+                    <div class="name">Electricidad</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 3, 'Limpieza')">
+                    <div class="icon">🧹</div>
+                    <div class="name">Limpieza</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 4, 'Carpintería')">
+                    <div class="icon">🪚</div>
+                    <div class="name">Carpintería</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 5, 'Pintura')">
+                    <div class="icon">🎨</div>
+                    <div class="name">Pintura</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 6, 'Jardinería')">
+                    <div class="icon">🌱</div>
+                    <div class="name">Jardinería</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 7, 'Cerrajería')">
+                    <div class="icon">🔑</div>
+                    <div class="name">Cerrajería</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 8, 'Mudanza')">
+                    <div class="icon">📦</div>
+                    <div class="name">Mudanza</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 9, 'Mecánica')">
+                    <div class="icon">🔩</div>
+                    <div class="name">Mecánica</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 10, 'Tecnología')">
+                    <div class="icon">💻</div>
+                    <div class="name">Tecnología</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 11, 'Salud')">
+                    <div class="icon">🏥</div>
+                    <div class="name">Salud</div>
+                </div>
+                <div class="cat-item" onclick="selCat(this, 12, 'Construcción')">
+                    <div class="icon">🏗️</div>
+                    <div class="name">Construcción</div>
+                </div>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>Descripción detallada</label>
-            <textarea name="descripcion" placeholder="Describe el problema o trabajo que necesitas..." required></textarea>
+        <!-- SECCIÓN 2: Detalles -->
+        <div class="section">
+            <div class="section-title">
+                <i class="bi bi-file-text-fill"></i> Detalles del servicio
+            </div>
+            <div class="form-group">
+                <label>Título breve *</label>
+                <input type="text" name="titulo" placeholder="Ej: Reparación de tubería en cocina" required>
+            </div>
+            <div class="form-group">
+                <label>Descripción detallada *</label>
+                <textarea name="descripcion" placeholder="Describe el problema o trabajo que necesitas con el mayor detalle posible..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Fecha programada (opcional)</label>
+                <input type="datetime-local" name="fecha_programada">
+            </div>
         </div>
 
-        <h3>📍 Ubicación del servicio</h3>
-
-        <div class="form-group">
-            <label>Dirección completa</label>
-            <input type="text" name="direccion_servicio" placeholder="Calle, número, barrio" required>
+        <!-- SECCIÓN 3: Ubicación -->
+        <div class="section">
+            <div class="section-title">
+                <i class="bi bi-geo-alt-fill"></i> Ubicación del servicio
+            </div>
+            <div class="form-group">
+                <label>Dirección completa *</label>
+                <input type="text" name="direccion_servicio" placeholder="Calle, número, barrio" required>
+            </div>
+            <div class="row-2">
+                <div class="form-group">
+                    <label>Ciudad *</label>
+                    <input type="text" name="ciudad" placeholder="Ciudad" required>
+                </div>
+                <div class="form-group">
+                    <label>Departamento *</label>
+                    <input type="text" name="departamento" placeholder="Departamento" required>
+                </div>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>Ciudad</label>
-            <input type="text" name="ciudad" placeholder="Ciudad" required>
+        <!-- SECCIÓN 4: Contacto -->
+        <div class="section">
+            <div class="section-title">
+                <i class="bi bi-person-fill"></i> Tus datos de contacto
+            </div>
+            <div class="form-group">
+                <label>Nombre completo *</label>
+                <input type="text" name="nombre_cliente" placeholder="Tu nombre" required>
+            </div>
+            <div class="row-2">
+                <div class="form-group">
+                    <label>Teléfono *</label>
+                    <input type="tel" name="telefono_cliente" placeholder="3001234567" required>
+                </div>
+                <div class="form-group">
+                    <label>Correo (opcional)</label>
+                    <input type="email" name="correo_cliente" placeholder="tu@correo.com">
+                </div>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>Departamento</label>
-            <input type="text" name="departamento" placeholder="Departamento" required>
-        </div>
-
-        <div class="form-group">
-            <label>Fecha programada (opcional)</label>
-            <input type="datetime-local" name="fecha_programada">
-        </div>
-
-        <button type="submit">Publicar Solicitud</button>
+        <button type="submit" class="btn-submit" id="btnSubmit">
+            <i class="bi bi-search"></i> Buscar Profesionales
+        </button>
     </form>
+
 </div>
 
 <script>
-    const categoriesData = [
-        {id: 1, nombre: 'Plomería', icono: '🔧'},
-        {id: 2, nombre: 'Electricidad', icono: '⚡'},
-        {id: 3, nombre: 'Limpieza', icono: '🧹'},
-        {id: 4, nombre: 'Carpintería', icono: '🪚'},
-        {id: 5, nombre: 'Pintura', icono: '🎨'},
-        {id: 6, nombre: 'Jardinería', icono: '🌱'},
-        {id: 7, nombre: 'Cerrajería', icono: '🔑'},
-        {id: 8, nombre: 'Mudanza', icono: '📦'}
-    ];
-
-    const categoriesGrid = document.getElementById('categoriesGrid');
-    const idCategoriaInput = document.getElementById('id_categoria');
-    const idTrabajadorInput = document.getElementById('id_trabajador');
-    const form = document.getElementById('formSolicitud');
-    const alert = document.getElementById('alert');
-    
-    // Obtener parámetros de URL
+    // Pre-seleccionar categoría si viene de URL
     const urlParams = new URLSearchParams(window.location.search);
+    const catURL = urlParams.get('categoria');
     const trabajadorId = urlParams.get('trabajador_id');
     const trabajadorNombre = urlParams.get('trabajador_nombre');
-    const categoriaPreseleccionada = urlParams.get('categoria');
-    
-    // Obtener ID del cliente desde URL o localStorage
-    const idCliente = urlParams.get('id_cliente') || localStorage.getItem('id_cliente') || 1;
-    document.getElementById('id_cliente').value = idCliente;
 
-    // Cargar categorías
-    categoriesData.forEach(cat => {
-        const div = document.createElement('div');
-        div.className = 'category-option';
-        div.dataset.id = cat.id;
-        div.innerHTML = `
-            <div class="category-icon">${cat.icono}</div>
-            <div class="category-name">${cat.nombre}</div>
-        `;
-        
-        div.addEventListener('click', () => {
-            document.querySelectorAll('.category-option').forEach(el => {
-                el.classList.remove('selected');
-            });
-            div.classList.add('selected');
-            idCategoriaInput.value = cat.id;
+    if (trabajadorId) document.getElementById('id_trabajador').value = trabajadorId;
+
+    if (catURL) {
+        // Buscar y seleccionar la tarjeta correspondiente
+        document.querySelectorAll('.cat-item').forEach(item => {
+            if (item.querySelector('.name').textContent === catURL) {
+                item.click();
+            }
         });
-        
-        categoriesGrid.appendChild(div);
-        
-        // Pre-seleccionar categoría si viene de URL
-        if (categoriaPreseleccionada && cat.nombre === categoriaPreseleccionada) {
-            div.classList.add('selected');
-            idCategoriaInput.value = cat.id;
-        }
-    });
-    
-    // Mostrar trabajador pre-seleccionado si viene de URL
-    if (trabajadorId && trabajadorNombre) {
-        document.getElementById('trabajadorSeleccionado').classList.remove('hidden');
-        document.getElementById('nombreTrabajador').textContent = trabajadorNombre;
-        document.getElementById('categoriaTrabajador').textContent = categoriaPreseleccionada || 'No especificada';
-        document.getElementById('subtitle').textContent = `Solicitar servicio a ${trabajadorNombre}`;
-        idTrabajadorInput.value = trabajadorId;
     }
 
-    // Enviar formulario
-    form.addEventListener('submit', async (e) => {
+    function selCat(el, id, nombre) {
+        document.querySelectorAll('.cat-item').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('id_categoria').value = id;
+        document.getElementById('selectedName').textContent = nombre;
+        document.getElementById('selectedChip').classList.add('show');
+    }
+
+    const alertEl = document.getElementById('alert');
+
+    document.getElementById('formSolicitud').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        if (!idCategoriaInput.value) {
-            alert.className = 'alert error';
-            alert.textContent = '❌ Por favor selecciona una categoría';
-            alert.style.display = 'block';
+
+        if (!document.getElementById('id_categoria').value) {
+            alertEl.className = 'alert error';
+            alertEl.textContent = '⚠️ Por favor selecciona un tipo de servicio';
+            alertEl.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
-        
-        const formData = new FormData(form);
-        
+
+        const btn = document.getElementById('btnSubmit');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Buscando...';
+
+        const formData = new FormData(e.target);
+
         try {
             const response = await fetch('/cliente/solicitud/crear', {
                 method: 'POST',
                 body: formData
             });
-            
+
             const data = await response.json();
-            
+
             if (response.ok) {
-                alert.className = 'alert success';
-                alert.textContent = '✅ ' + data.mensaje;
-                alert.style.display = 'block';
-                
+                alertEl.className = 'alert success';
+                alertEl.textContent = '✅ ' + (data.mensaje || 'Solicitud enviada. Buscando profesionales...');
+                alertEl.style.display = 'block';
+
+                // Redirigir al mapa con la categoría seleccionada
+                const catNombre = document.getElementById('selectedName').textContent;
                 setTimeout(() => {
-                    window.location.href = '/cliente/mis_solicitudes?id_cliente=' + formData.get('id_cliente');
-                }, 2000);
+                    window.location.href = `/cliente/mapa?categoria=${encodeURIComponent(catNombre)}`;
+                }, 1500);
             } else {
-                alert.className = 'alert error';
-                alert.textContent = '❌ Error: ' + (data.error || 'No se pudo crear la solicitud');
-                alert.style.display = 'block';
+                alertEl.className = 'alert error';
+                alertEl.textContent = '❌ ' + (data.error || 'No se pudo enviar la solicitud');
+                alertEl.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-search"></i> Buscar Profesionales';
             }
-        } catch (error) {
-            alert.className = 'alert error';
-            alert.textContent = '❌ Error de conexión. Intenta nuevamente.';
-            alert.style.display = 'block';
+        } catch (err) {
+            // Si falla el endpoint, igual redirigir al mapa
+            const catNombre = document.getElementById('selectedName').textContent;
+            window.location.href = `/cliente/mapa${catNombre ? '?categoria=' + encodeURIComponent(catNombre) : ''}`;
         }
     });
 </script>

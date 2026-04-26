@@ -57,9 +57,86 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 # TEMPLATES
 # ============================================
 
+@router.get("/servicios", response_class=HTMLResponse)
+def seleccionar_servicio(request: Request):
+    """Pantalla de selección de servicio para clientes"""
+    return templates.TemplateResponse("clientes/seleccionar_servicio.html", {"request": request})
+
+@router.get("/mi-perfil")
+def obtener_mi_perfil_cliente(request: Request):
+    """Obtiene datos del cliente autenticado"""
+    token = request.cookies.get("session_token")
+    if not token:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'cliente':
+        return JSONResponse({"error": "Sesión inválida"}, status_code=401)
+    conexion = conectar_bd()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT c.id_cliente, c.nombre_completo, e.correo
+        FROM clientes c
+        LEFT JOIN correo_cliente e ON c.id_cliente = e.id_cliente
+        WHERE c.id_cliente = %s
+    """, (sesion['id_usuario'],))
+    cliente = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+    return JSONResponse(cliente or {"error": "No encontrado"})
+
+@router.get("/panel", response_class=HTMLResponse)
+def mostrar_panel_cliente(request: Request):
+    """Panel principal del cliente"""
+    return templates.TemplateResponse("clientes/panel.html", {"request": request})
+
 @router.get("/registro", response_class=HTMLResponse)
 def mostrar_formulario(request: Request):
     return templates.TemplateResponse("clientes/registro_cliente.html", {"request": request})
+
+@router.post("/registro")
+async def registrar_cliente(
+    nombre_completo: str = Form(...),
+    correo: str = Form(...),
+    telefono: str = Form(...),
+    password: str = Form(...),
+    confirmar_password: str = Form(...)
+):
+    """Registro de cliente con contraseña"""
+    if password != confirmar_password:
+        return JSONResponse({"error": "Las contraseñas no coinciden"}, status_code=400)
+    if len(password) < 6:
+        return JSONResponse({"error": "La contraseña debe tener al menos 6 caracteres"}, status_code=400)
+
+    conexion = conectar_bd()
+    cursor = conexion.cursor(dictionary=True)
+
+    # Verificar correo único
+    cursor.execute("SELECT id_cliente FROM correo_cliente WHERE correo = %s", (correo,))
+    if cursor.fetchone():
+        cursor.close()
+        conexion.close()
+        return JSONResponse({"error": "Este correo ya está registrado"}, status_code=400)
+
+    try:
+        password_hash = auth.hash_password(password)
+        cursor.execute("""
+            INSERT INTO clientes (nombre_completo, estado, password_hash, fecha_registro)
+            VALUES (%s, 'activo', %s, NOW())
+        """, (nombre_completo, password_hash))
+        conexion.commit()
+        id_cliente = cursor.lastrowid
+
+        cursor.execute("INSERT INTO correo_cliente (id_cliente, correo, verificado, principal) VALUES (%s, %s, 0, 1)", (id_cliente, correo))
+        cursor.execute("INSERT INTO telefono_cliente (id_cliente, telefono, tipo_telefono, principal) VALUES (%s, %s, 'celular', 1)", (id_cliente, telefono))
+        conexion.commit()
+
+        return JSONResponse({"mensaje": "Cuenta creada exitosamente", "id_cliente": id_cliente})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        cursor.close()
+        conexion.close()
 
 @router.get("/solicitar_servicio", response_class=HTMLResponse)
 def mostrar_solicitar_servicio(request: Request):
@@ -480,7 +557,7 @@ async def login_cliente(
                 "requiere_verificacion_sms": False,
                 "id_cliente": cliente['id_cliente'],
                 "mensaje": "Login exitoso",
-                "redirect": "/cliente/dashboard"
+                "redirect": "/cliente/panel"
             })
             
     except Exception as e:

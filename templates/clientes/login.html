@@ -4,438 +4,120 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Cliente - TalentHub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #8b5cf6 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            width: 500px;
-            height: 500px;
-            background: rgba(139, 92, 246, 0.15);
-            border-radius: 50%;
-            top: -250px;
-            right: -250px;
-            animation: float 6s ease-in-out infinite;
-            z-index: 0;
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            width: 400px;
-            height: 400px;
-            background: rgba(37, 99, 235, 0.15);
-            border-radius: 50%;
-            bottom: -200px;
-            left: -200px;
-            animation: float 8s ease-in-out infinite reverse;
-            z-index: 0;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(20px); }
-        }
-
-        .login-container {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            box-shadow: 0 25px 70px rgba(0,0,0,0.4);
-            max-width: 450px;
-            width: 100%;
-            overflow: hidden;
-            position: relative;
-            z-index: 1;
-        }
-
-        .login-header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #8b5cf6 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-            position: relative;
-        }
-
-        .login-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 10px,
-                rgba(255,255,255,0.03) 10px,
-                rgba(255,255,255,0.03) 20px
-            );
-        }
-
-        .login-header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .login-header p {
-            opacity: 0.95;
-            font-size: 14px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .login-body {
-            padding: 40px 30px;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #1e293b;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 15px;
-            transition: all 0.3s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-login::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn-login:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
-        }
-
-        .btn-login:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .alert {
-            padding: 12px 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .alert-error {
-            background: #fee2e2;
-            color: #991b1b;
-            border-left: 4px solid #ef4444;
-        }
-
-        .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-            border-left: 4px solid #10b981;
-        }
-
-        .alert-info {
-            background: #e0e7ff;
-            color: #3730a3;
-            border-left: 4px solid #4CAF50;
-        }
-
-        .links {
-            text-align: center;
-            margin-top: 25px;
-            padding-top: 25px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .links a {
-            color: #4CAF50;
-            text-decoration: none;
-            font-size: 14px;
-            margin: 0 10px;
-        }
-
-        .links a:hover {
-            text-decoration: underline;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 20px 0;
-            color: #718096;
-            font-size: 14px;
-        }
-
-        #smsVerification {
-            display: none;
-        }
-
-        .code-input {
-            text-align: center;
-            font-size: 24px;
-            letter-spacing: 10px;
-            font-weight: bold;
-        }
-
-        .spinner {
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid #4CAF50;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',sans-serif; background:#0f172a; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .bg-circles { position:fixed;inset:0;pointer-events:none;overflow:hidden; }
+        .bg-circles span { position:absolute;border-radius:50%;opacity:0.05;animation:drift 10s ease-in-out infinite; }
+        .bg-circles span:nth-child(1) { width:400px;height:400px;background:#059669;top:-150px;right:-100px; }
+        .bg-circles span:nth-child(2) { width:300px;height:300px;background:#0891b2;bottom:-100px;left:-80px;animation-delay:4s; }
+        @keyframes drift { 0%,100%{transform:translateY(0)} 50%{transform:translateY(18px)} }
+        .card { background:white;border-radius:20px;padding:40px 32px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,0.4);position:relative;z-index:1;animation:fadeUp 0.4s ease; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .logo { text-align:center;margin-bottom:24px; }
+        .logo-icon { width:60px;height:60px;background:linear-gradient(135deg,#059669,#0891b2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 12px; }
+        .logo h2 { font-size:1.4rem;font-weight:700;color:#0f172a; }
+        .logo p { color:#64748b;font-size:0.85rem;margin-top:4px; }
+        .form-group { margin-bottom:16px; }
+        label { display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:6px; }
+        .input-wrap { position:relative; }
+        .input-wrap i { position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:1rem; }
+        input { width:100%;padding:12px 14px 12px 38px;border:2px solid #e2e8f0;border-radius:10px;font-size:0.95rem;outline:none;transition:border-color 0.2s;font-family:inherit; }
+        input:focus { border-color:#059669; }
+        .toggle-pw { position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;cursor:pointer;font-size:1rem; }
+        .alert { padding:12px 14px;border-radius:10px;font-size:0.85rem;margin-bottom:16px;display:none; }
+        .alert.error   { background:#fef2f2;color:#dc2626;border:1px solid #fecaca; }
+        .alert.success { background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0; }
+        .btn { width:100%;padding:14px;background:linear-gradient(135deg,#059669,#0891b2);color:white;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px; }
+        .btn:hover { transform:translateY(-2px);box-shadow:0 8px 24px rgba(5,150,105,0.35); }
+        .btn:disabled { opacity:0.6;cursor:not-allowed;transform:none; }
+        .links { margin-top:20px;text-align:center;font-size:0.82rem;color:#64748b; }
+        .links a { color:#059669;text-decoration:none;font-weight:600; }
+        hr { border:none;border-top:1px solid #f1f5f9;margin:20px 0; }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <h1>👤 Cliente</h1>
-            <p>Ingresa a tu cuenta</p>
-        </div>
+<div class="bg-circles"><span></span><span></span></div>
 
-        <div class="login-body">
-            <div id="alertContainer"></div>
-
-            <!-- Formulario de Login -->
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>📧 Correo electrónico</label>
-                    <input type="email" id="correo" required placeholder="tu@correo.com">
-                </div>
-
-                <div class="form-group">
-                    <label>🔒 Contraseña</label>
-                    <input type="password" id="password" required placeholder="••••••••">
-                </div>
-
-                <button type="submit" class="btn-login" id="btnLogin">
-                    Iniciar Sesión
-                </button>
-            </form>
-
-            <!-- Verificación SMS -->
-            <div id="smsVerification">
-                <div class="divider">Verificación SMS</div>
-                
-                <div class="alert alert-info">
-                    Hemos enviado un código de 6 dígitos a tu teléfono
-                </div>
-
-                <div class="form-group">
-                    <label>📱 Código de verificación</label>
-                    <input type="text" id="codigoSMS" maxlength="6" class="code-input" placeholder="000000">
-                </div>
-
-                <button type="button" class="btn-login" onclick="verificarCodigo()">
-                    Verificar Código
-                </button>
-
-                <div class="links">
-                    <a href="#" onclick="reenviarCodigo()">Reenviar código</a>
-                </div>
-            </div>
-
-            <div class="links">
-                <a href="/cliente/registro">¿No tienes cuenta? Regístrate</a>
-                <br><br>
-                <a href="/">← Volver al inicio</a>
-            </div>
-        </div>
+<div class="card">
+    <div class="logo">
+        <div class="logo-icon">🔍</div>
+        <h2>Acceso Cliente</h2>
+        <p>Ingresa con tu correo electrónico</p>
     </div>
 
-    <script>
-        let requiereVerificacion = false;
-        let idCliente = null;
+    <div id="alert" class="alert"></div>
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const correo = document.getElementById('correo').value;
-            const password = document.getElementById('password').value;
-            const btnLogin = document.getElementById('btnLogin');
+    <form id="formLogin">
+        <div class="form-group">
+            <label>Correo Electrónico</label>
+            <div class="input-wrap">
+                <i class="bi bi-envelope"></i>
+                <input type="email" name="correo" placeholder="tu@correo.com" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Contraseña</label>
+            <div class="input-wrap">
+                <i class="bi bi-lock"></i>
+                <input type="password" id="password" name="password" placeholder="Tu contraseña" required>
+                <button type="button" class="toggle-pw" onclick="togglePw()"><i class="bi bi-eye" id="eyeIcon"></i></button>
+            </div>
+        </div>
+        <button type="submit" class="btn" id="btnLogin">
+            <i class="bi bi-box-arrow-in-right"></i> Ingresar
+        </button>
+    </form>
 
-            btnLogin.disabled = true;
-            btnLogin.innerHTML = '<span class="spinner"></span>Verificando...';
+    <hr>
+    <div class="links">
+        ¿No tienes cuenta? <a href="/cliente/registro">Regístrate gratis</a><br><br>
+        <a href="/">← Volver al inicio</a>
+    </div>
+</div>
 
-            try {
-                const formData = new FormData();
-                formData.append('correo', correo);
-                formData.append('password', password);
+<script>
+    function togglePw() {
+        const input = document.getElementById('password');
+        const icon = document.getElementById('eyeIcon');
+        const isText = input.type === 'text';
+        input.type = isText ? 'password' : 'text';
+        icon.className = isText ? 'bi bi-eye' : 'bi bi-eye-slash';
+    }
 
-                const response = await fetch('/cliente/login', {
-                    method: 'POST',
-                    body: formData
-                });
+    const alertEl = document.getElementById('alert');
 
-                const data = await response.json();
+    document.getElementById('formLogin').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnLogin');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Verificando...';
 
-                if (response.ok) {
-                    if (data.requiere_verificacion_sms) {
-                        requiereVerificacion = true;
-                        idCliente = data.id_cliente;
-                        localStorage.setItem('id_cliente', data.id_cliente);
-                        document.getElementById('loginForm').style.display = 'none';
-                        document.getElementById('smsVerification').style.display = 'block';
-                        mostrarAlerta('Se ha enviado un código a tu teléfono', 'info');
-                    } else {
-                        // Guardar ID del cliente en localStorage
-                        if (data.id_cliente) {
-                            localStorage.setItem('id_cliente', data.id_cliente);
-                        }
-                        mostrarAlerta('¡Bienvenido! Redirigiendo...', 'success');
-                        setTimeout(() => {
-                            window.location.href = '/cliente/dashboard';
-                        }, 1500);
-                    }
-                } else {
-                    mostrarAlerta(data.error || 'Error al iniciar sesión', 'error');
-                }
-            } catch (error) {
-                mostrarAlerta('Error de conexión', 'error');
-            } finally {
-                btnLogin.disabled = false;
-                btnLogin.innerHTML = 'Iniciar Sesión';
+        const fd = new FormData(e.target);
+        try {
+            const res = await fetch('/cliente/login', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (res.ok) {
+                alertEl.className = 'alert success';
+                alertEl.textContent = '✅ ' + data.mensaje;
+                alertEl.style.display = 'block';
+                setTimeout(() => window.location.href = data.redirect || '/cliente/panel', 1000);
+            } else {
+                alertEl.className = 'alert error';
+                alertEl.textContent = '❌ ' + (data.error || 'Error al iniciar sesión');
+                alertEl.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Ingresar';
             }
-        });
-
-        async function verificarCodigo() {
-            const codigo = document.getElementById('codigoSMS').value;
-
-            if (codigo.length !== 6) {
-                mostrarAlerta('El código debe tener 6 dígitos', 'error');
-                return;
-            }
-
-            try {
-                const formData = new FormData();
-                formData.append('id_cliente', idCliente);
-                formData.append('codigo', codigo);
-
-                const response = await fetch('/cliente/verificar-sms', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    mostrarAlerta('¡Verificación exitosa! Redirigiendo...', 'success');
-                    setTimeout(() => {
-                        window.location.href = '/cliente/mapa';
-                    }, 1500);
-                } else {
-                    mostrarAlerta(data.error || 'Código incorrecto', 'error');
-                }
-            } catch (error) {
-                mostrarAlerta('Error de conexión', 'error');
-            }
+        } catch(err) {
+            alertEl.className = 'alert error';
+            alertEl.textContent = '❌ Error de conexión';
+            alertEl.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Ingresar';
         }
-
-        async function reenviarCodigo() {
-            try {
-                const formData = new FormData();
-                formData.append('id_cliente', idCliente);
-
-                const response = await fetch('/cliente/reenviar-codigo', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    mostrarAlerta('Código reenviado', 'success');
-                } else {
-                    mostrarAlerta(data.error || 'Error al reenviar', 'error');
-                }
-            } catch (error) {
-                mostrarAlerta('Error de conexión', 'error');
-            }
-        }
-
-        function mostrarAlerta(mensaje, tipo) {
-            const container = document.getElementById('alertContainer');
-            container.innerHTML = `<div class="alert alert-${tipo}">${mensaje}</div>`;
-            
-            setTimeout(() => {
-                container.innerHTML = '';
-            }, 5000);
-        }
-    </script>
+    });
+</script>
 </body>
 </html>

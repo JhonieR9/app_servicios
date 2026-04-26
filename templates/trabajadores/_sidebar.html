@@ -1,0 +1,132 @@
+<!-- MENÚ FLOTANTE - incluir en todas las páginas admin -->
+<style>
+    .with-sidebar { margin-left: 0 !important; }
+
+    .menu-fab {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        z-index: 1000;
+    }
+
+    .menu-fab-btn {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1e3a8a, #2563eb);
+        border: none;
+        color: white;
+        font-size: 1.4rem;
+        box-shadow: 0 4px 16px rgba(37,99,235,0.5);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .menu-fab-btn:hover {
+        transform: scale(1.08);
+        box-shadow: 0 6px 24px rgba(37,99,235,0.6);
+    }
+    .menu-fab-btn.open { transform: rotate(45deg); }
+
+    .menu-fab-panel {
+        position: absolute;
+        bottom: 62px;
+        right: 0;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        min-width: 200px;
+        overflow: hidden;
+        display: none;
+        animation: popUp 0.18s ease;
+    }
+    .menu-fab-panel.show { display: block; }
+
+    @keyframes popUp {
+        from { opacity: 0; transform: translateY(10px) scale(0.97); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .menu-fab-header {
+        background: linear-gradient(135deg, #1e3a8a, #2563eb);
+        color: white;
+        padding: 12px 16px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .menu-fab-panel a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 16px;
+        color: #1e293b;
+        text-decoration: none;
+        font-size: 0.88rem;
+        font-weight: 500;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s;
+    }
+    .menu-fab-panel a:last-child { border-bottom: none; }
+    .menu-fab-panel a:hover { background: #f0f6ff; color: #2563eb; }
+    .menu-fab-panel a.active { background: #dbeafe; color: #1d4ed8; font-weight: 700; }
+    .menu-fab-panel a i { font-size: 1rem; width: 18px; color: #2563eb; }
+    .menu-fab-panel a.danger i { color: #dc2626; }
+    .menu-fab-panel a.danger:hover { background: #fef2f2; color: #dc2626; }
+</style>
+
+<div class="menu-fab">
+    <div class="menu-fab-panel" id="fabPanel">
+        <div class="menu-fab-header">
+            <i class="bi bi-lightning-charge-fill"></i> TalentHub Admin
+        </div>
+        <a href="/trabajador/dashboard" id="nav-dashboard">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+        <a href="/trabajador/registros" id="nav-registros">
+            <i class="bi bi-people-fill"></i> Trabajadores
+        </a>
+        <a href="/trabajador/eliminados" id="nav-eliminados">
+            <i class="bi bi-trash3-fill"></i> Eliminados
+        </a>
+        <a href="/trabajador/registro">
+            <i class="bi bi-person-plus-fill"></i> Nuevo Registro
+        </a>
+        <a href="/trabajador/admin/logout" class="danger">
+            <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
+        </a>
+    </div>
+
+    <button class="menu-fab-btn" id="fabBtn" onclick="toggleMenu()">
+        <i class="bi bi-list" id="fabIcon"></i>
+    </button>
+</div>
+
+<script>
+    function toggleMenu() {
+        const panel = document.getElementById('fabPanel');
+        const btn   = document.getElementById('fabBtn');
+        const icon  = document.getElementById('fabIcon');
+        const open  = panel.classList.toggle('show');
+        btn.classList.toggle('open', open);
+        icon.className = open ? 'bi bi-x-lg' : 'bi bi-list';
+    }
+
+    // Cerrar al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        const fab = document.querySelector('.menu-fab');
+        if (!fab.contains(e.target)) {
+            document.getElementById('fabPanel').classList.remove('show');
+            document.getElementById('fabBtn').classList.remove('open');
+            document.getElementById('fabIcon').className = 'bi bi-list';
+        }
+    });
+
+    // Marcar link activo
+    const path = window.location.pathname;
+    if (path.includes('/dashboard'))  document.getElementById('nav-dashboard').classList.add('active');
+    else if (path.includes('/eliminados')) document.getElementById('nav-eliminados').classList.add('active');
+    else if (path.includes('/registros'))  document.getElementById('nav-registros').classList.add('active');
+</script>

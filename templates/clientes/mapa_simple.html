@@ -113,6 +113,15 @@
                     <option value="Carpintería">Carpintería</option>
                     <option value="Pintura">Pintura</option>
                     <option value="Jardinería">Jardinería</option>
+                    <option value="Cerrajería">Cerrajería</option>
+                    <option value="Mudanza">Mudanza</option>
+                    <option value="Mecánica">Mecánica</option>
+                    <option value="Tecnología">Tecnología</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Belleza">Belleza</option>
+                    <option value="Gastronomía">Gastronomía</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Construcción">Construcción</option>
                 </select>
             </div>
             <div>
@@ -250,6 +259,13 @@
         }
 
         window.onload = initMap;
+
+        // Pre-cargar categoría desde URL si viene de selección de servicio
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoriaURL = urlParams.get('categoria');
+        if (categoriaURL) {
+            document.getElementById('categoria').value = categoriaURL;
+        }
     </script>
 </body>
 </html>

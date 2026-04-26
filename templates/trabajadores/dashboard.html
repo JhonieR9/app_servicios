@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TalentHub Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        body { background: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+
+        .main-content { padding: 24px; }
+
+        .topbar {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .topbar h4 { margin: 0; font-weight: 700; color: #1e293b; }
+        .topbar small { color: #64748b; }
+
+        /* Tarjetas de estadísticas */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        .stat-icon {
+            width: 56px; height: 56px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+            flex-shrink: 0;
+        }
+        .stat-icon.blue   { background: #dbeafe; color: #2563eb; }
+        .stat-icon.green  { background: #dcfce7; color: #16a34a; }
+        .stat-icon.purple { background: #ede9fe; color: #7c3aed; }
+        .stat-icon.orange { background: #ffedd5; color: #ea580c; }
+        .stat-icon.red    { background: #fee2e2; color: #dc2626; }
+        .stat-icon.teal   { background: #ccfbf1; color: #0d9488; }
+
+        .stat-info h3 { font-size: 2rem; font-weight: 700; margin: 0; color: #1e293b; }
+        .stat-info p  { margin: 0; color: #64748b; font-size: 0.85rem; }
+
+        /* Tarjetas de gráficas */
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            height: 100%;
+        }
+        .chart-card h6 {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-card h6 i { color: #2563eb; }
+
+        /* Tabla últimos registros */
+        .table-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .table-card h6 {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .table th { font-size: 0.8rem; color: #64748b; font-weight: 600; border: none; }
+        .table td { font-size: 0.85rem; vertical-align: middle; border-color: #f1f5f9; }
+        .badge-servicio {
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Barra de progreso para top ciudades */
+        .city-bar { margin-bottom: 12px; }
+        .city-bar .city-name { font-size: 0.85rem; color: #374151; font-weight: 500; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .city-bar .progress { height: 8px; border-radius: 4px; }
+        .city-bar .progress-bar { background: linear-gradient(90deg, #2563eb, #8b5cf6); border-radius: 4px; }
+
+        /* Loading */
+        .loading { text-align: center; padding: 40px; color: #94a3b8; }
+        .spinner-border { color: #2563eb; }
+
+        @media (max-width: 768px) {
+            .main-content { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Contenido principal -->
+<div class="main-content">
+    {% include "trabajadores/_sidebar.html" %}
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div>
+            <h4><i class="bi bi-grid-1x2-fill me-2" style="color:#2563eb"></i>Dashboard</h4>
+            <small id="fecha-actual"></small>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary" onclick="cargarDatos()">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+            <a href="/trabajador/registros" class="btn btn-sm btn-primary">
+                <i class="bi bi-people"></i> Ver Registros
+            </a>
+        </div>
+    </div>
+
+    <!-- Tarjetas de estadísticas -->
+    <div class="row g-3 mb-4" id="stats-cards">
+        <div class="col-12 loading"><div class="spinner-border"></div><p class="mt-2">Cargando estadísticas...</p></div>
+    </div>
+
+    <!-- Gráficas fila 1 -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <h6><i class="bi bi-bar-chart-fill"></i> Registros por Mes</h6>
+                <canvas id="chartMeses" height="100"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-card">
+                <h6><i class="bi bi-pie-chart-fill"></i> Por Categoría</h6>
+                <canvas id="chartCategorias" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficas fila 2 -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-5">
+            <div class="chart-card">
+                <h6><i class="bi bi-geo-alt-fill"></i> Top Ciudades</h6>
+                <div id="top-ciudades"></div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="chart-card">
+                <h6><i class="bi bi-map-fill"></i> Por Departamento</h6>
+                <canvas id="chartDepartamentos" height="160"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimos registros -->
+    <div class="table-card">
+        <h6><i class="bi bi-clock-history"></i> Últimos Registros</h6>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>NOMBRE</th>
+                        <th>CIUDAD</th>
+                        <th>DEPARTAMENTO</th>
+                        <th>SERVICIOS</th>
+                        <th>FECHA</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-ultimos"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Fecha actual
+    const ahora = new Date();
+    document.getElementById('fecha-actual').textContent = ahora.toLocaleDateString('es-CO', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    let chartMeses, chartCategorias, chartDepartamentos;
+
+    const COLORES = [
+        '#2563eb','#7c3aed','#0d9488','#ea580c','#dc2626',
+        '#16a34a','#d97706','#0891b2','#9333ea','#be185d'
+    ];
+
+    async function cargarDatos() {
+        try {
+            const res = await fetch('/trabajador/estadisticas');
+            const data = await res.json();
+            if (data.error) { console.error(data.error); return; }
+
+            renderCards(data);
+            renderChartMeses(data.por_mes);
+            renderChartCategorias(data.por_categoria);
+            renderTopCiudades(data.por_ciudad);
+            renderChartDepartamentos(data.por_departamento);
+            renderUltimosRegistros(data.ultimos_registros);
+        } catch(e) {
+            console.error('Error cargando datos:', e);
+        }
+    }
+
+    function renderCards(data) {
+        const tarifa = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(data.tarifa_promedio);
+        document.getElementById('stats-cards').innerHTML = `
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
+                    <div class="stat-info">
+                        <h3>${data.total_activos}</h3>
+                        <p>Activos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-calendar-check-fill"></i></div>
+                    <div class="stat-info">
+                        <h3>${data.registros_hoy}</h3>
+                        <p>Hoy</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="bi bi-calendar-week-fill"></i></div>
+                    <div class="stat-info">
+                        <h3>${data.registros_semana}</h3>
+                        <p>Esta semana</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon orange"><i class="bi bi-briefcase-fill"></i></div>
+                    <div class="stat-info">
+                        <h3>${data.por_categoria.length}</h3>
+                        <p>Categorías</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon teal"><i class="bi bi-cash-coin"></i></div>
+                    <div class="stat-info">
+                        <h3 style="font-size:1.1rem">${tarifa}</h3>
+                        <p>Tarifa promedio</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon red"><i class="bi bi-trash3-fill"></i></div>
+                    <div class="stat-info">
+                        <h3>${data.total_eliminados}</h3>
+                        <p>Eliminados</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderChartMeses(datos) {
+        if (chartMeses) chartMeses.destroy();
+        const labels = datos.map(d => {
+            const [y, m] = d.mes.split('-');
+            return new Date(y, m-1).toLocaleDateString('es-CO', { month: 'short', year: '2-digit' });
+        });
+        const values = datos.map(d => d.total);
+        chartMeses = new Chart(document.getElementById('chartMeses'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Registros',
+                    data: values,
+                    backgroundColor: 'rgba(37,99,235,0.15)',
+                    borderColor: '#2563eb',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function renderChartCategorias(datos) {
+        if (chartCategorias) chartCategorias.destroy();
+        if (!datos.length) return;
+        chartCategorias = new Chart(document.getElementById('chartCategorias'), {
+            type: 'doughnut',
+            data: {
+                labels: datos.map(d => d.categoria),
+                datasets: [{
+                    data: datos.map(d => d.total),
+                    backgroundColor: COLORES,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 8 } }
+                }
+            }
+        });
+    }
+
+    function renderTopCiudades(datos) {
+        if (!datos.length) { document.getElementById('top-ciudades').innerHTML = '<p class="text-muted">Sin datos</p>'; return; }
+        const max = datos[0].total;
+        document.getElementById('top-ciudades').innerHTML = datos.map(d => `
+            <div class="city-bar">
+                <div class="city-name">
+                    <span>${d.ciudad}</span>
+                    <span style="color:#2563eb;font-weight:700">${d.total}</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar" style="width:${(d.total/max*100).toFixed(0)}%"></div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderChartDepartamentos(datos) {
+        if (chartDepartamentos) chartDepartamentos.destroy();
+        if (!datos.length) return;
+        chartDepartamentos = new Chart(document.getElementById('chartDepartamentos'), {
+            type: 'bar',
+            data: {
+                labels: datos.map(d => d.departamento || 'Sin depto'),
+                datasets: [{
+                    label: 'Trabajadores',
+                    data: datos.map(d => d.total),
+                    backgroundColor: COLORES,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+                    y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+                }
+            }
+        });
+    }
+
+    function renderUltimosRegistros(datos) {
+        if (!datos.length) {
+            document.getElementById('tabla-ultimos').innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No hay registros aún</td></tr>';
+            return;
+        }
+        document.getElementById('tabla-ultimos').innerHTML = datos.map(r => `
+            <tr>
+                <td><span class="badge bg-light text-dark">#${r.id_persona}</span></td>
+                <td><strong>${r.nombre_completo}</strong></td>
+                <td>${r.ciudad || '-'}</td>
+                <td>${r.departamento || '-'}</td>
+                <td>
+                    ${(r.servicios || '').split(',').slice(0,2).map(s =>
+                        `<span class="badge-servicio">${s.trim()}</span>`
+                    ).join(' ')}
+                </td>
+                <td><small class="text-muted">${r.fecha_registro ? r.fecha_registro.substring(0,10) : '-'}</small></td>
+                <td>
+                    <a href="/trabajador/registros" class="btn btn-sm btn-outline-primary py-0 px-2">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Cargar al iniciar
+    cargarDatos();
+</script>
+</body>
+</html>
