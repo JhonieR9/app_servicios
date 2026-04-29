@@ -858,20 +858,56 @@
     async function enviarFormulario(e) {
         e.preventDefault();
 
-        // Validar ciudad seleccionada
-        var ciudad = document.getElementById('ciudad_select').value;
-        if (!ciudad) {
-            mostrarAlerta('danger', '⚠️ Por favor selecciona una ciudad');
-            document.getElementById('ciudad_select').scrollIntoView({behavior:'smooth'});
-            return;
+        // Verificar campos requeridos manualmente
+        var camposRequeridos = [
+            {id: null, name: 'tipo_documento', label: 'Tipo de Documento'},
+            {id: null, name: 'numero_documento', label: 'Número de Documento'},
+            {id: null, name: 'genero', label: 'Género'},
+            {id: null, name: 'nombre_completo', label: 'Nombre Completo'},
+            {id: 'ciudad_select', name: 'ciudad', label: 'Ciudad'},
+            {id: null, name: 'celular', label: 'Celular'},
+            {id: null, name: 'habilidades_tipo', label: 'Tipo de Servicios'},
+            {id: null, name: 'disponibilidad', label: 'Horario'},
+            {id: null, name: 'disponibilidad_dias', label: 'Días Disponibles'},
+        ];
+
+        for (var i = 0; i < camposRequeridos.length; i++) {
+            var campo = camposRequeridos[i];
+            var el = campo.id ? document.getElementById(campo.id) : document.querySelector('[name="' + campo.name + '"]');
+            if (el && !el.value.trim()) {
+                mostrarAlerta('danger', '⚠️ El campo <strong>' + campo.label + '</strong> es obligatorio');
+                el.scrollIntoView({behavior: 'smooth', block: 'center'});
+                el.focus();
+                return;
+            }
         }
 
-        // Validar que haya al menos un servicio descrito
+        // Validar servicio descrito
         var descs = document.querySelectorAll('[name="habilidad_desc[]"]');
         var tieneServicio = false;
         descs.forEach(function(d) { if (d.value.trim()) tieneServicio = true; });
         if (!tieneServicio) {
-            mostrarAlerta('danger', '⚠️ Por favor describe al menos un servicio');
+            mostrarAlerta('danger', '⚠️ Por favor describe al menos un <strong>servicio</strong>');
+            return;
+        }
+
+        // Validar archivos requeridos
+        var fotoId = document.querySelector('[name="foto_identificacion"]');
+        if (fotoId && !fotoId.files.length) {
+            mostrarAlerta('danger', '⚠️ Debes subir la <strong>Foto de Identificación</strong>');
+            fotoId.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return;
+        }
+        var fotoAnt = document.querySelector('[name="foto_antecedentes"]');
+        if (fotoAnt && !fotoAnt.files.length) {
+            mostrarAlerta('danger', '⚠️ Debes subir el archivo de <strong>Antecedentes</strong>');
+            fotoAnt.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return;
+        }
+        var fotoRec = document.querySelector('[name="recomendaciones_archivo"]');
+        if (fotoRec && !fotoRec.files.length) {
+            mostrarAlerta('danger', '⚠️ Debes subir el archivo de <strong>Recomendaciones</strong>');
+            fotoRec.scrollIntoView({behavior: 'smooth', block: 'center'});
             return;
         }
 
@@ -912,20 +948,56 @@
     async function enviarFormulario(e) {
         e.preventDefault();
 
-        // Validar ciudad seleccionada
-        var ciudad = document.getElementById('ciudad_select').value;
-        if (!ciudad) {
-            mostrarAlerta('danger', '⚠️ Por favor selecciona una ciudad');
-            document.getElementById('ciudad_select').scrollIntoView({behavior:'smooth'});
-            return;
+        // Verificar campos requeridos manualmente
+        var camposRequeridos = [
+            {id: null, name: 'tipo_documento', label: 'Tipo de Documento'},
+            {id: null, name: 'numero_documento', label: 'Número de Documento'},
+            {id: null, name: 'genero', label: 'Género'},
+            {id: null, name: 'nombre_completo', label: 'Nombre Completo'},
+            {id: 'ciudad_select', name: 'ciudad', label: 'Ciudad'},
+            {id: null, name: 'celular', label: 'Celular'},
+            {id: null, name: 'habilidades_tipo', label: 'Tipo de Servicios'},
+            {id: null, name: 'disponibilidad', label: 'Horario'},
+            {id: null, name: 'disponibilidad_dias', label: 'Días Disponibles'},
+        ];
+
+        for (var i = 0; i < camposRequeridos.length; i++) {
+            var campo = camposRequeridos[i];
+            var el = campo.id ? document.getElementById(campo.id) : document.querySelector('[name="' + campo.name + '"]');
+            if (el && !el.value.trim()) {
+                mostrarAlerta('danger', '⚠️ El campo <strong>' + campo.label + '</strong> es obligatorio');
+                el.scrollIntoView({behavior: 'smooth', block: 'center'});
+                el.focus();
+                return;
+            }
         }
 
-        // Validar que haya al menos un servicio descrito
+        // Validar servicio descrito
         var descs = document.querySelectorAll('[name="habilidad_desc[]"]');
         var tieneServicio = false;
         descs.forEach(function(d) { if (d.value.trim()) tieneServicio = true; });
         if (!tieneServicio) {
-            mostrarAlerta('danger', '⚠️ Por favor describe al menos un servicio');
+            mostrarAlerta('danger', '⚠️ Por favor describe al menos un <strong>servicio</strong>');
+            return;
+        }
+
+        // Validar archivos requeridos
+        var fotoId = document.querySelector('[name="foto_identificacion"]');
+        if (fotoId && !fotoId.files.length) {
+            mostrarAlerta('danger', '⚠️ Debes subir la <strong>Foto de Identificación</strong>');
+            fotoId.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return;
+        }
+        var fotoAnt = document.querySelector('[name="foto_antecedentes"]');
+        if (fotoAnt && !fotoAnt.files.length) {
+            mostrarAlerta('danger', '⚠️ Debes subir el archivo de <strong>Antecedentes</strong>');
+            fotoAnt.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return;
+        }
+        var fotoRec = document.querySelector('[name="recomendaciones_archivo"]');
+        if (fotoRec && !fotoRec.files.length) {
+            mostrarAlerta('danger', '⚠️ Debes subir el archivo de <strong>Recomendaciones</strong>');
+            fotoRec.scrollIntoView({behavior: 'smooth', block: 'center'});
             return;
         }
 
