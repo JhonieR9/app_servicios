@@ -111,7 +111,7 @@
             <div class="form-content">
                 <div id="alert-container"></div>
 
-                <form method="POST" action="/trabajador/crear" enctype="multipart/form-data" id="mainForm">
+                <form enctype="multipart/form-data" id="mainForm" onsubmit="enviarFormulario(event)">
                     
                     <!-- SECCIÁ“N 1: INFORMACIÁ“N PERSONAL -->
                     <div class="section">
@@ -532,11 +532,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label required-label">Departamento</label>
-                                <input type="text" class="form-control" id="departamento_field" name="departamento" placeholder="Se llena automáticamente" style="background-color: #f8f9fa;" required>
+                                <input type="text" class="form-control" id="departamento_field" name="departamento" placeholder="Se llena automáticamente" style="background-color: #f8f9fa;">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label required-label">Código DANE</label>
-                                <input type="text" class="form-control" id="codigo_dane" name="codigo_dane" maxlength="8" required placeholder="00000000" style="background-color: #f8f9fa;" readonly>
+                                <input type="text" class="form-control" id="codigo_dane" name="codigo_dane" maxlength="8" placeholder="00000000" style="background-color: #f8f9fa;" readonly>
                                 <small class="text-muted">Se llena automáticamente</small>
                             </div>
                         </div>
@@ -854,6 +854,114 @@
             });
         }
     });
+
+    async function enviarFormulario(e) {
+        e.preventDefault();
+
+        // Validar ciudad seleccionada
+        var ciudad = document.getElementById('ciudad_select').value;
+        if (!ciudad) {
+            mostrarAlerta('danger', '⚠️ Por favor selecciona una ciudad');
+            document.getElementById('ciudad_select').scrollIntoView({behavior:'smooth'});
+            return;
+        }
+
+        // Validar que haya al menos un servicio descrito
+        var descs = document.querySelectorAll('[name="habilidad_desc[]"]');
+        var tieneServicio = false;
+        descs.forEach(function(d) { if (d.value.trim()) tieneServicio = true; });
+        if (!tieneServicio) {
+            mostrarAlerta('danger', '⚠️ Por favor describe al menos un servicio');
+            return;
+        }
+
+        var btn = document.querySelector('.btn-primary-custom');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+
+        var formData = new FormData(document.getElementById('mainForm'));
+
+        try {
+            var res = await fetch('/trabajador/crear', { method: 'POST', body: formData });
+            var data = await res.json();
+
+            if (data.error) {
+                mostrarAlerta('danger', '❌ ' + data.error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar Registro';
+            } else {
+                mostrarAlerta('success', '✅ ' + data.mensaje + ' — Redirigiendo...');
+                setTimeout(function() {
+                    window.location.href = data.redirect || '/trabajador/login';
+                }, 1500);
+            }
+        } catch(err) {
+            mostrarAlerta('danger', '❌ Error de conexión. Intenta nuevamente.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar Registro';
+        }
+    }
+
+    function mostrarAlerta(tipo, mensaje) {
+        var container = document.getElementById('alert-container');
+        container.innerHTML = '<div class="alert alert-' + tipo + ' alert-dismissible fade show" role="alert">' +
+            mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+        container.scrollIntoView({behavior: 'smooth'});
+    }
+
+    async function enviarFormulario(e) {
+        e.preventDefault();
+
+        // Validar ciudad seleccionada
+        var ciudad = document.getElementById('ciudad_select').value;
+        if (!ciudad) {
+            mostrarAlerta('danger', '⚠️ Por favor selecciona una ciudad');
+            document.getElementById('ciudad_select').scrollIntoView({behavior:'smooth'});
+            return;
+        }
+
+        // Validar que haya al menos un servicio descrito
+        var descs = document.querySelectorAll('[name="habilidad_desc[]"]');
+        var tieneServicio = false;
+        descs.forEach(function(d) { if (d.value.trim()) tieneServicio = true; });
+        if (!tieneServicio) {
+            mostrarAlerta('danger', '⚠️ Por favor describe al menos un servicio');
+            return;
+        }
+
+        var btn = document.querySelector('.btn-primary-custom');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+
+        var formData = new FormData(document.getElementById('mainForm'));
+
+        try {
+            var res = await fetch('/trabajador/crear', { method: 'POST', body: formData });
+            var data = await res.json();
+
+            if (data.error) {
+                mostrarAlerta('danger', '❌ ' + data.error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar Registro';
+            } else {
+                mostrarAlerta('success', '✅ ' + data.mensaje + ' — Redirigiendo...');
+                setTimeout(function() {
+                    window.location.href = data.redirect || '/trabajador/login';
+                }, 1500);
+            }
+        } catch(err) {
+            mostrarAlerta('danger', '❌ Error de conexión. Intenta nuevamente.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar Registro';
+        }
+    }
+
+    function mostrarAlerta(tipo, mensaje) {
+        var container = document.getElementById('alert-container');
+        container.innerHTML = '<div class="alert alert-' + tipo + ' alert-dismissible fade show" role="alert">' +
+            mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+        container.scrollIntoView({behavior: 'smooth'});
+    }
     </script>
 </body>
 </html>
