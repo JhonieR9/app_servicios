@@ -501,13 +501,18 @@ def listar_registros():
     try:
         cursor = conexion.cursor(dictionary=True)
         
-        # Consulta básica - solo campos que existen
         cursor.execute("""
             SELECT 
                 p.id_persona,
                 p.numero_documento,
                 p.nombre_completo,
                 p.ciudad,
+                p.departamento,
+                p.codigo_dane,
+                p.id_genero,
+                p.fecha_nacimiento,
+                p.nacionalidad,
+                p.fecha_registro,
                 p.estado
             FROM personas p
             WHERE p.estado = 'activo' OR p.estado IS NULL
@@ -516,22 +521,25 @@ def listar_registros():
         
         registros = cursor.fetchall()
         
-        # Convertir fechas y enriquecer datos
+        generos = {1: 'Masculino', 2: 'Femenino', 3: 'Otro', 4: 'Masculino', 5: 'Femenino', 6: 'Otro'}
+        horarios = {7: '8am-12pm', 8: '2pm-6pm', 9: '6pm-10pm', 10: '24 horas'}
+        dias = {11: 'Entre Semana', 12: 'Toda la Semana'}
+
         for reg in registros:
-            # Convertir todos los valores a tipos serializables
             for key, value in reg.items():
                 if value is None:
                     reg[key] = ''
-                elif hasattr(value, 'isoformat'):  # datetime
+                elif hasattr(value, 'isoformat'):
                     reg[key] = value.isoformat()
                 elif isinstance(value, (int, float)):
                     reg[key] = float(value) if isinstance(value, float) else int(value)
                 else:
                     reg[key] = str(value)
-            
-            # Valores por defecto
+
+            # Género desde id_genero
+            id_gen = reg.get('id_genero', 0)
+            reg['genero'] = generos.get(int(id_gen) if id_gen else 0, 'N/A')
             reg['tipo_documento'] = 'CC'
-            reg['genero'] = 'N/A'
             reg['telefono'] = 'N/A'
             reg['correo'] = ''
             reg['anios_experiencia'] = 0
@@ -543,78 +551,60 @@ def listar_registros():
             reg['horario'] = 'N/A'
             reg['dias_disponibles'] = 'N/A'
             reg['servicios'] = []
-            reg['codigo_dane'] = ''
             reg['registrado_por'] = 'Sistema'
-            reg['fecha_registro'] = ''
-            
-            # Intentar obtener datos adicionales
+
             try:
-                # Teléfono
                 cursor.execute("SELECT telefono FROM telefono_persona WHERE id_persona = %s LIMIT 1", (reg['id_persona'],))
                 tel = cursor.fetchone()
-                if tel:
-                    reg['telefono'] = str(tel['telefono'])
-                
-                # Correo
+                if tel: reg['telefono'] = str(tel['telefono'])
+
                 cursor.execute("SELECT correo FROM correo_persona WHERE id_persona = %s LIMIT 1", (reg['id_persona'],))
                 email = cursor.fetchone()
-                if email:
-                    reg['correo'] = str(email['correo'])
-                
-                # Detalles persona (si existe la tabla)
-                try:
-                    cursor.execute("""
-                        SELECT foto_identificacion, antecedentes_pdf, recomendaciones, recomendaciones_archivo
-                        FROM detalles_persona WHERE id_persona = %s LIMIT 1
-                    """, (reg['id_persona'],))
-                    detalles = cursor.fetchone()
-                    if detalles:
-                        reg['foto_identificacion'] = str(detalles.get('foto_identificacion') or '')
-                        reg['antecedentes_pdf'] = str(detalles.get('antecedentes_pdf') or '')
-                        reg['recomendaciones'] = str(detalles.get('recomendaciones') or '')
-                        reg['recomendaciones_archivo'] = str(detalles.get('recomendaciones_archivo') or '')
-                except:
-                    pass
-                
-                # Servicios
+                if email: reg['correo'] = str(email['correo'])
+
                 cursor.execute("""
-                    SELECT categoria, descripcion, anios_experiencia, valor_hora
+                    SELECT foto_identificacion, antecedentes_pdf, recomendaciones, recomendaciones_archivo
+                    FROM detalles_persona WHERE id_persona = %s LIMIT 1
+                """, (reg['id_persona'],))
+                detalles = cursor.fetchone()
+                if detalles:
+                    reg['foto_identificacion'] = str(detalles.get('foto_identificacion') or '')
+                    reg['antecedentes_pdf'] = str(detalles.get('antecedentes_pdf') or '')
+                    reg['recomendaciones'] = str(detalles.get('recomendaciones') or '')
+                    reg['recomendaciones_archivo'] = str(detalles.get('recomendaciones_archivo') or '')
+
+                # Disponibilidad
+                cursor.execute("SELECT id_horario, id_dias FROM disponibilidad WHERE id_persona = %s LIMIT 1", (reg['id_persona'],))
+                disp = cursor.fetchone()
+                if disp:
+                    reg['horario'] = horarios.get(disp.get('id_horario'), 'N/A')
+                    reg['dias_disponibles'] = dias.get(disp.get('id_dias'), 'N/A')
+
+                cursor.execute("""
+                    SELECT categoria, descripcion, anios_experiencia, valor_hora, tiene_ayudante, costo_ayudante
                     FROM servicios_persona WHERE id_persona = %s
                 """, (reg['id_persona'],))
                 servicios = cursor.fetchall()
-                
-                # Convertir Decimals en servicios y calcular experiencia máxima
-                max_experiencia = 0
-                servicios_procesados = []
+
+                max_exp = 0
+                servicios_proc = []
                 for serv in servicios:
-                    serv_procesado = {}
-                    for key, value in serv.items():
-                        if hasattr(value, '__float__'):  # Decimal
-                            serv_procesado[key] = float(value)
-                        elif value is None:
-                            serv_procesado[key] = 0 if key in ['valor_hora', 'anios_experiencia'] else ''
-                        else:
-                            serv_procesado[key] = value
-                    
-                    # Agregar campos faltantes
-                    serv_procesado['tiene_ayudante'] = 0
-                    serv_procesado['costo_ayudante'] = 0
-                    
-                    servicios_procesados.append(serv_procesado)
-                    
-                    # Actualizar experiencia máxima
-                    if serv_procesado.get('anios_experiencia', 0) > max_experiencia:
-                        max_experiencia = serv_procesado['anios_experiencia']
-                
-                reg['servicios'] = servicios_procesados
-                reg['anios_experiencia'] = int(max_experiencia)
-                
-                # Si tiene servicios, usar la primera categoría como tipo
-                if servicios_procesados:
-                    reg['servicio_tipo'] = servicios_procesados[0]['categoria']
-                
-            except Exception as e:
-                print(f"Error obteniendo datos adicionales para persona {reg['id_persona']}: {e}")
+                    sp = {}
+                    for k, v in serv.items():
+                        if hasattr(v, '__float__'): sp[k] = float(v)
+                        elif v is None: sp[k] = 0 if k in ['valor_hora','anios_experiencia','tiene_ayudante','costo_ayudante'] else ''
+                        else: sp[k] = v
+                    servicios_proc.append(sp)
+                    if sp.get('anios_experiencia', 0) > max_exp:
+                        max_exp = sp['anios_experiencia']
+
+                reg['servicios'] = servicios_proc
+                reg['anios_experiencia'] = int(max_exp)
+                if servicios_proc:
+                    reg['servicio_tipo'] = servicios_proc[0]['categoria']
+
+            except Exception as ex:
+                print(f"Error datos adicionales persona {reg['id_persona']}: {ex}")
                 pass
         
         return JSONResponse({"registros": registros})
