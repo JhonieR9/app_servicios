@@ -212,7 +212,10 @@ async def crear_trabajador(
     except Exception as e:
         if conexion:
             conexion.rollback()
-        return {"error": f"Error al procesar el formulario: {str(e)}"}
+        import traceback
+        error_detalle = traceback.format_exc()
+        print(f"ERROR EN REGISTRO: {error_detalle}")
+        return {"error": f"Error: {str(e)}"}
     
     finally:
         if cursor:
