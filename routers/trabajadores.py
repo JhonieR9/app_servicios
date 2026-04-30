@@ -121,7 +121,7 @@ async def crear_trabajador(
                 f.write(await recomendaciones_archivo.read())
         
         # Iniciar transacción
-        conexion.start_transaction()
+        conexion.autocommit = False
         
         # 1. Insertar persona
         cursor.execute("""
