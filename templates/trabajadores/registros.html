@@ -612,31 +612,31 @@
                                 <span class="badge bg-primary mb-2">${reg.servicio_tipo}</span>
                                 <div class="mt-2">${serviciosHTML}</div>
                             </div>
-                            ${reg.foto_identificacion || reg.antecedentes_pdf || reg.recomendaciones_archivo ? `
+                            ${reg.foto_identificacion || reg.foto_identificacion_url || reg.antecedentes_pdf || reg.antecedentes_url || reg.recomendaciones_archivo || reg.recomendaciones_url ? `
                             <div class="mb-3">
                                 <strong>Documentos:</strong>
                                 <div class="mt-2">
-                                    ${reg.foto_identificacion ? `
+                                    ${(reg.foto_identificacion_url || reg.foto_identificacion) ? `
                                     <div class="mb-2">
                                         <small class="text-muted d-block">Foto de Identificación:</small>
-                                        <img src="/static/uploads/${reg.foto_identificacion}" class="img-thumbnail" style="max-width: 200px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
+                                        <img src="${reg.foto_identificacion_url || '/static/uploads/' + reg.foto_identificacion}" class="img-thumbnail" style="max-width: 200px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
                                     </div>` : ''}
-                                    ${reg.antecedentes_pdf ? `
+                                    ${(reg.antecedentes_url || reg.antecedentes_pdf) ? `
                                     <div class="mb-2">
                                         <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark-check"></i> Antecedentes:</small>
-                                        ${reg.antecedentes_pdf.endsWith('.pdf') ? 
-                                            `<a href="/static/uploads/${reg.antecedentes_pdf}" target="_blank" download class="btn btn-sm btn-outline-danger">
+                                        ${(reg.antecedentes_url || (reg.antecedentes_pdf && reg.antecedentes_pdf.endsWith('.pdf'))) ? 
+                                            `<a href="${reg.antecedentes_url || '/static/uploads/' + reg.antecedentes_pdf}" target="_blank" download class="btn btn-sm btn-outline-danger">
                                                 <i class="bi bi-file-pdf"></i> Descargar PDF
                                             </a>` : 
-                                            `<a href="/static/uploads/${reg.antecedentes_pdf}" target="_blank" download>
-                                                <img src="/static/uploads/${reg.antecedentes_pdf}" class="img-thumbnail" style="max-width: 200px; cursor: pointer;">
+                                            `<a href="${reg.antecedentes_url || '/static/uploads/' + reg.antecedentes_pdf}" target="_blank" download>
+                                                <img src="${reg.antecedentes_url || '/static/uploads/' + reg.antecedentes_pdf}" class="img-thumbnail" style="max-width: 200px; cursor: pointer;">
                                             </a>`
                                         }
                                     </div>` : ''}
                                     ${reg.recomendaciones_archivo ? `
                                     <div class="mb-2">
                                         <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark-text"></i> Recomendaciones:</small>
-                                        <a href="/static/uploads/${reg.recomendaciones_archivo}" target="_blank" download class="btn btn-sm btn-outline-primary">
+                                        <a href="${reg.recomendaciones_url || '/static/uploads/' + reg.recomendaciones_archivo}" target="_blank" download class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-download"></i> Descargar Archivo
                                         </a>
                                     </div>` : ''}
