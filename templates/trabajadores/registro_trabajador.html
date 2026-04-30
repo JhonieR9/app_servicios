@@ -85,6 +85,47 @@
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
         }
         
+
+        /* Toast de notificación */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 360px;
+        }
+        .toast-notif {
+            background: white;
+            border-radius: 12px;
+            padding: 14px 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid #dc3545;
+        }
+        .toast-notif.success { border-left-color: #198754; }
+        .toast-notif.warning { border-left-color: #ffc107; }
+        .toast-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+        .toast-body { flex: 1; }
+        .toast-title { font-weight: 700; font-size: 0.85rem; color: #0f172a; margin-bottom: 2px; }
+        .toast-msg { font-size: 0.82rem; color: #475569; }
+        .toast-close {
+            background: none; border: none; color: #94a3b8;
+            cursor: pointer; font-size: 1rem; padding: 0; flex-shrink: 0;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOut {
+            from { opacity: 1; transform: translateX(0); }
+            to   { opacity: 0; transform: translateX(40px); }
+        }
         @media (max-width: 768px) {
             .main-container {
                 margin: 10px;
@@ -110,6 +151,7 @@
             <!-- Form Content -->
             <div class="form-content">
                 <div id="alert-container"></div>
+                <div id="toast-container"></div>
 
                 <form enctype="multipart/form-data" id="mainForm" onsubmit="enviarFormulario(event)">
                     
@@ -939,10 +981,39 @@
     }
 
     function mostrarAlerta(tipo, mensaje) {
-        var container = document.getElementById('alert-container');
-        container.innerHTML = '<div class="alert alert-' + tipo + ' alert-dismissible fade show" role="alert">' +
-            mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
-        container.scrollIntoView({behavior: 'smooth'});
+        // Mostrar toast en esquina superior derecha
+        var container = document.getElementById('toast-container');
+        var iconos = { danger: '❌', success: '✅', warning: '⚠️' };
+        var titulos = { danger: 'Campo requerido', success: '¡Éxito!', warning: 'Atención' };
+        var clases = { danger: '', success: 'success', warning: 'warning' };
+
+        var toast = document.createElement('div');
+        toast.className = 'toast-notif ' + (clases[tipo] || '');
+        toast.innerHTML =
+            '<span class="toast-icon">' + (iconos[tipo] || 'ℹ️') + '</span>' +
+            '<div class="toast-body">' +
+                '<div class="toast-title">' + (titulos[tipo] || 'Aviso') + '</div>' +
+                '<div class="toast-msg">' + mensaje + '</div>' +
+            '</div>' +
+            '<button class="toast-close" onclick="this.parentElement.remove()">✕</button>';
+
+        container.appendChild(toast);
+
+        // También mostrar en el alert-container para compatibilidad
+        var alertContainer = document.getElementById('alert-container');
+        if (alertContainer) {
+            alertContainer.innerHTML = '<div class="alert alert-' + tipo + ' alert-dismissible fade show" role="alert">' +
+                mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            alertContainer.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+
+        // Auto-cerrar después de 5 segundos
+        setTimeout(function() {
+            if (toast.parentElement) {
+                toast.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(function() { toast.remove(); }, 300);
+            }
+        }, 5000);
     }
 
     async function enviarFormulario(e) {
@@ -1028,12 +1099,7 @@
         }
     }
 
-    function mostrarAlerta(tipo, mensaje) {
-        var container = document.getElementById('alert-container');
-        container.innerHTML = '<div class="alert alert-' + tipo + ' alert-dismissible fade show" role="alert">' +
-            mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
-        container.scrollIntoView({behavior: 'smooth'});
-    }
+
     </script>
 </body>
 </html>
