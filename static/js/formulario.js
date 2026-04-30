@@ -115,7 +115,7 @@ function agregarHabilidad() {
             </div>
             <div class="col-md-6 costo-ayudante-container" style="display: none;">
                 <label class="form-label">Costo Ayudante/Hora (COP)</label>
-                <input type="number" class="form-control" name="costo_ayudante[]" min="5000" max="500000" step="1000" value="0" placeholder="Ej: 25000">
+                <input type="number" class="form-control" name="costo_ayudante[]" min="0" max="500000" step="1000" value="" placeholder="Ej: 25000">
             </div>
         </div>
     `;
