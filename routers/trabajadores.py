@@ -95,30 +95,41 @@ async def crear_trabajador(
         if cursor.fetchone()[0] > 0:
             return {"error": f"El documento {numero_documento} ya está registrado"}
         
-        # Guardar archivos
+        # Leer archivos en memoria (para guardar en BD)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
-        # Foto identificación (obligatoria)
+        # Foto identificación
+        foto_bytes = await foto_identificacion.read()
         foto_filename = f"foto_{timestamp}_{foto_identificacion.filename}"
-        foto_path = os.path.join(UPLOAD_FOLDER, foto_filename)
-        with open(foto_path, "wb") as f:
-            f.write(await foto_identificacion.read())
-        
-        # Antecedentes (opcional)
-        antecedentes_filename = None
-        if foto_antecedentes and foto_antecedentes.filename:
-            antecedentes_filename = f"antecedentes_{timestamp}_{foto_antecedentes.filename}"
-            antecedentes_path = os.path.join(UPLOAD_FOLDER, antecedentes_filename)
-            with open(antecedentes_path, "wb") as f:
-                f.write(await foto_antecedentes.read())
-        
-        # Recomendaciones (opcional)
-        recomend_filename = None
-        if recomendaciones_archivo and recomendaciones_archivo.filename:
-            recomend_filename = f"recom_{timestamp}_{recomendaciones_archivo.filename}"
-            recomend_path = os.path.join(UPLOAD_FOLDER, recomend_filename)
-            with open(recomend_path, "wb") as f:
-                f.write(await recomendaciones_archivo.read())
+        foto_tipo = foto_identificacion.content_type or 'image/jpeg'
+        # Guardar también en disco si es posible
+        try:
+            foto_path = os.path.join(UPLOAD_FOLDER, foto_filename)
+            with open(foto_path, "wb") as f:
+                f.write(foto_bytes)
+        except: pass
+
+        # Antecedentes
+        antecedentes_bytes = await foto_antecedentes.read()
+        antecedentes_filename = f"antecedentes_{timestamp}_{foto_antecedentes.filename}" if foto_antecedentes.filename else None
+        antecedentes_tipo = foto_antecedentes.content_type or 'application/pdf'
+        try:
+            if antecedentes_filename:
+                ant_path = os.path.join(UPLOAD_FOLDER, antecedentes_filename)
+                with open(ant_path, "wb") as f:
+                    f.write(antecedentes_bytes)
+        except: pass
+
+        # Recomendaciones
+        recomend_bytes = await recomendaciones_archivo.read()
+        recomend_filename = f"recom_{timestamp}_{recomendaciones_archivo.filename}" if recomendaciones_archivo.filename else None
+        recomend_tipo = recomendaciones_archivo.content_type or 'application/pdf'
+        try:
+            if recomend_filename:
+                rec_path = os.path.join(UPLOAD_FOLDER, recomend_filename)
+                with open(rec_path, "wb") as f:
+                    f.write(recomend_bytes)
+        except: pass
         
         # Iniciar transacción
         conexion.autocommit = False
@@ -195,11 +206,17 @@ async def crear_trabajador(
         cursor.execute("""
             INSERT INTO detalles_persona 
             (id_persona, id_servicio_tipo, tareas, antecedentes_pdf, foto_identificacion, 
-             acepta_terminos, permisos_ubicacion, recomendaciones, recomendaciones_archivo)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+             acepta_terminos, permisos_ubicacion, recomendaciones, recomendaciones_archivo,
+             foto_identificacion_data, foto_identificacion_tipo,
+             antecedentes_data, antecedentes_tipo,
+             recomendaciones_data, recomendaciones_tipo)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (id_persona, habilidades_tipo, resumen_servicios, antecedentes_filename, 
               foto_filename, acepta_terminos_val, permisos_ubicacion_val, 
-              recomendaciones or '', recomend_filename))
+              recomendaciones or '', recomend_filename,
+              foto_bytes, foto_tipo,
+              antecedentes_bytes, antecedentes_tipo,
+              recomend_bytes, recomend_tipo))
         
         conexion.commit()
         
@@ -572,6 +589,13 @@ def listar_registros():
                     reg['antecedentes_pdf'] = str(detalles.get('antecedentes_pdf') or '')
                     reg['recomendaciones'] = str(detalles.get('recomendaciones') or '')
                     reg['recomendaciones_archivo'] = str(detalles.get('recomendaciones_archivo') or '')
+                    # URLs para servir desde BD
+                    if detalles.get('foto_identificacion_data'):
+                        reg['foto_identificacion_url'] = f"/trabajador/archivo/{reg['id_persona']}/foto"
+                    if detalles.get('antecedentes_data'):
+                        reg['antecedentes_url'] = f"/trabajador/archivo/{reg['id_persona']}/antecedentes"
+                    if detalles.get('recomendaciones_data'):
+                        reg['recomendaciones_url'] = f"/trabajador/archivo/{reg['id_persona']}/recomendaciones"
 
                 # Disponibilidad
                 cursor.execute("SELECT id_horario, id_dias FROM disponibilidad WHERE id_persona = %s LIMIT 1", (reg['id_persona'],))
@@ -773,6 +797,36 @@ def exportar_excel():
         "mensaje": "Funcionalidad de exportación en desarrollo",
         "nota": "Requiere instalar openpyxl o xlsxwriter"
     })
+
+@router.get("/archivo/{id_persona}/{tipo}")
+def servir_archivo(id_persona: int, tipo: str):
+    """Sirve archivos guardados en la base de datos"""
+    from fastapi.responses import Response as FastResponse
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        campos = {
+            'foto': ('foto_identificacion_data', 'foto_identificacion_tipo'),
+            'antecedentes': ('antecedentes_data', 'antecedentes_tipo'),
+            'recomendaciones': ('recomendaciones_data', 'recomendaciones_tipo'),
+        }
+        if tipo not in campos:
+            return JSONResponse({"error": "Tipo inválido"}, status_code=400)
+        
+        col_data, col_tipo = campos[tipo]
+        cursor.execute(f"SELECT {col_data}, {col_tipo} FROM detalles_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
+        row = cursor.fetchone()
+        
+        if not row or not row[col_data]:
+            return JSONResponse({"error": "Archivo no encontrado"}, status_code=404)
+        
+        content_type = row[col_tipo] or 'application/octet-stream'
+        return FastResponse(content=bytes(row[col_data]), media_type=content_type)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
 
 
 # ============================================
