@@ -618,8 +618,6 @@
                             <div class="col-md-6">
                                 <label class="form-label">Correo Electrónico (opcional)</label>
                                 <input type="email" class="form-control" name="correo" 
-                                       pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-                                       title="Debe ser un correo válido (ejemplo@correo.com)"
                                        placeholder="ejemplo@correo.com">
                                 <small class="text-muted">Formato: usuario@dominio.com</small>
                             </div>
@@ -718,7 +716,7 @@
                                                 <i class="bi bi-info-circle"></i> Solo mano de obra
                                             </span>
                                         </label>
-                                        <input type="number" class="form-control" name="costo_ayudante[]" 
+                                        <input type="number" class="form-control" name="costo_ayudante[]" data-optional="true" 
                                                min="5000" 
                                                max="500000" 
                                                step="1000" 
