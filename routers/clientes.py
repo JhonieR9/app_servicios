@@ -57,11 +57,6 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 # TEMPLATES
 # ============================================
 
-@router.get("/servicios", response_class=HTMLResponse)
-def seleccionar_servicio(request: Request):
-    """Pantalla de selección de servicio para clientes"""
-    return templates.TemplateResponse("clientes/seleccionar_servicio.html", {"request": request})
-
 @router.get("/mi-perfil")
 def obtener_mi_perfil_cliente(request: Request):
     """Obtiene datos del cliente autenticado"""
@@ -145,16 +140,6 @@ def mostrar_solicitar_servicio(request: Request):
 @router.get("/mis_solicitudes", response_class=HTMLResponse)
 def mostrar_mis_solicitudes(request: Request):
     return templates.TemplateResponse("clientes/mis_solicitudes.html", {"request": request})
-
-@router.get("/dashboard", response_class=HTMLResponse)
-def mostrar_dashboard_cliente(request: Request):
-    """Muestra el dashboard del cliente después de login"""
-    return templates.TemplateResponse("clientes/dashboard.html", {"request": request})
-
-@router.get("/dashboard", response_class=HTMLResponse)
-def mostrar_dashboard_cliente(request: Request):
-    """Muestra el dashboard del cliente después de login"""
-    return templates.TemplateResponse("clientes/dashboard.html", {"request": request})
 
 
 # ============================================
@@ -349,21 +334,6 @@ def calificar_servicio(
 def mostrar_mapa(request: Request):
     """Muestra lista visual de trabajadores cercanos."""
     return templates.TemplateResponse("clientes/mapa_simple.html", {"request": request})
-
-@router.get("/mapa-interactivo", response_class=HTMLResponse)
-def mostrar_mapa_interactivo(request: Request):
-    """Mapa interactivo experimental."""
-    return templates.TemplateResponse("clientes/mapa_interactivo.html", {"request": request})
-
-@router.get("/mapa-visual", response_class=HTMLResponse)
-def mostrar_mapa_visual(request: Request):
-    """Mapa visual con canvas (experimental)"""
-    return templates.TemplateResponse("clientes/mapa_trabajadores.html", {"request": request})
-
-@router.get("/mapa-test", response_class=HTMLResponse)
-def mostrar_mapa_test(request: Request):
-    """Mapa de prueba simple"""
-    return templates.TemplateResponse("clientes/mapa_test.html", {"request": request})
 
 @router.get("/trabajadores-cercanos")
 def obtener_trabajadores_cercanos(
