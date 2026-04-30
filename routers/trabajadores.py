@@ -952,15 +952,25 @@ def listar_eliminados():
         cursor = conexion.cursor(dictionary=True)
         
         cursor.execute("""
-            SELECT p.id_persona, p.numero_documento, p.nombre_completo, p.ciudad, p.fecha_eliminacion,
-                   td.descripcion as tipo_documento,
+            SELECT p.id_persona, p.numero_documento, p.nombre_completo, p.ciudad, 
+                   p.fecha_eliminacion, p.departamento,
                    tp.telefono
             FROM personas p
-            LEFT JOIN detalle_parametro td ON p.id_tipo_documento = td.id_detalle
             LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
             WHERE p.estado = 'eliminado'
             ORDER BY p.fecha_eliminacion DESC
         """)
+        
+        registros = cursor.fetchall()
+        
+        # Serializar fechas
+        for r in registros:
+            for k, v in r.items():
+                if hasattr(v, 'isoformat'):
+                    r[k] = v.isoformat()
+                elif v is None:
+                    r[k] = ''
+            r['tipo_documento'] = 'CC'
         
         registros = cursor.fetchall()
         
