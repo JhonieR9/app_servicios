@@ -399,7 +399,7 @@
                         `<span class="badge-servicio">${s.trim()}</span>`
                     ).join(' ')}
                 </td>
-                <td><small class="text-muted">${r.fecha_registro ? r.fecha_registro.substring(0,10) : '-'}</small></td>
+                <td><small class="text-muted">${r.fecha_registro ? new Date(r.fecha_registro).toLocaleDateString('es-CO', {timeZone:'America/Bogota'}) : '-'}</small></td>
                 <td>
                     <a href="/trabajador/registros" class="btn btn-sm btn-outline-primary py-0 px-2">
                         <i class="bi bi-eye"></i>
