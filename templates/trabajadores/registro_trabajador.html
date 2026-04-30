@@ -852,254 +852,185 @@
     
 
     <script>
-    // Llenar departamento y DANE al seleccionar ciudad
+    // ============================================
+    // TOAST DE NOTIFICACION
+    // ============================================
+    function mostrarAlerta(tipo, mensaje) {
+        var container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:360px;';
+            document.body.appendChild(container);
+        }
+
+        var iconos = {danger:'❌', success:'✅', warning:'⚠️'};
+        var titulos = {danger:'Campo requerido', success:'¡Éxito!', warning:'Atención'};
+        var colores = {danger:'#dc3545', success:'#198754', warning:'#ffc107'};
+
+        var toast = document.createElement('div');
+        toast.style.cssText = 'background:white;border-radius:12px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.2);display:flex;align-items:flex-start;gap:12px;border-left:4px solid ' + (colores[tipo]||'#dc3545') + ';animation:slideIn 0.3s ease;';
+        toast.innerHTML =
+            '<span style="font-size:1.3rem;flex-shrink:0">' + (iconos[tipo]||'ℹ️') + '</span>' +
+            '<div style="flex:1">' +
+                '<div style="font-weight:700;font-size:0.85rem;color:#0f172a;margin-bottom:2px">' + (titulos[tipo]||'Aviso') + '</div>' +
+                '<div style="font-size:0.82rem;color:#475569">' + mensaje + '</div>' +
+            '</div>' +
+            '<button onclick="this.parentElement.remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:1rem;padding:0;flex-shrink:0">✕</button>';
+
+        container.appendChild(toast);
+
+        // Scroll al inicio para ver el alert-container también
+        var alertContainer = document.getElementById('alert-container');
+        if (alertContainer) {
+            alertContainer.innerHTML = '<div class="alert alert-' + tipo + ' alert-dismissible fade show" role="alert">' +
+                mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            alertContainer.scrollIntoView({behavior:'smooth', block:'start'});
+        }
+
+        setTimeout(function() {
+            if (toast.parentElement) { toast.remove(); }
+        }, 6000);
+    }
+
+    // ============================================
+    // LLENAR DEPARTAMENTO Y DANE
+    // ============================================
     function fillDaneDepto(sel) {
-        var opt    = sel.options[sel.selectedIndex];
-        var dane   = opt.getAttribute('data-dane')  || '';
-        var depto  = opt.getAttribute('data-depto') || '';
+        var opt = sel.options[sel.selectedIndex];
+        var dane  = opt.getAttribute('data-dane')  || '';
+        var depto = opt.getAttribute('data-depto') || '';
         var ciudad = opt.value || '';
         document.getElementById('codigo_dane').value = dane;
         document.getElementById('departamento_field').value = depto;
         opt.text = ciudad;
     }
 
-    // Mostrar/ocultar costo ayudante
+    // ============================================
+    // TOGGLE COSTO AYUDANTE
+    // ============================================
     function toggleCostoAyudante(sel) {
         var container = sel.closest('.row').querySelector('.costo-ayudante-container');
-        if (container) {
-            container.style.display = sel.value == '1' ? 'block' : 'none';
-        }
+        if (container) container.style.display = sel.value == '1' ? 'block' : 'none';
     }
 
-    // Agregar servicio
+    // ============================================
+    // AGREGAR SERVICIO
+    // ============================================
     var contadorHabilidades = 1;
     function agregarHabilidad() {
-        if (contadorHabilidades >= 10) return;
+        if (contadorHabilidades >= 10) { mostrarAlerta('warning', 'Máximo 10 servicios'); return; }
         contadorHabilidades++;
         var container = document.getElementById('habilidadesContainer');
         var template = container.querySelector('.habilidad-box').cloneNode(true);
         template.querySelector('h5').innerHTML = '<i class="bi bi-tools"></i> Servicio ' + contadorHabilidades;
         template.querySelectorAll('input, textarea, select').forEach(function(el) { el.value = ''; });
-        template.querySelector('.costo-ayudante-container').style.display = 'none';
+        var cac = template.querySelector('.costo-ayudante-container');
+        if (cac) cac.style.display = 'none';
         container.appendChild(template);
     }
 
-    // Tipo de habilidades
+    // ============================================
+    // TIPO DE HABILIDADES
+    // ============================================
     document.addEventListener('DOMContentLoaded', function() {
         var tipoHab = document.getElementById('tipoHabilidades');
         if (tipoHab) {
             tipoHab.addEventListener('change', function() {
                 var btnContainer = document.getElementById('btnAgregarContainer');
-                if (btnContainer) {
-                    btnContainer.style.display = this.value == '14' ? 'block' : 'none';
-                }
+                if (btnContainer) btnContainer.style.display = this.value == '14' ? 'block' : 'none';
             });
         }
     });
 
+    // ============================================
+    // ENVIAR FORMULARIO (AJAX)
+    // ============================================
     async function enviarFormulario(e) {
         e.preventDefault();
 
-        // Verificar campos requeridos manualmente
-        var camposRequeridos = [
-            {id: null, name: 'tipo_documento', label: 'Tipo de Documento'},
-            {id: null, name: 'numero_documento', label: 'Número de Documento'},
-            {id: null, name: 'genero', label: 'Género'},
-            {id: null, name: 'nombre_completo', label: 'Nombre Completo'},
-            {id: 'ciudad_select', name: 'ciudad', label: 'Ciudad'},
-            {id: null, name: 'celular', label: 'Celular'},
-            {id: null, name: 'habilidades_tipo', label: 'Tipo de Servicios'},
-            {id: null, name: 'disponibilidad', label: 'Horario'},
-            {id: null, name: 'disponibilidad_dias', label: 'Días Disponibles'},
+        // Validar campos obligatorios
+        var campos = [
+            {name:'tipo_documento',     label:'Tipo de Documento'},
+            {name:'numero_documento',   label:'Número de Documento'},
+            {name:'genero',             label:'Género'},
+            {name:'nombre_completo',    label:'Nombre Completo'},
+            {name:'celular',            label:'Celular'},
+            {name:'habilidades_tipo',   label:'Tipo de Servicios'},
+            {name:'disponibilidad',     label:'Horario'},
+            {name:'disponibilidad_dias',label:'Días Disponibles'},
         ];
 
-        for (var i = 0; i < camposRequeridos.length; i++) {
-            var campo = camposRequeridos[i];
-            var el = campo.id ? document.getElementById(campo.id) : document.querySelector('[name="' + campo.name + '"]');
+        for (var i = 0; i < campos.length; i++) {
+            var el = document.querySelector('[name="' + campos[i].name + '"]');
             if (el && !el.value.trim()) {
-                mostrarAlerta('danger', '⚠️ El campo <strong>' + campo.label + '</strong> es obligatorio');
-                el.scrollIntoView({behavior: 'smooth', block: 'center'});
+                mostrarAlerta('danger', 'El campo <strong>' + campos[i].label + '</strong> es obligatorio');
+                el.scrollIntoView({behavior:'smooth', block:'center'});
                 el.focus();
                 return;
             }
         }
 
-        // Validar servicio descrito
+        // Validar ciudad
+        var ciudad = document.getElementById('ciudad_select');
+        if (!ciudad || !ciudad.value) {
+            mostrarAlerta('danger', 'Debes seleccionar una <strong>Ciudad</strong>');
+            if (ciudad) ciudad.scrollIntoView({behavior:'smooth', block:'center'});
+            return;
+        }
+
+        // Validar servicio
         var descs = document.querySelectorAll('[name="habilidad_desc[]"]');
         var tieneServicio = false;
         descs.forEach(function(d) { if (d.value.trim()) tieneServicio = true; });
         if (!tieneServicio) {
-            mostrarAlerta('danger', '⚠️ Por favor describe al menos un <strong>servicio</strong>');
+            mostrarAlerta('danger', 'Debes describir al menos un <strong>Servicio</strong>');
             return;
         }
 
-        // Validar archivos requeridos
-        var fotoId = document.querySelector('[name="foto_identificacion"]');
-        if (fotoId && !fotoId.files.length) {
-            mostrarAlerta('danger', '⚠️ Debes subir la <strong>Foto de Identificación</strong>');
-            fotoId.scrollIntoView({behavior: 'smooth', block: 'center'});
-            return;
-        }
-        var fotoAnt = document.querySelector('[name="foto_antecedentes"]');
-        if (fotoAnt && !fotoAnt.files.length) {
-            mostrarAlerta('danger', '⚠️ Debes subir el archivo de <strong>Antecedentes</strong>');
-            fotoAnt.scrollIntoView({behavior: 'smooth', block: 'center'});
-            return;
-        }
-        var fotoRec = document.querySelector('[name="recomendaciones_archivo"]');
-        if (fotoRec && !fotoRec.files.length) {
-            mostrarAlerta('danger', '⚠️ Debes subir el archivo de <strong>Recomendaciones</strong>');
-            fotoRec.scrollIntoView({behavior: 'smooth', block: 'center'});
-            return;
-        }
-
-        var btn = document.querySelector('.btn-primary-custom');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
-
-        var formData = new FormData(document.getElementById('mainForm'));
-
-        try {
-            var res = await fetch('/trabajador/crear', { method: 'POST', body: formData });
-            var data = await res.json();
-
-            if (data.error) {
-                mostrarAlerta('danger', '❌ ' + data.error);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar Registro';
-            } else {
-                mostrarAlerta('success', '✅ ' + data.mensaje + ' — Redirigiendo...');
-                setTimeout(function() {
-                    window.location.href = data.redirect || '/trabajador/login';
-                }, 1500);
-            }
-        } catch(err) {
-            mostrarAlerta('danger', '❌ Error de conexión. Intenta nuevamente.');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar Registro';
-        }
-    }
-
-    function mostrarAlerta(tipo, mensaje) {
-        // Mostrar toast en esquina superior derecha
-        var container = document.getElementById('toast-container');
-        var iconos = { danger: '❌', success: '✅', warning: '⚠️' };
-        var titulos = { danger: 'Campo requerido', success: '¡Éxito!', warning: 'Atención' };
-        var clases = { danger: '', success: 'success', warning: 'warning' };
-
-        var toast = document.createElement('div');
-        toast.className = 'toast-notif ' + (clases[tipo] || '');
-        toast.innerHTML =
-            '<span class="toast-icon">' + (iconos[tipo] || 'ℹ️') + '</span>' +
-            '<div class="toast-body">' +
-                '<div class="toast-title">' + (titulos[tipo] || 'Aviso') + '</div>' +
-                '<div class="toast-msg">' + mensaje + '</div>' +
-            '</div>' +
-            '<button class="toast-close" onclick="this.parentElement.remove()">✕</button>';
-
-        container.appendChild(toast);
-
-        // También mostrar en el alert-container para compatibilidad
-        var alertContainer = document.getElementById('alert-container');
-        if (alertContainer) {
-            alertContainer.innerHTML = '<div class="alert alert-' + tipo + ' alert-dismissible fade show" role="alert">' +
-                mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
-            alertContainer.scrollIntoView({behavior: 'smooth', block: 'start'});
-        }
-
-        // Auto-cerrar después de 5 segundos
-        setTimeout(function() {
-            if (toast.parentElement) {
-                toast.style.animation = 'slideOut 0.3s ease forwards';
-                setTimeout(function() { toast.remove(); }, 300);
-            }
-        }, 5000);
-    }
-
-    async function enviarFormulario(e) {
-        e.preventDefault();
-
-        // Verificar campos requeridos manualmente
-        var camposRequeridos = [
-            {id: null, name: 'tipo_documento', label: 'Tipo de Documento'},
-            {id: null, name: 'numero_documento', label: 'Número de Documento'},
-            {id: null, name: 'genero', label: 'Género'},
-            {id: null, name: 'nombre_completo', label: 'Nombre Completo'},
-            {id: 'ciudad_select', name: 'ciudad', label: 'Ciudad'},
-            {id: null, name: 'celular', label: 'Celular'},
-            {id: null, name: 'habilidades_tipo', label: 'Tipo de Servicios'},
-            {id: null, name: 'disponibilidad', label: 'Horario'},
-            {id: null, name: 'disponibilidad_dias', label: 'Días Disponibles'},
+        // Validar archivos
+        var archivos = [
+            {name:'foto_identificacion',  label:'Foto de Identificación'},
+            {name:'foto_antecedentes',    label:'Archivo de Antecedentes'},
+            {name:'recomendaciones_archivo', label:'Archivo de Recomendaciones'},
         ];
-
-        for (var i = 0; i < camposRequeridos.length; i++) {
-            var campo = camposRequeridos[i];
-            var el = campo.id ? document.getElementById(campo.id) : document.querySelector('[name="' + campo.name + '"]');
-            if (el && !el.value.trim()) {
-                mostrarAlerta('danger', '⚠️ El campo <strong>' + campo.label + '</strong> es obligatorio');
-                el.scrollIntoView({behavior: 'smooth', block: 'center'});
-                el.focus();
+        for (var j = 0; j < archivos.length; j++) {
+            var arch = document.querySelector('[name="' + archivos[j].name + '"]');
+            if (arch && !arch.files.length) {
+                mostrarAlerta('danger', 'Debes subir <strong>' + archivos[j].label + '</strong>');
+                arch.scrollIntoView({behavior:'smooth', block:'center'});
                 return;
             }
         }
 
-        // Validar servicio descrito
-        var descs = document.querySelectorAll('[name="habilidad_desc[]"]');
-        var tieneServicio = false;
-        descs.forEach(function(d) { if (d.value.trim()) tieneServicio = true; });
-        if (!tieneServicio) {
-            mostrarAlerta('danger', '⚠️ Por favor describe al menos un <strong>servicio</strong>');
-            return;
-        }
-
-        // Validar archivos requeridos
-        var fotoId = document.querySelector('[name="foto_identificacion"]');
-        if (fotoId && !fotoId.files.length) {
-            mostrarAlerta('danger', '⚠️ Debes subir la <strong>Foto de Identificación</strong>');
-            fotoId.scrollIntoView({behavior: 'smooth', block: 'center'});
-            return;
-        }
-        var fotoAnt = document.querySelector('[name="foto_antecedentes"]');
-        if (fotoAnt && !fotoAnt.files.length) {
-            mostrarAlerta('danger', '⚠️ Debes subir el archivo de <strong>Antecedentes</strong>');
-            fotoAnt.scrollIntoView({behavior: 'smooth', block: 'center'});
-            return;
-        }
-        var fotoRec = document.querySelector('[name="recomendaciones_archivo"]');
-        if (fotoRec && !fotoRec.files.length) {
-            mostrarAlerta('danger', '⚠️ Debes subir el archivo de <strong>Recomendaciones</strong>');
-            fotoRec.scrollIntoView({behavior: 'smooth', block: 'center'});
-            return;
-        }
-
+        // Enviar
         var btn = document.querySelector('.btn-primary-custom');
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
 
-        var formData = new FormData(document.getElementById('mainForm'));
-
         try {
-            var res = await fetch('/trabajador/crear', { method: 'POST', body: formData });
+            var res = await fetch('/trabajador/crear', {
+                method: 'POST',
+                body: new FormData(document.getElementById('mainForm'))
+            });
             var data = await res.json();
 
             if (data.error) {
-                mostrarAlerta('danger', '❌ ' + data.error);
+                mostrarAlerta('danger', data.error);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar Registro';
             } else {
-                mostrarAlerta('success', '✅ ' + data.mensaje + ' — Redirigiendo...');
+                mostrarAlerta('success', data.mensaje + ' — Redirigiendo...');
                 setTimeout(function() {
                     window.location.href = data.redirect || '/trabajador/login';
-                }, 1500);
+                }, 2000);
             }
         } catch(err) {
-            mostrarAlerta('danger', '❌ Error de conexión. Intenta nuevamente.');
+            mostrarAlerta('danger', 'Error de conexión. Intenta nuevamente.');
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar Registro';
         }
     }
-
-
     </script>
 </body>
 </html>
