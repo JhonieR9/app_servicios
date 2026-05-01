@@ -580,7 +580,10 @@ def listar_registros():
                 if email: reg['correo'] = str(email['correo'])
 
                 cursor.execute("""
-                    SELECT foto_identificacion, antecedentes_pdf, recomendaciones, recomendaciones_archivo
+                    SELECT foto_identificacion, antecedentes_pdf, recomendaciones, recomendaciones_archivo,
+                           (foto_identificacion_data IS NOT NULL AND LENGTH(foto_identificacion_data) > 0) as tiene_foto,
+                           (antecedentes_data IS NOT NULL AND LENGTH(antecedentes_data) > 0) as tiene_ant,
+                           (recomendaciones_data IS NOT NULL AND LENGTH(recomendaciones_data) > 0) as tiene_rec
                     FROM detalles_persona WHERE id_persona = %s LIMIT 1
                 """, (reg['id_persona'],))
                 detalles = cursor.fetchone()
@@ -590,11 +593,11 @@ def listar_registros():
                     reg['recomendaciones'] = str(detalles.get('recomendaciones') or '')
                     reg['recomendaciones_archivo'] = str(detalles.get('recomendaciones_archivo') or '')
                     # URLs para servir desde BD
-                    if detalles.get('foto_identificacion_data'):
+                    if detalles.get('tiene_foto'):
                         reg['foto_identificacion_url'] = f"/trabajador/archivo/{reg['id_persona']}/foto"
-                    if detalles.get('antecedentes_data'):
+                    if detalles.get('tiene_ant'):
                         reg['antecedentes_url'] = f"/trabajador/archivo/{reg['id_persona']}/antecedentes"
-                    if detalles.get('recomendaciones_data'):
+                    if detalles.get('tiene_rec'):
                         reg['recomendaciones_url'] = f"/trabajador/archivo/{reg['id_persona']}/recomendaciones"
 
                 # Disponibilidad
