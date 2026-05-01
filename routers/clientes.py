@@ -333,7 +333,9 @@ def calificar_servicio(
 @router.get("/mapa", response_class=HTMLResponse)
 def mostrar_mapa(request: Request):
     """Muestra lista visual de trabajadores cercanos."""
-    return templates.TemplateResponse("clientes/mapa_simple.html", {"request": request})
+    import os
+    mapbox_token = os.getenv("MAPBOX_TOKEN", "pk.eyJ1IjoiamhvbmllcmNlc3BlZGVzMTItIiwiYSI6ImNtb25qeGJ1dTBtNGoycnB2NWZtb3V1ZDcifQ.oWycZCkDrln9HOGRaWT8Xg")
+    return templates.TemplateResponse("clientes/mapa_simple.html", {"request": request, "mapbox_token": mapbox_token})
 
 @router.get("/trabajadores-cercanos")
 def obtener_trabajadores_cercanos(
