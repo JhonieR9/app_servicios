@@ -559,7 +559,10 @@ def listar_registros():
                 if value is None:
                     reg[key] = ''
                 elif hasattr(value, 'isoformat'):
-                    reg[key] = value.isoformat()
+                    # Convertir UTC a hora Colombia (UTC-5)
+                    from datetime import timedelta
+                    valor_col = value - timedelta(hours=5)
+                    reg[key] = valor_col.strftime('%Y-%m-%d %H:%M')
                 elif isinstance(value, (int, float)):
                     reg[key] = float(value) if isinstance(value, float) else int(value)
                 else:
@@ -982,7 +985,9 @@ def listar_eliminados():
         for r in registros:
             for k, v in r.items():
                 if hasattr(v, 'isoformat'):
-                    r[k] = v.isoformat()
+                    from datetime import timedelta
+                    v_col = v - timedelta(hours=5)
+                    r[k] = v_col.strftime('%Y-%m-%d %H:%M')
                 elif v is None:
                     r[k] = ''
             r['tipo_documento'] = 'CC'
