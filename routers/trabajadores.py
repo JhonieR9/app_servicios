@@ -1115,9 +1115,18 @@ async def login_trabajador(
             return JSONResponse({"error": "Contraseña incorrecta"}, status_code=401)
 
         token = auth.crear_sesion('trabajador', trabajador['id_persona'])
-        response.set_cookie(key="session_token", value=token, httponly=True, max_age=86400, samesite="lax")
-
-        return JSONResponse({"mensaje": f"Bienvenido, {trabajador['nombre_completo'].split()[0]}", "redirect": "/trabajador/panel"})
+        response.set_cookie(
+            key="session_token",
+            value=token,
+            httponly=False,  # False para que JS pueda leerla si es necesario
+            max_age=86400,
+            samesite="lax"
+        )
+        nombre = trabajador['nombre_completo'].split()[0] if trabajador.get('nombre_completo') else 'Trabajador'
+        return JSONResponse({
+            "mensaje": f"Bienvenido, {nombre}",
+            "redirect": f"/trabajador/panel?nombre={trabajador['nombre_completo']}&doc={trabajador['numero_documento']}&id={trabajador['id_persona']}"
+        })
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)

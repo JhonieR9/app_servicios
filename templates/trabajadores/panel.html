@@ -176,15 +176,32 @@
 <script>
     // Cargar datos del trabajador desde la sesión
     async function cargarPerfil() {
+        // Leer datos de la URL primero
+        const params = new URLSearchParams(window.location.search);
+        const nombre = params.get('nombre');
+        const doc = params.get('doc');
+
+        if (nombre) {
+            document.getElementById('nombreTrabajador').textContent = nombre;
+            document.getElementById('docTrabajador').textContent = 'Doc: ' + (doc || '');
+            document.getElementById('bienvenida').textContent = 'Bienvenido, ' + nombre.split(' ')[0];
+            return;
+        }
+
+        // Si no hay datos en URL, intentar fetch
         try {
             const res = await fetch('/trabajador/mi-perfil', { credentials: 'include' });
-            if (!res.ok) { window.location.href = '/trabajador/login'; return; }
+            if (!res.ok) {
+                document.getElementById('nombreTrabajador').textContent = 'Trabajador';
+                document.getElementById('bienvenida').textContent = 'Bienvenido';
+                return;
+            }
             const data = await res.json();
             document.getElementById('nombreTrabajador').textContent = data.nombre_completo || 'Trabajador';
             document.getElementById('docTrabajador').textContent = 'Doc: ' + (data.numero_documento || '');
             document.getElementById('bienvenida').textContent = 'Bienvenido, ' + (data.nombre_completo || '').split(' ')[0];
         } catch(e) {
-            window.location.href = '/trabajador/login';
+            document.getElementById('nombreTrabajador').textContent = 'Trabajador';
         }
     }
 
