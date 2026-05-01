@@ -516,18 +516,19 @@ async def login_cliente(
             token = auth.crear_sesion('cliente', cliente['id_cliente'])
             
             response.set_cookie(
-                key="session_token",
+                key="session_token_cliente",
                 value=token,
-                httponly=True,
+                httponly=False,
                 max_age=86400,
                 samesite="lax"
             )
             
+            nombre = cliente.get('nombre_completo', 'Cliente')
             return JSONResponse({
                 "requiere_verificacion_sms": False,
                 "id_cliente": cliente['id_cliente'],
                 "mensaje": "Login exitoso",
-                "redirect": "/cliente/panel"
+                "redirect": f"/cliente/panel?nombre={nombre}&id={cliente['id_cliente']}"
             })
             
     except Exception as e:

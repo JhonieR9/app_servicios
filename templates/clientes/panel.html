@@ -74,14 +74,28 @@
 
 <script>
     async function cargarPerfil() {
+        const params = new URLSearchParams(window.location.search);
+        const nombre = params.get('nombre');
+        const id = params.get('id');
+
+        if (nombre) {
+            document.getElementById('nombreCliente').textContent = nombre;
+            document.getElementById('bienvenida').textContent = 'Bienvenido, ' + nombre.split(' ')[0];
+            // Actualizar link de solicitar servicio con id_cliente
+            if (id) {
+                document.querySelector('a[href="/cliente/solicitar_servicio"]').href = '/cliente/solicitar_servicio?id_cliente=' + id;
+                document.querySelector('a[href="/cliente/mapa"]').href = '/cliente/mapa?id_cliente=' + id;
+            }
+            return;
+        }
         try {
-            const res = await fetch('/cliente/mi-perfil');
-            if (!res.ok) { window.location.href = '/cliente/login'; return; }
+            const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
+            if (!res.ok) { document.getElementById('nombreCliente').textContent = 'Cliente'; return; }
             const data = await res.json();
             document.getElementById('nombreCliente').textContent = data.nombre_completo || 'Cliente';
             document.getElementById('correoCliente').textContent = data.correo || '';
             document.getElementById('bienvenida').textContent = 'Bienvenido, ' + (data.nombre_completo || '').split(' ')[0];
-        } catch(e) { window.location.href = '/cliente/login'; }
+        } catch(e) { document.getElementById('nombreCliente').textContent = 'Cliente'; }
     }
     cargarPerfil();
 </script>
