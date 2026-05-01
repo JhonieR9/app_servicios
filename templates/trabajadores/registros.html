@@ -578,11 +578,8 @@
                 </div>
             `).join('') : '';
 
-            const fechaRegistro = reg.fecha_registro ? new Date(reg.fecha_registro).toLocaleString('es-CO', {
-                timeZone: 'America/Bogota',
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', hour12: true
-            }) : 'N/A';
+            // Mostrar fecha tal como viene de la BD (ya está en hora Colombia)
+            const fechaRegistro = reg.fecha_registro ? reg.fecha_registro.replace('T', ' ').substring(0, 16) : 'N/A';
 
             return `
                 <div class="col-md-6 col-lg-4">
