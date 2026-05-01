@@ -975,8 +975,6 @@ def listar_eliminados():
                     r[k] = ''
             r['tipo_documento'] = 'CC'
         
-        registros = cursor.fetchall()
-        
         cursor.execute("SELECT COUNT(*) as total FROM personas WHERE estado = 'eliminado'")
         total = cursor.fetchone()['total']
         
