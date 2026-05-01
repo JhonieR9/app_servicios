@@ -682,6 +682,9 @@ def obtener_estadisticas():
         
         cursor.execute("SELECT COUNT(*) as total FROM personas WHERE estado = 'eliminado'")
         total_eliminados = cursor.fetchone()['total']
+
+        cursor.execute("SELECT COUNT(*) as total FROM clientes WHERE estado = 'activo'")
+        total_clientes = cursor.fetchone()['total']
         
         cursor.execute("SELECT COUNT(*) as total FROM personas")
         total_todos = cursor.fetchone()['total']
@@ -762,6 +765,7 @@ def obtener_estadisticas():
         return JSONResponse({
             "total_activos": total_activos,
             "total_eliminados": total_eliminados,
+            "total_clientes": total_clientes,
             "total_todos": total_todos,
             "registros_hoy": registros_hoy,
             "registros_semana": registros_semana,
@@ -812,9 +816,48 @@ async def eliminar_registro(id_persona: int = Form(...)):
 def exportar_excel():
     """Exportar registros a Excel (placeholder)"""
     return JSONResponse({
-        "mensaje": "Funcionalidad de exportación en desarrollo",
-        "nota": "Requiere instalar openpyxl o xlsxwriter"
+        "mensaje": "Funcionalidad de exportación en desarrollo"
     })
+
+@router.get("/clientes", response_class=HTMLResponse)
+def ver_clientes(request: Request):
+    """Página para ver todos los clientes registrados"""
+    return templates.TemplateResponse("trabajadores/clientes.html", {"request": request})
+
+@router.get("/clientes/listar")
+def listar_clientes():
+    """API para obtener todos los clientes registrados"""
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"error": "Error de conexión", "clientes": []}, status_code=500)
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT c.id_cliente, c.nombre_completo, c.estado, c.fecha_registro,
+                   e.correo, t.telefono
+            FROM clientes c
+            LEFT JOIN correo_cliente e ON c.id_cliente = e.id_cliente
+            LEFT JOIN telefono_cliente t ON c.id_cliente = t.id_cliente
+            WHERE c.estado = 'activo'
+            ORDER BY c.id_cliente DESC
+        """)
+        clientes = cursor.fetchall()
+        from datetime import timedelta
+        for cl in clientes:
+            for k, v in cl.items():
+                if hasattr(v, 'isoformat'):
+                    v_col = v - timedelta(hours=5)
+                    cl[k] = v_col.strftime('%Y-%m-%d %H:%M')
+                elif v is None:
+                    cl[k] = ''
+        cursor.execute("SELECT COUNT(*) as total FROM clientes WHERE estado = 'activo'")
+        total = cursor.fetchone()['total']
+        return JSONResponse({"clientes": clientes, "total": total})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "clientes": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
 
 @router.get("/archivo/{id_persona}/{tipo}")
 def servir_archivo(id_persona: int, tipo: str):
