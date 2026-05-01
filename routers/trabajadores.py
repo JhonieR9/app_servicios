@@ -137,9 +137,9 @@ async def crear_trabajador(
         # 1. Insertar persona
         cursor.execute("""
             INSERT INTO personas 
-            (id_tipo_documento, numero_documento, id_genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, registrado_por)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (tipo_documento, numero_documento, genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, nombre_completo))        
+            (id_tipo_documento, numero_documento, id_genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, registrado_por, departamento)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (tipo_documento, numero_documento, genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, nombre_completo, departamento))        
         id_persona = cursor.lastrowid
         
         # 2. Insertar teléfono
