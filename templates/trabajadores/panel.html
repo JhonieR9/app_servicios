@@ -177,7 +177,7 @@
     // Cargar datos del trabajador desde la sesión
     async function cargarPerfil() {
         try {
-            const res = await fetch('/trabajador/mi-perfil');
+            const res = await fetch('/trabajador/mi-perfil', { credentials: 'include' });
             if (!res.ok) { window.location.href = '/trabajador/login'; return; }
             const data = await res.json();
             document.getElementById('nombreTrabajador').textContent = data.nombre_completo || 'Trabajador';

@@ -33,18 +33,30 @@ def obtener_mi_perfil(request: Request):
     """Obtiene datos del trabajador autenticado"""
     token = request.cookies.get("session_token")
     if not token:
-        from fastapi.responses import JSONResponse as JR
-        return JR({"error": "No autenticado"}, status_code=401)
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
     sesion = auth.verificar_sesion(token)
     if not sesion or sesion['tipo_usuario'] != 'trabajador':
         return JSONResponse({"error": "Sesión inválida"}, status_code=401)
     conexion = conectar_bd()
     cursor = conexion.cursor(dictionary=True)
-    cursor.execute("SELECT id_persona, nombre_completo, numero_documento, ciudad FROM personas WHERE id_persona = %s", (sesion['id_usuario'],))
+    cursor.execute("""
+        SELECT p.id_persona, p.nombre_completo, p.numero_documento, p.ciudad, p.departamento,
+               tp.telefono, cp.correo
+        FROM personas p
+        LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+        LEFT JOIN correo_persona cp ON p.id_persona = cp.id_persona
+        WHERE p.id_persona = %s
+    """, (sesion['id_usuario'],))
     trabajador = cursor.fetchone()
     cursor.close()
     conexion.close()
-    return JSONResponse(trabajador or {"error": "No encontrado"})
+    if not trabajador:
+        return JSONResponse({"error": "No encontrado"}, status_code=404)
+    # Serializar
+    for k, v in trabajador.items():
+        if v is None:
+            trabajador[k] = ''
+    return JSONResponse(trabajador)
 
 @router.get("/registro", response_class=HTMLResponse)
 def mostrar_registro_trabajador(request: Request):
