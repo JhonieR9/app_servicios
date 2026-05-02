@@ -195,7 +195,7 @@
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <script>
-    mapboxgl.accessToken = '{{ mapbox_token }}';
+    mapboxgl.accessToken = '{{ mapbox_token | trim }}';
 
     let map, userMarker;
     let workerMarkers = [];
