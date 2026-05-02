@@ -58,6 +58,11 @@ def obtener_mi_perfil(request: Request):
             trabajador[k] = ''
     return JSONResponse(trabajador)
 
+@router.get("/solicitudes_pendientes_panel", response_class=HTMLResponse)
+def mostrar_mis_solicitudes_panel(request: Request):
+    """Panel de solicitudes del trabajador"""
+    return templates.TemplateResponse("trabajadores/mis_solicitudes.html", {"request": request})
+
 @router.get("/registro", response_class=HTMLResponse)
 def mostrar_registro_trabajador(request: Request):
     return templates.TemplateResponse("trabajadores/registro_trabajador.html", {"request": request})

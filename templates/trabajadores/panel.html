@@ -155,7 +155,7 @@
                 <div class="menu-sub">Ver mis datos</div>
             </div>
         </a>
-        <a href="#" class="menu-item">
+        <a href="/trabajador/solicitudes_pendientes_panel" class="menu-item" id="link-solicitudes">
             <div class="menu-icon purple"><i class="bi bi-briefcase-fill" style="color:#7c3aed"></i></div>
             <div>
                 <div class="menu-label">Solicitudes</div>
@@ -191,6 +191,8 @@
                 localStorage.setItem('id_trabajador', id);
                 const linkUbicacion = document.getElementById('link-ubicacion');
                 if (linkUbicacion) linkUbicacion.href = '/trabajador/disponibilidad?id=' + id;
+                const linkSolicitudes = document.getElementById('link-solicitudes');
+                if (linkSolicitudes) linkSolicitudes.href = '/trabajador/solicitudes_pendientes_panel?id=' + id;
             }
             return;
         }
