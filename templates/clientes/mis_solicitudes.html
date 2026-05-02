@@ -2,491 +2,129 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mis Solicitudes - TalentHub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <title>Mis Solicitudes - TalentHub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',sans-serif; background:#f0f2f5; min-height:100vh; }
+        .topbar {
+            background: linear-gradient(135deg, #059669, #0891b2);
+            color: white; padding: 16px 20px;
+            display: flex; align-items: center; gap: 12px;
         }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 15px;
+        .back-btn {
+            width:36px;height:36px;border-radius:50%;
+            background:rgba(255,255,255,0.2);border:none;
+            color:white;font-size:1rem;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            text-decoration:none;
         }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
+        .topbar h1 { font-size:1.1rem;font-weight:700; }
+        .content { max-width:600px;margin:0 auto;padding:20px 16px; }
+        .empty {
+            text-align:center;padding:60px 20px;
+            background:white;border-radius:16px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.06);
         }
-
-        .header {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        .empty i { font-size:3rem;color:#cbd5e1;display:block;margin-bottom:12px; }
+        .empty p { color:#64748b;font-size:0.9rem; }
+        .btn-nueva {
+            display:inline-block;margin-top:16px;
+            padding:12px 24px;background:linear-gradient(135deg,#059669,#0891b2);
+            color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.88rem;
         }
-
-        .back-button {
-            display: inline-block;
-            color: #666;
-            text-decoration: none;
-            margin-bottom: 15px;
-            font-size: 14px;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .back-button:hover {
-            color: #4CAF50;
-        }
-
-        h2 {
-            color: #2e7d32;
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            color: #666;
-            font-size: 14px;
-        }
-
         .solicitud-card {
-            background: white;
-            border-radius: 15px;
-            padding: 18px;
-            margin-bottom: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            background:white;border-radius:14px;
+            padding:18px;margin-bottom:12px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.06);
         }
-
-        .solicitud-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-
         .solicitud-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 12px;
-            gap: 10px;
+            display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;
         }
-
-        .solicitud-titulo {
-            font-size: 17px;
-            font-weight: 600;
-            color: #333;
-            flex: 1;
-            line-height: 1.3;
-        }
-
-        .estado-badge {
-            padding: 6px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .estado-pendiente {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .estado-aceptada {
-            background: #cfe2ff;
-            color: #084298;
-        }
-
-        .estado-en_proceso {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .estado-completada {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .estado-cancelada {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .solicitud-info {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .solicitud-descripcion {
-            color: #555;
-            font-size: 14px;
-            line-height: 1.5;
-            margin-bottom: 12px;
-        }
-
-        .solicitud-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 12px;
-            border-top: 1px solid #eee;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .fecha {
-            color: #999;
-            font-size: 13px;
-        }
-
+        .solicitud-titulo { font-weight:700;color:#0f172a;font-size:0.95rem; }
+        .badge-estado { padding:4px 10px;border-radius:99px;font-size:0.75rem;font-weight:600; }
+        .badge-pendiente  { background:#fef3c7;color:#d97706; }
+        .badge-aceptada   { background:#dbeafe;color:#2563eb; }
+        .badge-completada { background:#dcfce7;color:#16a34a; }
+        .badge-cancelada  { background:#fee2e2;color:#dc2626; }
+        .solicitud-info { font-size:0.82rem;color:#64748b;margin-bottom:4px; }
         .btn-cancelar {
-            padding: 8px 16px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: background 0.3s;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .btn-cancelar:active {
-            transform: scale(0.95);
-        }
-
-        .btn-cancelar:hover {
-            background: #c82333;
-        }
-
-        .empty-state {
-            background: white;
-            border-radius: 15px;
-            padding: 40px 20px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .empty-icon {
-            font-size: 60px;
-            margin-bottom: 15px;
-        }
-
-        .empty-text {
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .btn-nueva {
-            display: inline-block;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: transform 0.3s;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .btn-nueva:active {
-            transform: scale(0.95);
-        }
-
-        .btn-nueva:hover {
-            transform: translateY(-2px);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: white;
-            font-size: 18px;
-        }
-
-        /* Responsive para móviles pequeños */
-        @media (max-width: 380px) {
-            body {
-                padding: 10px;
-            }
-
-            .header {
-                padding: 18px;
-            }
-
-            h2 {
-                font-size: 22px;
-            }
-
-            .solicitud-card {
-                padding: 15px;
-            }
-
-            .solicitud-titulo {
-                font-size: 16px;
-            }
-
-            .estado-badge {
-                font-size: 10px;
-                padding: 5px 8px;
-            }
-
-            .solicitud-info {
-                font-size: 13px;
-            }
-
-            .btn-cancelar {
-                padding: 7px 14px;
-                font-size: 12px;
-            }
-        }
-
-        /* Responsive para tablets y desktop */
-        @media (min-width: 768px) {
-            body {
-                padding: 30px;
-            }
-
-            .container {
-                max-width: 700px;
-            }
-
-            .header {
-                padding: 30px;
-            }
-
-            h2 {
-                font-size: 28px;
-            }
-
-            .solicitud-card {
-                padding: 25px;
-            }
-
-            .solicitud-titulo {
-                font-size: 19px;
-            }
-
-            .estado-badge {
-                font-size: 12px;
-                padding: 7px 14px;
-            }
-
-            .solicitud-info {
-                font-size: 15px;
-            }
-
-            .btn-cancelar {
-                padding: 10px 20px;
-                font-size: 14px;
-            }
-
-            .empty-state {
-                padding: 60px 40px;
-            }
-
-            .empty-icon {
-                font-size: 80px;
-            }
-        }
-
-        /* Mejoras para touch devices */
-        @media (hover: none) and (pointer: coarse) {
-            .btn-cancelar {
-                padding: 10px 18px;
-                font-size: 14px;
-            }
-
-            .btn-nueva {
-                padding: 14px 28px;
-            }
-        }
-    </style>
-            font-size: 13px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .btn-cancelar:hover {
-            background: #c82333;
-        }
-
-        .empty-state {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .empty-icon {
-            font-size: 60px;
-            margin-bottom: 15px;
-        }
-
-        .empty-text {
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .btn-nueva {
-            display: inline-block;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: transform 0.3s;
-        }
-
-        .btn-nueva:hover {
-            transform: translateY(-2px);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: white;
-            font-size: 18px;
+            width:100%;padding:10px;margin-top:12px;
+            background:#fee2e2;color:#dc2626;border:none;border-radius:10px;
+            font-weight:600;font-size:0.85rem;cursor:pointer;
         }
     </style>
 </head>
 <body>
+<div class="topbar">
+    <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+    <h1>📋 Mis Solicitudes</h1>
+</div>
 
-<div class="container">
-    <div class="header">
-        <a href="javascript:history.back()" class="back-button">← Volver</a>
-        <h2>📋 Mis Solicitudes</h2>
-        <p class="subtitle">Gestiona tus servicios solicitados</p>
+<div class="content" id="contenido">
+    <div class="empty">
+        <i class="bi bi-hourglass-split"></i>
+        <p>Cargando solicitudes...</p>
     </div>
-
-    <div id="loading" class="loading">Cargando solicitudes...</div>
-    <div id="solicitudesContainer"></div>
 </div>
 
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const idCliente = urlParams.get('id_cliente') || 1;
-
-    const estadosTexto = {
-        'pendiente': 'Pendiente',
-        'aceptada': 'Aceptada',
-        'en_proceso': 'En Proceso',
-        'completada': 'Completada',
-        'cancelada': 'Cancelada'
-    };
+    const idCliente = urlParams.get('id_cliente') || localStorage.getItem('id_cliente') || 1;
 
     async function cargarSolicitudes() {
         try {
-            const response = await fetch(`/cliente/historial/${idCliente}`);
-            const data = await response.json();
-            
-            document.getElementById('loading').style.display = 'none';
-            
-            const container = document.getElementById('solicitudesContainer');
-            
-            if (data.historial.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">📭</div>
-                        <p class="empty-text">Aún no tienes solicitudes de servicio</p>
-                        <a href="/cliente/solicitar_servicio" class="btn-nueva">Solicitar Servicio</a>
-                    </div>
-                `;
+            const res = await fetch(`/cliente/mis_solicitudes_api?id_cliente=${idCliente}`);
+            const data = await res.json();
+            const solicitudes = data.solicitudes || [];
+            const contenido = document.getElementById('contenido');
+
+            if (!solicitudes.length) {
+                contenido.innerHTML = `
+                    <div class="empty">
+                        <i class="bi bi-inbox"></i>
+                        <p>Aún no tienes solicitudes</p>
+                        <a href="javascript:history.back()" class="btn-nueva">Solicitar Servicio</a>
+                    </div>`;
                 return;
             }
-            
-            data.historial.forEach(solicitud => {
-                const card = document.createElement('div');
-                card.className = 'solicitud-card';
-                
-                const fecha = new Date(solicitud.fecha_solicitud).toLocaleDateString('es-ES', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                });
-                
-                card.innerHTML = `
+
+            contenido.innerHTML = solicitudes.map(s => `
+                <div class="solicitud-card">
                     <div class="solicitud-header">
-                        <div class="solicitud-titulo">${solicitud.titulo}</div>
-                        <span class="estado-badge estado-${solicitud.estado}">
-                            ${estadosTexto[solicitud.estado]}
-                        </span>
+                        <div class="solicitud-titulo">${s.titulo || 'Solicitud de servicio'}</div>
+                        <span class="badge-estado badge-${s.estado}">${s.estado}</span>
                     </div>
-                    
-                    <div class="solicitud-info">
-                        <strong>Categoría:</strong> ${solicitud.nombre_categoria}
-                    </div>
-                    
-                    ${solicitud.nombre_trabajador ? `
-                        <div class="solicitud-info">
-                            <strong>Trabajador:</strong> ${solicitud.nombre_trabajador}
-                        </div>
-                    ` : ''}
-                    
-                    ${solicitud.precio_final ? `
-                        <div class="solicitud-info">
-                            <strong>Precio:</strong> $${parseFloat(solicitud.precio_final).toLocaleString('es-CO')}
-                        </div>
-                    ` : ''}
-                    
-                    <div class="solicitud-footer">
-                        <span class="fecha">📅 ${fecha}</span>
-                        ${solicitud.estado === 'pendiente' || solicitud.estado === 'aceptada' ? `
-                            <button class="btn-cancelar" onclick="cancelarSolicitud(${solicitud.id_solicitud})">
-                                Cancelar
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-                
-                container.appendChild(card);
-            });
-            
-        } catch (error) {
-            document.getElementById('loading').innerHTML = '❌ Error al cargar solicitudes';
+                    <div class="solicitud-info"><i class="bi bi-tools"></i> ${s.nombre_categoria || 'Servicio'}</div>
+                    <div class="solicitud-info"><i class="bi bi-geo-alt"></i> ${s.ciudad || ''} ${s.departamento || ''}</div>
+                    <div class="solicitud-info"><i class="bi bi-calendar"></i> ${s.fecha_solicitud || ''}</div>
+                    ${s.descripcion ? `<div class="solicitud-info" style="margin-top:8px;color:#374151">${s.descripcion}</div>` : ''}
+                    ${s.estado === 'pendiente' ? `
+                        <button class="btn-cancelar" onclick="cancelar(${s.id_solicitud})">
+                            ❌ Cancelar Solicitud
+                        </button>` : ''}
+                </div>
+            `).join('');
+        } catch(e) {
+            document.getElementById('contenido').innerHTML = `
+                <div class="empty">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <p>Error al cargar solicitudes</p>
+                </div>`;
         }
     }
 
-    async function cancelarSolicitud(idSolicitud) {
-        if (!confirm('¿Estás seguro de cancelar esta solicitud?')) return;
-        
-        const motivo = prompt('Motivo de cancelación (opcional):') || 'Sin motivo especificado';
-        
-        const formData = new FormData();
-        formData.append('id_solicitud', idSolicitud);
-        formData.append('motivo', motivo);
-        
-        try {
-            const response = await fetch('/cliente/solicitud/cancelar', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (response.ok) {
-                alert('✅ Solicitud cancelada');
-                location.reload();
-            } else {
-                alert('❌ Error al cancelar');
-            }
-        } catch (error) {
-            alert('❌ Error de conexión');
-        }
+    async function cancelar(idSolicitud) {
+        if (!confirm('¿Cancelar esta solicitud?')) return;
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('motivo', 'Cancelado por el cliente');
+        const res = await fetch('/cliente/solicitud/cancelar', { method:'POST', body:fd });
+        if (res.ok) { alert('Solicitud cancelada'); cargarSolicitudes(); }
     }
 
     cargarSolicitudes();
 </script>
-
 </body>
 </html>

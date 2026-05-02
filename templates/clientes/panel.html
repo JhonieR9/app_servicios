@@ -61,7 +61,7 @@
             <div class="menu-icon blue"><i class="bi bi-map-fill" style="color:#2563eb"></i></div>
             <div><div class="menu-label">Ver Mapa</div><div class="menu-sub">Trabajadores cercanos</div></div>
         </a>
-        <a href="/cliente/mis_solicitudes" class="menu-item">
+        <a href="/cliente/mis_solicitudes" class="menu-item" id="link-solicitudes-cliente">
             <div class="menu-icon purple"><i class="bi bi-list-check" style="color:#7c3aed"></i></div>
             <div><div class="menu-label">Mis Solicitudes</div><div class="menu-sub">Historial</div></div>
         </a>
@@ -86,7 +86,16 @@
                 document.querySelector('a[href="/cliente/solicitar_servicio"]').href = '/cliente/solicitar_servicio?id_cliente=' + id;
                 document.querySelector('a[href="/cliente/mapa"]').href = '/cliente/mapa?id_cliente=' + id;
             }
-            return;
+            if (id) {
+            localStorage.setItem('id_cliente', id);
+            const linkSol = document.getElementById('link-solicitudes-cliente');
+            if (linkSol) linkSol.href = '/cliente/mis_solicitudes?id_cliente=' + id;
+            const linkMapa = document.querySelector('a[href="/cliente/mapa"]');
+            if (linkMapa) linkMapa.href = '/cliente/mapa?id_cliente=' + id;
+            const linkSolicitar = document.querySelector('a[href="/cliente/solicitar_servicio"]');
+            if (linkSolicitar) linkSolicitar.href = '/cliente/solicitar_servicio?id_cliente=' + id;
+        }
+        return;
         }
         try {
             const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });

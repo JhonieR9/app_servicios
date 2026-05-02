@@ -141,6 +141,41 @@ def mostrar_solicitar_servicio(request: Request):
 def mostrar_mis_solicitudes(request: Request):
     return templates.TemplateResponse("clientes/mis_solicitudes.html", {"request": request})
 
+@router.get("/mis_solicitudes_api")
+def listar_mis_solicitudes_cliente(id_cliente: int = None):
+    """API para obtener solicitudes de un cliente"""
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"error": "Error de conexión", "solicitudes": []}, status_code=500)
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        if id_cliente:
+            cursor.execute("""
+                SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
+                       s.ciudad, s.departamento, s.fecha_solicitud,
+                       cat.nombre_categoria
+                FROM solicitudes_servicio s
+                LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+                WHERE s.id_cliente = %s
+                ORDER BY s.fecha_solicitud DESC
+            """, (id_cliente,))
+        else:
+            return JSONResponse({"solicitudes": []})
+        solicitudes = cursor.fetchall()
+        from datetime import timedelta
+        for s in solicitudes:
+            for k, v in s.items():
+                if hasattr(v, 'isoformat'):
+                    s[k] = (v - timedelta(hours=5)).strftime('%Y-%m-%d %H:%M')
+                elif v is None:
+                    s[k] = ''
+        return JSONResponse({"solicitudes": solicitudes})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "solicitudes": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 
 # ============================================
 # API ENDPOINTS
