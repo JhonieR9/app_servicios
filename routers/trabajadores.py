@@ -405,39 +405,15 @@ def trabajadores_disponibles(id_categoria: int):
     
     return {"trabajadores": trabajadores}
 
-@router.post("/disponibilidad/actualizar")
-def actualizar_disponibilidad(
+@router.post("/disponibilidad/actualizar_legacy")
+def actualizar_disponibilidad_legacy(
     id_trabajador: int = Form(...),
     disponible: bool = Form(...),
     latitud: float = Form(None),
     longitud: float = Form(None)
 ):
-    conexion = conectar_bd()
-    cursor = conexion.cursor()
-    
-    cursor.execute("""
-        SELECT id_disponibilidad FROM disponibilidad_trabajador 
-        WHERE id_trabajador = %s
-    """, (id_trabajador,))
-    
-    existe = cursor.fetchone()
-    
-    if existe:
-        sql = """
-        UPDATE disponibilidad_trabajador 
-        SET disponible = %s, latitud = %s, longitud = %s
-        WHERE id_trabajador = %s
-        """
-        cursor.execute(sql, (disponible, latitud, longitud, id_trabajador))
-    else:
-        sql = """
-        INSERT INTO disponibilidad_trabajador 
-        (id_trabajador, disponible, latitud, longitud)
-        VALUES (%s, %s, %s, %s)
-        """
-        cursor.execute(sql, (id_trabajador, disponible, latitud, longitud))
-    
-    conexion.commit()
+    """Endpoint legacy - usar /disponibilidad/actualizar en su lugar"""
+    return {"mensaje": "Use el endpoint actualizado"}
     cursor.close()
     conexion.close()
     
