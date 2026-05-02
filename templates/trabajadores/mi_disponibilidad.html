@@ -133,7 +133,10 @@
         let watchId = null;
         let updateInterval = null;
         let currentPosition = null;
-        const ID_TRABAJADOR = 1; // TODO: Obtener del login/sesión
+        
+        // Obtener ID del trabajador de la URL o localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const ID_TRABAJADOR = urlParams.get('id') || localStorage.getItem('id_trabajador') || 1;
 
         // Verificar estado al cargar
         window.onload = function() {

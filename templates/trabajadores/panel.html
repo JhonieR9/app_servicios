@@ -141,7 +141,7 @@
     <!-- Menú -->
     <div class="section-title">Opciones</div>
     <div class="menu-grid">
-        <a href="/trabajador/disponibilidad" class="menu-item">
+        <a href="/trabajador/disponibilidad" class="menu-item" id="link-ubicacion">
             <div class="menu-icon green"><i class="bi bi-geo-alt-fill" style="color:#16a34a"></i></div>
             <div>
                 <div class="menu-label">Mi Ubicación</div>
@@ -185,6 +185,13 @@
             document.getElementById('nombreTrabajador').textContent = nombre;
             document.getElementById('docTrabajador').textContent = 'Doc: ' + (doc || '');
             document.getElementById('bienvenida').textContent = 'Bienvenido, ' + nombre.split(' ')[0];
+            // Guardar id y actualizar link de ubicación
+            const id = params.get('id');
+            if (id) {
+                localStorage.setItem('id_trabajador', id);
+                const linkUbicacion = document.getElementById('link-ubicacion');
+                if (linkUbicacion) linkUbicacion.href = '/trabajador/disponibilidad?id=' + id;
+            }
             return;
         }
 
