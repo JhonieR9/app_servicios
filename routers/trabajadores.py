@@ -112,6 +112,47 @@ def listar_mis_solicitudes(id_trabajador: int = None):
         if conexion and conexion.is_connected():
             conexion.close()
 
+@router.get("/perfil_completo")
+def obtener_perfil_completo(id: int = None):
+    """Obtiene el perfil completo del trabajador"""
+    if not id:
+        return JSONResponse({"error": "ID requerido"}, status_code=400)
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT p.id_persona, p.nombre_completo, p.numero_documento,
+                   p.ciudad, p.departamento, p.nacionalidad, p.fecha_nacimiento,
+                   tp.telefono, cp.correo
+            FROM personas p
+            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+            LEFT JOIN correo_persona cp ON p.id_persona = cp.id_persona
+            WHERE p.id_persona = %s
+        """, (id,))
+        perfil = cursor.fetchone()
+        if not perfil:
+            return JSONResponse({"error": "No encontrado"}, status_code=404)
+        for k, v in perfil.items():
+            if v is None: perfil[k] = ''
+            elif hasattr(v, 'isoformat'): perfil[k] = str(v)
+        cursor.execute("SELECT categoria, descripcion, valor_hora, anios_experiencia FROM servicios_persona WHERE id_persona = %s", (id,))
+        servicios = cursor.fetchall()
+        for s in servicios:
+            for k, v in s.items():
+                if hasattr(v, '__float__'): s[k] = float(v)
+                elif v is None: s[k] = ''
+        perfil['servicios'] = servicios
+        return JSONResponse(perfil)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+@router.get("/mi_perfil_page", response_class=HTMLResponse)
+def mostrar_mi_perfil(request: Request):
+    return templates.TemplateResponse("trabajadores/mi_perfil.html", {"request": request})
+
 @router.get("/registro", response_class=HTMLResponse)
 def mostrar_registro_trabajador(request: Request):
     return templates.TemplateResponse("trabajadores/registro_trabajador.html", {"request": request})

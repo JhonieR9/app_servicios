@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - TalentHub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',sans-serif; background:#f0f2f5; min-height:100vh; }
+        .topbar {
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            color: white; padding: 16px 20px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .back-btn {
+            width:36px;height:36px;border-radius:50%;
+            background:rgba(255,255,255,0.2);border:none;
+            color:white;font-size:1rem;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            text-decoration:none;
+        }
+        .topbar h1 { font-size:1.1rem;font-weight:700; }
+        .content { max-width:600px;margin:0 auto;padding:20px 16px; }
+
+        .avatar-card {
+            background:white;border-radius:16px;padding:28px;
+            text-align:center;margin-bottom:16px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.06);
+        }
+        .avatar {
+            width:80px;height:80px;border-radius:50%;
+            background:linear-gradient(135deg,#1e3a8a,#2563eb);
+            display:flex;align-items:center;justify-content:center;
+            font-size:2rem;color:white;margin:0 auto 14px;
+        }
+        .nombre { font-size:1.2rem;font-weight:700;color:#0f172a; }
+        .doc { color:#64748b;font-size:0.85rem;margin-top:4px; }
+        .badge-activo {
+            display:inline-block;margin-top:8px;
+            padding:4px 12px;background:#dcfce7;color:#16a34a;
+            border-radius:99px;font-size:0.78rem;font-weight:600;
+        }
+
+        .info-card {
+            background:white;border-radius:16px;padding:20px;
+            margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);
+        }
+        .info-card h3 {
+            font-size:0.82rem;font-weight:700;color:#94a3b8;
+            text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;
+        }
+        .info-row {
+            display:flex;justify-content:space-between;align-items:center;
+            padding:10px 0;border-bottom:1px solid #f1f5f9;
+        }
+        .info-row:last-child { border-bottom:none; }
+        .info-label { font-size:0.82rem;color:#64748b; }
+        .info-value { font-size:0.88rem;font-weight:600;color:#0f172a;text-align:right;max-width:60%; }
+
+        .servicio-chip {
+            display:inline-block;padding:4px 12px;
+            background:#dbeafe;color:#1d4ed8;
+            border-radius:99px;font-size:0.78rem;font-weight:600;
+            margin:3px;
+        }
+        .loading { text-align:center;padding:40px;color:#94a3b8; }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+    <h1>👤 Mi Perfil</h1>
+</div>
+
+<div class="content" id="contenido">
+    <div class="loading"><i class="bi bi-hourglass-split"></i> Cargando perfil...</div>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const idTrabajador = urlParams.get('id') || localStorage.getItem('id_trabajador') || 1;
+
+    async function cargarPerfil() {
+        try {
+            const res = await fetch(`/trabajador/perfil_completo?id=${idTrabajador}`);
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            renderPerfil(data);
+        } catch(e) {
+            document.getElementById('contenido').innerHTML = `
+                <div class="loading"><i class="bi bi-exclamation-circle"></i> Error al cargar perfil</div>`;
+        }
+    }
+
+    function renderPerfil(d) {
+        const serviciosHtml = (d.servicios || []).map(s =>
+            `<span class="servicio-chip">${s.categoria}</span>`
+        ).join('');
+
+        document.getElementById('contenido').innerHTML = `
+            <div class="avatar-card">
+                <div class="avatar">👤</div>
+                <div class="nombre">${d.nombre_completo || '-'}</div>
+                <div class="doc">Doc: ${d.numero_documento || '-'}</div>
+                <span class="badge-activo">✅ Activo</span>
+            </div>
+
+            <div class="info-card">
+                <h3>Información Personal</h3>
+                <div class="info-row">
+                    <span class="info-label">Ciudad</span>
+                    <span class="info-value">${d.ciudad || '-'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Departamento</span>
+                    <span class="info-value">${d.departamento || '-'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Nacionalidad</span>
+                    <span class="info-value">${d.nacionalidad || '-'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fecha de Nacimiento</span>
+                    <span class="info-value">${d.fecha_nacimiento || '-'}</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>Contacto</h3>
+                <div class="info-row">
+                    <span class="info-label">Teléfono</span>
+                    <span class="info-value">${d.telefono || '-'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Correo</span>
+                    <span class="info-value">${d.correo || '-'}</span>
+                </div>
+            </div>
+
+            ${serviciosHtml ? `
+            <div class="info-card">
+                <h3>Servicios</h3>
+                <div style="padding:4px 0">${serviciosHtml}</div>
+            </div>` : ''}
+        `;
+    }
+
+    cargarPerfil();
+</script>
+</body>
+</html>

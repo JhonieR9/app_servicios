@@ -148,7 +148,7 @@
                 <div class="menu-sub">Activar GPS</div>
             </div>
         </a>
-        <a href="#" class="menu-item" onclick="verPerfil()">
+        <a href="#" class="menu-item" id="link-perfil">
             <div class="menu-icon blue"><i class="bi bi-person-fill" style="color:#2563eb"></i></div>
             <div>
                 <div class="menu-label">Mi Perfil</div>
@@ -193,6 +193,8 @@
                 if (linkUbicacion) linkUbicacion.href = '/trabajador/disponibilidad?id=' + id;
                 const linkSolicitudes = document.getElementById('link-solicitudes');
                 if (linkSolicitudes) linkSolicitudes.href = '/trabajador/solicitudes_pendientes_panel?id=' + id;
+                const linkPerfil = document.getElementById('link-perfil');
+                if (linkPerfil) linkPerfil.href = '/trabajador/mi_perfil_page?id=' + id;
             }
             return;
         }
