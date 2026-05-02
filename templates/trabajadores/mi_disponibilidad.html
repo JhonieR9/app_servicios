@@ -320,12 +320,8 @@
             }
         }
 
-        // Limpiar al salir
-        window.onbeforeunload = function() {
-            if (disponible) {
-                detenerRastreo();
-            }
-        };
+        // Nota: La disponibilidad se mantiene activa incluso al cerrar la página
+        // El trabajador debe desactivarla manualmente cuando no quiera trabajar
     </script>
 </body>
 </html>
