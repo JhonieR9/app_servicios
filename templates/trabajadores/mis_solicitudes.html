@@ -76,7 +76,7 @@
 
     async function cargarSolicitudes() {
         try {
-            const res = await fetch(`/trabajador/solicitudes_pendientes?id_trabajador=${idTrabajador}`);
+            const res = await fetch(`/trabajador/mis_solicitudes_api?id_trabajador=${idTrabajador}`);
             const data = await res.json();
             const solicitudes = data.solicitudes || [];
             const contenido = document.getElementById('contenido');
@@ -97,7 +97,7 @@
                         <div class="solicitud-titulo">${s.titulo || 'Solicitud de servicio'}</div>
                         <span class="badge-estado badge-${s.estado}">${s.estado}</span>
                     </div>
-                    <div class="solicitud-info"><i class="bi bi-tools"></i> ${s.nombre_categoria || s.id_categoria}</div>
+                    <div class="solicitud-info"><i class="bi bi-tools"></i> ${s.nombre_categoria || 'Servicio'}</div>
                     <div class="solicitud-info"><i class="bi bi-geo-alt"></i> ${s.ciudad || ''} ${s.departamento || ''}</div>
                     <div class="solicitud-info"><i class="bi bi-person"></i> ${s.nombre_cliente || 'Cliente'}</div>
                     ${s.descripcion ? `<div class="solicitud-info" style="margin-top:8px;color:#374151">${s.descripcion}</div>` : ''}

@@ -63,6 +63,55 @@ def mostrar_mis_solicitudes_panel(request: Request):
     """Panel de solicitudes del trabajador"""
     return templates.TemplateResponse("trabajadores/mis_solicitudes.html", {"request": request})
 
+@router.get("/mis_solicitudes_api")
+def listar_mis_solicitudes(id_trabajador: int = None):
+    """Solicitudes asignadas o pendientes para un trabajador"""
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"error": "Error de conexión", "solicitudes": []}, status_code=500)
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        if id_trabajador:
+            cursor.execute("""
+                SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
+                       s.ciudad, s.departamento, s.fecha_solicitud,
+                       cat.nombre_categoria,
+                       c.nombre_completo as nombre_cliente
+                FROM solicitudes_servicio s
+                LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+                LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+                WHERE s.id_trabajador = %s OR s.estado = 'pendiente'
+                ORDER BY s.fecha_solicitud DESC
+                LIMIT 20
+            """, (id_trabajador,))
+        else:
+            cursor.execute("""
+                SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
+                       s.ciudad, s.departamento, s.fecha_solicitud,
+                       cat.nombre_categoria,
+                       c.nombre_completo as nombre_cliente
+                FROM solicitudes_servicio s
+                LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+                LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+                WHERE s.estado = 'pendiente'
+                ORDER BY s.fecha_solicitud DESC
+                LIMIT 20
+            """)
+        solicitudes = cursor.fetchall()
+        for s in solicitudes:
+            for k, v in s.items():
+                if hasattr(v, 'isoformat'):
+                    from datetime import timedelta
+                    s[k] = (v - timedelta(hours=5)).strftime('%Y-%m-%d %H:%M')
+                elif v is None:
+                    s[k] = ''
+        return JSONResponse({"solicitudes": solicitudes})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "solicitudes": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 @router.get("/registro", response_class=HTMLResponse)
 def mostrar_registro_trabajador(request: Request):
     return templates.TemplateResponse("trabajadores/registro_trabajador.html", {"request": request})
