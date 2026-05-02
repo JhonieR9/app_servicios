@@ -5,312 +5,370 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TalentHub</title>
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#6366f1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TalentHub">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        :root {
+            --purple: #6366f1;
+            --purple-dark: #4f46e5;
+            --cyan: #06b6d4;
+            --green: #10b981;
+            --dark: #0a0a0f;
+            --dark2: #111118;
+            --card: #16161f;
+            --border: rgba(255,255,255,0.08);
+            --text: #f1f5f9;
+            --muted: #64748b;
+        }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #0f172a;
+            font-family: 'Inter', sans-serif;
+            background: var(--dark);
+            color: var(--text);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
-        /* ── PANTALLA DE CARGA ── */
+        /* ── SPLASH ── */
         #splash {
-            position: fixed;
-            inset: 0;
-            background: #0f172a;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: fixed; inset: 0;
+            background: var(--dark);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
             z-index: 999;
-            transition: opacity 0.6s ease, transform 0.6s ease;
+            transition: opacity 0.8s ease, transform 0.8s ease;
         }
-        #splash.hide {
-            opacity: 0;
-            transform: scale(1.05);
-            pointer-events: none;
-        }
+        #splash.hide { opacity: 0; transform: scale(1.04); pointer-events: none; }
 
         .splash-logo {
-            font-size: 3.5rem;
-            font-weight: 800;
-            color: white;
-            letter-spacing: -1px;
-            margin-bottom: 8px;
+            font-size: 3rem; font-weight: 900;
+            letter-spacing: -2px; margin-bottom: 6px;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 50%, #67e8f9 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .splash-logo span { color: #3b82f6; }
-
-        .splash-sub {
-            color: #64748b;
-            font-size: 0.95rem;
-            margin-bottom: 48px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+        .splash-tagline {
+            font-size: 0.78rem; letter-spacing: 4px;
+            text-transform: uppercase; color: var(--muted);
+            margin-bottom: 52px;
         }
-
-        .splash-bar-wrap {
-            width: 200px;
-            height: 3px;
-            background: #1e293b;
-            border-radius: 99px;
-            overflow: hidden;
+        .splash-loader {
+            width: 180px; height: 2px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 99px; overflow: hidden;
         }
-        .splash-bar {
+        .splash-loader-bar {
             height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            background: linear-gradient(90deg, var(--purple), var(--cyan));
             border-radius: 99px;
-            animation: loadBar 1.8s ease forwards;
+            animation: load 2s cubic-bezier(.4,0,.2,1) forwards;
         }
-        @keyframes loadBar {
-            0%   { width: 0%; }
-            60%  { width: 75%; }
-            100% { width: 100%; }
+        @keyframes load { 0%{width:0%} 60%{width:70%} 100%{width:100%} }
+
+        /* ── MAIN ── */
+        #main { display: none; min-height: 100vh; }
+        #main.show { display: block; animation: fadeUp .6s ease; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+
+        /* Fondo con mesh gradient */
+        .bg-mesh {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99,102,241,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 80%, rgba(6,182,212,0.1) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 50% 50%, rgba(16,185,129,0.05) 0%, transparent 60%);
         }
 
-        /* ── PANTALLA PRINCIPAL ── */
-        #main {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            width: 100%;
-            padding: 24px;
-            animation: fadeUp 0.5s ease;
-        }
-        #main.show { display: flex; }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Fondo con círculos animados */
-        .bg-circles {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
-        .bg-circles span {
-            position: absolute;
-            border-radius: 50%;
-            opacity: 0.06;
-            animation: drift 10s ease-in-out infinite;
-        }
-        .bg-circles span:nth-child(1) { width: 500px; height: 500px; background: #3b82f6; top: -200px; right: -150px; animation-delay: 0s; }
-        .bg-circles span:nth-child(2) { width: 350px; height: 350px; background: #8b5cf6; bottom: -100px; left: -100px; animation-delay: 3s; }
-        .bg-circles span:nth-child(3) { width: 200px; height: 200px; background: #06b6d4; top: 40%; left: 10%; animation-delay: 6s; }
-        @keyframes drift {
-            0%, 100% { transform: translateY(0px); }
-            50%       { transform: translateY(20px); }
-        }
-
-        /* Logo */
-        .logo {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: white;
-            letter-spacing: -1px;
-            margin-bottom: 6px;
+        /* ── HERO ── */
+        .hero {
+            position: relative; z-index: 1;
+            padding: 60px 24px 40px;
             text-align: center;
-        }
-        .logo span { color: #3b82f6; }
-
-        .tagline {
-            color: #64748b;
-            font-size: 0.9rem;
-            text-align: center;
-            margin-bottom: 48px;
-            letter-spacing: 1px;
+            max-width: 480px; margin: 0 auto;
         }
 
-        /* Pregunta */
-        .question {
-            color: #94a3b8;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            text-align: center;
+        .badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: #a5b4fc;
+            padding: 6px 14px; border-radius: 99px;
+            font-size: 0.72rem; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+        .badge-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #6366f1;
+            animation: blink 2s infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        .hero-title {
+            font-size: clamp(2.2rem, 8vw, 3.2rem);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -2px;
+            margin-bottom: 16px;
+        }
+        .hero-title .gradient {
+            background: linear-gradient(135deg, #a5b4fc 0%, #67e8f9 50%, #6ee7b7 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        /* Tarjetas de selección */
+        .hero-sub {
+            font-size: 1rem; color: var(--muted);
+            line-height: 1.6; margin-bottom: 48px;
+            font-weight: 400;
+        }
+
+        /* ── CARDS ── */
         .cards {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-            max-width: 560px;
-            width: 100%;
+            position: relative; z-index: 1;
+            display: flex; flex-direction: column; gap: 14px;
+            max-width: 420px; margin: 0 auto;
+            padding: 0 20px 40px;
         }
 
         .role-card {
-            flex: 1;
-            min-width: 220px;
-            max-width: 260px;
-            background: #1e293b;
-            border: 2px solid #334155;
+            position: relative; overflow: hidden;
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: 20px;
-            padding: 32px 24px;
-            text-align: center;
+            padding: 24px;
+            text-decoration: none; color: var(--text);
+            display: flex; align-items: center; gap: 18px;
+            transition: all 0.3s cubic-bezier(.4,0,.2,1);
             cursor: pointer;
-            text-decoration: none;
-            transition: all 0.25s ease;
-            position: relative;
-            overflow: hidden;
         }
         .role-card::before {
             content: '';
-            position: absolute;
-            inset: 0;
+            position: absolute; inset: 0;
             opacity: 0;
-            transition: opacity 0.25s;
-            border-radius: 18px;
+            transition: opacity 0.3s;
+            border-radius: 20px;
         }
-        .role-card.worker::before  { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); }
-        .role-card.client::before  { background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.15)); }
-
+        .role-card.worker::before {
+            background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08));
+        }
+        .role-card.client::before {
+            background: linear-gradient(135deg, rgba(6,182,212,0.12), rgba(16,185,129,0.08));
+        }
         .role-card:hover {
-            border-color: transparent;
-            transform: translateY(-6px);
-            box-shadow: 0 20px 48px rgba(0,0,0,0.4);
+            transform: translateY(-4px) scale(1.01);
+            border-color: rgba(255,255,255,0.15);
+            box-shadow: 0 24px 48px rgba(0,0,0,0.4);
         }
-        .role-card.worker:hover { border-color: #3b82f6; box-shadow: 0 20px 48px rgba(59,130,246,0.25); }
-        .role-card.client:hover  { border-color: #10b981; box-shadow: 0 20px 48px rgba(16,185,129,0.25); }
+        .role-card.worker:hover { border-color: rgba(99,102,241,0.4); box-shadow: 0 24px 48px rgba(99,102,241,0.2); }
+        .role-card.client:hover  { border-color: rgba(6,182,212,0.4);  box-shadow: 0 24px 48px rgba(6,182,212,0.2); }
         .role-card:hover::before { opacity: 1; }
 
-        .role-icon {
-            width: 72px;
-            height: 72px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 20px;
+        .card-icon {
+            width: 56px; height: 56px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; flex-shrink: 0;
+            position: relative; z-index: 1;
         }
-        .worker .role-icon { background: linear-gradient(135deg, #1d4ed8, #7c3aed); }
-        .client  .role-icon { background: linear-gradient(135deg, #059669, #0891b2); }
+        .worker .card-icon { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+        .client  .card-icon { background: linear-gradient(135deg, #0891b2, #059669); }
 
-        .role-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 8px;
+        .card-text { flex: 1; position: relative; z-index: 1; }
+        .card-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 3px; }
+        .card-desc  { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+
+        .card-arrow {
+            position: relative; z-index: 1;
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; color: var(--muted);
+            transition: all 0.3s;
         }
-        .role-desc {
-            font-size: 0.82rem;
-            color: #64748b;
-            line-height: 1.5;
-            margin-bottom: 24px;
+        .role-card:hover .card-arrow {
+            background: rgba(255,255,255,0.12);
+            color: white; transform: translateX(3px);
         }
 
-        .role-btn {
-            display: inline-block;
-            padding: 10px 24px;
-            border-radius: 99px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: white;
-            border: none;
+        /* Stats */
+        .stats {
+            position: relative; z-index: 1;
+            display: flex; justify-content: center; gap: 32px;
+            padding: 0 24px 20px;
+            max-width: 420px; margin: 0 auto;
         }
-        .worker .role-btn { background: linear-gradient(135deg, #2563eb, #7c3aed); }
-        .client  .role-btn { background: linear-gradient(135deg, #059669, #0891b2); }
+        .stat { text-align: center; }
+        .stat-num {
+            font-size: 1.4rem; font-weight: 800;
+            background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .stat-label { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
 
         /* Admin link */
         .admin-link {
-            margin-top: 40px;
-            color: #334155;
-            font-size: 0.78rem;
-            text-decoration: none;
+            position: relative; z-index: 1;
+            display: block; text-align: center;
+            padding: 20px;
+            color: rgba(255,255,255,0.2);
+            text-decoration: none; font-size: 0.75rem;
             transition: color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
-        .admin-link:hover { color: #64748b; }
+        .admin-link:hover { color: rgba(255,255,255,0.4); }
 
-        @media (max-width: 480px) {
-            .cards { flex-direction: column; align-items: center; }
-            .role-card { max-width: 100%; width: 100%; }
+        /* Línea divisora con glow */
+        .divider {
+            position: relative; z-index: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(99,102,241,0.3), transparent);
+            margin: 0 24px 24px;
         }
+
+        /* Servicios populares */
+        .services-section {
+            position: relative; z-index: 1;
+            padding: 0 20px 32px;
+            max-width: 420px; margin: 0 auto;
+        }
+        .services-title {
+            font-size: 0.72rem; font-weight: 600;
+            color: var(--muted); letter-spacing: 2px;
+            text-transform: uppercase; margin-bottom: 14px;
+            text-align: center;
+        }
+        .services-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+        }
+        .service-chip {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 12px 6px;
+            text-align: center; cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .service-chip:hover {
+            border-color: rgba(99,102,241,0.4);
+            background: rgba(99,102,241,0.08);
+            transform: translateY(-2px);
+        }
+        .service-chip .s-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+        .service-chip .s-name { font-size: 0.65rem; color: var(--muted); font-weight: 500; }
     </style>
 </head>
 <body>
 
-<!-- Pantalla de carga -->
+<!-- Splash -->
 <div id="splash">
-    <div class="splash-logo">Talent<span>Hub</span></div>
-    <div class="splash-sub">ENCUENTRA EL PROFESIONAL QUE NECESITAS</div>
-    <div class="splash-bar-wrap">
-        <div class="splash-bar"></div>
-    </div>
+    <div class="splash-logo">TalentHub</div>
+    <div class="splash-tagline">Encuentra el profesional que necesitas</div>
+    <div class="splash-loader"><div class="splash-loader-bar"></div></div>
 </div>
 
-<!-- Pantalla principal -->
-<div class="bg-circles">
-    <span></span><span></span><span></span>
-</div>
-
+<!-- Main -->
+<div class="bg-mesh"></div>
 <div id="main">
-    <div class="logo">Talent<span>Hub</span></div>
-    <div class="tagline">ENCUENTRA EL PROFESIONAL QUE NECESITAS</div>
 
-    <div class="question">¿Cómo quieres ingresar?</div>
+    <!-- Hero -->
+    <div class="hero">
+        <div class="badge"><span class="badge-dot"></span> Disponible ahora</div>
+        <h1 class="hero-title">
+            Tu servicio,<br>
+            <span class="gradient">a un toque</span>
+        </h1>
+        <p class="hero-sub">
+            Conectamos clientes con profesionales verificados cerca de ti. Rápido, seguro y confiable.
+        </p>
+    </div>
 
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-num">350+</div>
+            <div class="stat-label">Municipios</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">15+</div>
+            <div class="stat-label">Servicios</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">24/7</div>
+            <div class="stat-label">Disponible</div>
+        </div>
+    </div>
+
+    <!-- Cards -->
     <div class="cards">
-        <!-- Trabajador -->
         <a href="/trabajador/login" class="role-card worker">
-            <div class="role-icon">💼</div>
-            <div class="role-title">Soy Trabajador</div>
-            <div class="role-desc">Registra tus habilidades y conecta con clientes que necesitan tus servicios</div>
-            <span class="role-btn">Registrarme</span>
+            <div class="card-icon">💼</div>
+            <div class="card-text">
+                <div class="card-title">Soy Trabajador</div>
+                <div class="card-desc">Registra tus servicios y recibe solicitudes</div>
+            </div>
+            <div class="card-arrow">→</div>
         </a>
 
-        <!-- Cliente -->
         <a href="/cliente/login" class="role-card client">
-            <div class="role-icon">🔍</div>
-            <div class="role-title">Soy Cliente</div>
-            <div class="role-desc">Encuentra profesionales cerca de ti para cualquier servicio que necesites</div>
-            <span class="role-btn">Buscar Servicio</span>
+            <div class="card-icon">🔍</div>
+            <div class="card-text">
+                <div class="card-title">Necesito un Servicio</div>
+                <div class="card-desc">Encuentra profesionales cerca de ti</div>
+            </div>
+            <div class="card-arrow">→</div>
         </a>
     </div>
 
-    <a href="/trabajador/admin/login" class="admin-link">
-        <i class="bi bi-shield-lock"></i> Acceso Administrador
-    </a>
+    <!-- Servicios populares -->
+    <div class="divider"></div>
+    <div class="services-section">
+        <div class="services-title">Servicios populares</div>
+        <div class="services-grid">
+            <a href="/cliente/solicitar_servicio" class="service-chip">
+                <span class="s-icon">🔧</span><span class="s-name">Plomería</span>
+            </a>
+            <a href="/cliente/solicitar_servicio" class="service-chip">
+                <span class="s-icon">⚡</span><span class="s-name">Eléctrico</span>
+            </a>
+            <a href="/cliente/solicitar_servicio" class="service-chip">
+                <span class="s-icon">🧹</span><span class="s-name">Limpieza</span>
+            </a>
+            <a href="/cliente/solicitar_servicio" class="service-chip">
+                <span class="s-icon">🎨</span><span class="s-name">Pintura</span>
+            </a>
+            <a href="/cliente/solicitar_servicio" class="service-chip">
+                <span class="s-icon">🪚</span><span class="s-name">Carpint.</span>
+            </a>
+            <a href="/cliente/solicitar_servicio" class="service-chip">
+                <span class="s-icon">🌱</span><span class="s-name">Jardín</span>
+            </a>
+            <a href="/cliente/solicitar_servicio" class="service-chip">
+                <span class="s-icon">🔑</span><span class="s-name">Cerraj.</span>
+            </a>
+            <a href="/cliente/solicitar_servicio" class="service-chip">
+                <span class="s-icon">📦</span><span class="s-name">Mudanza</span>
+            </a>
+        </div>
+    </div>
+
+    <a href="/trabajador/admin/login" class="admin-link">⚙ Acceso Administrador</a>
 </div>
 
 <script>
-    // Esperar a que termine la barra de carga y mostrar pantalla principal
     setTimeout(() => {
         document.getElementById('splash').classList.add('hide');
         setTimeout(() => {
             document.getElementById('splash').style.display = 'none';
             document.getElementById('main').classList.add('show');
-        }, 600);
-    }, 2000);
+        }, 800);
+    }, 2200);
 
-    // Registrar Service Worker para PWA
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/static/sw.js')
-            .then(() => console.log('PWA: Service Worker registrado'))
-            .catch(e => console.log('PWA: Error SW', e));
+        navigator.serviceWorker.register('/static/sw.js').catch(() => {});
     }
 </script>
-
 </body>
 </html>
