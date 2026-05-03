@@ -24,6 +24,10 @@ app.include_router(trabajadores.router)
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+@app.get("/instalar", response_class=HTMLResponse)
+def instalar(request: Request):
+    return templates.TemplateResponse("instalar.html", {"request": request})
+
 @app.get("/inicio", response_class=HTMLResponse)
 def mostrar_solo_formulario(request: Request):
     return templates.TemplateResponse("solo_formulario.html", {"request": request})
