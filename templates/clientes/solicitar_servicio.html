@@ -320,6 +320,95 @@
             .cat-grid { grid-template-columns: repeat(3, 1fr); }
             .row-2 { grid-template-columns: 1fr; }
         }
+
+        /* ── AUTOCOMPLETE MUNICIPIO ── */
+        .municipio-wrap { position: relative; }
+        .municipio-input-box {
+            display: flex; align-items: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background: white;
+            transition: border-color 0.2s;
+            overflow: hidden;
+        }
+        .municipio-input-box:focus-within { border-color: #667eea; }
+        .municipio-input-box i {
+            padding: 0 12px;
+            color: #94a3b8;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .municipio-input-box input {
+            flex: 1;
+            border: none !important;
+            outline: none !important;
+            padding: 12px 12px 12px 0 !important;
+            font-size: 0.9rem;
+            font-family: 'Lato', sans-serif;
+            color: #0f172a;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .municipio-clear {
+            padding: 0 12px;
+            color: #cbd5e1;
+            cursor: pointer;
+            font-size: 1rem;
+            display: none;
+        }
+        .municipio-clear.show { display: block; }
+
+        .municipio-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0; right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        .municipio-dropdown.open { display: block; }
+        .muni-item {
+            padding: 11px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.15s;
+            border-bottom: 1px solid #f8fafc;
+        }
+        .muni-item:last-child { border-bottom: none; }
+        .muni-item:hover, .muni-item.active { background: #f3f0ff; }
+        .muni-nombre {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .muni-nombre mark {
+            background: none;
+            color: #667eea;
+            font-weight: 700;
+        }
+        .muni-depto {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            font-weight: 500;
+            text-align: right;
+        }
+        .muni-empty {
+            padding: 16px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+        /* Scrollbar del dropdown */
+        .municipio-dropdown::-webkit-scrollbar { width: 4px; }
+        .municipio-dropdown::-webkit-scrollbar-track { background: transparent; }
+        .municipio-dropdown::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
     </style>
 </head>
 <body>
@@ -459,14 +548,29 @@
                 <label>Dirección completa *</label>
                 <input type="text" name="direccion_servicio" placeholder="Calle, número, barrio" required>
             </div>
-            <div class="row-2">
-                <div class="form-group">
-                    <label>Ciudad *</label>
-                    <input type="text" name="ciudad" placeholder="Ciudad" required>
+
+            <!-- Buscador de municipio -->
+            <div class="form-group">
+                <label>Ciudad y Departamento *</label>
+                <div class="municipio-wrap">
+                    <div class="municipio-input-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="municipioBuscar"
+                               placeholder="Escribe tu municipio..."
+                               autocomplete="off"
+                               oninput="filtrarMunicipios(this.value)"
+                               onfocus="filtrarMunicipios(this.value)">
+                        <span class="municipio-clear" id="municipioClear" onclick="limpiarMunicipio()">✕</span>
+                    </div>
+                    <div class="municipio-dropdown" id="municipioDropdown"></div>
                 </div>
-                <div class="form-group">
-                    <label>Departamento *</label>
-                    <input type="text" name="departamento" placeholder="Departamento" required>
+                <!-- Campos ocultos que se envían al backend -->
+                <input type="hidden" name="ciudad" id="ciudadHidden" required>
+                <input type="hidden" name="departamento" id="departamentoHidden" required>
+                <!-- Chip de confirmación -->
+                <div id="municipioConfirm" style="display:none; margin-top:8px; padding:8px 12px;
+                     background:#f3f0ff; border-radius:8px; font-size:0.82rem; color:#667eea; font-weight:600;">
+                    📍 <span id="municipioConfirmText"></span>
                 </div>
             </div>
         </div>
@@ -514,6 +618,161 @@
             }
         });
     }
+
+    // ── MUNICIPIOS DE COLOMBIA ──
+    const MUNICIPIOS = [
+        {n:'BOGOTÁ',d:'CUNDINAMARCA'},{n:'MEDELLÍN',d:'ANTIOQUIA'},{n:'CALI',d:'VALLE DEL CAUCA'},
+        {n:'BARRANQUILLA',d:'ATLÁNTICO'},{n:'CARTAGENA',d:'BOLÍVAR'},{n:'CÚCUTA',d:'NORTE DE SANTANDER'},
+        {n:'BUCARAMANGA',d:'SANTANDER'},{n:'PEREIRA',d:'RISARALDA'},{n:'MANIZALES',d:'CALDAS'},
+        {n:'IBAGUÉ',d:'TOLIMA'},{n:'SANTA MARTA',d:'MAGDALENA'},{n:'VILLAVICENCIO',d:'META'},
+        {n:'ARMENIA',d:'QUINDÍO'},{n:'VALLEDUPAR',d:'CESAR'},{n:'MONTERÍA',d:'CÓRDOBA'},
+        {n:'NEIVA',d:'HUILA'},{n:'PASTO',d:'NARIÑO'},{n:'POPAYÁN',d:'CAUCA'},
+        {n:'SINCELEJO',d:'SUCRE'},{n:'TUNJA',d:'BOYACÁ'},{n:'RIOHACHA',d:'LA GUAJIRA'},
+        {n:'QUIBDÓ',d:'CHOCÓ'},{n:'FLORENCIA',d:'CAQUETÁ'},{n:'MOCOA',d:'PUTUMAYO'},
+        {n:'YOPAL',d:'CASANARE'},{n:'ARAUCA',d:'ARAUCA'},{n:'MITÚ',d:'VAUPÉS'},
+        {n:'INÍRIDA',d:'GUAINÍA'},{n:'SAN JOSÉ DEL GUAVIARE',d:'GUAVIARE'},{n:'LETICIA',d:'AMAZONAS'},
+        {n:'PUERTO CARREÑO',d:'VICHADA'},{n:'BELLO',d:'ANTIOQUIA'},{n:'ITAGÜÍ',d:'ANTIOQUIA'},
+        {n:'ENVIGADO',d:'ANTIOQUIA'},{n:'APARTADÓ',d:'ANTIOQUIA'},{n:'TURBO',d:'ANTIOQUIA'},
+        {n:'RIONEGRO',d:'ANTIOQUIA'},{n:'SABANETA',d:'ANTIOQUIA'},{n:'COPACABANA',d:'ANTIOQUIA'},
+        {n:'GIRARDOTA',d:'ANTIOQUIA'},{n:'CALDAS',d:'ANTIOQUIA'},{n:'LA ESTRELLA',d:'ANTIOQUIA'},
+        {n:'SOACHA',d:'CUNDINAMARCA'},{n:'FACATATIVÁ',d:'CUNDINAMARCA'},{n:'ZIPAQUIRÁ',d:'CUNDINAMARCA'},
+        {n:'CHÍA',d:'CUNDINAMARCA'},{n:'MOSQUERA',d:'CUNDINAMARCA'},{n:'FUSAGASUGÁ',d:'CUNDINAMARCA'},
+        {n:'GIRARDOT',d:'CUNDINAMARCA'},{n:'MADRID',d:'CUNDINAMARCA'},{n:'FUNZA',d:'CUNDINAMARCA'},
+        {n:'CAJICÁ',d:'CUNDINAMARCA'},{n:'TOCANCIPÁ',d:'CUNDINAMARCA'},{n:'SOPÓ',d:'CUNDINAMARCA'},
+        {n:'PALMIRA',d:'VALLE DEL CAUCA'},{n:'BUENAVENTURA',d:'VALLE DEL CAUCA'},{n:'TULUÁ',d:'VALLE DEL CAUCA'},
+        {n:'BUGA',d:'VALLE DEL CAUCA'},{n:'CARTAGO',d:'VALLE DEL CAUCA'},{n:'FLORIDA',d:'VALLE DEL CAUCA'},
+        {n:'YUMBO',d:'VALLE DEL CAUCA'},{n:'JAMUNDÍ',d:'VALLE DEL CAUCA'},{n:'CANDELARIA',d:'VALLE DEL CAUCA'},
+        {n:'SOLEDAD',d:'ATLÁNTICO'},{n:'MALAMBO',d:'ATLÁNTICO'},{n:'SABANALARGA',d:'ATLÁNTICO'},
+        {n:'BARANOA',d:'ATLÁNTICO'},{n:'PUERTO COLOMBIA',d:'ATLÁNTICO'},
+        {n:'TURBACO',d:'BOLÍVAR'},{n:'MAGANGUÉ',d:'BOLÍVAR'},{n:'MOMPÓS',d:'BOLÍVAR'},
+        {n:'OCAÑA',d:'NORTE DE SANTANDER'},{n:'PAMPLONA',d:'NORTE DE SANTANDER'},{n:'VILLA DEL ROSARIO',d:'NORTE DE SANTANDER'},
+        {n:'FLORIDABLANCA',d:'SANTANDER'},{n:'GIRÓN',d:'SANTANDER'},{n:'PIEDECUESTA',d:'SANTANDER'},
+        {n:'BARRANCABERMEJA',d:'SANTANDER'},{n:'SAN GIL',d:'SANTANDER'},{n:'SOCORRO',d:'SANTANDER'},
+        {n:'DOSQUEBRADAS',d:'RISARALDA'},{n:'SANTA ROSA DE CABAL',d:'RISARALDA'},{n:'LA VIRGINIA',d:'RISARALDA'},
+        {n:'CHINCHINÁ',d:'CALDAS'},{n:'VILLAMARÍA',d:'CALDAS'},{n:'RIOSUCIO',d:'CALDAS'},
+        {n:'ESPINAL',d:'TOLIMA'},{n:'MELGAR',d:'TOLIMA'},{n:'HONDA',d:'TOLIMA'},{n:'LÍBANO',d:'TOLIMA'},
+        {n:'CIÉNAGA',d:'MAGDALENA'},{n:'FUNDACIÓN',d:'MAGDALENA'},{n:'PLATO',d:'MAGDALENA'},
+        {n:'ACACÍAS',d:'META'},{n:'GRANADA',d:'META'},{n:'PUERTO LÓPEZ',d:'META'},
+        {n:'CALARCÁ',d:'QUINDÍO'},{n:'MONTENEGRO',d:'QUINDÍO'},{n:'QUIMBAYA',d:'QUINDÍO'},
+        {n:'AGUACHICA',d:'CESAR'},{n:'BOSCONIA',d:'CESAR'},{n:'LA PAZ',d:'CESAR'},
+        {n:'CERETÉ',d:'CÓRDOBA'},{n:'LORICA',d:'CÓRDOBA'},{n:'SAHAGÚN',d:'CÓRDOBA'},
+        {n:'CAMPOALEGRE',d:'HUILA'},{n:'GARZÓN',d:'HUILA'},{n:'PITALITO',d:'HUILA'},
+        {n:'IPIALES',d:'NARIÑO'},{n:'TUMACO',d:'NARIÑO'},{n:'TÚQUERRES',d:'NARIÑO'},
+        {n:'SANTANDER DE QUILICHAO',d:'CAUCA'},{n:'PUERTO TEJADA',d:'CAUCA'},{n:'PATÍA',d:'CAUCA'},
+        {n:'COROZAL',d:'SUCRE'},{n:'SAMPUÉS',d:'SUCRE'},{n:'TOLÚ',d:'SUCRE'},
+        {n:'DUITAMA',d:'BOYACÁ'},{n:'SOGAMOSO',d:'BOYACÁ'},{n:'CHIQUINQUIRÁ',d:'BOYACÁ'},
+        {n:'MAICAO',d:'LA GUAJIRA'},{n:'FONSECA',d:'LA GUAJIRA'},{n:'SAN JUAN DEL CESAR',d:'LA GUAJIRA'},
+        {n:'APARTADÓ',d:'ANTIOQUIA'},{n:'CAUCASIA',d:'ANTIOQUIA'},{n:'YARUMAL',d:'ANTIOQUIA'},
+        {n:'PUERTO BERRÍO',d:'ANTIOQUIA'},{n:'MARINILLA',d:'ANTIOQUIA'},{n:'EL CARMEN DE VIBORAL',d:'ANTIOQUIA'},
+        {n:'CIÉNAGA DE ORO',d:'CÓRDOBA'},{n:'MONTELÍBANO',d:'CÓRDOBA'},{n:'PLANETA RICA',d:'CÓRDOBA'},
+        {n:'EL BANCO',d:'MAGDALENA'},{n:'ARACATACA',d:'MAGDALENA'},{n:'PIVIJAY',d:'MAGDALENA'},
+        {n:'VILLANUEVA',d:'CASANARE'},{n:'AGUAZUL',d:'CASANARE'},{n:'TAURAMENA',d:'CASANARE'},
+        {n:'SARAVENA',d:'ARAUCA'},{n:'ARAUQUITA',d:'ARAUCA'},{n:'TAME',d:'ARAUCA'},
+        {n:'SAN VICENTE DEL CAGUÁN',d:'CAQUETÁ'},{n:'BELÉN DE LOS ANDAQUÍES',d:'CAQUETÁ'},
+        {n:'ORITO',d:'PUTUMAYO'},{n:'PUERTO ASÍS',d:'PUTUMAYO'},{n:'SIBUNDOY',d:'PUTUMAYO'},
+        {n:'TUMACO',d:'NARIÑO'},{n:'BARBACOAS',d:'NARIÑO'},{n:'LA UNIÓN',d:'NARIÑO'},
+        {n:'ROLDANILLO',d:'VALLE DEL CAUCA'},{n:'ZARZAL',d:'VALLE DEL CAUCA'},{n:'SEVILLA',d:'VALLE DEL CAUCA'},
+        {n:'PRADERA',d:'VALLE DEL CAUCA'},{n:'DAGUA',d:'VALLE DEL CAUCA'},{n:'RESTREPO',d:'VALLE DEL CAUCA'},
+        {n:'LORICA',d:'CÓRDOBA'},{n:'TIERRALTA',d:'CÓRDOBA'},{n:'PUERTO ESCONDIDO',d:'CÓRDOBA'},
+        {n:'MANAURE',d:'LA GUAJIRA'},{n:'URIBIA',d:'LA GUAJIRA'},{n:'DIBULLA',d:'LA GUAJIRA'},
+        {n:'ARIGUANÍ',d:'MAGDALENA'},{n:'ZONA BANANERA',d:'MAGDALENA'},{n:'ALGARROBO',d:'MAGDALENA'},
+        {n:'CHAPARRAL',d:'TOLIMA'},{n:'MARIQUITA',d:'TOLIMA'},{n:'FRESNO',d:'TOLIMA'},
+        {n:'ANSERMA',d:'CALDAS'},{n:'AGUADAS',d:'CALDAS'},{n:'SALAMINA',d:'CALDAS'},
+        {n:'BELÉN DE UMBRÍA',d:'RISARALDA'},{n:'APÍA',d:'RISARALDA'},{n:'QUINCHÍA',d:'RISARALDA'},
+        {n:'FILANDIA',d:'QUINDÍO'},{n:'CIRCASIA',d:'QUINDÍO'},{n:'SALENTO',d:'QUINDÍO'},
+        {n:'VÉLEZ',d:'SANTANDER'},{n:'MÁLAGA',d:'SANTANDER'},{n:'BARBOSA',d:'SANTANDER'},
+        {n:'OCAÑA',d:'NORTE DE SANTANDER'},{n:'TIBÚ',d:'NORTE DE SANTANDER'},{n:'CONVENCIÓN',d:'NORTE DE SANTANDER'},
+        {n:'GACHETÁ',d:'CUNDINAMARCA'},{n:'VILLETA',d:'CUNDINAMARCA'},{n:'LA MESA',d:'CUNDINAMARCA'},
+        {n:'SILVANIA',d:'CUNDINAMARCA'},{n:'ARBELÁEZ',d:'CUNDINAMARCA'},{n:'PASCA',d:'CUNDINAMARCA'},
+        {n:'PAIPA',d:'BOYACÁ'},{n:'MONGUÍ',d:'BOYACÁ'},{n:'VILLA DE LEYVA',d:'BOYACÁ'},
+        {n:'GARAGOA',d:'BOYACÁ'},{n:'GUATEQUE',d:'BOYACÁ'},{n:'MIRAFLORES',d:'BOYACÁ'},
+        {n:'PASTO',d:'NARIÑO'},{n:'LA FLORIDA',d:'NARIÑO'},{n:'SAMANIEGO',d:'NARIÑO'},
+        {n:'TAMINANGO',d:'NARIÑO'},{n:'CUMBAL',d:'NARIÑO'},{n:'GUACHUCAL',d:'NARIÑO'},
+        {n:'INZÁ',d:'CAUCA'},{n:'SILVIA',d:'CAUCA'},{n:'PIENDAMÓ',d:'CAUCA'},
+        {n:'MIRANDA',d:'CAUCA'},{n:'CORINTO',d:'CAUCA'},{n:'CALOTO',d:'CAUCA'},
+        {n:'NEIVA',d:'HUILA'},{n:'ALGECIRAS',d:'HUILA'},{n:'PALERMO',d:'HUILA'},
+        {n:'AIPE',d:'HUILA'},{n:'HOBO',d:'HUILA'},{n:'GIGANTE',d:'HUILA'},
+        {n:'OVEJAS',d:'SUCRE'},{n:'MORROA',d:'SUCRE'},{n:'GALERAS',d:'SUCRE'},
+        {n:'MONTERÍA',d:'CÓRDOBA'},{n:'VALENCIA',d:'CÓRDOBA'},{n:'BUENAVISTA',d:'CÓRDOBA'},
+        {n:'FLORENCIA',d:'CAQUETÁ'},{n:'ALBANIA',d:'CAQUETÁ'},{n:'CURILLO',d:'CAQUETÁ'},
+        {n:'VILLAGARZÓN',d:'PUTUMAYO'},{n:'COLÓN',d:'PUTUMAYO'},{n:'SANTIAGO',d:'PUTUMAYO'},
+        {n:'MITÚ',d:'VAUPÉS'},{n:'CARURÚ',d:'VAUPÉS'},{n:'TARAIRA',d:'VAUPÉS'},
+        {n:'INÍRIDA',d:'GUAINÍA'},{n:'BARRANCO MINAS',d:'GUAINÍA'},
+        {n:'SAN JOSÉ DEL GUAVIARE',d:'GUAVIARE'},{n:'CALAMAR',d:'GUAVIARE'},{n:'EL RETORNO',d:'GUAVIARE'},
+        {n:'LETICIA',d:'AMAZONAS'},{n:'PUERTO NARIÑO',d:'AMAZONAS'},
+        {n:'PUERTO CARREÑO',d:'VICHADA'},{n:'LA PRIMAVERA',d:'VICHADA'},{n:'CUMARIBO',d:'VICHADA'}
+    ];
+
+    let activeIdx = -1;
+
+    function filtrarMunicipios(q) {
+        const dd = document.getElementById('municipioDropdown');
+        const clear = document.getElementById('municipioClear');
+        clear.classList.toggle('show', q.length > 0);
+
+        if (q.length < 2) { dd.classList.remove('open'); return; }
+
+        const norm = q.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const res = MUNICIPIOS.filter(m => {
+            const mn = m.n.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+            const md = m.d.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+            return mn.includes(norm) || md.includes(norm);
+        }).slice(0, 12);
+
+        if (!res.length) {
+            dd.innerHTML = '<div class="muni-empty">No se encontró el municipio</div>';
+        } else {
+            dd.innerHTML = res.map((m, i) => {
+                const hn = m.n.replace(new RegExp(q, 'gi'), match => `<mark>${match}</mark>`);
+                return `<div class="muni-item" data-idx="${i}" onclick="selMunicipio('${m.n}','${m.d}')">
+                    <span class="muni-nombre">${hn}</span>
+                    <span class="muni-depto">${m.d}</span>
+                </div>`;
+            }).join('');
+        }
+        dd.classList.add('open');
+        activeIdx = -1;
+    }
+
+    function selMunicipio(ciudad, depto) {
+        document.getElementById('municipioBuscar').value = ciudad;
+        document.getElementById('ciudadHidden').value = ciudad;
+        document.getElementById('departamentoHidden').value = depto;
+        document.getElementById('municipioDropdown').classList.remove('open');
+        document.getElementById('municipioClear').classList.add('show');
+        const confirm = document.getElementById('municipioConfirm');
+        document.getElementById('municipioConfirmText').textContent = ciudad + ', ' + depto;
+        confirm.style.display = 'block';
+    }
+
+    function limpiarMunicipio() {
+        document.getElementById('municipioBuscar').value = '';
+        document.getElementById('ciudadHidden').value = '';
+        document.getElementById('departamentoHidden').value = '';
+        document.getElementById('municipioDropdown').classList.remove('open');
+        document.getElementById('municipioClear').classList.remove('show');
+        document.getElementById('municipioConfirm').style.display = 'none';
+    }
+
+    // Cerrar dropdown al hacer click fuera
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.municipio-wrap')) {
+            document.getElementById('municipioDropdown').classList.remove('open');
+        }
+    });
+
+    // Navegación con teclado
+    document.getElementById('municipioBuscar').addEventListener('keydown', e => {
+        const items = document.querySelectorAll('.muni-item');
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') { activeIdx = Math.min(activeIdx+1, items.length-1); }
+        else if (e.key === 'ArrowUp') { activeIdx = Math.max(activeIdx-1, 0); }
+        else if (e.key === 'Enter' && activeIdx >= 0) {
+            e.preventDefault(); items[activeIdx].click(); return;
+        } else return;
+        items.forEach((it,i) => it.classList.toggle('active', i === activeIdx));
+        items[activeIdx]?.scrollIntoView({ block: 'nearest' });
+    });
 
     // Seleccionar "ahora" por defecto
     selUrgencia('ahora');
