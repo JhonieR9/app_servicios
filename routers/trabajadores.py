@@ -153,6 +153,88 @@ def obtener_perfil_completo(id: int = None):
 def mostrar_mi_perfil(request: Request):
     return templates.TemplateResponse("trabajadores/mi_perfil.html", {"request": request})
 
+@router.get("/stats/{id_trabajador}")
+def obtener_stats_trabajador(id_trabajador: int):
+    """Estadísticas del panel del trabajador"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+
+        # Total solicitudes recibidas
+        cursor.execute("""
+            SELECT COUNT(*) as total FROM solicitudes_servicio
+            WHERE id_trabajador = %s
+        """, (id_trabajador,))
+        total_solicitudes = cursor.fetchone()['total']
+
+        # Solicitudes pendientes
+        cursor.execute("""
+            SELECT COUNT(*) as total FROM solicitudes_servicio
+            WHERE id_trabajador = %s AND estado = 'pendiente'
+        """, (id_trabajador,))
+        pendientes = cursor.fetchone()['total']
+
+        # Solicitudes completadas
+        cursor.execute("""
+            SELECT COUNT(*) as total FROM solicitudes_servicio
+            WHERE id_trabajador = %s AND estado = 'completada'
+        """, (id_trabajador,))
+        completadas = cursor.fetchone()['total']
+
+        # Calificación promedio
+        cursor.execute("""
+            SELECT AVG(puntuacion) as promedio, COUNT(*) as total
+            FROM calificaciones
+            WHERE id_trabajador = %s
+        """, (id_trabajador,))
+        cal = cursor.fetchone()
+        calificacion = round(float(cal['promedio']), 1) if cal['promedio'] else 0
+        total_cal = cal['total']
+
+        # Estado de disponibilidad
+        cursor.execute("""
+            SELECT disponible FROM disponibilidad
+            WHERE id_persona = %s LIMIT 1
+        """, (id_trabajador,))
+        disp = cursor.fetchone()
+        disponible = bool(disp and disp['disponible']) if disp else False
+
+        # Últimas 3 solicitudes
+        cursor.execute("""
+            SELECT s.id_solicitud, s.titulo, s.estado, s.fecha_solicitud,
+                   c.nombre_completo as nombre_cliente,
+                   cat.nombre_categoria
+            FROM solicitudes_servicio s
+            LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+            LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+            WHERE s.id_trabajador = %s
+            ORDER BY s.fecha_solicitud DESC
+            LIMIT 3
+        """, (id_trabajador,))
+        ultimas = cursor.fetchall()
+        from datetime import timedelta
+        for u in ultimas:
+            for k, v in u.items():
+                if hasattr(v, 'isoformat'):
+                    u[k] = (v - timedelta(hours=5)).strftime('%d/%m %H:%M')
+                elif v is None:
+                    u[k] = ''
+
+        return JSONResponse({
+            "total_solicitudes": total_solicitudes,
+            "pendientes": pendientes,
+            "completadas": completadas,
+            "calificacion": calificacion,
+            "total_calificaciones": total_cal,
+            "disponible": disponible,
+            "ultimas_solicitudes": ultimas
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 @router.get("/registro", response_class=HTMLResponse)
 def mostrar_registro_trabajador(request: Request):
     return templates.TemplateResponse("trabajadores/registro_trabajador.html", {"request": request})

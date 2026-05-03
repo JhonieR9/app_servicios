@@ -6,6 +6,55 @@
     <title>Mi Panel - TalentHub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/talenthub.css">
+    <style>
+        /* Stats cards */
+        .stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px; }
+        .stat-card {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:16px;
+            display:flex; flex-direction:column; gap:4px;
+        }
+        .stat-card .stat-val {
+            font-size:1.6rem; font-weight:800; line-height:1;
+            background:linear-gradient(135deg,#a5b4fc,#67e8f9);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .stat-card .stat-label { font-size:0.72rem; color:var(--muted); font-weight:500; }
+        .stat-card .stat-icon { font-size:1.2rem; margin-bottom:4px; }
+
+        /* Disponibilidad card */
+        .disp-card {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:16px;
+            display:flex; align-items:center; justify-content:space-between;
+            margin-bottom:16px;
+        }
+        .disp-dot {
+            width:10px; height:10px; border-radius:50%;
+            background:var(--muted); margin-right:8px;
+            display:inline-block; transition:background .3s;
+        }
+        .disp-dot.active { background:var(--green); box-shadow:0 0 8px rgba(16,185,129,.5); }
+
+        /* Solicitudes recientes */
+        .solicitud-item {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius-sm); padding:12px 14px;
+            margin-bottom:8px; display:flex; align-items:center; gap:12px;
+        }
+        .solicitud-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .solicitud-dot.pendiente  { background:#f59e0b; }
+        .solicitud-dot.aceptada   { background:#3b82f6; }
+        .solicitud-dot.completada { background:#10b981; }
+        .solicitud-dot.cancelada  { background:#ef4444; }
+        .solicitud-info { flex:1; min-width:0; }
+        .solicitud-titulo { font-size:0.82rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .solicitud-meta { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+
+        /* Calificación */
+        .stars { color:#f59e0b; font-size:0.85rem; }
+        .rating-val { font-size:1.1rem; font-weight:700; color:var(--text); }
+    </style>
 </head>
 <body>
 <div class="th-bg"></div>
@@ -21,29 +70,66 @@
     </a>
 </div>
 
-<div class="th-content" style="position:relative;z-index:1;padding-top:24px">
+<div class="th-content" style="position:relative;z-index:1;padding-top:20px">
 
     <!-- Perfil -->
     <div class="th-profile-card">
         <div class="th-avatar th-avatar-purple">👤</div>
-        <div>
+        <div style="flex:1">
             <div style="font-weight:700;font-size:1rem" id="nombreTrabajador">Cargando...</div>
-            <div style="font-size:0.8rem;color:var(--muted);margin-top:2px" id="docTrabajador"></div>
-            <span class="th-badge th-badge-green" style="margin-top:6px">✅ Activo</span>
+            <div style="font-size:0.78rem;color:var(--muted);margin-top:2px" id="docTrabajador"></div>
+            <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
+                <span class="th-badge th-badge-green">✅ Activo</span>
+                <span id="ratingBadge" style="display:none" class="th-badge th-badge-yellow"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="th-section-title"><i class="bi bi-bar-chart-fill"></i> Resumen</div>
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-val" id="statTotal">-</div>
+            <div class="stat-label">Solicitudes totales</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-val" id="statPendientes">-</div>
+            <div class="stat-label">Pendientes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-val" id="statCompletadas">-</div>
+            <div class="stat-label">Completadas</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-val" id="statCalif">-</div>
+            <div class="stat-label">Calificación</div>
         </div>
     </div>
 
     <!-- Disponibilidad -->
     <div class="th-section-title"><i class="bi bi-circle-fill"></i> Estado</div>
-    <div class="th-card" style="padding:18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div>
-            <div style="font-weight:700;font-size:0.92rem">Disponibilidad</div>
-            <div style="font-size:0.78rem;color:var(--muted);margin-top:3px" id="estadoDisp">Activa para recibir solicitudes</div>
+    <div class="disp-card">
+        <div style="display:flex;align-items:center">
+            <span class="disp-dot" id="dispDot"></span>
+            <div>
+                <div style="font-weight:700;font-size:0.9rem" id="dispTitle">Desconectado</div>
+                <div style="font-size:0.75rem;color:var(--muted)" id="dispSub">Activa para recibir solicitudes</div>
+            </div>
         </div>
         <label class="th-toggle">
             <input type="checkbox" id="toggleDisp" onchange="cambiarDisponibilidad()">
             <span class="th-toggle-slider"></span>
         </label>
+    </div>
+
+    <!-- Últimas solicitudes -->
+    <div id="ultimasSolicitudesSection" style="display:none">
+        <div class="th-section-title"><i class="bi bi-clock-history"></i> Últimas solicitudes</div>
+        <div id="ultimasSolicitudes"></div>
     </div>
 
     <!-- Menú -->
@@ -74,6 +160,8 @@
 </div>
 
 <script>
+    var idTrabajador = null;
+
     async function cargarPerfil() {
         const params = new URLSearchParams(window.location.search);
         const nombre = params.get('nombre');
@@ -85,6 +173,7 @@
             document.getElementById('docTrabajador').textContent = 'Doc: ' + (doc || '');
             document.getElementById('bienvenida').textContent = 'Bienvenido, ' + nombre.split(' ')[0];
             if (id) {
+                idTrabajador = id;
                 localStorage.setItem('id_trabajador', id);
                 const linkUbicacion = document.getElementById('link-ubicacion');
                 if (linkUbicacion) linkUbicacion.href = '/trabajador/disponibilidad?id=' + id;
@@ -92,9 +181,18 @@
                 if (linkSolicitudes) linkSolicitudes.href = '/trabajador/solicitudes_pendientes_panel?id=' + id;
                 const linkPerfil = document.getElementById('link-perfil');
                 if (linkPerfil) linkPerfil.href = '/trabajador/mi_perfil_page?id=' + id;
+                cargarStats(id);
             }
             return;
         }
+
+        // Intentar desde localStorage
+        const idLocal = localStorage.getItem('id_trabajador');
+        if (idLocal) {
+            idTrabajador = idLocal;
+            cargarStats(idLocal);
+        }
+
         try {
             const res = await fetch('/trabajador/mi-perfil', { credentials: 'include' });
             if (!res.ok) { document.getElementById('nombreTrabajador').textContent = 'Trabajador'; return; }
@@ -102,14 +200,63 @@
             document.getElementById('nombreTrabajador').textContent = data.nombre_completo || 'Trabajador';
             document.getElementById('docTrabajador').textContent = 'Doc: ' + (data.numero_documento || '');
             document.getElementById('bienvenida').textContent = 'Bienvenido, ' + (data.nombre_completo || '').split(' ')[0];
+            if (data.id_persona) {
+                idTrabajador = data.id_persona;
+                cargarStats(data.id_persona);
+            }
         } catch(e) { document.getElementById('nombreTrabajador').textContent = 'Trabajador'; }
+    }
+
+    async function cargarStats(id) {
+        try {
+            const res = await fetch('/trabajador/stats/' + id);
+            if (!res.ok) return;
+            const d = await res.json();
+
+            document.getElementById('statTotal').textContent = d.total_solicitudes || 0;
+            document.getElementById('statPendientes').textContent = d.pendientes || 0;
+            document.getElementById('statCompletadas').textContent = d.completadas || 0;
+            document.getElementById('statCalif').textContent = d.calificacion > 0 ? d.calificacion + '★' : '-';
+
+            if (d.calificacion > 0) {
+                const badge = document.getElementById('ratingBadge');
+                badge.textContent = '★ ' + d.calificacion;
+                badge.style.display = 'inline-flex';
+            }
+
+            // Disponibilidad
+            const dot = document.getElementById('dispDot');
+            const toggle = document.getElementById('toggleDisp');
+            if (d.disponible) {
+                dot.classList.add('active');
+                toggle.checked = true;
+                document.getElementById('dispTitle').textContent = 'Disponible';
+                document.getElementById('dispSub').textContent = '🟢 Visible para clientes cercanos';
+            }
+
+            // Últimas solicitudes
+            if (d.ultimas_solicitudes && d.ultimas_solicitudes.length > 0) {
+                document.getElementById('ultimasSolicitudesSection').style.display = 'block';
+                document.getElementById('ultimasSolicitudes').innerHTML = d.ultimas_solicitudes.map(s => `
+                    <div class="solicitud-item">
+                        <div class="solicitud-dot ${s.estado}"></div>
+                        <div class="solicitud-info">
+                            <div class="solicitud-titulo">${s.titulo || s.nombre_categoria || 'Solicitud'}</div>
+                            <div class="solicitud-meta">${s.nombre_cliente || 'Cliente'} · ${s.fecha_solicitud || ''}</div>
+                        </div>
+                        <span style="font-size:0.7rem;color:var(--muted);text-transform:capitalize">${s.estado}</span>
+                    </div>
+                `).join('');
+            }
+        } catch(e) { console.log('Stats no disponibles'); }
     }
 
     function cambiarDisponibilidad() {
         const activo = document.getElementById('toggleDisp').checked;
-        document.getElementById('estadoDisp').textContent = activo
-            ? '🟢 Visible para clientes cercanos'
-            : 'Activa para recibir solicitudes';
+        const dot = document.getElementById('dispDot');
+        dot.classList.toggle('active', activo);
+        document.getElementById('dispTitle').textContent = activo ? 'Disponible' : 'Desconectado';
+        document.getElementById('dispSub').textContent = activo ? '🟢 Visible para clientes cercanos' : 'Activa para recibir solicitudes';
     }
 
     cargarPerfil();
