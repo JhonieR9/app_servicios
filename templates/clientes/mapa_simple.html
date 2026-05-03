@@ -6,10 +6,12 @@
     <title>Mapa de Trabajadores - TalentHub</title>
     <link rel="icon" href="data:,">
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; width: 100%; overflow: hidden; }
-        body { font-family: 'Segoe UI', sans-serif; }
+        body { font-family: 'Lato', sans-serif; }
         #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
         /* Botón volver */
@@ -78,14 +80,16 @@
         }
         .btn-search {
             padding: 10px 20px;
-            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.88rem;
             white-space: nowrap;
+            font-family: 'Lato', sans-serif;
+            letter-spacing: 0.5px;
         }
         .btn-search:hover { opacity: 0.9; }
 
@@ -101,14 +105,16 @@
         }
         .popup-nombre {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 1.05rem;
             color: #1e293b;
             margin-bottom: 8px;
+            font-family: 'Playfair Display', serif;
         }
         .popup-info {
             font-size: 0.82rem;
             color: #475569;
             margin-bottom: 4px;
+            font-family: 'Lato', sans-serif;
         }
         .popup-btns {
             display: flex;
@@ -122,13 +128,15 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.82rem;
             color: white;
+            font-family: 'Lato', sans-serif;
+            letter-spacing: 0.5px;
         }
-        .popup-btn.solicitar { background: #1e3a8a; }
+        .popup-btn.solicitar { background: linear-gradient(135deg, #667eea, #764ba2); }
         .popup-btn.whatsapp  { background: #25D366; }
-        .popup-btn.llamar    { background: #2563eb; }
+        .popup-btn.llamar    { background: linear-gradient(135deg, #667eea, #764ba2); }
 
         /* Marcador usuario */
         .user-marker {
@@ -177,15 +185,14 @@
                 <option value="Carpintería">Carpintería</option>
                 <option value="Pintura">Pintura</option>
                 <option value="Jardinería">Jardinería</option>
-                <option value="Cerrajería">Cerrajería</option>
-                <option value="Mudanza">Mudanza</option>
                 <option value="Mecánica">Mecánica</option>
                 <option value="Tecnología">Tecnología</option>
+                <option value="Construcción">Construcción</option>
+                <option value="Educación">Educación</option>
                 <option value="Salud">Salud</option>
                 <option value="Belleza">Belleza</option>
                 <option value="Gastronomía">Gastronomía</option>
                 <option value="Transporte">Transporte</option>
-                <option value="Construcción">Construcción</option>
             </select>
         </div>
         <div>
