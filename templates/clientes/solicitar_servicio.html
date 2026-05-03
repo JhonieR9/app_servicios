@@ -198,8 +198,110 @@
         }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-        /* Chip de categoría seleccionada */
-        .selected-chip {
+        /* Urgencia selector */
+        .urgencia-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+        .urgencia-btn {
+            position: relative;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 18px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+            background: white;
+            overflow: hidden;
+        }
+        .urgencia-btn::before {
+            content: '';
+            position: absolute; inset: 0;
+            opacity: 0;
+            transition: opacity 0.25s;
+            border-radius: 14px;
+        }
+        .urgencia-btn.ahora::before {
+            background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(251,146,60,0.08));
+        }
+        .urgencia-btn.programar::before {
+            background: linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.08));
+        }
+        .urgencia-btn.selected-ahora {
+            border-color: #ef4444;
+            box-shadow: 0 6px 20px rgba(239,68,68,0.2);
+            transform: translateY(-3px);
+        }
+        .urgencia-btn.selected-ahora::before { opacity: 1; }
+        .urgencia-btn.selected-programar {
+            border-color: #667eea;
+            box-shadow: 0 6px 20px rgba(102,126,234,0.2);
+            transform: translateY(-3px);
+        }
+        .urgencia-btn.selected-programar::before { opacity: 1; }
+
+        .urgencia-emoji {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 8px;
+            position: relative; z-index: 1;
+        }
+        .urgencia-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+            display: block;
+            margin-bottom: 4px;
+            position: relative; z-index: 1;
+        }
+        .urgencia-sub {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            font-family: 'Lato', sans-serif;
+            position: relative; z-index: 1;
+            line-height: 1.3;
+        }
+        .urgencia-btn.selected-ahora .urgencia-title { color: #ef4444; }
+        .urgencia-btn.selected-programar .urgencia-title { color: #667eea; }
+        .urgencia-btn.selected-ahora .urgencia-sub { color: #f87171; }
+        .urgencia-btn.selected-programar .urgencia-sub { color: #818cf8; }
+
+        /* Badge "Recomendado" */
+        .badge-rec {
+            position: absolute;
+            top: 10px; right: 10px;
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 99px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-family: 'Lato', sans-serif;
+        }
+
+        /* Campo fecha oculto */
+        .fecha-wrap {
+            display: none;
+            margin-top: 14px;
+            animation: slideDown 0.3s ease;
+        }
+        .fecha-wrap.show { display: block; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Pulse en botón ahora */
+        @keyframes pulse-red {
+            0%,100% { box-shadow: 0 6px 20px rgba(239,68,68,0.2); }
+            50%      { box-shadow: 0 6px 28px rgba(239,68,68,0.4); }
+        }
+        .urgencia-btn.selected-ahora { animation: pulse-red 2s ease infinite; }
             display: none;
             align-items: center;
             gap: 6px;
@@ -324,9 +426,27 @@
                 <label>Descripción detallada *</label>
                 <textarea name="descripcion" placeholder="Describe el problema o trabajo que necesitas con el mayor detalle posible..." required></textarea>
             </div>
+
+            <!-- Urgencia -->
             <div class="form-group">
-                <label>Fecha programada (opcional)</label>
-                <input type="datetime-local" name="fecha_programada">
+                <label>¿Cuándo lo necesitas? *</label>
+                <div class="urgencia-wrap">
+                    <div class="urgencia-btn ahora" id="btnAhora" onclick="selUrgencia('ahora')">
+                        <span class="badge-rec">Popular</span>
+                        <span class="urgencia-emoji">⚡</span>
+                        <span class="urgencia-title">Lo necesito ahora</span>
+                        <span class="urgencia-sub">Conectamos contigo de inmediato</span>
+                    </div>
+                    <div class="urgencia-btn programar" id="btnProgramar" onclick="selUrgencia('programar')">
+                        <span class="urgencia-emoji">📅</span>
+                        <span class="urgencia-title">Programar</span>
+                        <span class="urgencia-sub">Elige fecha y hora exacta</span>
+                    </div>
+                </div>
+                <div class="fecha-wrap" id="fechaWrap">
+                    <input type="datetime-local" name="fecha_programada" id="fechaInput">
+                </div>
+                <input type="hidden" name="urgencia" id="urgenciaHidden" value="">
             </div>
         </div>
 
@@ -376,7 +496,6 @@
             <i class="bi bi-search"></i> Buscar Profesionales
         </button>
     </form>
-
 </div>
 
 <script>
@@ -389,12 +508,41 @@
     if (trabajadorId) document.getElementById('id_trabajador').value = trabajadorId;
 
     if (catURL) {
-        // Buscar y seleccionar la tarjeta correspondiente
         document.querySelectorAll('.cat-item').forEach(item => {
             if (item.querySelector('.name').textContent === catURL) {
                 item.click();
             }
         });
+    }
+
+    // Seleccionar "ahora" por defecto
+    selUrgencia('ahora');
+
+    function selUrgencia(tipo) {
+        const btnAhora    = document.getElementById('btnAhora');
+        const btnProgramar = document.getElementById('btnProgramar');
+        const fechaWrap   = document.getElementById('fechaWrap');
+        const fechaInput  = document.getElementById('fechaInput');
+        const hidden      = document.getElementById('urgenciaHidden');
+        const submitBtn   = document.getElementById('btnSubmit');
+
+        btnAhora.classList.remove('selected-ahora');
+        btnProgramar.classList.remove('selected-programar');
+
+        if (tipo === 'ahora') {
+            btnAhora.classList.add('selected-ahora');
+            fechaWrap.classList.remove('show');
+            fechaInput.removeAttribute('required');
+            fechaInput.value = '';
+            hidden.value = 'ahora';
+            submitBtn.innerHTML = '⚡ Buscar Profesional Ahora';
+        } else {
+            btnProgramar.classList.add('selected-programar');
+            fechaWrap.classList.add('show');
+            fechaInput.setAttribute('required', 'required');
+            hidden.value = 'programar';
+            submitBtn.innerHTML = '📅 Programar Servicio';
+        }
     }
 
     function selCat(el, id, nombre) {
@@ -418,7 +566,15 @@
             return;
         }
 
+        if (!document.getElementById('urgenciaHidden').value) {
+            alertEl.className = 'alert error';
+            alertEl.textContent = '⚠️ Indica cuándo necesitas el servicio';
+            alertEl.style.display = 'block';
+            return;
+        }
+
         const btn = document.getElementById('btnSubmit');
+        const textoOriginal = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Buscando...';
 
@@ -437,7 +593,6 @@
                 alertEl.textContent = '✅ ' + (data.mensaje || 'Solicitud enviada. Buscando profesionales...');
                 alertEl.style.display = 'block';
 
-                // Redirigir al mapa con la categoría seleccionada
                 const catNombre = document.getElementById('selectedName').textContent;
                 setTimeout(() => {
                     window.location.href = `/cliente/mapa?categoria=${encodeURIComponent(catNombre)}`;
@@ -447,10 +602,9 @@
                 alertEl.textContent = '❌ ' + (data.error || 'No se pudo enviar la solicitud');
                 alertEl.style.display = 'block';
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-search"></i> Buscar Profesionales';
+                btn.innerHTML = textoOriginal;
             }
         } catch (err) {
-            // Si falla el endpoint, igual redirigir al mapa
             const catNombre = document.getElementById('selectedName').textContent;
             window.location.href = `/cliente/mapa${catNombre ? '?categoria=' + encodeURIComponent(catNombre) : ''}`;
         }
