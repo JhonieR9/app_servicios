@@ -3,131 +3,453 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Solicitudes - TalentHub</title>
+    <title>Solicitudes - TalentHub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI',sans-serif; background:#f0f2f5; min-height:100vh; }
+        body { font-family:'Lato',sans-serif; background:#f0f2f5; min-height:100vh; padding-bottom:40px; }
+
+        /* TOP BAR */
         .topbar {
-            background: linear-gradient(135deg, #1e3a8a, #2563eb);
-            color: white; padding: 16px 20px;
-            display: flex; align-items: center; gap: 12px;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            color:white; padding:16px 20px;
+            display:flex; align-items:center; gap:12px;
+            position:sticky; top:0; z-index:10;
+            box-shadow:0 4px 16px rgba(102,126,234,0.3);
         }
         .back-btn {
             width:36px;height:36px;border-radius:50%;
             background:rgba(255,255,255,0.2);border:none;
             color:white;font-size:1rem;cursor:pointer;
             display:flex;align-items:center;justify-content:center;
-            text-decoration:none;
+            text-decoration:none; flex-shrink:0;
         }
-        .topbar h1 { font-size:1.1rem;font-weight:700; }
-        .content { max-width:600px;margin:0 auto;padding:20px 16px; }
+        .topbar-title { font-family:'Playfair Display',serif; font-size:1.15rem;font-weight:700; }
+        .topbar-sub { font-size:0.75rem;color:rgba(255,255,255,0.75);margin-top:1px; }
 
+        /* TABS */
+        .tabs {
+            display:flex; background:white;
+            border-bottom:2px solid #f0f2f5;
+            position:sticky; top:68px; z-index:9;
+        }
+        .tab-btn {
+            flex:1; padding:13px 8px;
+            background:none; border:none; border-bottom:3px solid transparent;
+            font-family:'Lato',sans-serif; font-size:0.82rem; font-weight:700;
+            color:#94a3b8; cursor:pointer; margin-bottom:-2px;
+            transition:all 0.2s; display:flex; align-items:center;
+            justify-content:center; gap:6px;
+        }
+        .tab-btn.active { color:#667eea; border-bottom-color:#667eea; }
+        .tab-badge {
+            background:#ef4444; color:white;
+            border-radius:99px; padding:1px 7px;
+            font-size:0.68rem; font-weight:700;
+            display:none;
+        }
+        .tab-badge.show { display:inline; }
+
+        /* CONTENT */
+        .content { max-width:600px;margin:0 auto;padding:16px; }
+
+        /* EMPTY */
         .empty {
             text-align:center;padding:60px 20px;
-            background:white;border-radius:16px;
+            background:white;border-radius:20px;
             box-shadow:0 2px 8px rgba(0,0,0,0.06);
         }
-        .empty i { font-size:3rem;color:#cbd5e1;display:block;margin-bottom:12px; }
+        .empty-icon { font-size:3rem;margin-bottom:12px; }
         .empty p { color:#64748b;font-size:0.9rem; }
+        .empty p.sub { font-size:0.78rem;margin-top:6px;color:#94a3b8; }
 
-        .solicitud-card {
-            background:white;border-radius:14px;
-            padding:18px;margin-bottom:12px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.06);
+        /* SOLICITUD CARD PENDIENTE — grande, tipo Uber */
+        .card-pendiente {
+            background:white; border-radius:20px;
+            margin-bottom:14px; overflow:hidden;
+            box-shadow:0 4px 20px rgba(0,0,0,0.1);
+            border:2px solid transparent;
+            animation:cardIn 0.4s ease;
+            transition:border-color 0.3s;
         }
-        .solicitud-header {
-            display:flex;justify-content:space-between;align-items:flex-start;
+        .card-pendiente.nueva { border-color:#667eea; animation:cardIn 0.4s ease, glowPulse 2s ease 3; }
+        @keyframes cardIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes glowPulse { 0%,100%{box-shadow:0 4px 20px rgba(0,0,0,0.1)} 50%{box-shadow:0 4px 32px rgba(102,126,234,0.4)} }
+
+        .card-header {
+            background:linear-gradient(135deg,#f3f0ff,#ede9fe);
+            padding:16px 18px 12px;
+            display:flex; align-items:center; justify-content:space-between;
+        }
+        .card-cat {
+            display:flex; align-items:center; gap:10px;
+        }
+        .cat-emoji { font-size:1.8rem; }
+        .cat-nombre { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:#0f172a; }
+        .cat-tipo { font-size:0.75rem; color:#7c3aed; font-weight:600; margin-top:1px; }
+
+        /* Contador regresivo */
+        .timer-wrap { text-align:right; }
+        .timer-num {
+            font-size:1.4rem; font-weight:800; color:#667eea;
+            font-family:'Playfair Display',serif; line-height:1;
+        }
+        .timer-num.urgente { color:#ef4444; animation:timerBlink 0.5s infinite; }
+        @keyframes timerBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .timer-label { font-size:0.65rem; color:#94a3b8; font-weight:600; text-transform:uppercase; }
+
+        .card-body { padding:14px 18px; }
+        .info-row {
+            display:flex; align-items:center; gap:10px;
             margin-bottom:10px;
         }
-        .solicitud-titulo { font-weight:700;color:#0f172a;font-size:0.95rem; }
-        .badge-estado {
-            padding:4px 10px;border-radius:99px;font-size:0.75rem;font-weight:600;
+        .info-icon-box {
+            width:32px;height:32px;border-radius:8px;
+            background:#f8fafc; display:flex; align-items:center;
+            justify-content:center; font-size:0.9rem; flex-shrink:0;
+            color:#667eea;
         }
-        .badge-pendiente { background:#fef3c7;color:#d97706; }
-        .badge-aceptada  { background:#dbeafe;color:#2563eb; }
-        .badge-completada{ background:#dcfce7;color:#16a34a; }
-        .solicitud-info { font-size:0.82rem;color:#64748b;margin-bottom:4px; }
+        .info-label { font-size:0.72rem; color:#94a3b8; font-weight:600; }
+        .info-val { font-size:0.88rem; color:#0f172a; font-weight:600; margin-top:1px; }
+
+        /* Urgencia badge */
+        .urgencia-badge {
+            display:inline-flex; align-items:center; gap:5px;
+            padding:5px 12px; border-radius:99px;
+            font-size:0.75rem; font-weight:700; margin-bottom:12px;
+        }
+        .urgencia-badge.ahora { background:#fef2f2; color:#ef4444; border:1px solid #fecaca; }
+        .urgencia-badge.programar { background:#f3f0ff; color:#667eea; border:1px solid #c4b5fd; }
+
+        /* Botones acción */
+        .card-actions {
+            display:grid; grid-template-columns:1fr 1fr;
+            gap:10px; padding:0 18px 18px;
+        }
+        .btn-rechazar {
+            padding:13px; border:2px solid #fee2e2;
+            background:white; color:#dc2626;
+            border-radius:14px; font-weight:700; font-size:0.88rem;
+            cursor:pointer; font-family:'Lato',sans-serif;
+            transition:all 0.2s; display:flex; align-items:center;
+            justify-content:center; gap:6px;
+        }
+        .btn-rechazar:hover { background:#fef2f2; }
         .btn-aceptar {
-            width:100%;padding:11px;margin-top:12px;
-            background:linear-gradient(135deg,#1e3a8a,#2563eb);
-            color:white;border:none;border-radius:10px;
-            font-weight:600;font-size:0.88rem;cursor:pointer;
+            padding:13px;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            color:white; border:none; border-radius:14px;
+            font-weight:700; font-size:0.88rem; cursor:pointer;
+            font-family:'Lato',sans-serif;
+            box-shadow:0 4px 14px rgba(102,126,234,0.35);
+            transition:all 0.2s; display:flex; align-items:center;
+            justify-content:center; gap:6px;
         }
-        .btn-aceptar:hover { opacity:0.9; }
+        .btn-aceptar:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(102,126,234,0.45); }
+        .btn-aceptar:disabled, .btn-rechazar:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+        /* CARD ACEPTADA / HISTORIAL */
+        .card-historial {
+            background:white; border-radius:16px;
+            padding:16px 18px; margin-bottom:10px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.06);
+            display:flex; align-items:center; gap:14px;
+        }
+        .hist-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+        .hist-dot.aceptada   { background:#3b82f6; }
+        .hist-dot.en_proceso { background:#10b981; }
+        .hist-dot.completada { background:#667eea; }
+        .hist-dot.cancelada  { background:#ef4444; }
+        .hist-info { flex:1; min-width:0; }
+        .hist-titulo { font-size:0.88rem;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+        .hist-meta { font-size:0.75rem;color:#94a3b8;margin-top:2px; }
+        .hist-badge { padding:4px 10px;border-radius:99px;font-size:0.72rem;font-weight:700;flex-shrink:0; }
+        .hist-badge.aceptada   { background:#dbeafe;color:#2563eb; }
+        .hist-badge.en_proceso { background:#dcfce7;color:#16a34a; }
+        .hist-badge.completada { background:#f3f0ff;color:#667eea; }
+        .hist-badge.cancelada  { background:#fee2e2;color:#dc2626; }
+
+        /* Sección título */
+        .section-label {
+            font-size:0.72rem;font-weight:700;color:#94a3b8;
+            text-transform:uppercase;letter-spacing:1.5px;
+            margin:16px 0 10px; display:flex; align-items:center; gap:8px;
+        }
+        .section-label::after { content:'';flex:1;height:1px;background:#e2e8f0; }
     </style>
 </head>
 <body>
+
 <div class="topbar">
     <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
-    <h1>📋 Mis Solicitudes</h1>
-</div>
-
-<div class="content" id="contenido">
-    <div class="empty">
-        <i class="bi bi-hourglass-split"></i>
-        <p>Cargando solicitudes...</p>
+    <div>
+        <div class="topbar-title">Solicitudes</div>
+        <div class="topbar-sub" id="topSub">Cargando...</div>
     </div>
 </div>
 
-<script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const idTrabajador = urlParams.get('id') || localStorage.getItem('id_trabajador') || 1;
+<!-- TABS -->
+<div class="tabs">
+    <button class="tab-btn active" id="tabPendientes" onclick="mostrarTab('pendientes')">
+        <i class="bi bi-clock"></i> Pendientes
+        <span class="tab-badge" id="badgePendientes"></span>
+    </button>
+    <button class="tab-btn" id="tabActivas" onclick="mostrarTab('activas')">
+        <i class="bi bi-tools"></i> Activas
+        <span class="tab-badge" id="badgeActivas"></span>
+    </button>
+    <button class="tab-btn" id="tabHistorial" onclick="mostrarTab('historial')">
+        <i class="bi bi-clock-history"></i> Historial
+    </button>
+</div>
 
+<div class="content">
+    <div id="contenidoPendientes"></div>
+    <div id="contenidoActivas" style="display:none"></div>
+    <div id="contenidoHistorial" style="display:none"></div>
+</div>
+
+<script>
+    const urlParams    = new URLSearchParams(window.location.search);
+    const idTrabajador = urlParams.get('id') || localStorage.getItem('id_trabajador') || 1;
+    let tabActual      = 'pendientes';
+    let ultimasIds     = new Set();
+    let primeraCarga   = true;
+    let timers         = {};
+
+    // ── EMOJIS POR CATEGORÍA ──
+    const CAT_EMOJI = {
+        'Plomería':'🔧','Electricidad':'⚡','Limpieza':'🧹','Carpintería':'🪚',
+        'Pintura':'🎨','Jardinería':'🌱','Mecánica':'🔩','Tecnología':'💻',
+        'Construcción':'🏗️','Educación':'📚','Salud':'💊','Belleza':'💇',
+        'Gastronomía':'🍳','Transporte':'🚚'
+    };
+
+    function mostrarTab(tab) {
+        tabActual = tab;
+        ['pendientes','activas','historial'].forEach(t => {
+            document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+            document.getElementById('contenido' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? 'block' : 'none';
+        });
+    }
+
+    // ── CONTADOR REGRESIVO ──
+    function iniciarTimer(id, segundos) {
+        if (timers[id]) clearInterval(timers[id]);
+        const el = document.getElementById('timer-' + id);
+        if (!el) return;
+        let restante = segundos;
+        function tick() {
+            if (!document.getElementById('timer-' + id)) { clearInterval(timers[id]); return; }
+            const mins = Math.floor(restante / 60);
+            const segs = restante % 60;
+            el.textContent = mins > 0 ? `${mins}:${String(segs).padStart(2,'0')}` : `${segs}s`;
+            el.classList.toggle('urgente', restante <= 30);
+            if (restante <= 0) { clearInterval(timers[id]); el.textContent = '—'; }
+            restante--;
+        }
+        tick();
+        timers[id] = setInterval(tick, 1000);
+    }
+
+    // ── RENDER SOLICITUD PENDIENTE ──
+    function renderPendiente(s, esNueva) {
+        const emoji = CAT_EMOJI[s.nombre_categoria] || '🔧';
+        const urgencia = s.urgencia === 'ahora'
+            ? '<span class="urgencia-badge ahora">⚡ Lo necesita ahora</span>'
+            : '<span class="urgencia-badge programar">📅 Programado</span>';
+        return `
+        <div class="card-pendiente${esNueva ? ' nueva' : ''}" id="card-${s.id_solicitud}">
+            <div class="card-header">
+                <div class="card-cat">
+                    <span class="cat-emoji">${emoji}</span>
+                    <div>
+                        <div class="cat-nombre">${s.nombre_categoria || 'Servicio'}</div>
+                        <div class="cat-tipo">${s.titulo || ''}</div>
+                    </div>
+                </div>
+                <div class="timer-wrap">
+                    <div class="timer-num" id="timer-${s.id_solicitud}">5:00</div>
+                    <div class="timer-label">para responder</div>
+                </div>
+            </div>
+            <div class="card-body">
+                ${urgencia}
+                <div class="info-row">
+                    <div class="info-icon-box"><i class="bi bi-person-fill"></i></div>
+                    <div>
+                        <div class="info-label">Cliente</div>
+                        <div class="info-val">${s.nombre_cliente || 'Cliente'}</div>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-icon-box"><i class="bi bi-geo-alt-fill"></i></div>
+                    <div>
+                        <div class="info-label">Ubicación</div>
+                        <div class="info-val">${[s.ciudad, s.departamento].filter(Boolean).join(', ') || 'No especificada'}</div>
+                    </div>
+                </div>
+                ${s.descripcion ? `
+                <div class="info-row">
+                    <div class="info-icon-box"><i class="bi bi-chat-text-fill"></i></div>
+                    <div>
+                        <div class="info-label">Descripción</div>
+                        <div class="info-val">${s.descripcion}</div>
+                    </div>
+                </div>` : ''}
+                <div class="info-row">
+                    <div class="info-icon-box"><i class="bi bi-clock-fill"></i></div>
+                    <div>
+                        <div class="info-label">Recibida</div>
+                        <div class="info-val">${s.fecha_solicitud || ''}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button class="btn-rechazar" id="btnR-${s.id_solicitud}" onclick="rechazar(${s.id_solicitud})">
+                    ✕ Rechazar
+                </button>
+                <button class="btn-aceptar" id="btnA-${s.id_solicitud}" onclick="aceptar(${s.id_solicitud})">
+                    ✓ Aceptar
+                </button>
+            </div>
+        </div>`;
+    }
+
+    // ── RENDER HISTORIAL ──
+    function renderHistorial(s) {
+        const estado = s.estado || 'pendiente';
+        return `
+        <div class="card-historial">
+            <div class="hist-dot ${estado}"></div>
+            <div class="hist-info">
+                <div class="hist-titulo">${s.titulo || s.nombre_categoria || 'Solicitud'}</div>
+                <div class="hist-meta">${s.nombre_cliente || 'Cliente'} · ${s.ciudad || ''} · ${s.fecha_solicitud || ''}</div>
+            </div>
+            <span class="hist-badge ${estado}">${estado}</span>
+        </div>`;
+    }
+
+    // ── CARGAR SOLICITUDES ──
     async function cargarSolicitudes() {
         try {
-            const res = await fetch(`/trabajador/mis_solicitudes_api?id_trabajador=${idTrabajador}`);
+            const res  = await fetch(`/trabajador/mis_solicitudes_api?id_trabajador=${idTrabajador}`);
             const data = await res.json();
-            const solicitudes = data.solicitudes || [];
-            const contenido = document.getElementById('contenido');
+            const todas = data.solicitudes || [];
 
-            if (!solicitudes.length) {
-                contenido.innerHTML = `
-                    <div class="empty">
-                        <i class="bi bi-inbox"></i>
-                        <p>No tienes solicitudes pendientes</p>
-                        <p style="margin-top:8px;font-size:0.8rem">Activa tu disponibilidad para recibir trabajos</p>
-                    </div>`;
-                return;
+            const pendientes  = todas.filter(s => s.estado === 'pendiente');
+            const activas     = todas.filter(s => ['aceptada','en_proceso'].includes(s.estado));
+            const historial   = todas.filter(s => ['completada','cancelada'].includes(s.estado));
+
+            // Badges
+            const bp = document.getElementById('badgePendientes');
+            bp.textContent = pendientes.length;
+            bp.classList.toggle('show', pendientes.length > 0);
+            const ba = document.getElementById('badgeActivas');
+            ba.textContent = activas.length;
+            ba.classList.toggle('show', activas.length > 0);
+
+            // Subtitle
+            document.getElementById('topSub').textContent =
+                pendientes.length > 0 ? `${pendientes.length} solicitud${pendientes.length > 1 ? 'es' : ''} esperando` : 'Sin solicitudes pendientes';
+
+            // Pendientes
+            const cpEl = document.getElementById('contenidoPendientes');
+            if (!pendientes.length) {
+                cpEl.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><p>No hay solicitudes pendientes</p><p class="sub">Activa tu disponibilidad para recibir trabajos</p></div>`;
+            } else {
+                const nuevasIds = new Set(pendientes.map(s => s.id_solicitud));
+                cpEl.innerHTML = pendientes.map(s => renderPendiente(s, !primeraCarga && !ultimasIds.has(s.id_solicitud))).join('');
+                pendientes.forEach(s => iniciarTimer(s.id_solicitud, 300)); // 5 min
+                ultimasIds = nuevasIds;
             }
 
-            contenido.innerHTML = solicitudes.map(s => `
-                <div class="solicitud-card">
-                    <div class="solicitud-header">
-                        <div class="solicitud-titulo">${s.titulo || 'Solicitud de servicio'}</div>
-                        <span class="badge-estado badge-${s.estado}">${s.estado}</span>
-                    </div>
-                    <div class="solicitud-info"><i class="bi bi-tools"></i> ${s.nombre_categoria || 'Servicio'}</div>
-                    <div class="solicitud-info"><i class="bi bi-geo-alt"></i> ${s.ciudad || ''} ${s.departamento || ''}</div>
-                    <div class="solicitud-info"><i class="bi bi-person"></i> ${s.nombre_cliente || 'Cliente'}</div>
-                    ${s.descripcion ? `<div class="solicitud-info" style="margin-top:8px;color:#374151">${s.descripcion}</div>` : ''}
-                    ${s.estado === 'pendiente' ? `
-                        <button class="btn-aceptar" onclick="aceptar(${s.id_solicitud})">
-                            ✅ Aceptar Solicitud
-                        </button>` : ''}
-                </div>
-            `).join('');
+            // Activas
+            const caEl = document.getElementById('contenidoActivas');
+            if (!activas.length) {
+                caEl.innerHTML = `<div class="empty"><div class="empty-icon">🔧</div><p>No tienes trabajos activos</p></div>`;
+            } else {
+                caEl.innerHTML = `<div class="section-label">En curso</div>` + activas.map(renderHistorial).join('');
+            }
+
+            // Historial
+            const chEl = document.getElementById('contenidoHistorial');
+            if (!historial.length) {
+                chEl.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><p>Sin historial aún</p></div>`;
+            } else {
+                chEl.innerHTML = `<div class="section-label">Completados y cancelados</div>` + historial.map(renderHistorial).join('');
+            }
+
         } catch(e) {
-            document.getElementById('contenido').innerHTML = `
-                <div class="empty">
-                    <i class="bi bi-exclamation-circle"></i>
-                    <p>Error al cargar solicitudes</p>
-                </div>`;
+            document.getElementById('contenidoPendientes').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Error al cargar solicitudes</p></div>`;
         }
     }
 
-    cargarSolicitudes();
+    // ── ACEPTAR ──
+    async function aceptar(idSolicitud) {
+        const btnA = document.getElementById('btnA-' + idSolicitud);
+        const btnR = document.getElementById('btnR-' + idSolicitud);
+        if (btnA) { btnA.disabled = true; btnA.innerHTML = '⏳ Aceptando...'; }
+        if (btnR) btnR.disabled = true;
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('id_trabajador', idTrabajador);
+        try {
+            const res  = await fetch('/trabajador/solicitud/aceptar', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && !data.error) {
+                if (timers[idSolicitud]) clearInterval(timers[idSolicitud]);
+                const card = document.getElementById('card-' + idSolicitud);
+                if (card) {
+                    card.style.transition = 'all 0.4s';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.95)';
+                    setTimeout(() => { card.remove(); cargarSolicitudes(); }, 400);
+                }
+                mostrarToast('✅ Solicitud aceptada', 'success');
+            } else {
+                mostrarToast('❌ ' + (data.error || 'Error al aceptar'), 'error');
+                if (btnA) { btnA.disabled = false; btnA.innerHTML = '✓ Aceptar'; }
+                if (btnR) btnR.disabled = false;
+            }
+        } catch(e) {
+            mostrarToast('❌ Error de conexión', 'error');
+            if (btnA) { btnA.disabled = false; btnA.innerHTML = '✓ Aceptar'; }
+            if (btnR) btnR.disabled = false;
+        }
+    }
 
-    // ── POLLING: revisar nuevas solicitudes cada 15s ──
-    let ultimasIds = new Set();
-    let primeraCarga = true;
+    // ── RECHAZAR ──
+    async function rechazar(idSolicitud) {
+        const card = document.getElementById('card-' + idSolicitud);
+        if (card) {
+            card.style.transition = 'all 0.35s';
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(-20px)';
+            setTimeout(() => { card.remove(); }, 350);
+        }
+        if (timers[idSolicitud]) clearInterval(timers[idSolicitud]);
+        mostrarToast('Solicitud rechazada', 'info');
+    }
 
+    // ── TOAST ──
+    function mostrarToast(msg, tipo) {
+        const t = document.createElement('div');
+        const colores = { success:'#667eea', error:'#ef4444', info:'#64748b' };
+        t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${colores[tipo]||'#667eea'};color:white;padding:12px 24px;border-radius:99px;font-weight:700;font-size:0.88rem;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.2);animation:toastIn 0.3s ease;white-space:nowrap;`;
+        t.innerHTML = `<style>@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}</style>${msg}`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+
+    // ── NOTIFICACIONES ──
     function sonarNotificacion() {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            [0, 150, 300].forEach(delay => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
+            [0,150,300].forEach(delay => {
+                const osc = ctx.createOscillator(), gain = ctx.createGain();
                 osc.connect(gain); gain.connect(ctx.destination);
                 osc.frequency.value = 880; osc.type = 'sine';
                 gain.gain.setValueAtTime(0.3, ctx.currentTime + delay/1000);
@@ -138,49 +460,24 @@
         } catch(e) {}
     }
 
-    function mostrarBanner(cantidad) {
-        let banner = document.getElementById('nuevaBanner');
-        if (!banner) {
-            banner = document.createElement('div');
-            banner.id = 'nuevaBanner';
-            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:0.95rem;box-shadow:0 4px 20px rgba(102,126,234,0.5);animation:slideDown 0.4s ease;';
-            banner.innerHTML = '<style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style><span id="bannerTexto">🔔 Nueva solicitud</span><button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:700">✕</button>';
-            document.body.prepend(banner);
-            setTimeout(() => { if(banner) banner.remove(); }, 8000);
-        }
-        document.getElementById('bannerTexto').textContent = cantidad > 1 ? `🔔 ${cantidad} nuevas solicitudes` : '🔔 ¡Nueva solicitud recibida!';
-    }
-
+    // ── POLLING ──
     async function pollingCheck() {
         try {
-            const res = await fetch(`/trabajador/mis_solicitudes_api?id_trabajador=${idTrabajador}`);
+            const res  = await fetch(`/trabajador/mis_solicitudes_api?id_trabajador=${idTrabajador}`);
             const data = await res.json();
-            const solicitudes = data.solicitudes || [];
-            const nuevasIds = new Set(solicitudes.map(s => s.id_solicitud));
+            const pendientes = (data.solicitudes || []).filter(s => s.estado === 'pendiente');
+            const nuevasIds  = new Set(pendientes.map(s => s.id_solicitud));
             if (!primeraCarga) {
                 const nuevas = [...nuevasIds].filter(id => !ultimasIds.has(id));
-                if (nuevas.length > 0) { sonarNotificacion(); mostrarBanner(nuevas.length); cargarSolicitudes(); }
+                if (nuevas.length > 0) { sonarNotificacion(); cargarSolicitudes(); mostrarTab('pendientes'); }
             } else { primeraCarga = false; }
             ultimasIds = nuevasIds;
         } catch(e) {}
     }
 
+    cargarSolicitudes();
     pollingCheck();
     setInterval(pollingCheck, 15000);
-        const fd = new FormData();
-        fd.append('id_solicitud', idSolicitud);
-        fd.append('id_trabajador', idTrabajador);
-        const res = await fetch('/trabajador/solicitud/aceptar', { method:'POST', body:fd });
-        const data = await res.json();
-        if (res.ok) {
-            alert('✅ Solicitud aceptada');
-            cargarSolicitudes();
-        } else {
-            alert('❌ ' + (data.error || 'Error'));
-        }
-    }
-
-    cargarSolicitudes();
 </script>
 </body>
 </html>
