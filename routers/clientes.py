@@ -263,37 +263,55 @@ def crear_solicitud(
     fecha_programada: str = Form(None),
     id_trabajador: int = Form(None)
 ):
+    # Mapa de id_categoria → nombre (igual que en el frontend)
+    CATEGORIAS = {
+        1: 'Plomería', 2: 'Electricidad', 3: 'Limpieza', 4: 'Carpintería',
+        5: 'Pintura', 6: 'Jardinería', 7: 'Mecánica', 8: 'Tecnología',
+        9: 'Construcción', 10: 'Educación', 11: 'Salud', 12: 'Belleza',
+        13: 'Gastronomía', 14: 'Transporte'
+    }
+
     conexion = conectar_bd()
     cursor = conexion.cursor()
-    
-    sql = """
-    INSERT INTO solicitudes_servicio 
-    (id_cliente, id_categoria, titulo, descripcion, direccion_servicio, 
-     ciudad, departamento, fecha_programada, estado)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pendiente')
-    """
-    
-    cursor.execute(sql, (
-        id_cliente, id_categoria, titulo, descripcion, direccion_servicio,
-        ciudad, departamento, fecha_programada if fecha_programada else None
-    ))
-    
-    conexion.commit()
-    id_solicitud = cursor.lastrowid
-    
-    # Si se especificó un trabajador, asignar automáticamente
-    if id_trabajador:
+
+    try:
+        # Asegurar que la categoría existe en la tabla
+        nombre_cat = CATEGORIAS.get(id_categoria, 'Otro')
         cursor.execute("""
-            UPDATE solicitudes_servicio 
-            SET id_trabajador = %s, estado = 'aceptada'
-            WHERE id_solicitud = %s
-        """, (id_trabajador, id_solicitud))
+            INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, estado)
+            VALUES (%s, %s, 'activo')
+        """, (id_categoria, nombre_cat))
         conexion.commit()
-    
-    cursor.close()
-    conexion.close()
-    
-    return {"mensaje": "Solicitud creada exitosamente", "id_solicitud": id_solicitud}
+
+        sql = """
+        INSERT INTO solicitudes_servicio 
+        (id_cliente, id_categoria, titulo, descripcion, direccion_servicio, 
+         ciudad, departamento, fecha_programada, estado)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pendiente')
+        """
+        cursor.execute(sql, (
+            id_cliente, id_categoria, titulo, descripcion, direccion_servicio,
+            ciudad, departamento, fecha_programada if fecha_programada else None
+        ))
+        conexion.commit()
+        id_solicitud = cursor.lastrowid
+
+        if id_trabajador:
+            cursor.execute("""
+                UPDATE solicitudes_servicio 
+                SET id_trabajador = %s, estado = 'aceptada'
+                WHERE id_solicitud = %s
+            """, (id_trabajador, id_solicitud))
+            conexion.commit()
+
+        return {"mensaje": "Solicitud creada exitosamente", "id_solicitud": id_solicitud}
+
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        cursor.close()
+        conexion.close()
 
 @router.get("/historial/{id_cliente}")
 def historial_cliente(id_cliente: int):

@@ -65,30 +65,55 @@ def mostrar_mis_solicitudes_panel(request: Request):
 
 @router.get("/mis_solicitudes_api")
 def listar_mis_solicitudes(id_trabajador: int = None):
-    """Solicitudes asignadas o pendientes para un trabajador"""
+    """Solicitudes asignadas o pendientes para un trabajador, filtradas por sus categorías"""
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión", "solicitudes": []}, status_code=500)
     try:
         cursor = conexion.cursor(dictionary=True)
         if id_trabajador:
+            # Obtener las categorías del trabajador (texto)
             cursor.execute("""
-                SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
-                       s.ciudad, s.departamento, s.fecha_solicitud,
-                       cat.nombre_categoria,
-                       c.nombre_completo as nombre_cliente
-                FROM solicitudes_servicio s
-                LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
-                LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
-                WHERE s.id_trabajador = %s OR s.estado = 'pendiente'
-                ORDER BY s.fecha_solicitud DESC
-                LIMIT 20
+                SELECT DISTINCT categoria FROM servicios_persona WHERE id_persona = %s
             """, (id_trabajador,))
+            cats = [r['categoria'] for r in cursor.fetchall()]
+
+            # Buscar solicitudes propias + pendientes que coincidan con sus categorías
+            if cats:
+                placeholders = ','.join(['%s'] * len(cats))
+                cursor.execute(f"""
+                    SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
+                           s.ciudad, s.departamento, s.fecha_solicitud,
+                           COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
+                           c.nombre_completo as nombre_cliente
+                    FROM solicitudes_servicio s
+                    LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+                    LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+                    WHERE s.id_trabajador = %s
+                       OR (s.estado = 'pendiente' AND cat.nombre_categoria IN ({placeholders}))
+                    ORDER BY s.fecha_solicitud DESC
+                    LIMIT 50
+                """, (id_trabajador, *cats))
+            else:
+                # Sin categorías registradas, mostrar solo las propias
+                cursor.execute("""
+                    SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
+                           s.ciudad, s.departamento, s.fecha_solicitud,
+                           COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
+                           c.nombre_completo as nombre_cliente
+                    FROM solicitudes_servicio s
+                    LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+                    LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+                    WHERE s.id_trabajador = %s
+                    ORDER BY s.fecha_solicitud DESC
+                    LIMIT 50
+                """, (id_trabajador,))
         else:
+            # Sin id: mostrar todas las pendientes
             cursor.execute("""
                 SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
                        s.ciudad, s.departamento, s.fecha_solicitud,
-                       cat.nombre_categoria,
+                       COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
                        c.nombre_completo as nombre_cliente
                 FROM solicitudes_servicio s
                 LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
