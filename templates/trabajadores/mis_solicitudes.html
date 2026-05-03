@@ -116,7 +116,57 @@
         }
     }
 
-    async function aceptar(idSolicitud) {
+    cargarSolicitudes();
+
+    // ── POLLING: revisar nuevas solicitudes cada 15s ──
+    let ultimasIds = new Set();
+    let primeraCarga = true;
+
+    function sonarNotificacion() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            [0, 150, 300].forEach(delay => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.value = 880; osc.type = 'sine';
+                gain.gain.setValueAtTime(0.3, ctx.currentTime + delay/1000);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay/1000 + 0.3);
+                osc.start(ctx.currentTime + delay/1000);
+                osc.stop(ctx.currentTime + delay/1000 + 0.3);
+            });
+        } catch(e) {}
+    }
+
+    function mostrarBanner(cantidad) {
+        let banner = document.getElementById('nuevaBanner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'nuevaBanner';
+            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:0.95rem;box-shadow:0 4px 20px rgba(102,126,234,0.5);animation:slideDown 0.4s ease;';
+            banner.innerHTML = '<style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style><span id="bannerTexto">🔔 Nueva solicitud</span><button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:700">✕</button>';
+            document.body.prepend(banner);
+            setTimeout(() => { if(banner) banner.remove(); }, 8000);
+        }
+        document.getElementById('bannerTexto').textContent = cantidad > 1 ? `🔔 ${cantidad} nuevas solicitudes` : '🔔 ¡Nueva solicitud recibida!';
+    }
+
+    async function pollingCheck() {
+        try {
+            const res = await fetch(`/trabajador/mis_solicitudes_api?id_trabajador=${idTrabajador}`);
+            const data = await res.json();
+            const solicitudes = data.solicitudes || [];
+            const nuevasIds = new Set(solicitudes.map(s => s.id_solicitud));
+            if (!primeraCarga) {
+                const nuevas = [...nuevasIds].filter(id => !ultimasIds.has(id));
+                if (nuevas.length > 0) { sonarNotificacion(); mostrarBanner(nuevas.length); cargarSolicitudes(); }
+            } else { primeraCarga = false; }
+            ultimasIds = nuevasIds;
+        } catch(e) {}
+    }
+
+    pollingCheck();
+    setInterval(pollingCheck, 15000);
         const fd = new FormData();
         fd.append('id_solicitud', idSolicitud);
         fd.append('id_trabajador', idTrabajador);

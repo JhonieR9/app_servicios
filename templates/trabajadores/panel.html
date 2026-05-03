@@ -148,7 +148,7 @@
         <a href="/trabajador/solicitudes_pendientes_panel" class="th-menu-item" id="link-solicitudes">
             <div class="th-menu-icon th-menu-icon-cyan"><i class="bi bi-briefcase-fill" style="color:#06b6d4"></i></div>
             <div class="th-menu-label">Solicitudes</div>
-            <div class="th-menu-sub">Ver trabajos</div>
+            <div class="th-menu-sub">Ver trabajos <span id="badgeSolicitudes" style="display:none;background:#ef4444;color:white;border-radius:99px;padding:1px 7px;font-size:0.7rem;font-weight:700;margin-left:4px"></span></div>
         </a>
         <a href="/trabajador/logout" class="th-menu-item">
             <div class="th-menu-icon th-menu-icon-orange"><i class="bi bi-box-arrow-left" style="color:#f59e0b"></i></div>
@@ -260,6 +260,68 @@
     }
 
     cargarPerfil();
+
+    // ── POLLING EN PANEL: badge + banner cada 20s ──
+    let panelUltimasIds = new Set();
+    let panelPrimeraCarga = true;
+
+    function sonarNotificacion() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            [0, 150, 300].forEach(delay => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.value = 880; osc.type = 'sine';
+                gain.gain.setValueAtTime(0.3, ctx.currentTime + delay/1000);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay/1000 + 0.3);
+                osc.start(ctx.currentTime + delay/1000);
+                osc.stop(ctx.currentTime + delay/1000 + 0.3);
+            });
+        } catch(e) {}
+    }
+
+    function mostrarBannerPanel(cantidad) {
+        let banner = document.getElementById('panelBanner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'panelBanner';
+            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:0.95rem;box-shadow:0 4px 20px rgba(102,126,234,0.5);animation:slideDown 0.4s ease;';
+            banner.innerHTML = '<style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style><span id="panelBannerTexto">🔔 Nueva solicitud</span><a id="panelBannerLink" href="#" style="background:rgba(255,255,255,0.25);border:none;color:white;border-radius:8px;padding:6px 14px;cursor:pointer;font-weight:700;text-decoration:none;font-size:0.85rem">Ver →</a>';
+            document.body.prepend(banner);
+            setTimeout(() => { if(banner) banner.remove(); }, 10000);
+        }
+        document.getElementById('panelBannerTexto').textContent = cantidad > 1 ? `🔔 ${cantidad} nuevas solicitudes` : '🔔 ¡Nueva solicitud recibida!';
+        const linkSol = document.getElementById('link-solicitudes');
+        if (linkSol) document.getElementById('panelBannerLink').href = linkSol.href;
+    }
+
+    async function panelPolling() {
+        const id = idTrabajador || localStorage.getItem('id_trabajador');
+        if (!id) return;
+        try {
+            const res = await fetch(`/trabajador/mis_solicitudes_api?id_trabajador=${id}`);
+            const data = await res.json();
+            const pendientes = (data.solicitudes || []).filter(s => s.estado === 'pendiente');
+            const nuevasIds = new Set(pendientes.map(s => s.id_solicitud));
+
+            // Badge en botón
+            const badge = document.getElementById('badgeSolicitudes');
+            if (badge) {
+                if (pendientes.length > 0) { badge.textContent = pendientes.length; badge.style.display = 'inline'; }
+                else { badge.style.display = 'none'; }
+            }
+
+            if (!panelPrimeraCarga) {
+                const nuevas = [...nuevasIds].filter(id => !panelUltimasIds.has(id));
+                if (nuevas.length > 0) { sonarNotificacion(); mostrarBannerPanel(nuevas.length); cargarStats(id); }
+            } else { panelPrimeraCarga = false; }
+            panelUltimasIds = nuevasIds;
+        } catch(e) {}
+    }
+
+    panelPolling();
+    setInterval(panelPolling, 20000);
 </script>
 </body>
 </html>
