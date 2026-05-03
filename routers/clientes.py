@@ -253,7 +253,8 @@ def listar_categorias():
 
 @router.post("/solicitud/crear")
 def crear_solicitud(
-    id_cliente: int = Form(...),
+    request: Request,
+    id_cliente: int = Form(None),
     id_categoria: int = Form(...),
     titulo: str = Form(...),
     descripcion: str = Form(...),
@@ -263,6 +264,16 @@ def crear_solicitud(
     fecha_programada: str = Form(None),
     id_trabajador: int = Form(None)
 ):
+    # Intentar obtener id_cliente desde la sesión si no viene en el form
+    if not id_cliente:
+        token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+        if token:
+            import auth as auth_module
+            sesion = auth_module.verificar_sesion(token)
+            if sesion and sesion.get('tipo_usuario') == 'cliente':
+                id_cliente = sesion['id_usuario']
+        if not id_cliente:
+            id_cliente = 1  # fallback para pruebas sin login
     # Mapa de id_categoria → nombre (igual que en el frontend)
     CATEGORIAS = {
         1: 'Plomería', 2: 'Electricidad', 3: 'Limpieza', 4: 'Carpintería',

@@ -503,6 +503,16 @@ let selectedCatId = null;
 let selectedCatName = '';
 let selectedProblem = '';
 
+// Leer id_cliente desde localStorage o URL
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const idUrl  = params.get('id_cliente');
+    const idStorage = localStorage.getItem('id_cliente');
+    const id = idUrl || idStorage || '1';
+    document.getElementById('id_cliente').value = id;
+    if (idUrl) localStorage.setItem('id_cliente', idUrl); // sincronizar
+})();
+
 // CHIPS PER CATEGORY
 const CHIPS = {
     'Plomeria':     ['Tuberia rota','Goteras','Instalacion nueva','Bano tapado','Otro'],
