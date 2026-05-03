@@ -17,6 +17,88 @@ app.include_router(clientes.router)
 app.include_router(trabajadores.router)
 
 # ============================================
+# CREAR TABLAS AL ARRANCAR (si no existen)
+# ============================================
+
+@app.on_event("startup")
+def crear_tablas():
+    try:
+        import mysql.connector
+        from config import DB_CONFIG
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `categorias_servicio` (
+              `id_categoria` int NOT NULL AUTO_INCREMENT,
+              `nombre_categoria` varchar(100) NOT NULL,
+              `descripcion` text,
+              `icono` varchar(50) DEFAULT NULL,
+              `estado` varchar(20) DEFAULT 'activo',
+              PRIMARY KEY (`id_categoria`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
+        categorias = [
+            (1,'Plomería'),(2,'Electricidad'),(3,'Limpieza'),(4,'Carpintería'),
+            (5,'Pintura'),(6,'Jardinería'),(7,'Mecánica'),(8,'Tecnología'),
+            (9,'Construcción'),(10,'Educación'),(11,'Salud'),(12,'Belleza'),
+            (13,'Gastronomía'),(14,'Transporte')
+        ]
+        for id_cat, nombre in categorias:
+            cursor.execute(
+                "INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, estado) VALUES (%s, %s, 'activo')",
+                (id_cat, nombre)
+            )
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `solicitudes_servicio` (
+              `id_solicitud`        int NOT NULL AUTO_INCREMENT,
+              `id_cliente`          int DEFAULT NULL,
+              `id_categoria`        int DEFAULT NULL,
+              `id_trabajador`       int DEFAULT NULL,
+              `titulo`              varchar(255) DEFAULT NULL,
+              `descripcion`         text,
+              `direccion_servicio`  text,
+              `ciudad`              varchar(100) DEFAULT NULL,
+              `departamento`        varchar(100) DEFAULT NULL,
+              `fecha_programada`    datetime DEFAULT NULL,
+              `estado`              varchar(50) DEFAULT 'pendiente',
+              `fecha_solicitud`     datetime DEFAULT CURRENT_TIMESTAMP,
+              `fecha_aceptacion`    datetime DEFAULT NULL,
+              `fecha_inicio`        datetime DEFAULT NULL,
+              `fecha_finalizacion`  datetime DEFAULT NULL,
+              `precio_final`        decimal(10,2) DEFAULT NULL,
+              `motivo_cancelacion`  text,
+              PRIMARY KEY (`id_solicitud`),
+              KEY `idx_sol_estado`    (`estado`),
+              KEY `idx_sol_cliente`   (`id_cliente`),
+              KEY `idx_sol_categoria` (`id_categoria`),
+              KEY `idx_sol_trabajador`(`id_trabajador`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
+        # Agregar columnas faltantes si la tabla ya existía sin ellas
+        for col, definition in [
+            ('id_trabajador',      'int DEFAULT NULL AFTER id_categoria'),
+            ('fecha_aceptacion',   'datetime DEFAULT NULL'),
+            ('fecha_inicio',       'datetime DEFAULT NULL'),
+            ('fecha_finalizacion', 'datetime DEFAULT NULL'),
+            ('precio_final',       'decimal(10,2) DEFAULT NULL'),
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE solicitudes_servicio ADD COLUMN {col} {definition}")
+            except Exception:
+                pass  # Ya existe
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        print("✅ Tablas verificadas/creadas correctamente")
+    except Exception as e:
+        print(f"⚠️ Error al crear tablas: {e}")
+
+# ============================================
 # PÁGINA PRINCIPAL - SOLO FORMULARIO
 # ============================================
 
