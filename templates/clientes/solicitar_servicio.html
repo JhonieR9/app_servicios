@@ -798,8 +798,12 @@ document.getElementById('formSolicitud').addEventListener('submit', async functi
             alertEl.className = 'alert success'; alertEl.style.display = 'block';
             alertEl.textContent = data.mensaje || 'Solicitud enviada. Buscando profesionales...';
             setTimeout(function() {
-                window.location.href = '/cliente/mapa?categoria=' + encodeURIComponent(selectedCatName);
-            }, 1500);
+                if (data.id_solicitud) {
+                    window.location.href = '/cliente/seguimiento?id=' + data.id_solicitud;
+                } else {
+                    window.location.href = '/cliente/mapa?categoria=' + encodeURIComponent(selectedCatName);
+                }
+            }, 1200);
         } else {
             alertEl.className = 'alert error'; alertEl.style.display = 'block';
             alertEl.textContent = data.error || 'No se pudo enviar la solicitud';

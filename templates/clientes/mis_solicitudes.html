@@ -100,6 +100,10 @@
                     <div class="solicitud-info"><i class="bi bi-geo-alt"></i> ${s.ciudad || ''} ${s.departamento || ''}</div>
                     <div class="solicitud-info"><i class="bi bi-calendar"></i> ${s.fecha_solicitud || ''}</div>
                     ${s.descripcion ? `<div class="solicitud-info" style="margin-top:8px;color:#374151">${s.descripcion}</div>` : ''}
+                    <a href="/cliente/seguimiento?id=${s.id_solicitud}"
+                       style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;margin-top:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border-radius:10px;font-weight:700;font-size:0.88rem;text-decoration:none;">
+                        📍 Ver seguimiento
+                    </a>
                     ${s.estado === 'pendiente' ? `
                         <button class="btn-cancelar" onclick="cancelar(${s.id_solicitud})">
                             ❌ Cancelar Solicitud

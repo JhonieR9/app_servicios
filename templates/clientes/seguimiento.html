@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento - TalentHub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'Lato',sans-serif;
+            background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+            min-height:100vh; padding-bottom:40px;
+        }
+
+        /* TOP BAR */
+        .top-bar {
+            background:rgba(255,255,255,0.15);
+            backdrop-filter:blur(10px);
+            padding:16px 20px;
+            display:flex; align-items:center; gap:12px;
+            position:sticky; top:0; z-index:10;
+        }
+        .back-btn {
+            width:36px;height:36px;border-radius:50%;
+            background:rgba(255,255,255,0.2);border:none;
+            color:white;font-size:1rem;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            text-decoration:none;
+        }
+        .top-bar h1 {
+            font-family:'Playfair Display',serif;
+            font-size:1.15rem;font-weight:700;color:white;
+        }
+        .top-bar p { font-size:0.75rem;color:rgba(255,255,255,0.7);margin-top:1px; }
+
+        /* CONTENT */
+        .content { max-width:480px;margin:0 auto;padding:24px 16px; }
+
+        /* CARD PRINCIPAL */
+        .main-card {
+            background:white;border-radius:24px;
+            padding:28px 24px;margin-bottom:16px;
+            box-shadow:0 16px 48px rgba(0,0,0,0.2);
+        }
+
+        /* ESTADO GRANDE */
+        .estado-hero {
+            text-align:center;padding:20px 0 28px;
+        }
+        .estado-icono {
+            width:80px;height:80px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            font-size:2.2rem;margin:0 auto 16px;
+            transition:all 0.5s;
+        }
+        .estado-icono.pendiente  { background:#fef3c7; animation:pulseYellow 2s infinite; }
+        .estado-icono.aceptada   { background:#dbeafe; animation:pulseBlue 2s infinite; }
+        .estado-icono.en_proceso { background:#dcfce7; animation:pulseGreen 2s infinite; }
+        .estado-icono.completada { background:#dcfce7; }
+        .estado-icono.cancelada  { background:#fee2e2; }
+
+        @keyframes pulseYellow { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.4)} 50%{box-shadow:0 0 0 16px rgba(245,158,11,0)} }
+        @keyframes pulseBlue   { 0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,0.4)}  50%{box-shadow:0 0 0 16px rgba(37,99,235,0)} }
+        @keyframes pulseGreen  { 0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.4)} 50%{box-shadow:0 0 0 16px rgba(16,185,129,0)} }
+
+        .estado-titulo {
+            font-family:'Playfair Display',serif;
+            font-size:1.4rem;font-weight:700;color:#0f172a;margin-bottom:6px;
+        }
+        .estado-sub { font-size:0.88rem;color:#64748b;line-height:1.5; }
+
+        /* TIMELINE */
+        .timeline { padding:0 4px; }
+        .tl-item {
+            display:flex;gap:16px;align-items:flex-start;
+            margin-bottom:0; position:relative;
+        }
+        .tl-item:not(:last-child) .tl-line {
+            position:absolute;left:15px;top:32px;
+            width:2px;height:calc(100% + 4px);
+            background:#e2e8f0;
+            transition:background 0.5s;
+        }
+        .tl-item.done:not(:last-child) .tl-line { background:linear-gradient(#667eea,#764ba2); }
+
+        .tl-dot {
+            width:32px;height:32px;border-radius:50%;flex-shrink:0;
+            display:flex;align-items:center;justify-content:center;
+            font-size:0.9rem;position:relative;z-index:1;
+            transition:all 0.4s;
+            background:#f1f5f9;color:#94a3b8;border:2px solid #e2e8f0;
+        }
+        .tl-item.done .tl-dot {
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            color:white;border-color:transparent;
+            box-shadow:0 4px 12px rgba(102,126,234,0.35);
+        }
+        .tl-item.active .tl-dot {
+            background:white;color:#667eea;
+            border-color:#667eea;border-width:2px;
+            box-shadow:0 0 0 4px rgba(102,126,234,0.15);
+            animation:spinDot 1.5s linear infinite;
+        }
+        @keyframes spinDot { to{transform:rotate(360deg)} }
+
+        .tl-body { padding:4px 0 24px; }
+        .tl-title {
+            font-size:0.9rem;font-weight:700;color:#0f172a;
+            transition:color 0.3s;
+        }
+        .tl-item.active .tl-title { color:#667eea; }
+        .tl-item.done .tl-title { color:#667eea; }
+        .tl-sub { font-size:0.78rem;color:#94a3b8;margin-top:2px; }
+        .tl-time { font-size:0.72rem;color:#cbd5e1;margin-top:2px; }
+
+        /* INFO CARD */
+        .info-card {
+            background:white;border-radius:18px;
+            padding:20px;margin-bottom:16px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.08);
+        }
+        .info-title {
+            font-size:0.72rem;font-weight:700;color:#94a3b8;
+            text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;
+        }
+        .info-row {
+            display:flex;align-items:center;gap:12px;margin-bottom:12px;
+        }
+        .info-row:last-child { margin-bottom:0; }
+        .info-icon {
+            width:36px;height:36px;border-radius:10px;
+            background:#f3f0ff;display:flex;align-items:center;
+            justify-content:center;font-size:1rem;flex-shrink:0;
+        }
+        .info-label { font-size:0.72rem;color:#94a3b8;font-weight:600; }
+        .info-val { font-size:0.88rem;color:#0f172a;font-weight:600;margin-top:1px; }
+
+        /* TRABAJADOR CARD */
+        .trabajador-card {
+            background:linear-gradient(135deg,#f3f0ff,#ede9fe);
+            border:1px solid #c4b5fd;
+            border-radius:18px;padding:20px;margin-bottom:16px;
+            display:none;
+        }
+        .trabajador-card.show { display:block; }
+        .trab-header { display:flex;align-items:center;gap:14px;margin-bottom:14px; }
+        .trab-avatar {
+            width:52px;height:52px;border-radius:50%;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            display:flex;align-items:center;justify-content:center;
+            font-size:1.4rem;flex-shrink:0;
+        }
+        .trab-nombre { font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#0f172a; }
+        .trab-cat { font-size:0.78rem;color:#7c3aed;font-weight:600;margin-top:2px; }
+        .trab-btns { display:flex;gap:10px; }
+        .btn-trab {
+            flex:1;padding:11px;border:none;border-radius:12px;
+            font-weight:700;font-size:0.82rem;cursor:pointer;
+            font-family:'Lato',sans-serif;letter-spacing:0.5px;
+            display:flex;align-items:center;justify-content:center;gap:6px;
+            transition:all 0.2s;
+        }
+        .btn-trab.whatsapp { background:#25D366;color:white; }
+        .btn-trab.llamar   { background:linear-gradient(135deg,#667eea,#764ba2);color:white; }
+        .btn-trab:hover { transform:translateY(-2px); }
+
+        /* BOTÓN CANCELAR */
+        .btn-cancelar {
+            width:100%;padding:14px;
+            background:#fee2e2;color:#dc2626;
+            border:none;border-radius:14px;
+            font-weight:700;font-size:0.88rem;cursor:pointer;
+            font-family:'Lato',sans-serif;
+            transition:background 0.2s;
+        }
+        .btn-cancelar:hover { background:#fecaca; }
+
+        /* REFRESH indicator */
+        .refresh-bar {
+            text-align:center;padding:10px;
+            font-size:0.72rem;color:rgba(255,255,255,0.6);
+            display:flex;align-items:center;justify-content:center;gap:6px;
+        }
+        .refresh-dot {
+            width:6px;height:6px;border-radius:50%;
+            background:rgba(255,255,255,0.5);
+            animation:blink 2s infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+    <div>
+        <h1>Seguimiento</h1>
+        <p id="topSub">Actualizando en tiempo real...</p>
+    </div>
+</div>
+
+<div class="content">
+
+    <!-- Estado hero -->
+    <div class="main-card">
+        <div class="estado-hero">
+            <div class="estado-icono pendiente" id="estadoIcono">⏳</div>
+            <div class="estado-titulo" id="estadoTitulo">Buscando profesional...</div>
+            <div class="estado-sub" id="estadoSub">Tu solicitud fue enviada. Estamos buscando el profesional ideal para ti.</div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline" id="timeline">
+            <div class="tl-item" id="tl-pendiente">
+                <div class="tl-line"></div>
+                <div class="tl-dot"><i class="bi bi-send"></i></div>
+                <div class="tl-body">
+                    <div class="tl-title">Solicitud enviada</div>
+                    <div class="tl-sub">Tu solicitud fue recibida</div>
+                    <div class="tl-time" id="tl-time-pendiente"></div>
+                </div>
+            </div>
+            <div class="tl-item" id="tl-aceptada">
+                <div class="tl-line"></div>
+                <div class="tl-dot"><i class="bi bi-person-check"></i></div>
+                <div class="tl-body">
+                    <div class="tl-title">Profesional asignado</div>
+                    <div class="tl-sub">Un profesional aceptó tu solicitud</div>
+                    <div class="tl-time" id="tl-time-aceptada"></div>
+                </div>
+            </div>
+            <div class="tl-item" id="tl-en_proceso">
+                <div class="tl-line"></div>
+                <div class="tl-dot"><i class="bi bi-tools"></i></div>
+                <div class="tl-body">
+                    <div class="tl-title">En proceso</div>
+                    <div class="tl-sub">El profesional está trabajando</div>
+                    <div class="tl-time" id="tl-time-en_proceso"></div>
+                </div>
+            </div>
+            <div class="tl-item" id="tl-completada">
+                <div class="tl-dot"><i class="bi bi-check-lg"></i></div>
+                <div class="tl-body">
+                    <div class="tl-title">Completado</div>
+                    <div class="tl-sub">Servicio finalizado exitosamente</div>
+                    <div class="tl-time" id="tl-time-completada"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trabajador asignado -->
+    <div class="trabajador-card" id="trabajadorCard">
+        <div class="trab-header">
+            <div class="trab-avatar">👷</div>
+            <div>
+                <div class="trab-nombre" id="trabNombre">Profesional</div>
+                <div class="trab-cat" id="trabCat"></div>
+            </div>
+        </div>
+        <div class="trab-btns">
+            <button class="btn-trab whatsapp" id="btnWhatsapp" onclick="contactarWhatsapp()">
+                💬 WhatsApp
+            </button>
+            <button class="btn-trab llamar" id="btnLlamar" onclick="llamar()">
+                📞 Llamar
+            </button>
+        </div>
+    </div>
+
+    <!-- Info solicitud -->
+    <div class="info-card">
+        <div class="info-title">Detalle de la solicitud</div>
+        <div class="info-row">
+            <div class="info-icon">🔧</div>
+            <div>
+                <div class="info-label">Servicio</div>
+                <div class="info-val" id="infoServicio">—</div>
+            </div>
+        </div>
+        <div class="info-row">
+            <div class="info-icon">📍</div>
+            <div>
+                <div class="info-label">Ubicación</div>
+                <div class="info-val" id="infoUbicacion">—</div>
+            </div>
+        </div>
+        <div class="info-row">
+            <div class="info-icon">🕐</div>
+            <div>
+                <div class="info-label">Solicitado</div>
+                <div class="info-val" id="infoFecha">—</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancelar (solo si pendiente) -->
+    <div id="cancelarWrap" style="display:none">
+        <button class="btn-cancelar" onclick="cancelarSolicitud()">
+            ❌ Cancelar solicitud
+        </button>
+    </div>
+
+    <div class="refresh-bar">
+        <div class="refresh-dot"></div>
+        Actualizando cada 10 segundos
+    </div>
+</div>
+
+<script>
+    const params     = new URLSearchParams(window.location.search);
+    const idSolicitud = params.get('id');
+    let trabTelefono = '';
+    let trabNombreVal = '';
+    let estadoActual = '';
+
+    if (!idSolicitud) {
+        document.querySelector('.content').innerHTML = '<div style="text-align:center;padding:60px 20px;color:white"><p>Solicitud no encontrada</p></div>';
+    }
+
+    const ESTADOS = {
+        pendiente:  { icono:'⏳', clase:'pendiente',  titulo:'Buscando profesional...', sub:'Tu solicitud fue enviada. Estamos buscando el profesional ideal para ti.' },
+        aceptada:   { icono:'✅', clase:'aceptada',   titulo:'¡Profesional asignado!',  sub:'Un profesional aceptó tu solicitud y se está preparando para atenderte.' },
+        en_proceso: { icono:'🔧', clase:'en_proceso', titulo:'En proceso',              sub:'El profesional está trabajando en tu solicitud ahora mismo.' },
+        completada: { icono:'🎉', clase:'completada', titulo:'¡Servicio completado!',   sub:'Tu servicio fue completado exitosamente. ¡Gracias por usar TalentHub!' },
+        cancelada:  { icono:'❌', clase:'cancelada',  titulo:'Solicitud cancelada',     sub:'Esta solicitud fue cancelada.' }
+    };
+
+    const ORDEN = ['pendiente','aceptada','en_proceso','completada'];
+
+    function actualizarTimeline(estado) {
+        const idx = ORDEN.indexOf(estado);
+        ORDEN.forEach((e, i) => {
+            const item = document.getElementById('tl-' + e);
+            if (!item) return;
+            item.classList.remove('done','active');
+            if (i < idx) item.classList.add('done');
+            else if (i === idx) item.classList.add('active');
+        });
+    }
+
+    function actualizarEstadoHero(estado) {
+        const cfg = ESTADOS[estado] || ESTADOS.pendiente;
+        const icono = document.getElementById('estadoIcono');
+        icono.textContent = cfg.icono;
+        icono.className = 'estado-icono ' + cfg.clase;
+        document.getElementById('estadoTitulo').textContent = cfg.titulo;
+        document.getElementById('estadoSub').textContent    = cfg.sub;
+    }
+
+    async function cargarSeguimiento() {
+        if (!idSolicitud) return;
+        try {
+            const res  = await fetch('/cliente/seguimiento_api?id=' + idSolicitud);
+            const data = await res.json();
+            if (data.error) return;
+
+            const estado = data.estado || 'pendiente';
+
+            // Solo actualizar DOM si cambió el estado
+            if (estado !== estadoActual) {
+                estadoActual = estado;
+                actualizarEstadoHero(estado);
+                actualizarTimeline(estado);
+
+                // Cancelar visible solo si pendiente
+                document.getElementById('cancelarWrap').style.display =
+                    estado === 'pendiente' ? 'block' : 'none';
+            }
+
+            // Info solicitud
+            document.getElementById('infoServicio').textContent  = data.nombre_categoria || data.titulo || '—';
+            document.getElementById('infoUbicacion').textContent = [data.ciudad, data.departamento].filter(Boolean).join(', ') || '—';
+            document.getElementById('infoFecha').textContent     = data.fecha_solicitud || '—';
+            document.getElementById('topSub').textContent        = 'Solicitud #' + idSolicitud;
+
+            // Tiempos en timeline
+            if (data.fecha_solicitud)    document.getElementById('tl-time-pendiente').textContent  = data.fecha_solicitud;
+            if (data.fecha_aceptacion)   document.getElementById('tl-time-aceptada').textContent   = data.fecha_aceptacion;
+            if (data.fecha_inicio)       document.getElementById('tl-time-en_proceso').textContent = data.fecha_inicio;
+            if (data.fecha_finalizacion) document.getElementById('tl-time-completada').textContent = data.fecha_finalizacion;
+
+            // Trabajador asignado
+            if (data.trabajador) {
+                const card = document.getElementById('trabajadorCard');
+                card.classList.add('show');
+                document.getElementById('trabNombre').textContent = data.trabajador.nombre || 'Profesional';
+                document.getElementById('trabCat').textContent    = data.nombre_categoria || '';
+                trabTelefono  = data.trabajador.telefono || '';
+                trabNombreVal = data.trabajador.nombre   || 'Profesional';
+            }
+
+        } catch(e) { console.log('Error seguimiento:', e); }
+    }
+
+    function contactarWhatsapp() {
+        if (!trabTelefono) return;
+        const msg = encodeURIComponent('Hola ' + trabNombreVal + ', soy el cliente de TalentHub. ¿Cómo va mi solicitud?');
+        window.open('https://wa.me/57' + trabTelefono + '?text=' + msg, '_blank');
+    }
+
+    function llamar() {
+        if (!trabTelefono) return;
+        window.location.href = 'tel:+57' + trabTelefono;
+    }
+
+    async function cancelarSolicitud() {
+        if (!confirm('¿Seguro que deseas cancelar esta solicitud?')) return;
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('motivo', 'Cancelado por el cliente');
+        const res = await fetch('/cliente/solicitud/cancelar', { method:'POST', body:fd });
+        if (res.ok) {
+            estadoActual = '';
+            cargarSeguimiento();
+        }
+    }
+
+    cargarSeguimiento();
+    setInterval(cargarSeguimiento, 10000);
+</script>
+</body>
+</html>
