@@ -1,873 +1,804 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solicitar Servicio - TalentHub</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Lato', sans-serif; background: #f8fafc; min-height: 100vh; padding-bottom: 60px; }
 
-        body {
-            font-family: 'Lato', sans-serif;
-            background: #f8fafc;
-            min-height: 100vh;
-            padding-bottom: 40px;
-        }
-
-        /* Header */
+        /* TOP BAR */
         .top-bar {
             background: white;
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            padding: 14px 16px 0;
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-bar-row {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
         }
         .back-btn {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            background: #f1f5f9;
-            border: none;
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #f1f5f9; border: none;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            text-decoration: none;
-            color: #374151;
-            font-size: 1rem;
-            flex-shrink: 0;
+            cursor: pointer; text-decoration: none; color: #374151;
+            font-size: 1rem; flex-shrink: 0;
         }
-        .top-bar h1 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #0f172a;
+        .top-bar-title { flex: 1; }
+        .top-bar-title h1 {
             font-family: 'Playfair Display', serif;
+            font-size: 1.15rem; font-weight: 700; color: #0f172a;
         }
-        .top-bar p {
-            font-size: 0.78rem;
-            color: #94a3b8;
-            margin-top: 1px;
-            font-family: 'Lato', sans-serif;
-            font-weight: 300;
-            letter-spacing: 0.3px;
+        .top-bar-title p { font-size: 0.75rem; color: #94a3b8; margin-top: 1px; }
+
+        /* PROGRESS BAR */
+        .progress-steps {
+            display: flex; align-items: center; gap: 0;
+            padding-bottom: 14px;
+        }
+        .step-item {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; gap: 4px; position: relative;
+        }
+        .step-item:not(:last-child)::after {
+            content: '';
+            position: absolute; top: 14px; left: 50%; right: -50%;
+            height: 2px; background: #e2e8f0;
+            z-index: 0; transition: background 0.4s;
+        }
+        .step-item.done:not(:last-child)::after { background: linear-gradient(90deg,#667eea,#764ba2); }
+        .step-dot {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #e2e8f0; color: #94a3b8;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700;
+            position: relative; z-index: 1;
+            transition: all 0.3s;
+        }
+        .step-item.active .step-dot {
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            color: white; box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+        }
+        .step-item.done .step-dot {
+            background: linear-gradient(135deg,#667eea,#764ba2); color: white;
+        }
+        .step-label {
+            font-size: 0.65rem; font-weight: 600; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .step-item.active .step-label { color: #667eea; }
+        .step-item.done .step-label { color: #764ba2; }
+
+        /* CONTENT */
+        .content { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
+
+        /* STEP PANELS */
+        .step-panel { display: none; animation: fadeSlide 0.35s ease; }
+        .step-panel.active { display: block; }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateX(24px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        .step-panel.back-anim { animation: fadeSlideBack 0.35s ease; }
+        @keyframes fadeSlideBack {
+            from { opacity: 0; transform: translateX(-24px); }
+            to   { opacity: 1; transform: translateX(0); }
         }
 
-        /* Contenido */
-        .content {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px 16px;
+        /* CARD */
+        .card {
+            background: white; border-radius: 20px;
+            padding: 24px 20px; margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
         }
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem; font-weight: 700; color: #0f172a;
+            margin-bottom: 6px;
+        }
+        .card-sub { font-size: 0.85rem; color: #64748b; margin-bottom: 20px; }
 
-        /* Sección */
-        .section {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        }
-        .section-title {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-family: 'Lato', sans-serif;
-        }
-        .section-title i { color: #2563eb; font-size: 1rem; }
-
-        /* Grid de categorías */
+        /* CATEGORY GRID */
         .cat-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
         }
         .cat-item {
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 12px 6px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.18s;
-            background: white;
+            border: 2px solid #e2e8f0; border-radius: 14px;
+            padding: 14px 6px; text-align: center; cursor: pointer;
+            transition: all 0.2s; background: white;
         }
-        .cat-item:hover {
-            border-color: #2563eb;
-            background: #eff6ff;
-        }
+        .cat-item:hover { border-color: #667eea; background: #f5f3ff; transform: translateY(-2px); }
         .cat-item.selected {
-            border-color: #2563eb;
-            background: #eff6ff;
-        }
-        .cat-item .icon { font-size: 1.6rem; margin-bottom: 4px; }
-        .cat-item .name {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #374151;
-            line-height: 1.2;
-            font-family: 'Lato', sans-serif;
-            letter-spacing: 0.3px;
-        }
-        .cat-item.selected .name { color: #1d4ed8; }
-
-        /* Inputs */
-        .form-group { margin-bottom: 14px; }
-        .form-group label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #374151;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            font-family: 'Lato', sans-serif;
-        }
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 12px 14px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-family: 'Lato', sans-serif;
-            color: #0f172a;
-            background: white;
-            outline: none;
-            transition: border-color 0.2s;
-            -webkit-appearance: none;
-        }
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            border-color: #2563eb;
-        }
-        .form-group textarea {
-            resize: vertical;
-            min-height: 90px;
-        }
-        .form-group input::placeholder,
-        .form-group textarea::placeholder { color: #cbd5e1; }
-
-        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-        /* Alerta */
-        .alert {
-            padding: 12px 14px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            margin-bottom: 16px;
-            display: none;
-        }
-        .alert.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-        .alert.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-
-        /* Botón */
-        .btn-submit {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 14px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 16px rgba(102,126,234,0.35);
-            font-family: 'Lato', sans-serif;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-        .btn-submit:hover {
+            border-color: #667eea; background: #f5f3ff;
+            box-shadow: 0 4px 14px rgba(102,126,234,0.2);
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(102,126,234,0.45);
         }
-        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .cat-item .icon { font-size: 1.7rem; margin-bottom: 5px; display: block; }
+        .cat-item .name {
+            font-size: 0.68rem; font-weight: 700; color: #374151;
+            line-height: 1.2; font-family: 'Lato', sans-serif;
+        }
+        .cat-item.selected .name { color: #667eea; }
 
-        /* Urgencia selector */
-        .urgencia-wrap {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 4px;
+        /* CHIPS */
+        .chips-wrap { display: flex; flex-wrap: wrap; gap: 10px; }
+        .chip {
+            border: 2px solid #e2e8f0; border-radius: 99px;
+            padding: 10px 18px; cursor: pointer;
+            font-size: 0.88rem; font-weight: 600; color: #374151;
+            background: white; transition: all 0.2s;
+            font-family: 'Lato', sans-serif;
         }
+        .chip:hover { border-color: #667eea; color: #667eea; background: #f5f3ff; }
+        .chip.selected {
+            border-color: #667eea; color: white;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+        }
+
+        /* SELECTED SUMMARY */
+        .summary-pill {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            color: white; padding: 8px 16px; border-radius: 99px;
+            font-size: 0.82rem; font-weight: 700; margin-bottom: 20px;
+        }
+
+        /* FORM */
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block; font-size: 0.75rem; font-weight: 700;
+            color: #374151; margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .form-group input, .form-group select {
+            width: 100%; padding: 13px 14px;
+            border: 2px solid #e2e8f0; border-radius: 12px;
+            font-size: 0.9rem; font-family: 'Lato', sans-serif;
+            color: #0f172a; background: white; outline: none;
+            transition: border-color 0.2s; -webkit-appearance: none;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #667eea; }
+        .form-group input::placeholder { color: #cbd5e1; }
+
+        /* URGENCIA */
+        .urgencia-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
         .urgencia-btn {
-            position: relative;
-            border: 2px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 18px 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
-            background: white;
-            overflow: hidden;
-        }
-        .urgencia-btn::before {
-            content: '';
-            position: absolute; inset: 0;
-            opacity: 0;
-            transition: opacity 0.25s;
-            border-radius: 14px;
-        }
-        .urgencia-btn.ahora::before {
-            background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(251,146,60,0.08));
-        }
-        .urgencia-btn.programar::before {
-            background: linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.08));
+            position: relative; border: 2px solid #e2e8f0; border-radius: 18px;
+            padding: 20px 12px; text-align: center; cursor: pointer;
+            transition: all 0.25s cubic-bezier(.34,1.56,.64,1); background: white; overflow: hidden;
         }
         .urgencia-btn.selected-ahora {
             border-color: #ef4444;
-            box-shadow: 0 6px 20px rgba(239,68,68,0.2);
-            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(239,68,68,0.2); transform: translateY(-3px);
         }
-        .urgencia-btn.selected-ahora::before { opacity: 1; }
         .urgencia-btn.selected-programar {
             border-color: #667eea;
-            box-shadow: 0 6px 20px rgba(102,126,234,0.2);
-            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.2); transform: translateY(-3px);
         }
-        .urgencia-btn.selected-programar::before { opacity: 1; }
-
-        .urgencia-emoji {
-            font-size: 2rem;
-            display: block;
-            margin-bottom: 8px;
-            position: relative; z-index: 1;
-        }
+        .urgencia-emoji { font-size: 2rem; display: block; margin-bottom: 8px; }
         .urgencia-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #0f172a;
-            display: block;
-            margin-bottom: 4px;
-            position: relative; z-index: 1;
+            font-family: 'Playfair Display', serif; font-size: 0.9rem;
+            font-weight: 700; color: #0f172a; display: block; margin-bottom: 4px;
         }
-        .urgencia-sub {
-            font-size: 0.72rem;
-            color: #94a3b8;
-            font-family: 'Lato', sans-serif;
-            position: relative; z-index: 1;
-            line-height: 1.3;
-        }
+        .urgencia-sub { font-size: 0.7rem; color: #94a3b8; line-height: 1.3; }
         .urgencia-btn.selected-ahora .urgencia-title { color: #ef4444; }
         .urgencia-btn.selected-programar .urgencia-title { color: #667eea; }
-        .urgencia-btn.selected-ahora .urgencia-sub { color: #f87171; }
-        .urgencia-btn.selected-programar .urgencia-sub { color: #818cf8; }
-
-        /* Badge "Recomendado" */
-        .badge-rec {
-            position: absolute;
-            top: 10px; right: 10px;
-            background: linear-gradient(135deg, #ef4444, #f97316);
-            color: white;
-            font-size: 0.6rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 99px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            font-family: 'Lato', sans-serif;
+        .badge-popular {
+            position: absolute; top: 10px; right: 10px;
+            background: linear-gradient(135deg,#ef4444,#f97316);
+            color: white; font-size: 0.58rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 99px;
+            letter-spacing: 0.5px; text-transform: uppercase;
         }
-
-        /* Campo fecha oculto */
-        .fecha-wrap {
-            display: none;
-            margin-top: 14px;
-            animation: slideDown 0.3s ease;
-        }
+        .fecha-wrap { display: none; margin-top: 14px; animation: slideDown 0.3s ease; }
         .fecha-wrap.show { display: block; }
         @keyframes slideDown {
             from { opacity: 0; transform: translateY(-8px); }
             to   { opacity: 1; transform: translateY(0); }
         }
-
-        /* Pulse en botón ahora */
         @keyframes pulse-red {
             0%,100% { box-shadow: 0 6px 20px rgba(239,68,68,0.2); }
             50%      { box-shadow: 0 6px 28px rgba(239,68,68,0.4); }
         }
         .urgencia-btn.selected-ahora { animation: pulse-red 2s ease infinite; }
-            display: none;
-            align-items: center;
-            gap: 6px;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1d4ed8;
-            padding: 4px 12px;
-            border-radius: 99px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-        .selected-chip.show { display: inline-flex; }
 
-        @media (max-width: 400px) {
-            .cat-grid { grid-template-columns: repeat(3, 1fr); }
-            .row-2 { grid-template-columns: 1fr; }
-        }
-
-        /* ── AUTOCOMPLETE MUNICIPIO ── */
+        /* MUNICIPIO AUTOCOMPLETE */
         .municipio-wrap { position: relative; }
         .municipio-input-box {
             display: flex; align-items: center;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            background: white;
-            transition: border-color 0.2s;
-            overflow: hidden;
+            border: 2px solid #e2e8f0; border-radius: 12px;
+            background: white; transition: border-color 0.2s; overflow: hidden;
         }
         .municipio-input-box:focus-within { border-color: #667eea; }
-        .municipio-input-box i {
-            padding: 0 12px;
-            color: #94a3b8;
-            font-size: 1rem;
-            flex-shrink: 0;
-        }
+        .municipio-input-box i { padding: 0 12px; color: #94a3b8; font-size: 1rem; flex-shrink: 0; }
         .municipio-input-box input {
-            flex: 1;
-            border: none !important;
-            outline: none !important;
-            padding: 12px 12px 12px 0 !important;
-            font-size: 0.9rem;
-            font-family: 'Lato', sans-serif;
-            color: #0f172a;
+            flex: 1; border: none !important; outline: none !important;
+            padding: 13px 12px 13px 0 !important; font-size: 0.9rem;
+            font-family: 'Lato', sans-serif; color: #0f172a;
             background: transparent !important;
-            box-shadow: none !important;
         }
-        .municipio-clear {
-            padding: 0 12px;
-            color: #cbd5e1;
-            cursor: pointer;
-            font-size: 1rem;
-            display: none;
-        }
+        .municipio-clear { padding: 0 12px; color: #cbd5e1; cursor: pointer; font-size: 1rem; display: none; }
         .municipio-clear.show { display: block; }
-
         .municipio-dropdown {
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 0; right: 0;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-            max-height: 220px;
-            overflow-y: auto;
-            z-index: 100;
-            display: none;
+            position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+            background: white; border: 1px solid #e2e8f0; border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12); max-height: 220px;
+            overflow-y: auto; z-index: 200; display: none;
         }
         .municipio-dropdown.open { display: block; }
         .muni-item {
-            padding: 11px 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: background 0.15s;
-            border-bottom: 1px solid #f8fafc;
+            padding: 11px 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: background 0.15s; border-bottom: 1px solid #f8fafc;
         }
         .muni-item:last-child { border-bottom: none; }
         .muni-item:hover, .muni-item.active { background: #f3f0ff; }
-        .muni-nombre {
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: #0f172a;
-        }
-        .muni-nombre mark {
-            background: none;
-            color: #667eea;
-            font-weight: 700;
-        }
-        .muni-depto {
-            font-size: 0.72rem;
-            color: #94a3b8;
-            font-weight: 500;
-            text-align: right;
-        }
-        .muni-empty {
-            padding: 16px;
-            text-align: center;
-            color: #94a3b8;
-            font-size: 0.85rem;
-        }
-        /* Scrollbar del dropdown */
+        .muni-nombre { font-size: 0.88rem; font-weight: 600; color: #0f172a; }
+        .muni-nombre mark { background: none; color: #667eea; font-weight: 700; }
+        .muni-depto { font-size: 0.72rem; color: #94a3b8; font-weight: 500; }
+        .muni-empty { padding: 16px; text-align: center; color: #94a3b8; font-size: 0.85rem; }
         .municipio-dropdown::-webkit-scrollbar { width: 4px; }
-        .municipio-dropdown::-webkit-scrollbar-track { background: transparent; }
         .municipio-dropdown::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+        .municipio-confirm {
+            display: none; margin-top: 8px; padding: 8px 12px;
+            background: #f3f0ff; border-radius: 10px;
+            font-size: 0.82rem; color: #667eea; font-weight: 600;
+        }
+        .municipio-confirm.show { display: block; }
+
+        /* BUTTONS */
+        .btn-next {
+            width: 100%; padding: 16px;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            color: white; border: none; border-radius: 14px;
+            font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center;
+            justify-content: center; gap: 8px;
+            box-shadow: 0 4px 16px rgba(102,126,234,0.35);
+            font-family: 'Lato', sans-serif; letter-spacing: 1px;
+            text-transform: uppercase; margin-top: 8px;
+        }
+        .btn-next:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,0.45); }
+        .btn-next:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-back-step {
+            width: 100%; padding: 13px;
+            background: #f1f5f9; color: #64748b;
+            border: none; border-radius: 14px;
+            font-size: 0.88rem; font-weight: 600; cursor: pointer;
+            font-family: 'Lato', sans-serif; margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .btn-back-step:hover { background: #e2e8f0; }
+
+        /* ALERT */
+        .alert {
+            padding: 12px 14px; border-radius: 12px;
+            font-size: 0.85rem; margin-bottom: 16px; display: none;
+        }
+        .alert.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .alert.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+        @media (max-width: 400px) {
+            .cat-grid { grid-template-columns: repeat(3, 1fr); }
+        }
     </style>
 </head>
 <body>
 
-<!-- Top bar -->
+<!-- TOP BAR -->
 <div class="top-bar">
-    <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
-    <div>
-        <h1>Solicitar Servicio</h1>
-        <p>Describe lo que necesitas y encuentra al profesional ideal</p>
+    <div class="top-bar-row">
+        <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+        <div class="top-bar-title">
+            <h1>Solicitar Servicio</h1>
+            <p>Encuentra al profesional ideal en minutos</p>
+        </div>
+    </div>
+    <div class="progress-steps">
+        <div class="step-item active" id="stepIndicator1">
+            <div class="step-dot">1</div>
+            <div class="step-label">Categoría</div>
+        </div>
+        <div class="step-item" id="stepIndicator2">
+            <div class="step-dot">2</div>
+            <div class="step-label">Problema</div>
+        </div>
+        <div class="step-item" id="stepIndicator3">
+            <div class="step-dot">3</div>
+            <div class="step-label">Detalles</div>
+        </div>
     </div>
 </div>
 
 <div class="content">
-
-    <div id="alert" class="alert"></div>
+    <div id="alertBox" class="alert"></div>
 
     <form id="formSolicitud">
-        <input type="hidden" id="id_categoria" name="id_categoria">
+        <!-- Hidden fields -->
         <input type="hidden" id="id_cliente" name="id_cliente" value="1">
-        <input type="hidden" id="id_trabajador" name="id_trabajador">
+        <input type="hidden" id="id_categoria" name="id_categoria">
+        <input type="hidden" id="titulo" name="titulo">
+        <input type="hidden" id="descripcion" name="descripcion">
+        <input type="hidden" id="urgenciaHidden" name="urgencia" value="ahora">
+        <input type="hidden" id="ciudadHidden" name="ciudad">
+        <input type="hidden" id="departamentoHidden" name="departamento">
 
-        <!-- SECCIÓN 1: Tipo de servicio -->
-        <div class="section">
-            <div class="section-title">
-                <i class="bi bi-grid-1x2-fill"></i> Selecciona el tipo de servicio
-            </div>
-
-            <span class="selected-chip" id="selectedChip">
-                <i class="bi bi-check-circle-fill"></i>
-                <span id="selectedName"></span>
-            </span>
-
-            <div class="cat-grid">
-                <div class="cat-item" onclick="selCat(this, 1, 'Plomería')">
-                    <div class="icon">🔧</div>
-                    <div class="name">Plomería</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 2, 'Electricidad')">
-                    <div class="icon">⚡</div>
-                    <div class="name">Electricidad</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 3, 'Limpieza')">
-                    <div class="icon">🧹</div>
-                    <div class="name">Limpieza</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 4, 'Carpintería')">
-                    <div class="icon">🪚</div>
-                    <div class="name">Carpintería</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 5, 'Pintura')">
-                    <div class="icon">🎨</div>
-                    <div class="name">Pintura</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 6, 'Jardinería')">
-                    <div class="icon">🌱</div>
-                    <div class="name">Jardinería</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 7, 'Mecánica')">
-                    <div class="icon">🔩</div>
-                    <div class="name">Mecánica</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 8, 'Tecnología')">
-                    <div class="icon">💻</div>
-                    <div class="name">Tecnología</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 9, 'Construcción')">
-                    <div class="icon">🏗️</div>
-                    <div class="name">Construcción</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 10, 'Educación')">
-                    <div class="icon">📚</div>
-                    <div class="name">Educación</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 11, 'Salud')">
-                    <div class="icon">💊</div>
-                    <div class="name">Salud</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 12, 'Belleza')">
-                    <div class="icon">💇</div>
-                    <div class="name">Belleza</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 13, 'Gastronomía')">
-                    <div class="icon">🍳</div>
-                    <div class="name">Gastronomía</div>
-                </div>
-                <div class="cat-item" onclick="selCat(this, 14, 'Transporte')">
-                    <div class="icon">🚚</div>
-                    <div class="name">Transporte</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECCIÓN 2: Detalles -->
-        <div class="section">
-            <div class="section-title">
-                <i class="bi bi-file-text-fill"></i> Detalles del servicio
-            </div>
-            <div class="form-group">
-                <label>Título breve *</label>
-                <input type="text" name="titulo" placeholder="Ej: Reparación de tubería en cocina" required>
-            </div>
-            <div class="form-group">
-                <label>Descripción detallada *</label>
-                <textarea name="descripcion" placeholder="Describe el problema o trabajo que necesitas con el mayor detalle posible..." required></textarea>
-            </div>
-
-            <!-- Urgencia -->
-            <div class="form-group">
-                <label>¿Cuándo lo necesitas? *</label>
-                <div class="urgencia-wrap">
-                    <div class="urgencia-btn ahora" id="btnAhora" onclick="selUrgencia('ahora')">
-                        <span class="badge-rec">Popular</span>
-                        <span class="urgencia-emoji">⚡</span>
-                        <span class="urgencia-title">Lo necesito ahora</span>
-                        <span class="urgencia-sub">Conectamos contigo de inmediato</span>
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- PASO 1: CATEGORÍA                                       -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div class="step-panel active" id="step1">
+            <div class="card">
+                <div class="card-title">¿Qué servicio necesitas?</div>
+                <div class="card-sub">Selecciona la categoría que mejor describe tu necesidad</div>
+                <div class="cat-grid">
+                    <div class="cat-item" onclick="selCat(this,1,'Plomería')">
+                        <span class="icon">🔧</span><div class="name">Plomería</div>
                     </div>
-                    <div class="urgencia-btn programar" id="btnProgramar" onclick="selUrgencia('programar')">
-                        <span class="urgencia-emoji">📅</span>
-                        <span class="urgencia-title">Programar</span>
-                        <span class="urgencia-sub">Elige fecha y hora exacta</span>
+                    <div class="cat-item" onclick="selCat(this,2,'Electricidad')">
+                        <span class="icon">⚡</span><div class="name">Electricidad</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,3,'Limpieza')">
+                        <span class="icon">🧹</span><div class="name">Limpieza</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,4,'Carpintería')">
+                        <span class="icon">🪚</span><div class="name">Carpintería</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,5,'Pintura')">
+                        <span class="icon">🎨</span><div class="name">Pintura</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,6,'Jardinería')">
+                        <span class="icon">🌱</span><div class="name">Jardinería</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,7,'Mecánica')">
+                        <span class="icon">🔩</span><div class="name">Mecánica</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,8,'Tecnología')">
+                        <span class="icon">💻</span><div class="name">Tecnología</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,9,'Construcción')">
+                        <span class="icon">🏗️</span><div class="name">Construcción</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,10,'Educación')">
+                        <span class="icon">📚</span><div class="name">Educación</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,11,'Salud')">
+                        <span class="icon">💊</span><div class="name">Salud</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,12,'Belleza')">
+                        <span class="icon">💇</span><div class="name">Belleza</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,13,'Gastronomía')">
+                        <span class="icon">🍳</span><div class="name">Gastronomía</div>
+                    </div>
+                    <div class="cat-item" onclick="selCat(this,14,'Transporte')">
+                        <span class="icon">🚚</span><div class="name">Transporte</div>
                     </div>
                 </div>
-                <div class="fecha-wrap" id="fechaWrap">
-                    <input type="datetime-local" name="fecha_programada" id="fechaInput">
-                </div>
-                <input type="hidden" name="urgencia" id="urgenciaHidden" value="">
             </div>
+            <button type="button" class="btn-next" id="btnStep1" onclick="goStep(2)" disabled>
+                Continuar <i class="bi bi-arrow-right"></i>
+            </button>
         </div>
 
-        <!-- SECCIÓN 3: Ubicación -->
-        <div class="section">
-            <div class="section-title">
-                <i class="bi bi-geo-alt-fill"></i> Ubicación del servicio
-            </div>
-            <div class="form-group">
-                <label>Dirección completa *</label>
-                <input type="text" name="direccion_servicio" placeholder="Calle, número, barrio" required>
-            </div>
-
-            <!-- Buscador de municipio -->
-            <div class="form-group">
-                <label>Ciudad y Departamento *</label>
-                <div class="municipio-wrap">
-                    <div class="municipio-input-box">
-                        <i class="bi bi-search"></i>
-                        <input type="text" id="municipioBuscar"
-                               placeholder="Escribe tu municipio..."
-                               autocomplete="off"
-                               oninput="filtrarMunicipios(this.value)"
-                               onfocus="filtrarMunicipios(this.value)">
-                        <span class="municipio-clear" id="municipioClear" onclick="limpiarMunicipio()">✕</span>
-                    </div>
-                    <div class="municipio-dropdown" id="municipioDropdown"></div>
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- PASO 2: TIPO DE PROBLEMA                                -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div class="step-panel" id="step2">
+            <div class="card">
+                <div id="step2Summary" class="summary-pill" style="display:none">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span id="step2CatName"></span>
                 </div>
-                <!-- Campos ocultos que se envían al backend -->
-                <input type="hidden" name="ciudad" id="ciudadHidden" required>
-                <input type="hidden" name="departamento" id="departamentoHidden" required>
-                <!-- Chip de confirmación -->
-                <div id="municipioConfirm" style="display:none; margin-top:8px; padding:8px 12px;
-                     background:#f3f0ff; border-radius:8px; font-size:0.82rem; color:#667eea; font-weight:600;">
-                    📍 <span id="municipioConfirmText"></span>
-                </div>
+                <div class="card-title">¿Cuál es el problema?</div>
+                <div class="card-sub">Selecciona el tipo específico de servicio</div>
+                <div class="chips-wrap" id="chipsContainer"></div>
             </div>
+            <button type="button" class="btn-next" id="btnStep2" onclick="goStep(3)" disabled>
+                Continuar <i class="bi bi-arrow-right"></i>
+            </button>
+            <button type="button" class="btn-back-step" onclick="goStep(1)">
+                <i class="bi bi-arrow-left"></i> Volver
+            </button>
         </div>
 
-        <!-- SECCIÓN 4: Contacto -->
-        <div class="section">
-            <div class="section-title">
-                <i class="bi bi-person-fill"></i> Tus datos de contacto
-            </div>
-            <div class="form-group">
-                <label>Nombre completo *</label>
-                <input type="text" name="nombre_cliente" placeholder="Tu nombre" required>
-            </div>
-            <div class="row-2">
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- PASO 3: UBICACIÓN + URGENCIA + CONTACTO                 -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div class="step-panel" id="step3">
+            <div class="card">
+                <div id="step3Summary" class="summary-pill" style="display:none">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span id="step3Title"></span>
+                </div>
+                <div class="card-title">¿Dónde y cuándo?</div>
+                <div class="card-sub">Indica la ubicación y urgencia del servicio</div>
+
+                <!-- Ubicación -->
                 <div class="form-group">
-                    <label>Teléfono *</label>
-                    <input type="tel" name="telefono_cliente" placeholder="3001234567" required>
+                    <label>Dirección *</label>
+                    <input type="text" name="direccion_servicio" id="direccionInput"
+                           placeholder="Calle, número, barrio" required>
                 </div>
                 <div class="form-group">
-                    <label>Correo (opcional)</label>
-                    <input type="email" name="correo_cliente" placeholder="tu@correo.com">
+                    <label>Ciudad / Municipio *</label>
+                    <div class="municipio-wrap">
+                        <div class="municipio-input-box">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="municipioBuscar"
+                                   placeholder="Escribe tu municipio..."
+                                   autocomplete="off"
+                                   oninput="filtrarMunicipios(this.value)"
+                                   onfocus="filtrarMunicipios(this.value)">
+                            <span class="municipio-clear" id="municipioClear" onclick="limpiarMunicipio()">✕</span>
+                        </div>
+                        <div class="municipio-dropdown" id="municipioDropdown"></div>
+                    </div>
+                    <div class="municipio-confirm" id="municipioConfirm">
+                        📍 <span id="municipioConfirmText"></span>
+                    </div>
+                </div>
+
+                <!-- Urgencia -->
+                <div class="form-group">
+                    <label>¿Cuándo lo necesitas? *</label>
+                    <div class="urgencia-wrap">
+                        <div class="urgencia-btn ahora selected-ahora" id="btnAhora" onclick="selUrgencia('ahora')">
+                            <span class="badge-popular">Popular</span>
+                            <span class="urgencia-emoji">⚡</span>
+                            <span class="urgencia-title">Lo necesito ahora</span>
+                            <span class="urgencia-sub">Conectamos contigo de inmediato</span>
+                        </div>
+                        <div class="urgencia-btn programar" id="btnProgramar" onclick="selUrgencia('programar')">
+                            <span class="urgencia-emoji">📅</span>
+                            <span class="urgencia-title">Programar</span>
+                            <span class="urgencia-sub">Elige fecha y hora exacta</span>
+                        </div>
+                    </div>
+                    <div class="fecha-wrap" id="fechaWrap">
+                        <input type="datetime-local" name="fecha_programada" id="fechaInput">
+                    </div>
                 </div>
             </div>
+
+            <!-- Contacto -->
+            <div class="card">
+                <div class="card-title" style="font-size:1.1rem; margin-bottom:4px;">Tus datos</div>
+                <div class="card-sub">Para que el profesional pueda contactarte</div>
+                <div class="form-group">
+                    <label>Nombre completo *</label>
+                    <input type="text" name="nombre_cliente" placeholder="Tu nombre" required>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>Teléfono *</label>
+                        <input type="tel" name="telefono_cliente" placeholder="3001234567" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Correo (opcional)</label>
+                        <input type="email" name="correo_cliente" placeholder="tu@correo.com">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-next" id="btnSubmit">
+                <i class="bi bi-search"></i> Buscar Profesionales
+            </button>
+            <button type="button" class="btn-back-step" onclick="goStep(2)">
+                <i class="bi bi-arrow-left"></i> Volver
+            </button>
         </div>
 
-        <button type="submit" class="btn-submit" id="btnSubmit">
-            <i class="bi bi-search"></i> Buscar Profesionales
-        </button>
     </form>
 </div>
 
 <script>
-    // Pre-seleccionar categoría si viene de URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const catURL = urlParams.get('categoria');
-    const trabajadorId = urlParams.get('trabajador_id');
-    const trabajadorNombre = urlParams.get('trabajador_nombre');
+// STATE
+let currentStep = 1;
+let selectedCatId = null;
+let selectedCatName = '';
+let selectedProblem = '';
 
-    if (trabajadorId) document.getElementById('id_trabajador').value = trabajadorId;
+// CHIPS PER CATEGORY
+const CHIPS = {
+    'Plomeria':     ['Tuberia rota','Goteras','Instalacion nueva','Bano tapado','Otro'],
+    'Electricidad': ['Sin luz','Corto circuito','Instalacion','Toma danada','Otro'],
+    'Limpieza':     ['Casa completa','Oficina','Post-obra','Solo banos','Otro'],
+    'Carpinteria':  ['Mueble roto','Puerta danada','Instalacion','Closet','Otro'],
+    'Pintura':      ['Interior','Exterior','Retoques','Impermeabilizar','Otro'],
+    'Jardineria':   ['Corte de cesped','Poda','Diseno','Fumigacion','Otro'],
+    'Mecanica':     ['Carro no enciende','Cambio de aceite','Frenos','Llantas','Otro'],
+    'Tecnologia':   ['PC lento','Virus','Red/WiFi','Instalacion','Otro'],
+    'Construccion': ['Remodelacion','Fisuras','Pisos','Techo','Otro'],
+    'Educacion':    ['Matematicas','Ingles','Refuerzo escolar','Universitario','Otro'],
+    'Salud':        ['Enfermeria','Fisioterapia','Cuidado adulto mayor','Primeros auxilios','Otro'],
+    'Belleza':      ['Corte de cabello','Manicure','Maquillaje','Depilacion','Otro'],
+    'Gastronomia':  ['Almuerzo','Cena especial','Domicilio','Catering','Otro'],
+    'Transporte':   ['Mudanza','Domicilio','Aeropuerto','Diligencias','Otro']
+};
 
-    if (catURL) {
-        document.querySelectorAll('.cat-item').forEach(item => {
-            if (item.querySelector('.name').textContent === catURL) {
-                item.click();
-            }
-        });
+// STEP NAVIGATION
+function goStep(n, isBack) {
+    const current = document.getElementById('step' + currentStep);
+    const next    = document.getElementById('step' + n);
+    if (!next) return;
+    current.classList.remove('active');
+    next.classList.remove('back-anim');
+    if (isBack) next.classList.add('back-anim');
+    next.classList.add('active');
+    for (let i = 1; i <= 3; i++) {
+        const ind = document.getElementById('stepIndicator' + i);
+        ind.classList.remove('active','done');
+        if (i < n) ind.classList.add('done');
+        else if (i === n) ind.classList.add('active');
     }
+    currentStep = n;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-    // ── MUNICIPIOS DE COLOMBIA ──
-    const MUNICIPIOS = [
-        {n:'BOGOTÁ',d:'CUNDINAMARCA'},{n:'MEDELLÍN',d:'ANTIOQUIA'},{n:'CALI',d:'VALLE DEL CAUCA'},
-        {n:'BARRANQUILLA',d:'ATLÁNTICO'},{n:'CARTAGENA',d:'BOLÍVAR'},{n:'CÚCUTA',d:'NORTE DE SANTANDER'},
-        {n:'BUCARAMANGA',d:'SANTANDER'},{n:'PEREIRA',d:'RISARALDA'},{n:'MANIZALES',d:'CALDAS'},
-        {n:'IBAGUÉ',d:'TOLIMA'},{n:'SANTA MARTA',d:'MAGDALENA'},{n:'VILLAVICENCIO',d:'META'},
-        {n:'ARMENIA',d:'QUINDÍO'},{n:'VALLEDUPAR',d:'CESAR'},{n:'MONTERÍA',d:'CÓRDOBA'},
-        {n:'NEIVA',d:'HUILA'},{n:'PASTO',d:'NARIÑO'},{n:'POPAYÁN',d:'CAUCA'},
-        {n:'SINCELEJO',d:'SUCRE'},{n:'TUNJA',d:'BOYACÁ'},{n:'RIOHACHA',d:'LA GUAJIRA'},
-        {n:'QUIBDÓ',d:'CHOCÓ'},{n:'FLORENCIA',d:'CAQUETÁ'},{n:'MOCOA',d:'PUTUMAYO'},
-        {n:'YOPAL',d:'CASANARE'},{n:'ARAUCA',d:'ARAUCA'},{n:'MITÚ',d:'VAUPÉS'},
-        {n:'INÍRIDA',d:'GUAINÍA'},{n:'SAN JOSÉ DEL GUAVIARE',d:'GUAVIARE'},{n:'LETICIA',d:'AMAZONAS'},
-        {n:'PUERTO CARREÑO',d:'VICHADA'},{n:'BELLO',d:'ANTIOQUIA'},{n:'ITAGÜÍ',d:'ANTIOQUIA'},
-        {n:'ENVIGADO',d:'ANTIOQUIA'},{n:'APARTADÓ',d:'ANTIOQUIA'},{n:'TURBO',d:'ANTIOQUIA'},
-        {n:'RIONEGRO',d:'ANTIOQUIA'},{n:'SABANETA',d:'ANTIOQUIA'},{n:'COPACABANA',d:'ANTIOQUIA'},
-        {n:'GIRARDOTA',d:'ANTIOQUIA'},{n:'CALDAS',d:'ANTIOQUIA'},{n:'LA ESTRELLA',d:'ANTIOQUIA'},
-        {n:'SOACHA',d:'CUNDINAMARCA'},{n:'FACATATIVÁ',d:'CUNDINAMARCA'},{n:'ZIPAQUIRÁ',d:'CUNDINAMARCA'},
-        {n:'CHÍA',d:'CUNDINAMARCA'},{n:'MOSQUERA',d:'CUNDINAMARCA'},{n:'FUSAGASUGÁ',d:'CUNDINAMARCA'},
-        {n:'GIRARDOT',d:'CUNDINAMARCA'},{n:'MADRID',d:'CUNDINAMARCA'},{n:'FUNZA',d:'CUNDINAMARCA'},
-        {n:'CAJICÁ',d:'CUNDINAMARCA'},{n:'TOCANCIPÁ',d:'CUNDINAMARCA'},{n:'SOPÓ',d:'CUNDINAMARCA'},
-        {n:'PALMIRA',d:'VALLE DEL CAUCA'},{n:'BUENAVENTURA',d:'VALLE DEL CAUCA'},{n:'TULUÁ',d:'VALLE DEL CAUCA'},
-        {n:'BUGA',d:'VALLE DEL CAUCA'},{n:'CARTAGO',d:'VALLE DEL CAUCA'},{n:'FLORIDA',d:'VALLE DEL CAUCA'},
-        {n:'YUMBO',d:'VALLE DEL CAUCA'},{n:'JAMUNDÍ',d:'VALLE DEL CAUCA'},{n:'CANDELARIA',d:'VALLE DEL CAUCA'},
-        {n:'SOLEDAD',d:'ATLÁNTICO'},{n:'MALAMBO',d:'ATLÁNTICO'},{n:'SABANALARGA',d:'ATLÁNTICO'},
-        {n:'BARANOA',d:'ATLÁNTICO'},{n:'PUERTO COLOMBIA',d:'ATLÁNTICO'},
-        {n:'TURBACO',d:'BOLÍVAR'},{n:'MAGANGUÉ',d:'BOLÍVAR'},{n:'MOMPÓS',d:'BOLÍVAR'},
-        {n:'OCAÑA',d:'NORTE DE SANTANDER'},{n:'PAMPLONA',d:'NORTE DE SANTANDER'},{n:'VILLA DEL ROSARIO',d:'NORTE DE SANTANDER'},
-        {n:'FLORIDABLANCA',d:'SANTANDER'},{n:'GIRÓN',d:'SANTANDER'},{n:'PIEDECUESTA',d:'SANTANDER'},
-        {n:'BARRANCABERMEJA',d:'SANTANDER'},{n:'SAN GIL',d:'SANTANDER'},{n:'SOCORRO',d:'SANTANDER'},
-        {n:'DOSQUEBRADAS',d:'RISARALDA'},{n:'SANTA ROSA DE CABAL',d:'RISARALDA'},{n:'LA VIRGINIA',d:'RISARALDA'},
-        {n:'CHINCHINÁ',d:'CALDAS'},{n:'VILLAMARÍA',d:'CALDAS'},{n:'RIOSUCIO',d:'CALDAS'},
-        {n:'ESPINAL',d:'TOLIMA'},{n:'MELGAR',d:'TOLIMA'},{n:'HONDA',d:'TOLIMA'},{n:'LÍBANO',d:'TOLIMA'},
-        {n:'CIÉNAGA',d:'MAGDALENA'},{n:'FUNDACIÓN',d:'MAGDALENA'},{n:'PLATO',d:'MAGDALENA'},
-        {n:'ACACÍAS',d:'META'},{n:'GRANADA',d:'META'},{n:'PUERTO LÓPEZ',d:'META'},
-        {n:'CALARCÁ',d:'QUINDÍO'},{n:'MONTENEGRO',d:'QUINDÍO'},{n:'QUIMBAYA',d:'QUINDÍO'},
-        {n:'AGUACHICA',d:'CESAR'},{n:'BOSCONIA',d:'CESAR'},{n:'LA PAZ',d:'CESAR'},
-        {n:'CERETÉ',d:'CÓRDOBA'},{n:'LORICA',d:'CÓRDOBA'},{n:'SAHAGÚN',d:'CÓRDOBA'},
-        {n:'CAMPOALEGRE',d:'HUILA'},{n:'GARZÓN',d:'HUILA'},{n:'PITALITO',d:'HUILA'},
-        {n:'IPIALES',d:'NARIÑO'},{n:'TUMACO',d:'NARIÑO'},{n:'TÚQUERRES',d:'NARIÑO'},
-        {n:'SANTANDER DE QUILICHAO',d:'CAUCA'},{n:'PUERTO TEJADA',d:'CAUCA'},{n:'PATÍA',d:'CAUCA'},
-        {n:'COROZAL',d:'SUCRE'},{n:'SAMPUÉS',d:'SUCRE'},{n:'TOLÚ',d:'SUCRE'},
-        {n:'DUITAMA',d:'BOYACÁ'},{n:'SOGAMOSO',d:'BOYACÁ'},{n:'CHIQUINQUIRÁ',d:'BOYACÁ'},
-        {n:'MAICAO',d:'LA GUAJIRA'},{n:'FONSECA',d:'LA GUAJIRA'},{n:'SAN JUAN DEL CESAR',d:'LA GUAJIRA'},
-        {n:'APARTADÓ',d:'ANTIOQUIA'},{n:'CAUCASIA',d:'ANTIOQUIA'},{n:'YARUMAL',d:'ANTIOQUIA'},
-        {n:'PUERTO BERRÍO',d:'ANTIOQUIA'},{n:'MARINILLA',d:'ANTIOQUIA'},{n:'EL CARMEN DE VIBORAL',d:'ANTIOQUIA'},
-        {n:'CIÉNAGA DE ORO',d:'CÓRDOBA'},{n:'MONTELÍBANO',d:'CÓRDOBA'},{n:'PLANETA RICA',d:'CÓRDOBA'},
-        {n:'EL BANCO',d:'MAGDALENA'},{n:'ARACATACA',d:'MAGDALENA'},{n:'PIVIJAY',d:'MAGDALENA'},
-        {n:'VILLANUEVA',d:'CASANARE'},{n:'AGUAZUL',d:'CASANARE'},{n:'TAURAMENA',d:'CASANARE'},
-        {n:'SARAVENA',d:'ARAUCA'},{n:'ARAUQUITA',d:'ARAUCA'},{n:'TAME',d:'ARAUCA'},
-        {n:'SAN VICENTE DEL CAGUÁN',d:'CAQUETÁ'},{n:'BELÉN DE LOS ANDAQUÍES',d:'CAQUETÁ'},
-        {n:'ORITO',d:'PUTUMAYO'},{n:'PUERTO ASÍS',d:'PUTUMAYO'},{n:'SIBUNDOY',d:'PUTUMAYO'},
-        {n:'TUMACO',d:'NARIÑO'},{n:'BARBACOAS',d:'NARIÑO'},{n:'LA UNIÓN',d:'NARIÑO'},
-        {n:'ROLDANILLO',d:'VALLE DEL CAUCA'},{n:'ZARZAL',d:'VALLE DEL CAUCA'},{n:'SEVILLA',d:'VALLE DEL CAUCA'},
-        {n:'PRADERA',d:'VALLE DEL CAUCA'},{n:'DAGUA',d:'VALLE DEL CAUCA'},{n:'RESTREPO',d:'VALLE DEL CAUCA'},
-        {n:'LORICA',d:'CÓRDOBA'},{n:'TIERRALTA',d:'CÓRDOBA'},{n:'PUERTO ESCONDIDO',d:'CÓRDOBA'},
-        {n:'MANAURE',d:'LA GUAJIRA'},{n:'URIBIA',d:'LA GUAJIRA'},{n:'DIBULLA',d:'LA GUAJIRA'},
-        {n:'ARIGUANÍ',d:'MAGDALENA'},{n:'ZONA BANANERA',d:'MAGDALENA'},{n:'ALGARROBO',d:'MAGDALENA'},
-        {n:'CHAPARRAL',d:'TOLIMA'},{n:'MARIQUITA',d:'TOLIMA'},{n:'FRESNO',d:'TOLIMA'},
-        {n:'ANSERMA',d:'CALDAS'},{n:'AGUADAS',d:'CALDAS'},{n:'SALAMINA',d:'CALDAS'},
-        {n:'BELÉN DE UMBRÍA',d:'RISARALDA'},{n:'APÍA',d:'RISARALDA'},{n:'QUINCHÍA',d:'RISARALDA'},
-        {n:'FILANDIA',d:'QUINDÍO'},{n:'CIRCASIA',d:'QUINDÍO'},{n:'SALENTO',d:'QUINDÍO'},
-        {n:'VÉLEZ',d:'SANTANDER'},{n:'MÁLAGA',d:'SANTANDER'},{n:'BARBOSA',d:'SANTANDER'},
-        {n:'OCAÑA',d:'NORTE DE SANTANDER'},{n:'TIBÚ',d:'NORTE DE SANTANDER'},{n:'CONVENCIÓN',d:'NORTE DE SANTANDER'},
-        {n:'GACHETÁ',d:'CUNDINAMARCA'},{n:'VILLETA',d:'CUNDINAMARCA'},{n:'LA MESA',d:'CUNDINAMARCA'},
-        {n:'SILVANIA',d:'CUNDINAMARCA'},{n:'ARBELÁEZ',d:'CUNDINAMARCA'},{n:'PASCA',d:'CUNDINAMARCA'},
-        {n:'PAIPA',d:'BOYACÁ'},{n:'MONGUÍ',d:'BOYACÁ'},{n:'VILLA DE LEYVA',d:'BOYACÁ'},
-        {n:'GARAGOA',d:'BOYACÁ'},{n:'GUATEQUE',d:'BOYACÁ'},{n:'MIRAFLORES',d:'BOYACÁ'},
-        {n:'PASTO',d:'NARIÑO'},{n:'LA FLORIDA',d:'NARIÑO'},{n:'SAMANIEGO',d:'NARIÑO'},
-        {n:'TAMINANGO',d:'NARIÑO'},{n:'CUMBAL',d:'NARIÑO'},{n:'GUACHUCAL',d:'NARIÑO'},
-        {n:'INZÁ',d:'CAUCA'},{n:'SILVIA',d:'CAUCA'},{n:'PIENDAMÓ',d:'CAUCA'},
-        {n:'MIRANDA',d:'CAUCA'},{n:'CORINTO',d:'CAUCA'},{n:'CALOTO',d:'CAUCA'},
-        {n:'NEIVA',d:'HUILA'},{n:'ALGECIRAS',d:'HUILA'},{n:'PALERMO',d:'HUILA'},
-        {n:'AIPE',d:'HUILA'},{n:'HOBO',d:'HUILA'},{n:'GIGANTE',d:'HUILA'},
-        {n:'OVEJAS',d:'SUCRE'},{n:'MORROA',d:'SUCRE'},{n:'GALERAS',d:'SUCRE'},
-        {n:'MONTERÍA',d:'CÓRDOBA'},{n:'VALENCIA',d:'CÓRDOBA'},{n:'BUENAVISTA',d:'CÓRDOBA'},
-        {n:'FLORENCIA',d:'CAQUETÁ'},{n:'ALBANIA',d:'CAQUETÁ'},{n:'CURILLO',d:'CAQUETÁ'},
-        {n:'VILLAGARZÓN',d:'PUTUMAYO'},{n:'COLÓN',d:'PUTUMAYO'},{n:'SANTIAGO',d:'PUTUMAYO'},
-        {n:'MITÚ',d:'VAUPÉS'},{n:'CARURÚ',d:'VAUPÉS'},{n:'TARAIRA',d:'VAUPÉS'},
-        {n:'INÍRIDA',d:'GUAINÍA'},{n:'BARRANCO MINAS',d:'GUAINÍA'},
-        {n:'SAN JOSÉ DEL GUAVIARE',d:'GUAVIARE'},{n:'CALAMAR',d:'GUAVIARE'},{n:'EL RETORNO',d:'GUAVIARE'},
-        {n:'LETICIA',d:'AMAZONAS'},{n:'PUERTO NARIÑO',d:'AMAZONAS'},
-        {n:'PUERTO CARREÑO',d:'VICHADA'},{n:'LA PRIMAVERA',d:'VICHADA'},{n:'CUMARIBO',d:'VICHADA'}
-    ];
+// STEP 1: SELECT CATEGORY
+function selCat(el, id, nombre) {
+    document.querySelectorAll('.cat-item').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedCatId   = id;
+    selectedCatName = nombre;
+    document.getElementById('id_categoria').value = id;
+    document.getElementById('btnStep1').disabled = false;
+    const key = nombre.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const chips = CHIPS[key] || ['Otro'];
+    const container = document.getElementById('chipsContainer');
+    container.innerHTML = chips.map(c =>
+        '<div class="chip" onclick="selChip(this,\'' + c.replace(/'/g,"\\'") + '\')">' + c + '</div>'
+    ).join('');
+    selectedProblem = '';
+    document.getElementById('btnStep2').disabled = true;
+    document.getElementById('step2CatName').textContent = nombre;
+    document.getElementById('step2Summary').style.display = 'inline-flex';
+}
 
-    let activeIdx = -1;
+// STEP 2: SELECT CHIP
+function selChip(el, problema) {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedProblem = problema;
+    document.getElementById('btnStep2').disabled = false;
+    const titulo = selectedCatName + ' - ' + problema;
+    const desc   = 'Solicitud de servicio de ' + selectedCatName.toLowerCase() + ': ' + problema + '. Por favor contactarme para coordinar los detalles.';
+    document.getElementById('titulo').value      = titulo;
+    document.getElementById('descripcion').value = desc;
+    document.getElementById('step3Title').textContent = titulo;
+    document.getElementById('step3Summary').style.display = 'inline-flex';
+}
 
-    function filtrarMunicipios(q) {
-        const dd = document.getElementById('municipioDropdown');
-        const clear = document.getElementById('municipioClear');
-        clear.classList.toggle('show', q.length > 0);
-
-        if (q.length < 2) { dd.classList.remove('open'); return; }
-
-        const norm = q.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        const res = MUNICIPIOS.filter(m => {
-            const mn = m.n.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-            const md = m.d.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-            return mn.includes(norm) || md.includes(norm);
-        }).slice(0, 12);
-
-        if (!res.length) {
-            dd.innerHTML = '<div class="muni-empty">No se encontró el municipio</div>';
-        } else {
-            dd.innerHTML = res.map((m, i) => {
-                const hn = m.n.replace(new RegExp(q, 'gi'), match => `<mark>${match}</mark>`);
-                return `<div class="muni-item" data-idx="${i}" onclick="selMunicipio('${m.n}','${m.d}')">
-                    <span class="muni-nombre">${hn}</span>
-                    <span class="muni-depto">${m.d}</span>
-                </div>`;
-            }).join('');
-        }
-        dd.classList.add('open');
-        activeIdx = -1;
+// URGENCIA
+function selUrgencia(tipo) {
+    const btnAhora    = document.getElementById('btnAhora');
+    const btnProgramar = document.getElementById('btnProgramar');
+    const fechaWrap   = document.getElementById('fechaWrap');
+    const fechaInput  = document.getElementById('fechaInput');
+    const hidden      = document.getElementById('urgenciaHidden');
+    const submitBtn   = document.getElementById('btnSubmit');
+    btnAhora.classList.remove('selected-ahora');
+    btnProgramar.classList.remove('selected-programar');
+    if (tipo === 'ahora') {
+        btnAhora.classList.add('selected-ahora');
+        fechaWrap.classList.remove('show');
+        fechaInput.removeAttribute('required');
+        fechaInput.value = '';
+        hidden.value = 'ahora';
+        submitBtn.innerHTML = '<i class="bi bi-lightning-fill"></i> Buscar Profesional Ahora';
+    } else {
+        btnProgramar.classList.add('selected-programar');
+        fechaWrap.classList.add('show');
+        fechaInput.setAttribute('required','required');
+        hidden.value = 'programar';
+        submitBtn.innerHTML = '<i class="bi bi-calendar-check"></i> Programar Servicio';
     }
+}
 
-    function selMunicipio(ciudad, depto) {
-        document.getElementById('municipioBuscar').value = ciudad;
-        document.getElementById('ciudadHidden').value = ciudad;
-        document.getElementById('departamentoHidden').value = depto;
+// MUNICIPIOS DE COLOMBIA
+const MUNICIPIOS = [
+    {n:'BOGOTA',d:'CUNDINAMARCA'},{n:'MEDELLIN',d:'ANTIOQUIA'},{n:'CALI',d:'VALLE DEL CAUCA'},
+    {n:'BARRANQUILLA',d:'ATLANTICO'},{n:'CARTAGENA',d:'BOLIVAR'},{n:'CUCUTA',d:'NORTE DE SANTANDER'},
+    {n:'BUCARAMANGA',d:'SANTANDER'},{n:'PEREIRA',d:'RISARALDA'},{n:'MANIZALES',d:'CALDAS'},
+    {n:'IBAGUE',d:'TOLIMA'},{n:'SANTA MARTA',d:'MAGDALENA'},{n:'VILLAVICENCIO',d:'META'},
+    {n:'ARMENIA',d:'QUINDIO'},{n:'VALLEDUPAR',d:'CESAR'},{n:'MONTERIA',d:'CORDOBA'},
+    {n:'NEIVA',d:'HUILA'},{n:'PASTO',d:'NARINO'},{n:'POPAYAN',d:'CAUCA'},
+    {n:'SINCELEJO',d:'SUCRE'},{n:'TUNJA',d:'BOYACA'},{n:'RIOHACHA',d:'LA GUAJIRA'},
+    {n:'QUIBDO',d:'CHOCO'},{n:'FLORENCIA',d:'CAQUETA'},{n:'MOCOA',d:'PUTUMAYO'},
+    {n:'YOPAL',d:'CASANARE'},{n:'ARAUCA',d:'ARAUCA'},{n:'MITU',d:'VAUPES'},
+    {n:'INIRIDA',d:'GUAINIA'},{n:'SAN JOSE DEL GUAVIARE',d:'GUAVIARE'},{n:'LETICIA',d:'AMAZONAS'},
+    {n:'PUERTO CARRENO',d:'VICHADA'},{n:'BELLO',d:'ANTIOQUIA'},{n:'ITAGUI',d:'ANTIOQUIA'},
+    {n:'ENVIGADO',d:'ANTIOQUIA'},{n:'APARTADO',d:'ANTIOQUIA'},{n:'TURBO',d:'ANTIOQUIA'},
+    {n:'RIONEGRO',d:'ANTIOQUIA'},{n:'SABANETA',d:'ANTIOQUIA'},{n:'COPACABANA',d:'ANTIOQUIA'},
+    {n:'GIRARDOTA',d:'ANTIOQUIA'},{n:'CALDAS',d:'ANTIOQUIA'},{n:'LA ESTRELLA',d:'ANTIOQUIA'},
+    {n:'SOACHA',d:'CUNDINAMARCA'},{n:'FACATATIVA',d:'CUNDINAMARCA'},{n:'ZIPAQUIRA',d:'CUNDINAMARCA'},
+    {n:'CHIA',d:'CUNDINAMARCA'},{n:'MOSQUERA',d:'CUNDINAMARCA'},{n:'FUSAGASUGA',d:'CUNDINAMARCA'},
+    {n:'GIRARDOT',d:'CUNDINAMARCA'},{n:'MADRID',d:'CUNDINAMARCA'},{n:'FUNZA',d:'CUNDINAMARCA'},
+    {n:'CAJICA',d:'CUNDINAMARCA'},{n:'TOCANCIPA',d:'CUNDINAMARCA'},{n:'SOPO',d:'CUNDINAMARCA'},
+    {n:'PALMIRA',d:'VALLE DEL CAUCA'},{n:'BUENAVENTURA',d:'VALLE DEL CAUCA'},{n:'TULUA',d:'VALLE DEL CAUCA'},
+    {n:'BUGA',d:'VALLE DEL CAUCA'},{n:'CARTAGO',d:'VALLE DEL CAUCA'},{n:'FLORIDA',d:'VALLE DEL CAUCA'},
+    {n:'YUMBO',d:'VALLE DEL CAUCA'},{n:'JAMUNDI',d:'VALLE DEL CAUCA'},{n:'CANDELARIA',d:'VALLE DEL CAUCA'},
+    {n:'SOLEDAD',d:'ATLANTICO'},{n:'MALAMBO',d:'ATLANTICO'},{n:'SABANALARGA',d:'ATLANTICO'},
+    {n:'BARANOA',d:'ATLANTICO'},{n:'PUERTO COLOMBIA',d:'ATLANTICO'},
+    {n:'TURBACO',d:'BOLIVAR'},{n:'MAGANGUE',d:'BOLIVAR'},{n:'MOMPOS',d:'BOLIVAR'},
+    {n:'OCANA',d:'NORTE DE SANTANDER'},{n:'PAMPLONA',d:'NORTE DE SANTANDER'},{n:'VILLA DEL ROSARIO',d:'NORTE DE SANTANDER'},
+    {n:'FLORIDABLANCA',d:'SANTANDER'},{n:'GIRON',d:'SANTANDER'},{n:'PIEDECUESTA',d:'SANTANDER'},
+    {n:'BARRANCABERMEJA',d:'SANTANDER'},{n:'SAN GIL',d:'SANTANDER'},{n:'SOCORRO',d:'SANTANDER'},
+    {n:'DOSQUEBRADAS',d:'RISARALDA'},{n:'SANTA ROSA DE CABAL',d:'RISARALDA'},{n:'LA VIRGINIA',d:'RISARALDA'},
+    {n:'CHINCHINA',d:'CALDAS'},{n:'VILLAMARIA',d:'CALDAS'},{n:'RIOSUCIO',d:'CALDAS'},
+    {n:'ESPINAL',d:'TOLIMA'},{n:'MELGAR',d:'TOLIMA'},{n:'HONDA',d:'TOLIMA'},{n:'LIBANO',d:'TOLIMA'},
+    {n:'CIENAGA',d:'MAGDALENA'},{n:'FUNDACION',d:'MAGDALENA'},{n:'PLATO',d:'MAGDALENA'},
+    {n:'ACACIAS',d:'META'},{n:'GRANADA',d:'META'},{n:'PUERTO LOPEZ',d:'META'},
+    {n:'CALARCA',d:'QUINDIO'},{n:'MONTENEGRO',d:'QUINDIO'},{n:'QUIMBAYA',d:'QUINDIO'},
+    {n:'AGUACHICA',d:'CESAR'},{n:'BOSCONIA',d:'CESAR'},{n:'LA PAZ',d:'CESAR'},
+    {n:'CERETE',d:'CORDOBA'},{n:'LORICA',d:'CORDOBA'},{n:'SAHAGUN',d:'CORDOBA'},
+    {n:'CAMPOALEGRE',d:'HUILA'},{n:'GARZON',d:'HUILA'},{n:'PITALITO',d:'HUILA'},
+    {n:'IPIALES',d:'NARINO'},{n:'TUMACO',d:'NARINO'},{n:'TUQUERRES',d:'NARINO'},
+    {n:'SANTANDER DE QUILICHAO',d:'CAUCA'},{n:'PUERTO TEJADA',d:'CAUCA'},{n:'PATIA',d:'CAUCA'},
+    {n:'COROZAL',d:'SUCRE'},{n:'SAMPUES',d:'SUCRE'},{n:'TOLU',d:'SUCRE'},
+    {n:'DUITAMA',d:'BOYACA'},{n:'SOGAMOSO',d:'BOYACA'},{n:'CHIQUINQUIRA',d:'BOYACA'},
+    {n:'MAICAO',d:'LA GUAJIRA'},{n:'FONSECA',d:'LA GUAJIRA'},{n:'SAN JUAN DEL CESAR',d:'LA GUAJIRA'},
+    {n:'CAUCASIA',d:'ANTIOQUIA'},{n:'YARUMAL',d:'ANTIOQUIA'},{n:'PUERTO BERRIO',d:'ANTIOQUIA'},
+    {n:'MARINILLA',d:'ANTIOQUIA'},{n:'EL CARMEN DE VIBORAL',d:'ANTIOQUIA'},
+    {n:'CIENAGA DE ORO',d:'CORDOBA'},{n:'MONTELIBANO',d:'CORDOBA'},{n:'PLANETA RICA',d:'CORDOBA'},
+    {n:'EL BANCO',d:'MAGDALENA'},{n:'ARACATACA',d:'MAGDALENA'},{n:'PIVIJAY',d:'MAGDALENA'},
+    {n:'VILLANUEVA',d:'CASANARE'},{n:'AGUAZUL',d:'CASANARE'},{n:'TAURAMENA',d:'CASANARE'},
+    {n:'SARAVENA',d:'ARAUCA'},{n:'ARAUQUITA',d:'ARAUCA'},{n:'TAME',d:'ARAUCA'},
+    {n:'SAN VICENTE DEL CAGUAN',d:'CAQUETA'},{n:'BELEN DE LOS ANDAQUIES',d:'CAQUETA'},
+    {n:'ORITO',d:'PUTUMAYO'},{n:'PUERTO ASIS',d:'PUTUMAYO'},{n:'SIBUNDOY',d:'PUTUMAYO'},
+    {n:'BARBACOAS',d:'NARINO'},{n:'LA UNION',d:'NARINO'},{n:'SAMANIEGO',d:'NARINO'},
+    {n:'ROLDANILLO',d:'VALLE DEL CAUCA'},{n:'ZARZAL',d:'VALLE DEL CAUCA'},{n:'SEVILLA',d:'VALLE DEL CAUCA'},
+    {n:'PRADERA',d:'VALLE DEL CAUCA'},{n:'DAGUA',d:'VALLE DEL CAUCA'},{n:'RESTREPO',d:'VALLE DEL CAUCA'},
+    {n:'TIERRALTA',d:'CORDOBA'},{n:'PUERTO ESCONDIDO',d:'CORDOBA'},
+    {n:'MANAURE',d:'LA GUAJIRA'},{n:'URIBIA',d:'LA GUAJIRA'},{n:'DIBULLA',d:'LA GUAJIRA'},
+    {n:'CHAPARRAL',d:'TOLIMA'},{n:'MARIQUITA',d:'TOLIMA'},{n:'FRESNO',d:'TOLIMA'},
+    {n:'ANSERMA',d:'CALDAS'},{n:'AGUADAS',d:'CALDAS'},{n:'SALAMINA',d:'CALDAS'},
+    {n:'BELEN DE UMBRIA',d:'RISARALDA'},{n:'APIA',d:'RISARALDA'},{n:'QUINCHIA',d:'RISARALDA'},
+    {n:'FILANDIA',d:'QUINDIO'},{n:'CIRCASIA',d:'QUINDIO'},{n:'SALENTO',d:'QUINDIO'},
+    {n:'VELEZ',d:'SANTANDER'},{n:'MALAGA',d:'SANTANDER'},{n:'BARBOSA',d:'SANTANDER'},
+    {n:'TIBU',d:'NORTE DE SANTANDER'},{n:'CONVENCION',d:'NORTE DE SANTANDER'},
+    {n:'GACHETA',d:'CUNDINAMARCA'},{n:'VILLETA',d:'CUNDINAMARCA'},{n:'LA MESA',d:'CUNDINAMARCA'},
+    {n:'SILVANIA',d:'CUNDINAMARCA'},{n:'ARBELAEZ',d:'CUNDINAMARCA'},{n:'PASCA',d:'CUNDINAMARCA'},
+    {n:'PAIPA',d:'BOYACA'},{n:'MONGUI',d:'BOYACA'},{n:'VILLA DE LEYVA',d:'BOYACA'},
+    {n:'GARAGOA',d:'BOYACA'},{n:'GUATEQUE',d:'BOYACA'},{n:'MIRAFLORES',d:'BOYACA'},
+    {n:'LA FLORIDA',d:'NARINO'},{n:'TAMINANGO',d:'NARINO'},{n:'CUMBAL',d:'NARINO'},{n:'GUACHUCAL',d:'NARINO'},
+    {n:'INZA',d:'CAUCA'},{n:'SILVIA',d:'CAUCA'},{n:'PIENDAMO',d:'CAUCA'},
+    {n:'MIRANDA',d:'CAUCA'},{n:'CORINTO',d:'CAUCA'},
+    {n:'ALGECIRAS',d:'HUILA'},{n:'PALERMO',d:'HUILA'},{n:'AIPE',d:'HUILA'},{n:'HOBO',d:'HUILA'},{n:'GIGANTE',d:'HUILA'},
+    {n:'OVEJAS',d:'SUCRE'},{n:'MORROA',d:'SUCRE'},{n:'GALERAS',d:'SUCRE'},
+    {n:'VALENCIA',d:'CORDOBA'},{n:'BUENAVISTA',d:'CORDOBA'},
+    {n:'ALBANIA',d:'CAQUETA'},{n:'CURILLO',d:'CAQUETA'},
+    {n:'VILLAGARZON',d:'PUTUMAYO'},{n:'COLON',d:'PUTUMAYO'},{n:'SANTIAGO',d:'PUTUMAYO'},
+    {n:'CARURU',d:'VAUPES'},{n:'TARAIRA',d:'VAUPES'},
+    {n:'BARRANCO MINAS',d:'GUAINIA'},
+    {n:'CALAMAR',d:'GUAVIARE'},{n:'EL RETORNO',d:'GUAVIARE'},
+    {n:'PUERTO NARINO',d:'AMAZONAS'},
+    {n:'LA PRIMAVERA',d:'VICHADA'},{n:'CUMARIBO',d:'VICHADA'}
+];
+
+let activeIdx = -1;
+
+function filtrarMunicipios(q) {
+    const dd    = document.getElementById('municipioDropdown');
+    const clear = document.getElementById('municipioClear');
+    clear.classList.toggle('show', q.length > 0);
+    if (q.length < 2) { dd.classList.remove('open'); return; }
+    const norm = q.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const res  = MUNICIPIOS.filter(m => {
+        const mn = m.n.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const md = m.d.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        return mn.includes(norm) || md.includes(norm);
+    }).slice(0,12);
+    if (!res.length) {
+        dd.innerHTML = '<div class="muni-empty">No se encontro el municipio</div>';
+    } else {
+        dd.innerHTML = res.map((m,i) => {
+            const hn = m.n.replace(new RegExp(q,'gi'), match => '<mark>' + match + '</mark>');
+            return '<div class="muni-item" data-idx="' + i + '" onclick="selMunicipio(\'' + m.n + '\',\'' + m.d + '\')">' +
+                '<span class="muni-nombre">' + hn + '</span>' +
+                '<span class="muni-depto">' + m.d + '</span>' +
+                '</div>';
+        }).join('');
+    }
+    dd.classList.add('open');
+    activeIdx = -1;
+}
+
+function selMunicipio(ciudad, depto) {
+    document.getElementById('municipioBuscar').value = ciudad;
+    document.getElementById('ciudadHidden').value    = ciudad;
+    document.getElementById('departamentoHidden').value = depto;
+    document.getElementById('municipioDropdown').classList.remove('open');
+    document.getElementById('municipioClear').classList.add('show');
+    document.getElementById('municipioConfirmText').textContent = ciudad + ', ' + depto;
+    document.getElementById('municipioConfirm').classList.add('show');
+}
+
+function limpiarMunicipio() {
+    document.getElementById('municipioBuscar').value = '';
+    document.getElementById('ciudadHidden').value    = '';
+    document.getElementById('departamentoHidden').value = '';
+    document.getElementById('municipioDropdown').classList.remove('open');
+    document.getElementById('municipioClear').classList.remove('show');
+    document.getElementById('municipioConfirm').classList.remove('show');
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.municipio-wrap'))
         document.getElementById('municipioDropdown').classList.remove('open');
-        document.getElementById('municipioClear').classList.add('show');
-        const confirm = document.getElementById('municipioConfirm');
-        document.getElementById('municipioConfirmText').textContent = ciudad + ', ' + depto;
-        confirm.style.display = 'block';
+});
+
+document.getElementById('municipioBuscar').addEventListener('keydown', function(e) {
+    const items = document.querySelectorAll('.muni-item');
+    if (!items.length) return;
+    if (e.key === 'ArrowDown')      { activeIdx = Math.min(activeIdx+1, items.length-1); }
+    else if (e.key === 'ArrowUp')   { activeIdx = Math.max(activeIdx-1, 0); }
+    else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); items[activeIdx].click(); return; }
+    else return;
+    items.forEach(function(it,i) { it.classList.toggle('active', i === activeIdx); });
+    if (items[activeIdx]) items[activeIdx].scrollIntoView({ block:'nearest' });
+});
+
+// Pre-select from URL
+const urlParams = new URLSearchParams(window.location.search);
+const catURL    = urlParams.get('categoria');
+if (catURL) {
+    document.querySelectorAll('.cat-item').forEach(function(item) {
+        if (item.querySelector('.name').textContent.trim() === catURL) item.click();
+    });
+}
+
+// FORM SUBMIT
+document.getElementById('formSolicitud').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const alertEl = document.getElementById('alertBox');
+
+    if (!selectedCatId) {
+        alertEl.className = 'alert error'; alertEl.style.display = 'block';
+        alertEl.textContent = 'Por favor selecciona una categoria';
+        return;
+    }
+    if (!selectedProblem) {
+        alertEl.className = 'alert error'; alertEl.style.display = 'block';
+        alertEl.textContent = 'Por favor selecciona el tipo de problema';
+        return;
+    }
+    if (!document.getElementById('ciudadHidden').value) {
+        alertEl.className = 'alert error'; alertEl.style.display = 'block';
+        alertEl.textContent = 'Por favor selecciona tu ciudad';
+        return;
     }
 
-    function limpiarMunicipio() {
-        document.getElementById('municipioBuscar').value = '';
-        document.getElementById('ciudadHidden').value = '';
-        document.getElementById('departamentoHidden').value = '';
-        document.getElementById('municipioDropdown').classList.remove('open');
-        document.getElementById('municipioClear').classList.remove('show');
-        document.getElementById('municipioConfirm').style.display = 'none';
-    }
+    const btn = document.getElementById('btnSubmit');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
 
-    // Cerrar dropdown al hacer click fuera
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.municipio-wrap')) {
-            document.getElementById('municipioDropdown').classList.remove('open');
-        }
-    });
+    const formData = new FormData(e.target);
 
-    // Navegación con teclado
-    document.getElementById('municipioBuscar').addEventListener('keydown', e => {
-        const items = document.querySelectorAll('.muni-item');
-        if (!items.length) return;
-        if (e.key === 'ArrowDown') { activeIdx = Math.min(activeIdx+1, items.length-1); }
-        else if (e.key === 'ArrowUp') { activeIdx = Math.max(activeIdx-1, 0); }
-        else if (e.key === 'Enter' && activeIdx >= 0) {
-            e.preventDefault(); items[activeIdx].click(); return;
-        } else return;
-        items.forEach((it,i) => it.classList.toggle('active', i === activeIdx));
-        items[activeIdx]?.scrollIntoView({ block: 'nearest' });
-    });
-
-    // Seleccionar "ahora" por defecto
-    selUrgencia('ahora');
-
-    function selUrgencia(tipo) {
-        const btnAhora    = document.getElementById('btnAhora');
-        const btnProgramar = document.getElementById('btnProgramar');
-        const fechaWrap   = document.getElementById('fechaWrap');
-        const fechaInput  = document.getElementById('fechaInput');
-        const hidden      = document.getElementById('urgenciaHidden');
-        const submitBtn   = document.getElementById('btnSubmit');
-
-        btnAhora.classList.remove('selected-ahora');
-        btnProgramar.classList.remove('selected-programar');
-
-        if (tipo === 'ahora') {
-            btnAhora.classList.add('selected-ahora');
-            fechaWrap.classList.remove('show');
-            fechaInput.removeAttribute('required');
-            fechaInput.value = '';
-            hidden.value = 'ahora';
-            submitBtn.innerHTML = '⚡ Buscar Profesional Ahora';
+    try {
+        const response = await fetch('/cliente/solicitud/crear', { method:'POST', body: formData });
+        const data = await response.json();
+        if (response.ok) {
+            alertEl.className = 'alert success'; alertEl.style.display = 'block';
+            alertEl.textContent = data.mensaje || 'Solicitud enviada. Buscando profesionales...';
+            setTimeout(function() {
+                window.location.href = '/cliente/mapa?categoria=' + encodeURIComponent(selectedCatName);
+            }, 1500);
         } else {
-            btnProgramar.classList.add('selected-programar');
-            fechaWrap.classList.add('show');
-            fechaInput.setAttribute('required', 'required');
-            hidden.value = 'programar';
-            submitBtn.innerHTML = '📅 Programar Servicio';
+            alertEl.className = 'alert error'; alertEl.style.display = 'block';
+            alertEl.textContent = data.error || 'No se pudo enviar la solicitud';
+            btn.disabled = false; btn.innerHTML = orig;
         }
+    } catch (err) {
+        window.location.href = '/cliente/mapa?categoria=' + encodeURIComponent(selectedCatName);
     }
-
-    function selCat(el, id, nombre) {
-        document.querySelectorAll('.cat-item').forEach(c => c.classList.remove('selected'));
-        el.classList.add('selected');
-        document.getElementById('id_categoria').value = id;
-        document.getElementById('selectedName').textContent = nombre;
-        document.getElementById('selectedChip').classList.add('show');
-    }
-
-    const alertEl = document.getElementById('alert');
-
-    document.getElementById('formSolicitud').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        if (!document.getElementById('id_categoria').value) {
-            alertEl.className = 'alert error';
-            alertEl.textContent = '⚠️ Por favor selecciona un tipo de servicio';
-            alertEl.style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-        }
-
-        if (!document.getElementById('urgenciaHidden').value) {
-            alertEl.className = 'alert error';
-            alertEl.textContent = '⚠️ Indica cuándo necesitas el servicio';
-            alertEl.style.display = 'block';
-            return;
-        }
-
-        const btn = document.getElementById('btnSubmit');
-        const textoOriginal = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Buscando...';
-
-        const formData = new FormData(e.target);
-
-        try {
-            const response = await fetch('/cliente/solicitud/crear', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                alertEl.className = 'alert success';
-                alertEl.textContent = '✅ ' + (data.mensaje || 'Solicitud enviada. Buscando profesionales...');
-                alertEl.style.display = 'block';
-
-                const catNombre = document.getElementById('selectedName').textContent;
-                setTimeout(() => {
-                    window.location.href = `/cliente/mapa?categoria=${encodeURIComponent(catNombre)}`;
-                }, 1500);
-            } else {
-                alertEl.className = 'alert error';
-                alertEl.textContent = '❌ ' + (data.error || 'No se pudo enviar la solicitud');
-                alertEl.style.display = 'block';
-                btn.disabled = false;
-                btn.innerHTML = textoOriginal;
-            }
-        } catch (err) {
-            const catNombre = document.getElementById('selectedName').textContent;
-            window.location.href = `/cliente/mapa${catNombre ? '?categoria=' + encodeURIComponent(catNombre) : ''}`;
-        }
-    });
+});
 </script>
 
 </body>
