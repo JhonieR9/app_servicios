@@ -296,14 +296,7 @@ def crear_solicitud(
         conexion.commit()
         id_solicitud = cursor.lastrowid
 
-        if id_trabajador:
-            cursor.execute("""
-                UPDATE solicitudes_servicio 
-                SET id_trabajador = %s, estado = 'aceptada'
-                WHERE id_solicitud = %s
-            """, (id_trabajador, id_solicitud))
-            conexion.commit()
-
+        # Ya NO se acepta automáticamente — el trabajador decide
         return {"mensaje": "Solicitud creada exitosamente", "id_solicitud": id_solicitud}
 
     except Exception as e:
