@@ -150,7 +150,7 @@ def api_seguimiento(id: int):
         cursor.execute("""
             SELECT s.id_solicitud, s.titulo, s.estado, s.ciudad, s.departamento,
                    s.fecha_solicitud, s.fecha_aceptacion, s.fecha_inicio, s.fecha_finalizacion,
-                   s.id_trabajador,
+                   s.id_trabajador, s.precio_final,
                    COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria
             FROM solicitudes_servicio s
             LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
@@ -166,6 +166,10 @@ def api_seguimiento(id: int):
                 sol[k] = (sol[k] - timedelta(hours=5)).strftime('%d/%m %H:%M')
             elif not sol.get(k):
                 sol[k] = None
+
+        # Serializar precio
+        if sol.get('precio_final') is not None:
+            sol['precio_final'] = float(sol['precio_final'])
 
         if sol.get('id_trabajador'):
             cursor.execute("""
@@ -191,53 +195,6 @@ def api_seguimiento(id: int):
 @router.get("/mis_solicitudes", response_class=HTMLResponse)
 def mostrar_mis_solicitudes(request: Request):
     return templates.TemplateResponse("clientes/mis_solicitudes.html", {"request": request})
-def api_seguimiento(id: int):
-    """Retorna el estado actual de una solicitud con datos del trabajador"""
-    conexion = conectar_bd()
-    try:
-        cursor = conexion.cursor(dictionary=True)
-        cursor.execute("""
-            SELECT s.id_solicitud, s.titulo, s.estado, s.ciudad, s.departamento,
-                   s.fecha_solicitud, s.fecha_aceptacion, s.fecha_inicio, s.fecha_finalizacion,
-                   s.id_trabajador,
-                   COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria
-            FROM solicitudes_servicio s
-            LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
-            WHERE s.id_solicitud = %s
-        """, (id,))
-        sol = cursor.fetchone()
-        if not sol:
-            return JSONResponse({"error": "No encontrada"}, status_code=404)
-
-        # Serializar fechas
-        from datetime import timedelta
-        for k in ['fecha_solicitud','fecha_aceptacion','fecha_inicio','fecha_finalizacion']:
-            if sol.get(k) and hasattr(sol[k], 'isoformat'):
-                sol[k] = (sol[k] - timedelta(hours=5)).strftime('%d/%m %H:%M')
-            elif not sol.get(k):
-                sol[k] = None
-
-        # Datos del trabajador si está asignado
-        if sol.get('id_trabajador'):
-            cursor.execute("""
-                SELECT p.nombre_completo, tp.telefono
-                FROM personas p
-                LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
-                WHERE p.id_persona = %s
-            """, (sol['id_trabajador'],))
-            trab = cursor.fetchone()
-            if trab:
-                sol['trabajador'] = {
-                    'nombre':   trab['nombre_completo'] or '',
-                    'telefono': str(trab['telefono'] or '')
-                }
-
-        return JSONResponse(sol)
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
-    finally:
-        if conexion and conexion.is_connected():
-            conexion.close()
 
 @router.get("/mis_solicitudes_api")
 def listar_mis_solicitudes_cliente(id_cliente: int = None):

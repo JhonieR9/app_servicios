@@ -464,12 +464,16 @@
 
     // ── COMPLETAR SERVICIO ──
     async function completarServicio(idSolicitud) {
-        if (!confirm('¿Confirmar que el servicio fue completado?')) return;
+        // Modal de precio
+        const precio = prompt('💰 ¿Cuál es el precio del servicio? (deja en 0 si no aplica)', '0');
+        if (precio === null) return; // canceló
+        const precioNum = parseFloat(precio) || 0;
+
         const btn = document.querySelector(`#activa-${idSolicitud} .btn-completar`);
         if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Completando...'; }
         const fd = new FormData();
         fd.append('id_solicitud', idSolicitud);
-        fd.append('precio_final', '0'); // precio opcional
+        fd.append('precio_final', precioNum);
         try {
             const res  = await fetch('/trabajador/servicio/completar', { method:'POST', body:fd });
             const data = await res.json();

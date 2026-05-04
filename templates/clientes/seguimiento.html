@@ -359,14 +359,22 @@
             if (data.error) return;
 
             const estado = data.estado || 'pendiente';
+            const estadoAnterior = estadoActual;
 
-            // Solo actualizar DOM si cambió el estado
+            // Notificar si cambió el estado
+            if (estadoAnterior && estado !== estadoAnterior) {
+                sonarCambioEstado();
+                mostrarBannerCambio(estado);
+                // Si se completó, mostrar modal de calificación
+                if (estado === 'completada') {
+                    setTimeout(() => mostrarModalCalificacion(data), 1500);
+                }
+            }
+
             if (estado !== estadoActual) {
                 estadoActual = estado;
                 actualizarEstadoHero(estado);
                 actualizarTimeline(estado);
-
-                // Cancelar visible solo si pendiente
                 document.getElementById('cancelarWrap').style.display =
                     estado === 'pendiente' ? 'block' : 'none';
             }
@@ -377,13 +385,17 @@
             document.getElementById('infoFecha').textContent     = data.fecha_solicitud || '—';
             document.getElementById('topSub').textContent        = 'Solicitud #' + idSolicitud;
 
-            // Tiempos en timeline
+            // Precio si está completada
+            if (data.precio_final && parseFloat(data.precio_final) > 0) {
+                document.getElementById('infoFecha').textContent =
+                    (data.fecha_solicitud || '') + ' · 💰 $' + parseFloat(data.precio_final).toLocaleString('es-CO');
+            }
+
             if (data.fecha_solicitud)    document.getElementById('tl-time-pendiente').textContent  = data.fecha_solicitud;
             if (data.fecha_aceptacion)   document.getElementById('tl-time-aceptada').textContent   = data.fecha_aceptacion;
             if (data.fecha_inicio)       document.getElementById('tl-time-en_proceso').textContent = data.fecha_inicio;
             if (data.fecha_finalizacion) document.getElementById('tl-time-completada').textContent = data.fecha_finalizacion;
 
-            // Trabajador asignado
             if (data.trabajador) {
                 const card = document.getElementById('trabajadorCard');
                 card.classList.add('show');
@@ -391,9 +403,117 @@
                 document.getElementById('trabCat').textContent    = data.nombre_categoria || '';
                 trabTelefono  = data.trabajador.telefono || '';
                 trabNombreVal = data.trabajador.nombre   || 'Profesional';
+                trabId        = data.id_trabajador || null;
             }
 
         } catch(e) { console.log('Error seguimiento:', e); }
+    }
+
+    // ── SONIDO CAMBIO ESTADO ──
+    function sonarCambioEstado() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const freqs = [523, 659, 784]; // Do-Mi-Sol
+            freqs.forEach((f, i) => {
+                const osc = ctx.createOscillator(), gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.value = f; osc.type = 'sine';
+                gain.gain.setValueAtTime(0.25, ctx.currentTime + i*0.15);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.15 + 0.4);
+                osc.start(ctx.currentTime + i*0.15);
+                osc.stop(ctx.currentTime + i*0.15 + 0.4);
+            });
+        } catch(e) {}
+    }
+
+    // ── BANNER CAMBIO ESTADO ──
+    function mostrarBannerCambio(estado) {
+        const msgs = {
+            aceptada:   '✅ ¡Un profesional aceptó tu solicitud!',
+            en_proceso: '🔧 El profesional está trabajando ahora',
+            completada: '🎉 ¡Servicio completado!'
+        };
+        const msg = msgs[estado];
+        if (!msg) return;
+        const banner = document.createElement('div');
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:16px 20px;text-align:center;font-weight:700;font-size:1rem;box-shadow:0 4px 20px rgba(102,126,234,0.5);animation:slideDown 0.4s ease;';
+        banner.innerHTML = `<style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style>${msg}`;
+        document.body.prepend(banner);
+        setTimeout(() => banner.remove(), 5000);
+    }
+
+    // ── MODAL CALIFICACIÓN ──
+    let trabId = null;
+
+    function mostrarModalCalificacion(data) {
+        // No mostrar si ya calificó
+        if (localStorage.getItem('calificado_' + idSolicitud)) return;
+
+        const modal = document.createElement('div');
+        modal.id = 'modalCalif';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:flex-end;justify-content:center;padding:0;animation:fadeIn 0.3s ease;';
+        modal.innerHTML = `
+        <style>
+            @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+            @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+            .modal-sheet{background:white;border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;animation:slideUp 0.4s cubic-bezier(.34,1.56,.64,1);}
+            .star-row{display:flex;justify-content:center;gap:12px;margin:20px 0;}
+            .star{font-size:2.5rem;cursor:pointer;transition:transform 0.2s;filter:grayscale(1);opacity:0.4;}
+            .star.active{filter:none;opacity:1;transform:scale(1.2);}
+            .btn-calificar{width:100%;padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:14px;font-weight:700;font-size:1rem;cursor:pointer;font-family:'Lato',sans-serif;margin-top:16px;letter-spacing:1px;}
+            .btn-skip{width:100%;padding:12px;background:none;border:none;color:#94a3b8;font-size:0.85rem;cursor:pointer;margin-top:8px;font-family:'Lato',sans-serif;}
+        </style>
+        <div class="modal-sheet">
+            <div style="text-align:center">
+                <div style="font-size:2.5rem;margin-bottom:8px">🎉</div>
+                <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#0f172a">¡Servicio completado!</div>
+                <div style="font-size:0.88rem;color:#64748b;margin-top:6px">¿Cómo fue tu experiencia con <strong>${data.trabajador ? data.trabajador.nombre : 'el profesional'}</strong>?</div>
+            </div>
+            <div class="star-row" id="starRow">
+                <span class="star" data-val="1" onclick="selStar(1)">⭐</span>
+                <span class="star" data-val="2" onclick="selStar(2)">⭐</span>
+                <span class="star" data-val="3" onclick="selStar(3)">⭐</span>
+                <span class="star" data-val="4" onclick="selStar(4)">⭐</span>
+                <span class="star" data-val="5" onclick="selStar(5)">⭐</span>
+            </div>
+            <textarea id="comentCalif" placeholder="Cuéntanos cómo fue (opcional)..."
+                style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-family:'Lato',sans-serif;font-size:0.88rem;resize:none;height:80px;outline:none;color:#0f172a;"
+                onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+            <button class="btn-calificar" onclick="enviarCalificacion()">⭐ Enviar calificación</button>
+            <button class="btn-skip" onclick="cerrarModal()">Omitir por ahora</button>
+        </div>`;
+        document.body.appendChild(modal);
+    }
+
+    let estrellasSel = 0;
+    function selStar(val) {
+        estrellasSel = val;
+        document.querySelectorAll('.star').forEach((s, i) => {
+            s.classList.toggle('active', i < val);
+        });
+    }
+
+    async function enviarCalificacion() {
+        if (!estrellasSel) { alert('Selecciona una calificación'); return; }
+        const comentario = document.getElementById('comentCalif').value;
+        const idClienteLocal = localStorage.getItem('id_cliente') || 1;
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('id_cliente', idClienteLocal);
+        fd.append('id_trabajador', trabId || 0);
+        fd.append('puntuacion', estrellasSel);
+        fd.append('comentario', comentario);
+        try {
+            await fetch('/cliente/calificar', { method:'POST', body:fd });
+            localStorage.setItem('calificado_' + idSolicitud, '1');
+            cerrarModal();
+            mostrarBannerCambio('completada');
+        } catch(e) { cerrarModal(); }
+    }
+
+    function cerrarModal() {
+        const m = document.getElementById('modalCalif');
+        if (m) m.remove();
     }
 
     function contactarWhatsapp() {
