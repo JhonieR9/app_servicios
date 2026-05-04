@@ -251,12 +251,37 @@
         } catch(e) { console.log('Stats no disponibles'); }
     }
 
-    function cambiarDisponibilidad() {
+    async function cambiarDisponibilidad() {
         const activo = document.getElementById('toggleDisp').checked;
         const dot = document.getElementById('dispDot');
         dot.classList.toggle('active', activo);
         document.getElementById('dispTitle').textContent = activo ? 'Disponible' : 'Desconectado';
         document.getElementById('dispSub').textContent = activo ? '🟢 Visible para clientes cercanos' : 'Activa para recibir solicitudes';
+
+        const id = idTrabajador || localStorage.getItem('id_trabajador');
+        if (!id) return;
+
+        if (activo && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const fd = new FormData();
+                fd.append('id_trabajador', id);
+                fd.append('disponible', true);
+                fd.append('latitud', pos.coords.latitude);
+                fd.append('longitud', pos.coords.longitude);
+                await fetch('/trabajador/disponibilidad/actualizar', { method:'POST', body:fd });
+            }, async () => {
+                // Sin GPS igual activar
+                const fd = new FormData();
+                fd.append('id_trabajador', id);
+                fd.append('disponible', true);
+                await fetch('/trabajador/disponibilidad/actualizar', { method:'POST', body:fd });
+            });
+        } else {
+            const fd = new FormData();
+            fd.append('id_trabajador', id);
+            fd.append('disponible', false);
+            await fetch('/trabajador/disponibilidad/actualizar', { method:'POST', body:fd });
+        }
     }
 
     cargarPerfil();

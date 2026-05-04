@@ -91,6 +91,24 @@ def crear_tablas():
             except Exception:
                 pass  # Ya existe
 
+        # Columnas GPS en disponibilidad
+        for col, definition in [
+            ('disponible',          'tinyint(1) DEFAULT 0'),
+            ('latitud',             'decimal(10,8) DEFAULT NULL'),
+            ('longitud',            'decimal(11,8) DEFAULT NULL'),
+            ('ultima_actualizacion','datetime DEFAULT NULL'),
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE disponibilidad ADD COLUMN {col} {definition}")
+            except Exception:
+                pass  # Ya existe
+
+        # Columna password_hash en personas (para login trabajador)
+        try:
+            cursor.execute("ALTER TABLE personas ADD COLUMN password_hash varchar(255) DEFAULT NULL")
+        except Exception:
+            pass
+
         # Tabla calificaciones
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS `calificaciones` (

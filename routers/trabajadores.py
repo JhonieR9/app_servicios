@@ -1422,75 +1422,7 @@ async def login_trabajador(
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
-    """
-    Endpoint de login para trabajadores
-    Verifica credenciales y opcionalmente envía código SMS
-    """
-    try:
-        # Autenticar trabajador
-        exitoso, trabajador, mensaje = auth.autenticar_trabajador(correo, password)
-        
-        if not exitoso:
-            return JSONResponse(
-                {"error": mensaje},
-                status_code=401
-            )
-        
-        # Verificar si requiere verificación SMS
-        conexion = conectar_bd()
-        cursor = conexion.cursor(dictionary=True)
-        
-        cursor.execute("""
-            SELECT valor FROM configuracion_seguridad
-            WHERE clave = 'requiere_verificacion_sms'
-        """)
-        config = cursor.fetchone()
-        requiere_sms = config and config['valor'] == '1'
-        
-        cursor.close()
-        conexion.close()
-        
-        if requiere_sms and trabajador.get('telefono'):
-            # Generar y enviar código SMS
-            codigo = auth.crear_codigo_verificacion(
-                'trabajador',
-                trabajador['id_persona'],
-                trabajador['telefono'],
-                'login'
-            )
-            
-            # Enviar SMS (simulado por ahora)
-            auth.enviar_sms(trabajador['telefono'], codigo)
-            
-            return JSONResponse({
-                "requiere_verificacion_sms": True,
-                "id_trabajador": trabajador['id_persona'],
-                "mensaje": "Código enviado a tu teléfono"
-            })
-        else:
-            # Login directo sin SMS
-            token = auth.crear_sesion('trabajador', trabajador['id_persona'])
-            
-            # Guardar token en cookie
-            response.set_cookie(
-                key="session_token",
-                value=token,
-                httponly=True,
-                max_age=86400,  # 24 horas
-                samesite="lax"
-            )
-            
-            return JSONResponse({
-                "requiere_verificacion_sms": False,
-                "mensaje": "Login exitoso",
-                "redirect": "/trabajador/disponibilidad"
-            })
-            
-    except Exception as e:
-        return JSONResponse(
-            {"error": f"Error en el servidor: {str(e)}"},
-            status_code=500
-        )
+
 
 @router.post("/verificar-sms")
 async def verificar_sms_trabajador(
