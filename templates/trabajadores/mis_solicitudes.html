@@ -171,6 +171,31 @@
         .hist-badge.completada { background:#f3f0ff;color:#667eea; }
         .hist-badge.cancelada  { background:#fee2e2;color:#dc2626; }
 
+        /* Botones avance estado */
+        .btn-iniciar {
+            width:100%; padding:12px;
+            background:linear-gradient(135deg,#0891b2,#059669);
+            color:white; border:none; border-radius:12px;
+            font-weight:700; font-size:0.88rem; cursor:pointer;
+            font-family:'Lato',sans-serif; letter-spacing:0.5px;
+            transition:all 0.2s; display:flex; align-items:center;
+            justify-content:center; gap:8px;
+            box-shadow:0 4px 12px rgba(8,145,178,0.3);
+        }
+        .btn-iniciar:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(8,145,178,0.4); }
+        .btn-completar {
+            width:100%; padding:12px;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            color:white; border:none; border-radius:12px;
+            font-weight:700; font-size:0.88rem; cursor:pointer;
+            font-family:'Lato',sans-serif; letter-spacing:0.5px;
+            transition:all 0.2s; display:flex; align-items:center;
+            justify-content:center; gap:8px;
+            box-shadow:0 4px 12px rgba(102,126,234,0.3);
+        }
+        .btn-completar:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(102,126,234,0.4); }
+        .btn-iniciar:disabled, .btn-completar:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
         /* Sección título */
         .section-label {
             font-size:0.72rem;font-weight:700;color:#94a3b8;
@@ -332,6 +357,34 @@
         </div>`;
     }
 
+    // ── RENDER ACTIVA (con botones de avance) ──
+    function renderActiva(s) {
+        const emoji = CAT_EMOJI[s.nombre_categoria] || '🔧';
+        const estado = s.estado;
+        let accionBtn = '';
+        if (estado === 'aceptada') {
+            accionBtn = `<button class="btn-iniciar" onclick="iniciarServicio(${s.id_solicitud})">
+                🚀 Iniciar trabajo
+            </button>`;
+        } else if (estado === 'en_proceso') {
+            accionBtn = `<button class="btn-completar" onclick="completarServicio(${s.id_solicitud})">
+                ✅ Marcar como completado
+            </button>`;
+        }
+        return `
+        <div class="card-historial" id="activa-${s.id_solicitud}" style="flex-direction:column;align-items:stretch;gap:10px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div class="hist-dot ${estado}" style="width:12px;height:12px;"></div>
+                <div class="hist-info">
+                    <div class="hist-titulo">${emoji} ${s.titulo || s.nombre_categoria || 'Solicitud'}</div>
+                    <div class="hist-meta">${s.nombre_cliente || 'Cliente'} · ${s.ciudad || ''} · ${s.fecha_solicitud || ''}</div>
+                </div>
+                <span class="hist-badge ${estado}">${estado.replace('_',' ')}</span>
+            </div>
+            ${accionBtn}
+        </div>`;
+    }
+
     // ── CARGAR SOLICITUDES ──
     async function cargarSolicitudes() {
         try {
@@ -371,7 +424,7 @@
             if (!activas.length) {
                 caEl.innerHTML = `<div class="empty"><div class="empty-icon">🔧</div><p>No tienes trabajos activos</p></div>`;
             } else {
-                caEl.innerHTML = `<div class="section-label">En curso</div>` + activas.map(renderHistorial).join('');
+                caEl.innerHTML = `<div class="section-label">En curso</div>` + activas.map(renderActiva).join('');
             }
 
             // Historial
@@ -384,6 +437,53 @@
 
         } catch(e) {
             document.getElementById('contenidoPendientes').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Error al cargar solicitudes</p></div>`;
+        }
+    }
+
+    // ── INICIAR SERVICIO ──
+    async function iniciarServicio(idSolicitud) {
+        const btn = document.querySelector(`#activa-${idSolicitud} .btn-iniciar`);
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Iniciando...'; }
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        try {
+            const res  = await fetch('/trabajador/servicio/iniciar', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && !data.error) {
+                mostrarToast('🚀 Trabajo iniciado — el cliente fue notificado', 'success');
+                cargarSolicitudes();
+            } else {
+                mostrarToast('❌ ' + (data.error || 'Error'), 'error');
+                if (btn) { btn.disabled = false; btn.innerHTML = '🚀 Iniciar trabajo'; }
+            }
+        } catch(e) {
+            mostrarToast('❌ Error de conexión', 'error');
+            if (btn) { btn.disabled = false; btn.innerHTML = '🚀 Iniciar trabajo'; }
+        }
+    }
+
+    // ── COMPLETAR SERVICIO ──
+    async function completarServicio(idSolicitud) {
+        if (!confirm('¿Confirmar que el servicio fue completado?')) return;
+        const btn = document.querySelector(`#activa-${idSolicitud} .btn-completar`);
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Completando...'; }
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('precio_final', '0'); // precio opcional
+        try {
+            const res  = await fetch('/trabajador/servicio/completar', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && !data.error) {
+                mostrarToast('🎉 ¡Servicio completado! El cliente fue notificado', 'success');
+                cargarSolicitudes();
+                mostrarTab('historial');
+            } else {
+                mostrarToast('❌ ' + (data.error || 'Error'), 'error');
+                if (btn) { btn.disabled = false; btn.innerHTML = '✅ Marcar como completado'; }
+            }
+        } catch(e) {
+            mostrarToast('❌ Error de conexión', 'error');
+            if (btn) { btn.disabled = false; btn.innerHTML = '✅ Marcar como completado'; }
         }
     }
 
