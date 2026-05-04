@@ -178,6 +178,70 @@ def obtener_perfil_completo(id: int = None):
 def mostrar_mi_perfil(request: Request):
     return templates.TemplateResponse("trabajadores/mi_perfil.html", {"request": request})
 
+@router.get("/perfil/{id_persona}", response_class=HTMLResponse)
+def perfil_publico(request: Request, id_persona: int):
+    """Perfil público del trabajador visible para clientes"""
+    return templates.TemplateResponse("trabajadores/perfil_publico.html", {"request": request, "id_persona": id_persona})
+
+@router.get("/perfil_api/{id_persona}")
+def api_perfil_publico(id_persona: int):
+    """API del perfil público del trabajador"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT p.id_persona, p.nombre_completo, p.ciudad, p.departamento,
+                   tp.telefono, ep.anios_experiencia
+            FROM personas p
+            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+            LEFT JOIN experiencia_persona ep ON p.id_persona = ep.id_persona
+            WHERE p.id_persona = %s
+        """, (id_persona,))
+        perfil = cursor.fetchone()
+        if not perfil:
+            return JSONResponse({"error": "No encontrado"}, status_code=404)
+        for k, v in perfil.items():
+            if v is None: perfil[k] = ''
+            elif hasattr(v, 'isoformat'): perfil[k] = str(v)
+
+        cursor.execute("""
+            SELECT categoria, descripcion, valor_hora, anios_experiencia
+            FROM servicios_persona WHERE id_persona = %s
+        """, (id_persona,))
+        servicios = cursor.fetchall()
+        for s in servicios:
+            for k, v in s.items():
+                if hasattr(v, '__float__'): s[k] = float(v)
+                elif v is None: s[k] = ''
+        perfil['servicios'] = servicios
+
+        cursor.execute("""
+            SELECT ROUND(AVG(puntuacion),1) as promedio, COUNT(*) as total
+            FROM calificaciones WHERE id_trabajador = %s
+        """, (id_persona,))
+        cal = cursor.fetchone()
+        perfil['calificacion'] = float(cal['promedio']) if cal and cal['promedio'] else 0
+        perfil['total_calificaciones'] = int(cal['total']) if cal else 0
+
+        cursor.execute("""
+            SELECT puntuacion, comentario, fecha_calificacion
+            FROM calificaciones WHERE id_trabajador = %s
+            ORDER BY fecha_calificacion DESC LIMIT 5
+        """, (id_persona,))
+        resenas = cursor.fetchall()
+        for r in resenas:
+            if r.get('fecha_calificacion') and hasattr(r['fecha_calificacion'], 'isoformat'):
+                from datetime import timedelta
+                r['fecha_calificacion'] = (r['fecha_calificacion'] - timedelta(hours=5)).strftime('%d/%m/%Y')
+        perfil['resenas'] = resenas
+
+        return JSONResponse(perfil)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 @router.get("/stats/{id_trabajador}")
 def obtener_stats_trabajador(id_trabajador: int):
     """Estadísticas del panel del trabajador"""

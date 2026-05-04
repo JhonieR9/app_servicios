@@ -123,9 +123,11 @@
 
         if (res.ok) {
             alertEl.className = 'alert success';
-            alertEl.textContent = '✅ Cuenta creada. Redirigiendo...';
+            alertEl.textContent = '✅ Cuenta creada. Entrando...';
             alertEl.style.display = 'block';
-            setTimeout(() => window.location.href = '/cliente/login', 1500);
+            // Guardar id en localStorage y redirigir al panel
+            if (data.id_cliente) localStorage.setItem('id_cliente', data.id_cliente);
+            setTimeout(() => window.location.href = data.redirect || '/cliente/panel', 1000);
         } else {
             alertEl.className = 'alert error';
             alertEl.textContent = '❌ ' + (data.error || 'Error al crear cuenta');
