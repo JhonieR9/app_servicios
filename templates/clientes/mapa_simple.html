@@ -273,6 +273,10 @@
                     <div class="popup-info">📍 ${t.distancia} km de distancia</div>
                     <div class="popup-info">📞 ${t.telefono}</div>
                     <div class="popup-info">⭐ ${t.experiencia} años de experiencia</div>
+                    ${t.calificacion > 0
+                        ? `<div class="popup-info">${'★'.repeat(Math.round(t.calificacion))}${'☆'.repeat(5-Math.round(t.calificacion))} <strong>${t.calificacion}</strong> (${t.total_calificaciones} reseñas)</div>`
+                        : `<div class="popup-info">⭐ Sin calificaciones aún</div>`
+                    }
                     <div class="popup-info">🔧 ${t.categoria}</div>
                     <div class="popup-btns">
                         <button class="popup-btn solicitar" onclick="solicitarServicio(${t.id}, '${t.nombre}', '${t.categoria}')">

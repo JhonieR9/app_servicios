@@ -91,6 +91,23 @@ def crear_tablas():
             except Exception:
                 pass  # Ya existe
 
+        # Tabla calificaciones
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `calificaciones` (
+              `id_calificacion`   int NOT NULL AUTO_INCREMENT,
+              `id_solicitud`      int DEFAULT NULL,
+              `id_cliente`        int DEFAULT NULL,
+              `id_trabajador`     int DEFAULT NULL,
+              `tipo_calificacion` varchar(50) DEFAULT 'cliente_a_trabajador',
+              `puntuacion`        int DEFAULT NULL,
+              `comentario`        text,
+              `fecha_calificacion` datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id_calificacion`),
+              KEY `idx_cal_trabajador` (`id_trabajador`),
+              KEY `idx_cal_solicitud`  (`id_solicitud`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
         conn.commit()
         cursor.close()
         conn.close()

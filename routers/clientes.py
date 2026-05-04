@@ -90,13 +90,14 @@ def mostrar_formulario(request: Request):
 
 @router.post("/registro")
 async def registrar_cliente(
+    response: Response,
     nombre_completo: str = Form(...),
     correo: str = Form(...),
     telefono: str = Form(...),
     password: str = Form(...),
     confirmar_password: str = Form(...)
 ):
-    """Registro de cliente con contraseña"""
+    """Registro de cliente con contraseña y login automático"""
     if password != confirmar_password:
         return JSONResponse({"error": "Las contraseñas no coinciden"}, status_code=400)
     if len(password) < 6:
@@ -105,7 +106,6 @@ async def registrar_cliente(
     conexion = conectar_bd()
     cursor = conexion.cursor(dictionary=True)
 
-    # Verificar correo único
     cursor.execute("SELECT id_cliente FROM correo_cliente WHERE correo = %s", (correo,))
     if cursor.fetchone():
         cursor.close()
@@ -125,7 +125,23 @@ async def registrar_cliente(
         cursor.execute("INSERT INTO telefono_cliente (id_cliente, telefono, tipo_telefono, principal) VALUES (%s, %s, 'celular', 1)", (id_cliente, telefono))
         conexion.commit()
 
-        return JSONResponse({"mensaje": "Cuenta creada exitosamente", "id_cliente": id_cliente})
+        # Login automático — crear sesión
+        token = auth.crear_sesion('cliente', id_cliente)
+        response.set_cookie(
+            key="session_token_cliente",
+            value=token,
+            httponly=False,
+            max_age=86400 * 7,
+            samesite="lax"
+        )
+
+        nombre_corto = nombre_completo.split()[0]
+        return JSONResponse({
+            "mensaje": f"¡Bienvenido {nombre_corto}! Cuenta creada.",
+            "id_cliente": id_cliente,
+            "nombre": nombre_completo,
+            "redirect": f"/cliente/panel?nombre={nombre_completo}&id={id_cliente}"
+        })
     except Exception as e:
         conexion.rollback()
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -411,31 +427,47 @@ def cancelar_solicitud(
     return {"mensaje": "Solicitud cancelada"}
 
 @router.post("/calificar")
+@router.post("/calificar")
 def calificar_servicio(
     id_solicitud: int = Form(...),
     id_cliente: int = Form(...),
-    id_trabajador: int = Form(...),
+    id_trabajador: int = Form(0),
     puntuacion: int = Form(...),
     comentario: str = Form(None)
 ):
     if puntuacion < 1 or puntuacion > 5:
         return {"error": "La puntuación debe estar entre 1 y 5"}
-    
+
     conexion = conectar_bd()
-    cursor = conexion.cursor()
-    
-    sql = """
-    INSERT INTO calificaciones 
-    (id_solicitud, id_cliente, id_trabajador, tipo_calificacion, puntuacion, comentario)
-    VALUES (%s, %s, %s, 'cliente_a_trabajador', %s, %s)
-    """
-    
-    cursor.execute(sql, (id_solicitud, id_cliente, id_trabajador, puntuacion, comentario))
+    cursor = conexion.cursor(dictionary=True)
+
+    # Si no viene id_trabajador, obtenerlo de la solicitud
+    if not id_trabajador:
+        cursor.execute("SELECT id_trabajador FROM solicitudes_servicio WHERE id_solicitud = %s", (id_solicitud,))
+        sol = cursor.fetchone()
+        id_trabajador = sol['id_trabajador'] if sol and sol['id_trabajador'] else 0
+
+    if not id_trabajador:
+        return JSONResponse({"error": "No se encontró el trabajador"}, status_code=400)
+
+    # Evitar calificación duplicada
+    cursor.execute("""
+        SELECT id_calificacion FROM calificaciones
+        WHERE id_solicitud = %s AND id_cliente = %s
+    """, (id_solicitud, id_cliente))
+    if cursor.fetchone():
+        return JSONResponse({"mensaje": "Ya calificaste este servicio"})
+
+    cursor.execute("""
+        INSERT INTO calificaciones
+        (id_solicitud, id_cliente, id_trabajador, tipo_calificacion, puntuacion, comentario)
+        VALUES (%s, %s, %s, 'cliente_a_trabajador', %s, %s)
+    """, (id_solicitud, id_cliente, id_trabajador, puntuacion, comentario))
     conexion.commit()
     cursor.close()
     conexion.close()
-    
-    return {"mensaje": "Calificación registrada exitosamente"}
+
+    return {"mensaje": "¡Gracias por tu calificación!"}
 
 
 # ============================================
@@ -496,6 +528,16 @@ def obtener_trabajadores_cercanos(
         trabajadores_cercanos = []
         
         for trabajador in trabajadores:
+            # Obtener calificación promedio
+            cursor.execute("""
+                SELECT AVG(puntuacion) as promedio, COUNT(*) as total
+                FROM calificaciones
+                WHERE id_trabajador = %s
+            """, (trabajador['id_persona'],))
+            cal = cursor.fetchone()
+            calificacion = round(float(cal['promedio']), 1) if cal and cal['promedio'] else 0
+            total_cal = int(cal['total']) if cal else 0
+
             # Obtener servicios del trabajador
             cursor.execute("""
                 SELECT categoria, descripcion, valor_hora, anios_experiencia
@@ -543,6 +585,15 @@ def obtener_trabajadores_cercanos(
                 elif not experiencia:
                     experiencia = 0
                 
+                # Calificación promedio
+                cursor.execute("""
+                    SELECT ROUND(AVG(puntuacion),1) as promedio, COUNT(*) as total
+                    FROM calificaciones WHERE id_trabajador = %s
+                """, (trabajador['id_persona'],))
+                cal = cursor.fetchone()
+                calificacion = float(cal['promedio']) if cal and cal['promedio'] else 0
+                total_cal = int(cal['total']) if cal else 0
+
                 trabajadores_cercanos.append({
                     "id": int(trabajador['id_persona']),
                     "nombre": str(trabajador['nombre_completo']),
@@ -553,9 +604,10 @@ def obtener_trabajadores_cercanos(
                     "latitud": float(trabajador_lat),
                     "longitud": float(trabajador_lng),
                     "distancia": float(round(distancia, 2)),
-                    "tiene_gps_real": bool(trabajador.get('latitud') and trabajador.get('longitud'))
-                })
-        
+                    "tiene_gps_real": bool(trabajador.get('latitud') and trabajador.get('longitud')),
+                    "calificacion": calificacion,
+                    "total_calificaciones": total_cal
+                })        
         # Ordenar por distancia
         trabajadores_cercanos.sort(key=lambda x: x['distancia'])
         
