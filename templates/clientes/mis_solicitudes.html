@@ -5,115 +5,384 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Solicitudes - TalentHub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI',sans-serif; background:#f0f2f5; min-height:100vh; }
+        body { font-family:'Lato',sans-serif; background:#f0f2f5; min-height:100vh; padding-bottom:40px; }
+
+        /* TOP BAR */
         .topbar {
-            background: linear-gradient(135deg, #059669, #0891b2);
-            color: white; padding: 16px 20px;
-            display: flex; align-items: center; gap: 12px;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            color:white; padding:16px 20px;
+            display:flex; align-items:center; gap:12px;
+            position:sticky; top:0; z-index:10;
+            box-shadow:0 4px 16px rgba(102,126,234,0.3);
         }
         .back-btn {
             width:36px;height:36px;border-radius:50%;
             background:rgba(255,255,255,0.2);border:none;
             color:white;font-size:1rem;cursor:pointer;
             display:flex;align-items:center;justify-content:center;
-            text-decoration:none;
+            text-decoration:none; flex-shrink:0;
         }
-        .topbar h1 { font-size:1.1rem;font-weight:700; }
-        .content { max-width:600px;margin:0 auto;padding:20px 16px; }
+        .topbar-title { font-family:'Playfair Display',serif; font-size:1.15rem;font-weight:700; }
+        .topbar-sub { font-size:0.75rem;color:rgba(255,255,255,0.75);margin-top:1px; }
+
+        /* TABS */
+        .tabs {
+            display:flex; background:white;
+            border-bottom:2px solid #f0f2f5;
+            position:sticky; top:68px; z-index:9;
+        }
+        .tab-btn {
+            flex:1; padding:13px 8px;
+            background:none; border:none; border-bottom:3px solid transparent;
+            font-family:'Lato',sans-serif; font-size:0.82rem; font-weight:700;
+            color:#94a3b8; cursor:pointer; margin-bottom:-2px;
+            transition:all 0.2s; display:flex; align-items:center;
+            justify-content:center; gap:6px;
+        }
+        .tab-btn.active { color:#667eea; border-bottom-color:#667eea; }
+        .tab-badge {
+            background:#ef4444; color:white;
+            border-radius:99px; padding:1px 7px;
+            font-size:0.68rem; font-weight:700; display:none;
+        }
+        .tab-badge.show { display:inline; }
+
+        /* CONTENT */
+        .content { max-width:600px;margin:0 auto;padding:16px; }
+
+        /* EMPTY */
         .empty {
             text-align:center;padding:60px 20px;
-            background:white;border-radius:16px;
+            background:white;border-radius:20px;
             box-shadow:0 2px 8px rgba(0,0,0,0.06);
         }
-        .empty i { font-size:3rem;color:#cbd5e1;display:block;margin-bottom:12px; }
+        .empty-icon { font-size:3rem;margin-bottom:12px; }
         .empty p { color:#64748b;font-size:0.9rem; }
+        .empty p.sub { font-size:0.78rem;margin-top:6px;color:#94a3b8; }
         .btn-nueva {
-            display:inline-block;margin-top:16px;
-            padding:12px 24px;background:linear-gradient(135deg,#059669,#0891b2);
-            color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.88rem;
+            display:inline-flex;align-items:center;gap:8px;
+            margin-top:20px; padding:13px 28px;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            color:white;border-radius:14px;text-decoration:none;
+            font-weight:700;font-size:0.9rem;
+            box-shadow:0 4px 14px rgba(102,126,234,0.35);
+            transition:all 0.2s;
         }
-        .solicitud-card {
-            background:white;border-radius:14px;
-            padding:18px;margin-bottom:12px;
+        .btn-nueva:hover { transform:translateY(-2px); }
+
+        /* CARD ACTIVA (pendiente/aceptada/en_proceso) */
+        .card-activa {
+            background:white; border-radius:20px;
+            margin-bottom:14px; overflow:hidden;
+            box-shadow:0 4px 16px rgba(0,0,0,0.08);
+            animation:cardIn 0.35s ease;
+        }
+        @keyframes cardIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+        .card-activa-header {
+            padding:16px 18px 12px;
+            display:flex; align-items:center; gap:12px;
+        }
+        .estado-dot-wrap {
+            width:44px;height:44px;border-radius:14px;
+            display:flex;align-items:center;justify-content:center;
+            font-size:1.4rem;flex-shrink:0;
+        }
+        .estado-dot-wrap.pendiente  { background:#fef3c7; }
+        .estado-dot-wrap.aceptada   { background:#dbeafe; }
+        .estado-dot-wrap.en_proceso { background:#dcfce7; }
+
+        .card-activa-titulo {
+            font-family:'Playfair Display',serif;
+            font-size:0.95rem;font-weight:700;color:#0f172a;
+        }
+        .card-activa-sub { font-size:0.75rem;color:#94a3b8;margin-top:2px; }
+
+        .estado-pill {
+            margin-left:auto; padding:5px 12px;
+            border-radius:99px; font-size:0.72rem; font-weight:700;
+            flex-shrink:0;
+        }
+        .estado-pill.pendiente  { background:#fef3c7;color:#d97706; }
+        .estado-pill.aceptada   { background:#dbeafe;color:#2563eb; }
+        .estado-pill.en_proceso { background:#dcfce7;color:#16a34a; }
+
+        /* Barra de progreso de estado */
+        .estado-progress {
+            display:flex; align-items:center;
+            padding:0 18px 14px; gap:0;
+        }
+        .prog-step {
+            flex:1; display:flex; flex-direction:column;
+            align-items:center; position:relative;
+        }
+        .prog-step:not(:last-child)::after {
+            content:''; position:absolute;
+            top:10px; left:50%; right:-50%;
+            height:2px; background:#e2e8f0; z-index:0;
+            transition:background 0.4s;
+        }
+        .prog-step.done:not(:last-child)::after { background:linear-gradient(90deg,#667eea,#764ba2); }
+        .prog-dot {
+            width:20px;height:20px;border-radius:50%;
+            background:#e2e8f0;position:relative;z-index:1;
+            display:flex;align-items:center;justify-content:center;
+            font-size:0.6rem;color:#94a3b8;
+            transition:all 0.3s;
+        }
+        .prog-step.done .prog-dot { background:linear-gradient(135deg,#667eea,#764ba2);color:white; }
+        .prog-step.active .prog-dot {
+            background:white;border:2px solid #667eea;color:#667eea;
+            box-shadow:0 0 0 3px rgba(102,126,234,0.2);
+        }
+        .prog-label { font-size:0.6rem;color:#94a3b8;margin-top:4px;font-weight:600; }
+        .prog-step.done .prog-label { color:#667eea; }
+        .prog-step.active .prog-label { color:#667eea;font-weight:700; }
+
+        .card-activa-btns {
+            display:grid; grid-template-columns:1fr 1fr;
+            gap:10px; padding:0 18px 18px;
+        }
+        .btn-seguimiento {
+            padding:12px; border:none;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            color:white; border-radius:12px;
+            font-weight:700; font-size:0.82rem; cursor:pointer;
+            font-family:'Lato',sans-serif;
+            display:flex;align-items:center;justify-content:center;gap:6px;
+            text-decoration:none; transition:all 0.2s;
+            box-shadow:0 4px 12px rgba(102,126,234,0.3);
+        }
+        .btn-seguimiento:hover { transform:translateY(-2px); }
+        .btn-cancelar-card {
+            padding:12px; border:2px solid #fee2e2;
+            background:white; color:#dc2626;
+            border-radius:12px; font-weight:700; font-size:0.82rem;
+            cursor:pointer; font-family:'Lato',sans-serif;
+            display:flex;align-items:center;justify-content:center;gap:6px;
+            transition:background 0.2s;
+        }
+        .btn-cancelar-card:hover { background:#fef2f2; }
+
+        /* CARD HISTORIAL */
+        .card-hist {
+            background:white; border-radius:16px;
+            padding:16px 18px; margin-bottom:10px;
             box-shadow:0 2px 8px rgba(0,0,0,0.06);
+            display:flex; align-items:center; gap:14px;
+            animation:cardIn 0.3s ease;
         }
-        .solicitud-header {
-            display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;
+        .hist-emoji { font-size:1.6rem;flex-shrink:0; }
+        .hist-info { flex:1;min-width:0; }
+        .hist-titulo {
+            font-size:0.88rem;font-weight:700;color:#0f172a;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
         }
-        .solicitud-titulo { font-weight:700;color:#0f172a;font-size:0.95rem; }
-        .badge-estado { padding:4px 10px;border-radius:99px;font-size:0.75rem;font-weight:600; }
-        .badge-pendiente  { background:#fef3c7;color:#d97706; }
-        .badge-aceptada   { background:#dbeafe;color:#2563eb; }
-        .badge-completada { background:#dcfce7;color:#16a34a; }
-        .badge-cancelada  { background:#fee2e2;color:#dc2626; }
-        .solicitud-info { font-size:0.82rem;color:#64748b;margin-bottom:4px; }
-        .btn-cancelar {
-            width:100%;padding:10px;margin-top:12px;
-            background:#fee2e2;color:#dc2626;border:none;border-radius:10px;
-            font-weight:600;font-size:0.85rem;cursor:pointer;
+        .hist-meta { font-size:0.75rem;color:#94a3b8;margin-top:2px; }
+        .hist-right { display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0; }
+        .hist-badge { padding:4px 10px;border-radius:99px;font-size:0.72rem;font-weight:700; }
+        .hist-badge.completada { background:#f3f0ff;color:#667eea; }
+        .hist-badge.cancelada  { background:#fee2e2;color:#dc2626; }
+        .btn-repetir {
+            padding:6px 14px; border:none;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            color:white; border-radius:99px;
+            font-size:0.72rem; font-weight:700; cursor:pointer;
+            font-family:'Lato',sans-serif;
+            transition:all 0.2s;
         }
+        .btn-repetir:hover { transform:scale(1.05); }
+
+        /* Sección label */
+        .section-label {
+            font-size:0.72rem;font-weight:700;color:#94a3b8;
+            text-transform:uppercase;letter-spacing:1.5px;
+            margin:16px 0 10px; display:flex; align-items:center; gap:8px;
+        }
+        .section-label::after { content:'';flex:1;height:1px;background:#e2e8f0; }
+
+        /* FAB nueva solicitud */
+        .fab {
+            position:fixed; bottom:24px; right:20px;
+            width:56px;height:56px;border-radius:50%;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            color:white; border:none; font-size:1.5rem;
+            cursor:pointer; box-shadow:0 8px 24px rgba(102,126,234,0.45);
+            display:flex;align-items:center;justify-content:center;
+            transition:all 0.2s; text-decoration:none; z-index:100;
+        }
+        .fab:hover { transform:scale(1.1) rotate(15deg); }
     </style>
 </head>
 <body>
+
 <div class="topbar">
     <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
-    <h1>📋 Mis Solicitudes</h1>
-</div>
-
-<div class="content" id="contenido">
-    <div class="empty">
-        <i class="bi bi-hourglass-split"></i>
-        <p>Cargando solicitudes...</p>
+    <div>
+        <div class="topbar-title">Mis Solicitudes</div>
+        <div class="topbar-sub" id="topSub">Cargando...</div>
     </div>
 </div>
+
+<!-- TABS -->
+<div class="tabs">
+    <button class="tab-btn active" id="tabActivas" onclick="mostrarTab('activas')">
+        <i class="bi bi-clock"></i> En curso
+        <span class="tab-badge" id="badgeActivas"></span>
+    </button>
+    <button class="tab-btn" id="tabHistorial" onclick="mostrarTab('historial')">
+        <i class="bi bi-clock-history"></i> Historial
+    </button>
+</div>
+
+<div class="content">
+    <div id="contenidoActivas"></div>
+    <div id="contenidoHistorial" style="display:none"></div>
+</div>
+
+<!-- FAB nueva solicitud -->
+<a href="/cliente/solicitar_servicio" class="fab" title="Nueva solicitud">+</a>
 
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const idCliente = urlParams.get('id_cliente') || localStorage.getItem('id_cliente') || 1;
+    let tabActual   = 'activas';
+
+    const CAT_EMOJI = {
+        'Plomería':'🔧','Electricidad':'⚡','Limpieza':'🧹','Carpintería':'🪚',
+        'Pintura':'🎨','Jardinería':'🌱','Mecánica':'🔩','Tecnología':'💻',
+        'Construcción':'🏗️','Educación':'📚','Salud':'💊','Belleza':'💇',
+        'Gastronomía':'🍳','Transporte':'🚚'
+    };
+
+    const ESTADO_EMOJI = { pendiente:'⏳', aceptada:'✅', en_proceso:'🔧', completada:'🎉', cancelada:'❌' };
+    const ESTADO_LABEL = { pendiente:'Buscando profesional', aceptada:'Profesional asignado', en_proceso:'En proceso', completada:'Completado', cancelada:'Cancelado' };
+
+    const PROG_ESTADOS = ['pendiente','aceptada','en_proceso','completada'];
+
+    function mostrarTab(tab) {
+        tabActual = tab;
+        ['activas','historial'].forEach(t => {
+            document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+            document.getElementById('contenido' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? 'block' : 'none';
+        });
+    }
+
+    function renderProgreso(estado) {
+        const idx = PROG_ESTADOS.indexOf(estado);
+        return `<div class="estado-progress">` +
+            PROG_ESTADOS.map((e, i) => {
+                let cls = i < idx ? 'done' : i === idx ? 'active' : '';
+                const labels = { pendiente:'Enviado', aceptada:'Asignado', en_proceso:'En proceso', completada:'Listo' };
+                return `<div class="prog-step ${cls}">
+                    <div class="prog-dot">${i < idx ? '✓' : i+1}</div>
+                    <div class="prog-label">${labels[e]}</div>
+                </div>`;
+            }).join('') +
+        `</div>`;
+    }
+
+    function renderActiva(s) {
+        const emoji = CAT_EMOJI[s.nombre_categoria] || '🔧';
+        const estado = s.estado || 'pendiente';
+        const cancelBtn = estado === 'pendiente'
+            ? `<button class="btn-cancelar-card" onclick="cancelar(${s.id_solicitud})"><i class="bi bi-x-circle"></i> Cancelar</button>`
+            : `<div></div>`;
+        return `
+        <div class="card-activa">
+            <div class="card-activa-header">
+                <div class="estado-dot-wrap ${estado}">${ESTADO_EMOJI[estado] || '⏳'}</div>
+                <div style="flex:1;min-width:0">
+                    <div class="card-activa-titulo">${s.titulo || s.nombre_categoria || 'Solicitud'}</div>
+                    <div class="card-activa-sub">${ESTADO_LABEL[estado] || estado} · ${s.fecha_solicitud || ''}</div>
+                </div>
+                <span class="estado-pill ${estado}">${estado.replace('_',' ')}</span>
+            </div>
+            ${renderProgreso(estado)}
+            <div class="card-activa-btns">
+                <a href="/cliente/seguimiento?id=${s.id_solicitud}" class="btn-seguimiento">
+                    <i class="bi bi-map"></i> Ver seguimiento
+                </a>
+                ${cancelBtn}
+            </div>
+        </div>`;
+    }
+
+    function renderHistorialCard(s) {
+        const emoji = CAT_EMOJI[s.nombre_categoria] || '🔧';
+        const estado = s.estado || 'completada';
+        return `
+        <div class="card-hist">
+            <div class="hist-emoji">${emoji}</div>
+            <div class="hist-info">
+                <div class="hist-titulo">${s.titulo || s.nombre_categoria || 'Solicitud'}</div>
+                <div class="hist-meta">${s.ciudad || ''} ${s.departamento || ''} · ${s.fecha_solicitud || ''}</div>
+            </div>
+            <div class="hist-right">
+                <span class="hist-badge ${estado}">${estado}</span>
+                ${estado === 'completada' ? `<button class="btn-repetir" onclick="repetir('${encodeURIComponent(s.nombre_categoria||'')}')">↺ Repetir</button>` : ''}
+            </div>
+        </div>`;
+    }
 
     async function cargarSolicitudes() {
         try {
-            const res = await fetch(`/cliente/mis_solicitudes_api?id_cliente=${idCliente}`);
+            const res  = await fetch(`/cliente/mis_solicitudes_api?id_cliente=${idCliente}`);
             const data = await res.json();
-            const solicitudes = data.solicitudes || [];
-            const contenido = document.getElementById('contenido');
+            const todas = data.solicitudes || [];
 
-            if (!solicitudes.length) {
-                contenido.innerHTML = `
+            const activas   = todas.filter(s => ['pendiente','aceptada','en_proceso'].includes(s.estado));
+            const historial = todas.filter(s => ['completada','cancelada'].includes(s.estado));
+
+            // Badges
+            const ba = document.getElementById('badgeActivas');
+            ba.textContent = activas.length;
+            ba.classList.toggle('show', activas.length > 0);
+
+            // Subtitle
+            document.getElementById('topSub').textContent =
+                activas.length > 0
+                    ? `${activas.length} servicio${activas.length > 1 ? 's' : ''} en curso`
+                    : `${historial.length} servicio${historial.length !== 1 ? 's' : ''} en historial`;
+
+            // Activas
+            const caEl = document.getElementById('contenidoActivas');
+            if (!activas.length) {
+                caEl.innerHTML = `
                     <div class="empty">
-                        <i class="bi bi-inbox"></i>
-                        <p>Aún no tienes solicitudes</p>
-                        <a href="javascript:history.back()" class="btn-nueva">Solicitar Servicio</a>
+                        <div class="empty-icon">📭</div>
+                        <p>No tienes servicios en curso</p>
+                        <p class="sub">¿Necesitas algo? Solicita un servicio ahora</p>
+                        <a href="/cliente/solicitar_servicio" class="btn-nueva">
+                            <i class="bi bi-plus-circle"></i> Solicitar servicio
+                        </a>
                     </div>`;
-                return;
+            } else {
+                caEl.innerHTML = `<div class="section-label">En curso</div>` + activas.map(renderActiva).join('');
             }
 
-            contenido.innerHTML = solicitudes.map(s => `
-                <div class="solicitud-card">
-                    <div class="solicitud-header">
-                        <div class="solicitud-titulo">${s.titulo || 'Solicitud de servicio'}</div>
-                        <span class="badge-estado badge-${s.estado}">${s.estado}</span>
-                    </div>
-                    <div class="solicitud-info"><i class="bi bi-tools"></i> ${s.nombre_categoria || 'Servicio'}</div>
-                    <div class="solicitud-info"><i class="bi bi-geo-alt"></i> ${s.ciudad || ''} ${s.departamento || ''}</div>
-                    <div class="solicitud-info"><i class="bi bi-calendar"></i> ${s.fecha_solicitud || ''}</div>
-                    ${s.descripcion ? `<div class="solicitud-info" style="margin-top:8px;color:#374151">${s.descripcion}</div>` : ''}
-                    <a href="/cliente/seguimiento?id=${s.id_solicitud}"
-                       style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;margin-top:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border-radius:10px;font-weight:700;font-size:0.88rem;text-decoration:none;">
-                        📍 Ver seguimiento
-                    </a>
-                    ${s.estado === 'pendiente' ? `
-                        <button class="btn-cancelar" onclick="cancelar(${s.id_solicitud})">
-                            ❌ Cancelar Solicitud
-                        </button>` : ''}
-                </div>
-            `).join('');
+            // Historial
+            const chEl = document.getElementById('contenidoHistorial');
+            if (!historial.length) {
+                chEl.innerHTML = `
+                    <div class="empty">
+                        <div class="empty-icon">📋</div>
+                        <p>Sin historial aún</p>
+                        <p class="sub">Aquí aparecerán tus servicios completados</p>
+                    </div>`;
+            } else {
+                chEl.innerHTML = `<div class="section-label">Completados · ${historial.length} servicios</div>` +
+                    historial.map(renderHistorialCard).join('');
+            }
+
         } catch(e) {
-            document.getElementById('contenido').innerHTML = `
+            document.getElementById('contenidoActivas').innerHTML = `
                 <div class="empty">
-                    <i class="bi bi-exclamation-circle"></i>
+                    <div class="empty-icon">⚠️</div>
                     <p>Error al cargar solicitudes</p>
                 </div>`;
         }
@@ -125,10 +394,24 @@
         fd.append('id_solicitud', idSolicitud);
         fd.append('motivo', 'Cancelado por el cliente');
         const res = await fetch('/cliente/solicitud/cancelar', { method:'POST', body:fd });
-        if (res.ok) { alert('Solicitud cancelada'); cargarSolicitudes(); }
+        if (res.ok) { mostrarToast('Solicitud cancelada'); cargarSolicitudes(); }
+    }
+
+    function repetir(categoria) {
+        window.location.href = '/cliente/solicitar_servicio?categoria=' + categoria;
+    }
+
+    function mostrarToast(msg) {
+        const t = document.createElement('div');
+        t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#667eea;color:white;padding:12px 24px;border-radius:99px;font-weight:700;font-size:0.88rem;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.2);white-space:nowrap;';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
     }
 
     cargarSolicitudes();
+    // Polling cada 20s para actualizar estados
+    setInterval(cargarSolicitudes, 20000);
 </script>
 </body>
 </html>
