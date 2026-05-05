@@ -39,51 +39,49 @@ def crear_tablas():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """)
 
-        categorias = [
-            # Hogar y construcción
-            (1,  'Plomería',           'Reparación de tuberías, grifos, baños y sistemas de agua'),
-            (2,  'Electricidad',       'Instalaciones eléctricas, reparaciones y mantenimiento'),
-            (3,  'Limpieza',           'Limpieza de hogares, oficinas y espacios comerciales'),
-            (4,  'Carpintería',        'Muebles, puertas, ventanas y trabajos en madera'),
-            (5,  'Pintura',            'Pintura de interiores, exteriores e impermeabilización'),
-            (6,  'Jardinería',         'Corte de césped, poda, diseño y mantenimiento de jardines'),
-            (7,  'Cerrajería',         'Apertura de puertas, cambio de chapas y seguridad'),
-            (8,  'Mudanza',            'Transporte de muebles y trasteos locales'),
-            (9,  'Construcción',       'Remodelaciones, pisos, techos y obras civiles'),
-            (10, 'Vidriería',          'Instalación y reparación de vidrios y ventanas'),
-            (11, 'Impermeabilización', 'Sellado de filtraciones y techos'),
-            # Limpieza y mantenimiento
-            (12, 'Lavandería',         'Lavado y planchado de ropa a domicilio'),
-            (13, 'Control de plagas',  'Fumigación y eliminación de insectos y roedores'),
-            # Tecnología
-            (14, 'Tecnología',         'Reparación de computadores, redes WiFi e instalaciones'),
-            (15, 'Electrodomésticos',  'Reparación de neveras, lavadoras, hornos y más'),
-            (16, 'CCTV y Alarmas',     'Instalación de cámaras de seguridad y sistemas de alarma'),
-            # Transporte
-            (17, 'Transporte',         'Domicilios, diligencias y transporte de carga'),
-            (18, 'Mecánica',           'Reparación de vehículos a domicilio'),
-            # Salud y bienestar
-            (19, 'Salud',              'Enfermería, fisioterapia y cuidado en casa'),
-            (20, 'Belleza',            'Corte de cabello, manicure, maquillaje y más'),
-            (21, 'Masajes',            'Masajes terapéuticos y relajantes a domicilio'),
-            (22, 'Veterinaria',        'Cuidado y atención veterinaria a domicilio'),
-            # Educación
-            (23, 'Educación',          'Clases particulares, refuerzo escolar y tutorías'),
-            (24, 'Idiomas',            'Clases de inglés, francés y otros idiomas'),
-            # Gastronomía y eventos
-            (25, 'Gastronomía',        'Cocineros a domicilio, catering y preparación de alimentos'),
-            (26, 'Eventos',            'Organización de fiestas, decoración y animación'),
-            (27, 'Fotografía',         'Fotografía y video para eventos y sesiones'),
-            # Otros servicios
-            (28, 'Contabilidad',       'Declaraciones de renta, contabilidad y asesoría fiscal'),
-            (29, 'Diseño',             'Diseño gráfico, logos y material publicitario'),
-            (30, 'Mensajería',         'Envío de paquetes y documentos en la ciudad'),
-        ]
-        for id_cat, nombre, descripcion in categorias:
-            cursor.execute(
-                "INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, descripcion, estado) VALUES (%s, %s, %s, 'activo')",
-                (id_cat, nombre, descripcion)
-            )
+        # Solo insertar si la tabla está vacía para evitar duplicados
+        cursor.execute("SELECT COUNT(*) FROM categorias_servicio")
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            categorias = [
+                (1,  'Plomería',           'Reparación de tuberías, grifos y sistemas de agua'),
+                (2,  'Electricidad',       'Instalaciones eléctricas y reparaciones'),
+                (3,  'Limpieza',           'Limpieza de hogares, oficinas y espacios'),
+                (4,  'Carpintería',        'Muebles, puertas, ventanas y trabajos en madera'),
+                (5,  'Pintura',            'Pintura de interiores y exteriores'),
+                (6,  'Jardinería',         'Corte de césped, poda y mantenimiento de jardines'),
+                (7,  'Cerrajería',         'Apertura de puertas y cambio de chapas'),
+                (8,  'Mudanza',            'Transporte de muebles y trasteos'),
+                (9,  'Construcción',       'Remodelaciones, pisos, techos y obras civiles'),
+                (10, 'Vidriería',          'Instalación y reparación de vidrios'),
+                (11, 'Impermeabilización', 'Sellado de filtraciones y techos'),
+                (12, 'Lavandería',         'Lavado y planchado de ropa a domicilio'),
+                (13, 'Control de plagas',  'Fumigación y eliminación de insectos'),
+                (14, 'Tecnología',         'Reparación de computadores y redes WiFi'),
+                (15, 'Electrodomésticos',  'Reparación de neveras, lavadoras y hornos'),
+                (16, 'CCTV y Alarmas',     'Instalación de cámaras y sistemas de alarma'),
+                (17, 'Transporte',         'Domicilios, diligencias y carga'),
+                (18, 'Mecánica',           'Reparación de vehículos a domicilio'),
+                (19, 'Salud',              'Enfermería, fisioterapia y cuidado en casa'),
+                (20, 'Belleza',            'Corte de cabello, manicure y maquillaje'),
+                (21, 'Masajes',            'Masajes terapéuticos y relajantes a domicilio'),
+                (22, 'Veterinaria',        'Cuidado veterinario a domicilio'),
+                (23, 'Educación',          'Clases particulares y refuerzo escolar'),
+                (24, 'Idiomas',            'Clases de inglés, francés y otros idiomas'),
+                (25, 'Gastronomía',        'Cocineros a domicilio, catering y alimentos'),
+                (26, 'Eventos',            'Organización de fiestas y decoración'),
+                (27, 'Fotografía',         'Fotografía y video para eventos'),
+                (28, 'Contabilidad',       'Declaraciones de renta y asesoría fiscal'),
+                (29, 'Diseño',             'Diseño gráfico, logos y publicidad'),
+                (30, 'Mensajería',         'Envío de paquetes y documentos'),
+            ]
+            for id_cat, nombre, descripcion in categorias:
+                cursor.execute(
+                    "INSERT INTO categorias_servicio (id_categoria, nombre_categoria, descripcion, estado) VALUES (%s, %s, %s, 'activo')",
+                    (id_cat, nombre, descripcion)
+                )
+            print(f"✅ {len(categorias)} categorías insertadas")
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS `solicitudes_servicio` (
