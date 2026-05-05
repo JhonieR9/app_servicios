@@ -335,9 +335,29 @@
             <div class="card">
                 <div class="card-title">¿Qué servicio necesitas?</div>
                 <div class="card-sub">Selecciona la categoría que mejor describe tu necesidad</div>
+
+                <!-- Categorías principales (primeras 10) -->
                 <div class="cat-grid" id="catGrid">
-                    <!-- Se cargan dinámicamente desde la base de datos -->
+                    <!-- Se cargan dinámicamente -->
                 </div>
+
+                <!-- Botón Ver más -->
+                <div id="verMasContainer" style="display:none; margin-top:12px;">
+                    <button type="button" onclick="toggleVerMas()" id="btnVerMas"
+                        style="width:100%;padding:14px;border:2px dashed #c7d2fe;background:#f5f3ff;
+                               border-radius:14px;cursor:pointer;font-weight:600;color:#6366f1;
+                               font-size:0.9rem;transition:all 0.3s;display:flex;align-items:center;
+                               justify-content:center;gap:8px;">
+                        <span id="verMasIcon">➕</span>
+                        <span id="verMasTexto">Ver más categorías</span>
+                    </button>
+                </div>
+
+                <!-- Categorías adicionales (ocultas inicialmente) -->
+                <div class="cat-grid" id="catGridExtra" style="display:none; margin-top:12px;">
+                    <!-- Se cargan dinámicamente -->
+                </div>
+
             </div>
             <button type="button" class="btn-next" id="btnStep1" onclick="goStep(2)" disabled>
                 Continuar <i class="bi bi-arrow-right"></i>
@@ -495,24 +515,41 @@ const ICONOS = {
 // Cargar categorías dinámicamente desde la base de datos
 async function cargarCategorias() {
     const grid = document.getElementById('catGrid');
+    const gridExtra = document.getElementById('catGridExtra');
+    const verMasContainer = document.getElementById('verMasContainer');
+
     try {
         const res = await fetch('/cliente/categorias');
         const data = await res.json();
         const categorias = data.categorias || [];
 
         if (categorias.length === 0) {
-            // Fallback: categorías por defecto si la API falla
             grid.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">No hay categorías disponibles</p>';
             return;
         }
 
-        grid.innerHTML = categorias.map(cat => {
+        // Separar primeras 10 y el resto
+        const principales = categorias.slice(0, 10);
+        const extras = categorias.slice(10);
+
+        // Renderizar función
+        function renderCat(cat) {
             const icono = ICONOS[cat.nombre_categoria] || '🛠️';
             return `<div class="cat-item" onclick="selCat(this,${cat.id_categoria},'${cat.nombre_categoria.replace(/'/g,"\\'")}')">
                 <span class="icon">${icono}</span>
                 <div class="name">${cat.nombre_categoria}</div>
             </div>`;
-        }).join('');
+        }
+
+        // Mostrar primeras 10
+        grid.innerHTML = principales.map(renderCat).join('');
+
+        // Mostrar extras si hay
+        if (extras.length > 0) {
+            gridExtra.innerHTML = extras.map(renderCat).join('');
+            verMasContainer.style.display = 'block';
+            document.getElementById('verMasTexto').textContent = `Ver más categorías (${extras.length})`;
+        }
 
         // Pre-seleccionar si viene de URL
         const catURL = new URLSearchParams(window.location.search).get('categoria');
@@ -526,6 +563,28 @@ async function cargarCategorias() {
     } catch(e) {
         console.error('Error cargando categorías:', e);
         grid.innerHTML = '<p style="color:#ef4444;text-align:center;padding:20px">Error cargando categorías. Recarga la página.</p>';
+    }
+}
+
+function toggleVerMas() {
+    const gridExtra = document.getElementById('catGridExtra');
+    const btn = document.getElementById('btnVerMas');
+    const icon = document.getElementById('verMasIcon');
+    const texto = document.getElementById('verMasTexto');
+    const extras = gridExtra.querySelectorAll('.cat-item').length;
+
+    if (gridExtra.style.display === 'none') {
+        gridExtra.style.display = 'grid';
+        icon.textContent = '➖';
+        texto.textContent = 'Ver menos';
+        btn.style.background = '#ede9fe';
+        btn.style.borderColor = '#a5b4fc';
+    } else {
+        gridExtra.style.display = 'none';
+        icon.textContent = '➕';
+        texto.textContent = `Ver más categorías (${extras})`;
+        btn.style.background = '#f5f3ff';
+        btn.style.borderColor = '#c7d2fe';
     }
 }
 
