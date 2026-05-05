@@ -40,15 +40,49 @@ def crear_tablas():
         """)
 
         categorias = [
-            (1,'Plomería'),(2,'Electricidad'),(3,'Limpieza'),(4,'Carpintería'),
-            (5,'Pintura'),(6,'Jardinería'),(7,'Mecánica'),(8,'Tecnología'),
-            (9,'Construcción'),(10,'Educación'),(11,'Salud'),(12,'Belleza'),
-            (13,'Gastronomía'),(14,'Transporte')
+            # Hogar y construcción
+            (1,  'Plomería',           'Reparación de tuberías, grifos, baños y sistemas de agua'),
+            (2,  'Electricidad',       'Instalaciones eléctricas, reparaciones y mantenimiento'),
+            (3,  'Limpieza',           'Limpieza de hogares, oficinas y espacios comerciales'),
+            (4,  'Carpintería',        'Muebles, puertas, ventanas y trabajos en madera'),
+            (5,  'Pintura',            'Pintura de interiores, exteriores e impermeabilización'),
+            (6,  'Jardinería',         'Corte de césped, poda, diseño y mantenimiento de jardines'),
+            (7,  'Cerrajería',         'Apertura de puertas, cambio de chapas y seguridad'),
+            (8,  'Mudanza',            'Transporte de muebles y trasteos locales'),
+            (9,  'Construcción',       'Remodelaciones, pisos, techos y obras civiles'),
+            (10, 'Vidriería',          'Instalación y reparación de vidrios y ventanas'),
+            (11, 'Impermeabilización', 'Sellado de filtraciones y techos'),
+            # Limpieza y mantenimiento
+            (12, 'Lavandería',         'Lavado y planchado de ropa a domicilio'),
+            (13, 'Control de plagas',  'Fumigación y eliminación de insectos y roedores'),
+            # Tecnología
+            (14, 'Tecnología',         'Reparación de computadores, redes WiFi e instalaciones'),
+            (15, 'Electrodomésticos',  'Reparación de neveras, lavadoras, hornos y más'),
+            (16, 'CCTV y Alarmas',     'Instalación de cámaras de seguridad y sistemas de alarma'),
+            # Transporte
+            (17, 'Transporte',         'Domicilios, diligencias y transporte de carga'),
+            (18, 'Mecánica',           'Reparación de vehículos a domicilio'),
+            # Salud y bienestar
+            (19, 'Salud',              'Enfermería, fisioterapia y cuidado en casa'),
+            (20, 'Belleza',            'Corte de cabello, manicure, maquillaje y más'),
+            (21, 'Masajes',            'Masajes terapéuticos y relajantes a domicilio'),
+            (22, 'Veterinaria',        'Cuidado y atención veterinaria a domicilio'),
+            # Educación
+            (23, 'Educación',          'Clases particulares, refuerzo escolar y tutorías'),
+            (24, 'Idiomas',            'Clases de inglés, francés y otros idiomas'),
+            # Gastronomía y eventos
+            (25, 'Gastronomía',        'Cocineros a domicilio, catering y preparación de alimentos'),
+            (26, 'Eventos',            'Organización de fiestas, decoración y animación'),
+            (27, 'Fotografía',         'Fotografía y video para eventos y sesiones'),
+            # Otros servicios
+            (28, 'Contabilidad',       'Declaraciones de renta, contabilidad y asesoría fiscal'),
+            (29, 'Diseño',             'Diseño gráfico, logos y material publicitario'),
+            (30, 'Mensajería',         'Envío de paquetes y documentos en la ciudad'),
         ]
-        for id_cat, nombre in categorias:
+        for id_cat, nombre, descripcion in categorias:
             cursor.execute(
-                "INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, estado) VALUES (%s, %s, 'activo')",
-                (id_cat, nombre)
+                "INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, descripcion, estado) VALUES (%s, %s, %s, 'activo')",
+                (id_cat, nombre, descripcion)
             )
 
         cursor.execute("""
