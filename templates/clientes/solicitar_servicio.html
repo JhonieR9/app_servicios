@@ -335,49 +335,8 @@
             <div class="card">
                 <div class="card-title">¿Qué servicio necesitas?</div>
                 <div class="card-sub">Selecciona la categoría que mejor describe tu necesidad</div>
-                <div class="cat-grid">
-                    <div class="cat-item" onclick="selCat(this,1,'Plomería')">
-                        <span class="icon">🔧</span><div class="name">Plomería</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,2,'Electricidad')">
-                        <span class="icon">⚡</span><div class="name">Electricidad</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,3,'Limpieza')">
-                        <span class="icon">🧹</span><div class="name">Limpieza</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,4,'Carpintería')">
-                        <span class="icon">🪚</span><div class="name">Carpintería</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,5,'Pintura')">
-                        <span class="icon">🎨</span><div class="name">Pintura</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,6,'Jardinería')">
-                        <span class="icon">🌱</span><div class="name">Jardinería</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,7,'Mecánica')">
-                        <span class="icon">🔩</span><div class="name">Mecánica</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,8,'Tecnología')">
-                        <span class="icon">💻</span><div class="name">Tecnología</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,9,'Construcción')">
-                        <span class="icon">🏗️</span><div class="name">Construcción</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,10,'Educación')">
-                        <span class="icon">📚</span><div class="name">Educación</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,11,'Salud')">
-                        <span class="icon">💊</span><div class="name">Salud</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,12,'Belleza')">
-                        <span class="icon">💇</span><div class="name">Belleza</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,13,'Gastronomía')">
-                        <span class="icon">🍳</span><div class="name">Gastronomía</div>
-                    </div>
-                    <div class="cat-item" onclick="selCat(this,14,'Transporte')">
-                        <span class="icon">🚚</span><div class="name">Transporte</div>
-                    </div>
+                <div class="cat-grid" id="catGrid">
+                    <!-- Se cargan dinámicamente desde la base de datos -->
                 </div>
             </div>
             <button type="button" class="btn-next" id="btnStep1" onclick="goStep(2)" disabled>
@@ -512,6 +471,66 @@ let selectedProblem = '';
     document.getElementById('id_cliente').value = id;
     if (idUrl) localStorage.setItem('id_cliente', idUrl); // sincronizar
 })();
+
+// Iconos por categoría
+const ICONOS = {
+    'Plomería': '🔧', 'Plomeria': '🔧',
+    'Electricidad': '⚡',
+    'Limpieza': '🧹',
+    'Carpintería': '🪚', 'Carpinteria': '🪚',
+    'Pintura': '🎨',
+    'Jardinería': '🌱', 'Jardineria': '🌱',
+    'Mecánica': '🔩', 'Mecanica': '🔩',
+    'Tecnología': '💻', 'Tecnologia': '💻',
+    'Construcción': '🏗️', 'Construccion': '🏗️',
+    'Educación': '📚', 'Educacion': '📚',
+    'Salud': '💊',
+    'Belleza': '💇',
+    'Gastronomía': '🍳', 'Gastronomia': '🍳',
+    'Transporte': '🚚',
+    'Cerrajería': '🔑', 'Cerrajeria': '🔑',
+    'Mudanza': '📦'
+};
+
+// Cargar categorías dinámicamente desde la base de datos
+async function cargarCategorias() {
+    const grid = document.getElementById('catGrid');
+    try {
+        const res = await fetch('/cliente/categorias');
+        const data = await res.json();
+        const categorias = data.categorias || [];
+
+        if (categorias.length === 0) {
+            // Fallback: categorías por defecto si la API falla
+            grid.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px">No hay categorías disponibles</p>';
+            return;
+        }
+
+        grid.innerHTML = categorias.map(cat => {
+            const icono = ICONOS[cat.nombre_categoria] || '🛠️';
+            return `<div class="cat-item" onclick="selCat(this,${cat.id_categoria},'${cat.nombre_categoria.replace(/'/g,"\\'")}')">
+                <span class="icon">${icono}</span>
+                <div class="name">${cat.nombre_categoria}</div>
+            </div>`;
+        }).join('');
+
+        // Pre-seleccionar si viene de URL
+        const catURL = new URLSearchParams(window.location.search).get('categoria');
+        if (catURL) {
+            document.querySelectorAll('.cat-item').forEach(item => {
+                if (item.querySelector('.name').textContent === catURL) {
+                    item.click();
+                }
+            });
+        }
+    } catch(e) {
+        console.error('Error cargando categorías:', e);
+        grid.innerHTML = '<p style="color:#ef4444;text-align:center;padding:20px">Error cargando categorías. Recarga la página.</p>';
+    }
+}
+
+// Cargar al iniciar
+cargarCategorias();
 
 // CHIPS PER CATEGORY
 const CHIPS = {
