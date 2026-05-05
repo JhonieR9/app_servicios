@@ -83,41 +83,45 @@ def listar_mis_solicitudes(id_trabajador: int = None):
                 placeholders = ','.join(['%s'] * len(cats))
                 cursor.execute(f"""
                     SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
-                           s.ciudad, s.departamento, s.fecha_solicitud,
+                           s.ciudad, s.departamento, s.direccion_servicio, s.fecha_solicitud,
                            COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
-                           c.nombre_completo as nombre_cliente
+                           c.nombre_completo as nombre_cliente,
+                           tc.telefono as telefono_cliente
                     FROM solicitudes_servicio s
                     LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
                     LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+                    LEFT JOIN telefono_cliente tc ON c.id_cliente = tc.id_cliente
                     WHERE s.id_trabajador = %s
                        OR (s.estado = 'pendiente' AND cat.nombre_categoria IN ({placeholders}))
                     ORDER BY s.fecha_solicitud DESC
                     LIMIT 50
                 """, (id_trabajador, *cats))
             else:
-                # Sin categorías registradas, mostrar solo las propias
                 cursor.execute("""
                     SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
-                           s.ciudad, s.departamento, s.fecha_solicitud,
+                           s.ciudad, s.departamento, s.direccion_servicio, s.fecha_solicitud,
                            COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
-                           c.nombre_completo as nombre_cliente
+                           c.nombre_completo as nombre_cliente,
+                           tc.telefono as telefono_cliente
                     FROM solicitudes_servicio s
                     LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
                     LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+                    LEFT JOIN telefono_cliente tc ON c.id_cliente = tc.id_cliente
                     WHERE s.id_trabajador = %s
                     ORDER BY s.fecha_solicitud DESC
                     LIMIT 50
                 """, (id_trabajador,))
         else:
-            # Sin id: mostrar todas las pendientes
             cursor.execute("""
                 SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
-                       s.ciudad, s.departamento, s.fecha_solicitud,
+                       s.ciudad, s.departamento, s.direccion_servicio, s.fecha_solicitud,
                        COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
-                       c.nombre_completo as nombre_cliente
+                       c.nombre_completo as nombre_cliente,
+                       tc.telefono as telefono_cliente
                 FROM solicitudes_servicio s
                 LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
                 LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+                LEFT JOIN telefono_cliente tc ON c.id_cliente = tc.id_cliente
                 WHERE s.estado = 'pendiente'
                 ORDER BY s.fecha_solicitud DESC
                 LIMIT 20
@@ -126,13 +130,52 @@ def listar_mis_solicitudes(id_trabajador: int = None):
         for s in solicitudes:
             for k, v in s.items():
                 if hasattr(v, 'isoformat'):
-                    from datetime import timedelta
-                    s[k] = (v - timedelta(hours=5)).strftime('%Y-%m-%d %H:%M')
+                    s[k] = v.strftime('%Y-%m-%d %H:%M')
                 elif v is None:
                     s[k] = ''
         return JSONResponse({"solicitudes": solicitudes})
     except Exception as e:
         return JSONResponse({"error": str(e), "solicitudes": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/solicitud/actualizar")
+def actualizar_estado_solicitud(
+    id_solicitud: int = Form(...),
+    estado: str = Form(...),
+    id_trabajador: int = Form(None)
+):
+    """Permite al trabajador aceptar, rechazar o completar una solicitud"""
+    estados_validos = ['aceptada', 'cancelada', 'completada', 'en_proceso']
+    if estado not in estados_validos:
+        return JSONResponse({"error": "Estado no válido"}, status_code=400)
+
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"error": "Error de conexión"}, status_code=500)
+    try:
+        cursor = conexion.cursor()
+
+        if estado == 'aceptada' and id_trabajador:
+            # Al aceptar, asignar el trabajador
+            cursor.execute("""
+                UPDATE solicitudes_servicio
+                SET estado = %s, id_trabajador = %s
+                WHERE id_solicitud = %s
+            """, (estado, id_trabajador, id_solicitud))
+        else:
+            cursor.execute("""
+                UPDATE solicitudes_servicio
+                SET estado = %s
+                WHERE id_solicitud = %s
+            """, (estado, id_solicitud))
+
+        conexion.commit()
+        return JSONResponse({"mensaje": f"Solicitud actualizada a '{estado}'"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
@@ -697,8 +740,9 @@ def actualizar_disponibilidad_legacy(
 # AUTENTICACIÓN Y ADMINISTRACIÓN
 # ============================================
 
-# Contraseña de administrador simple (cambiar en producción)
-ADMIN_PASSWORD = "admin123"
+# Contraseña de administrador - se lee desde variable de entorno en Railway
+import os
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 @router.get("/admin/login", response_class=HTMLResponse)
 def mostrar_admin_login(request: Request):

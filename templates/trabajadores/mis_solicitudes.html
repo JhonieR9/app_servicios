@@ -3,585 +3,454 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitudes - TalentHub</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Mis Solicitudes - TalentHub</title>
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Lato',sans-serif; background:#f0f2f5; min-height:100vh; padding-bottom:40px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* TOP BAR */
-        .topbar {
-            background: linear-gradient(135deg,#667eea,#764ba2);
-            color:white; padding:16px 20px;
-            display:flex; align-items:center; gap:12px;
-            position:sticky; top:0; z-index:10;
-            box-shadow:0 4px 16px rgba(102,126,234,0.3);
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #8b5cf6 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 { color: #1e3a8a; font-size: 22px; }
+
         .back-btn {
-            width:36px;height:36px;border-radius:50%;
-            background:rgba(255,255,255,0.2);border:none;
-            color:white;font-size:1rem;cursor:pointer;
-            display:flex;align-items:center;justify-content:center;
-            text-decoration:none; flex-shrink:0;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
         }
-        .topbar-title { font-family:'Playfair Display',serif; font-size:1.15rem;font-weight:700; }
-        .topbar-sub { font-size:0.75rem;color:rgba(255,255,255,0.75);margin-top:1px; }
 
-        /* TABS */
         .tabs {
-            display:flex; background:white;
-            border-bottom:2px solid #f0f2f5;
-            position:sticky; top:68px; z-index:9;
+            display: flex;
+            background: white;
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            gap: 5px;
         }
-        .tab-btn {
-            flex:1; padding:13px 8px;
-            background:none; border:none; border-bottom:3px solid transparent;
-            font-family:'Lato',sans-serif; font-size:0.82rem; font-weight:700;
-            color:#94a3b8; cursor:pointer; margin-bottom:-2px;
-            transition:all 0.2s; display:flex; align-items:center;
-            justify-content:center; gap:6px;
-        }
-        .tab-btn.active { color:#667eea; border-bottom-color:#667eea; }
-        .tab-badge {
-            background:#ef4444; color:white;
-            border-radius:99px; padding:1px 7px;
-            font-size:0.68rem; font-weight:700;
-            display:none;
-        }
-        .tab-badge.show { display:inline; }
 
-        /* CONTENT */
-        .content { max-width:600px;margin:0 auto;padding:16px; }
-
-        /* EMPTY */
-        .empty {
-            text-align:center;padding:60px 20px;
-            background:white;border-radius:20px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.06);
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
         }
-        .empty-icon { font-size:3rem;margin-bottom:12px; }
-        .empty p { color:#64748b;font-size:0.9rem; }
-        .empty p.sub { font-size:0.78rem;margin-top:6px;color:#94a3b8; }
 
-        /* SOLICITUD CARD PENDIENTE — grande, tipo Uber */
-        .card-pendiente {
-            background:white; border-radius:20px;
-            margin-bottom:14px; overflow:hidden;
-            box-shadow:0 4px 20px rgba(0,0,0,0.1);
-            border:2px solid transparent;
-            animation:cardIn 0.4s ease;
-            transition:border-color 0.3s;
+        .tab.active {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
         }
-        .card-pendiente.nueva { border-color:#667eea; animation:cardIn 0.4s ease, glowPulse 2s ease 3; }
-        @keyframes cardIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes glowPulse { 0%,100%{box-shadow:0 4px 20px rgba(0,0,0,0.1)} 50%{box-shadow:0 4px 32px rgba(102,126,234,0.4)} }
 
-        .card-header {
-            background:linear-gradient(135deg,#f3f0ff,#ede9fe);
-            padding:16px 18px 12px;
-            display:flex; align-items:center; justify-content:space-between;
+        .solicitud-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #3b82f6;
+            animation: fadeIn 0.3s ease;
         }
-        .card-cat {
-            display:flex; align-items:center; gap:10px;
-        }
-        .cat-emoji { font-size:1.8rem; }
-        .cat-nombre { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:#0f172a; }
-        .cat-tipo { font-size:0.75rem; color:#7c3aed; font-weight:600; margin-top:1px; }
 
-        /* Contador regresivo */
-        .timer-wrap { text-align:right; }
-        .timer-num {
-            font-size:1.4rem; font-weight:800; color:#667eea;
-            font-family:'Playfair Display',serif; line-height:1;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .timer-num.urgente { color:#ef4444; animation:timerBlink 0.5s infinite; }
-        @keyframes timerBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        .timer-label { font-size:0.65rem; color:#94a3b8; font-weight:600; text-transform:uppercase; }
 
-        .card-body { padding:14px 18px; }
+        .solicitud-card.urgente { border-left-color: #ef4444; }
+        .solicitud-card.aceptada { border-left-color: #22c55e; }
+        .solicitud-card.completada { border-left-color: #8b5cf6; }
+
+        .solicitud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .solicitud-titulo {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1e293b;
+            flex: 1;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .badge-pendiente { background: #fef3c7; color: #92400e; }
+        .badge-aceptada { background: #d1fae5; color: #065f46; }
+        .badge-en_proceso { background: #dbeafe; color: #1e40af; }
+        .badge-completada { background: #ede9fe; color: #5b21b6; }
+        .badge-cancelada { background: #fee2e2; color: #991b1b; }
+
         .info-row {
-            display:flex; align-items:center; gap:10px;
-            margin-bottom:10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #475569;
         }
-        .info-icon-box {
-            width:32px;height:32px;border-radius:8px;
-            background:#f8fafc; display:flex; align-items:center;
-            justify-content:center; font-size:0.9rem; flex-shrink:0;
-            color:#667eea;
-        }
-        .info-label { font-size:0.72rem; color:#94a3b8; font-weight:600; }
-        .info-val { font-size:0.88rem; color:#0f172a; font-weight:600; margin-top:1px; }
 
-        /* Urgencia badge */
-        .urgencia-badge {
-            display:inline-flex; align-items:center; gap:5px;
-            padding:5px 12px; border-radius:99px;
-            font-size:0.75rem; font-weight:700; margin-bottom:12px;
-        }
-        .urgencia-badge.ahora { background:#fef2f2; color:#ef4444; border:1px solid #fecaca; }
-        .urgencia-badge.programar { background:#f3f0ff; color:#667eea; border:1px solid #c4b5fd; }
+        .info-row strong { color: #1e293b; }
 
-        /* Botones acción */
-        .card-actions {
-            display:grid; grid-template-columns:1fr 1fr;
-            gap:10px; padding:0 18px 18px;
+        .descripcion {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #475569;
+            margin: 12px 0;
+            line-height: 1.5;
         }
-        .btn-rechazar {
-            padding:13px; border:2px solid #fee2e2;
-            background:white; color:#dc2626;
-            border-radius:14px; font-weight:700; font-size:0.88rem;
-            cursor:pointer; font-family:'Lato',sans-serif;
-            transition:all 0.2s; display:flex; align-items:center;
-            justify-content:center; gap:6px;
+
+        .acciones {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
         }
-        .btn-rechazar:hover { background:#fef2f2; }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 120px;
+        }
+
         .btn-aceptar {
-            padding:13px;
-            background:linear-gradient(135deg,#667eea,#764ba2);
-            color:white; border:none; border-radius:14px;
-            font-weight:700; font-size:0.88rem; cursor:pointer;
-            font-family:'Lato',sans-serif;
-            box-shadow:0 4px 14px rgba(102,126,234,0.35);
-            transition:all 0.2s; display:flex; align-items:center;
-            justify-content:center; gap:6px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
         }
-        .btn-aceptar:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(102,126,234,0.45); }
-        .btn-aceptar:disabled, .btn-rechazar:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
 
-        /* CARD ACEPTADA / HISTORIAL */
-        .card-historial {
-            background:white; border-radius:16px;
-            padding:16px 18px; margin-bottom:10px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.06);
-            display:flex; align-items:center; gap:14px;
-        }
-        .hist-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
-        .hist-dot.aceptada   { background:#3b82f6; }
-        .hist-dot.en_proceso { background:#10b981; }
-        .hist-dot.completada { background:#667eea; }
-        .hist-dot.cancelada  { background:#ef4444; }
-        .hist-info { flex:1; min-width:0; }
-        .hist-titulo { font-size:0.88rem;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-        .hist-meta { font-size:0.75rem;color:#94a3b8;margin-top:2px; }
-        .hist-badge { padding:4px 10px;border-radius:99px;font-size:0.72rem;font-weight:700;flex-shrink:0; }
-        .hist-badge.aceptada   { background:#dbeafe;color:#2563eb; }
-        .hist-badge.en_proceso { background:#dcfce7;color:#16a34a; }
-        .hist-badge.completada { background:#f3f0ff;color:#667eea; }
-        .hist-badge.cancelada  { background:#fee2e2;color:#dc2626; }
+        .btn-aceptar:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34,197,94,0.4); }
 
-        /* Botones avance estado */
-        .btn-iniciar {
-            width:100%; padding:12px;
-            background:linear-gradient(135deg,#0891b2,#059669);
-            color:white; border:none; border-radius:12px;
-            font-weight:700; font-size:0.88rem; cursor:pointer;
-            font-family:'Lato',sans-serif; letter-spacing:0.5px;
-            transition:all 0.2s; display:flex; align-items:center;
-            justify-content:center; gap:8px;
-            box-shadow:0 4px 12px rgba(8,145,178,0.3);
+        .btn-rechazar {
+            background: white;
+            color: #ef4444;
+            border: 2px solid #ef4444;
         }
-        .btn-iniciar:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(8,145,178,0.4); }
+
+        .btn-rechazar:hover { background: #fee2e2; }
+
         .btn-completar {
-            width:100%; padding:12px;
-            background:linear-gradient(135deg,#667eea,#764ba2);
-            color:white; border:none; border-radius:12px;
-            font-weight:700; font-size:0.88rem; cursor:pointer;
-            font-family:'Lato',sans-serif; letter-spacing:0.5px;
-            transition:all 0.2s; display:flex; align-items:center;
-            justify-content:center; gap:8px;
-            box-shadow:0 4px 12px rgba(102,126,234,0.3);
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
         }
-        .btn-completar:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(102,126,234,0.4); }
-        .btn-iniciar:disabled, .btn-completar:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
 
-        /* Sección título */
-        .section-label {
-            font-size:0.72rem;font-weight:700;color:#94a3b8;
-            text-transform:uppercase;letter-spacing:1.5px;
-            margin:16px 0 10px; display:flex; align-items:center; gap:8px;
+        .btn-completar:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(139,92,246,0.4); }
+
+        .btn-whatsapp {
+            background: linear-gradient(135deg, #25d366, #128c7e);
+            color: white;
         }
-        .section-label::after { content:'';flex:1;height:1px;background:#e2e8f0; }
+
+        .btn-llamar {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+
+        .empty-state {
+            background: white;
+            border-radius: 15px;
+            padding: 50px 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .empty-icon { font-size: 60px; margin-bottom: 15px; }
+        .empty-text { color: #64748b; font-size: 16px; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .refresh-btn {
+            background: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #1e3a8a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nueva-badge {
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 5px;
+        }
+
+        .cliente-info {
+            background: #eff6ff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .tiempo {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
+<div class="container">
 
-<div class="topbar">
-    <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
-    <div>
-        <div class="topbar-title">Solicitudes</div>
-        <div class="topbar-sub" id="topSub">Cargando...</div>
+    <div class="header">
+        <div>
+            <h2>📋 Mis Solicitudes</h2>
+            <p style="color:#64748b;font-size:13px">Gestiona los servicios que te solicitan</p>
+        </div>
+        <button class="refresh-btn" onclick="cargarSolicitudes()">
+            🔄 Actualizar
+        </button>
     </div>
-</div>
 
-<!-- TABS -->
-<div class="tabs">
-    <button class="tab-btn active" id="tabPendientes" onclick="mostrarTab('pendientes')">
-        <i class="bi bi-clock"></i> Pendientes
-        <span class="tab-badge" id="badgePendientes"></span>
-    </button>
-    <button class="tab-btn" id="tabActivas" onclick="mostrarTab('activas')">
-        <i class="bi bi-tools"></i> Activas
-        <span class="tab-badge" id="badgeActivas"></span>
-    </button>
-    <button class="tab-btn" id="tabHistorial" onclick="mostrarTab('historial')">
-        <i class="bi bi-clock-history"></i> Historial
-    </button>
-</div>
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="cambiarTab('pendiente', this)">
+            🔔 Nuevas <span id="countPendiente" class="nueva-badge" style="display:none">0</span>
+        </button>
+        <button class="tab" onclick="cambiarTab('aceptada', this)">
+            ✅ Aceptadas
+        </button>
+        <button class="tab" onclick="cambiarTab('completada', this)">
+            🏆 Completadas
+        </button>
+    </div>
 
-<div class="content">
-    <div id="contenidoPendientes"></div>
-    <div id="contenidoActivas" style="display:none"></div>
-    <div id="contenidoHistorial" style="display:none"></div>
+    <div id="loading" class="loading">⏳ Cargando solicitudes...</div>
+    <div id="solicitudesContainer"></div>
+
 </div>
 
 <script>
-    const urlParams    = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(window.location.search);
     const idTrabajador = urlParams.get('id') || localStorage.getItem('id_trabajador') || 1;
-    let tabActual      = 'pendientes';
-    let ultimasIds     = new Set();
-    let primeraCarga   = true;
-    let timers         = {};
+    let tabActual = 'pendiente';
+    let todasLasSolicitudes = [];
 
-    // ── EMOJIS POR CATEGORÍA ──
-    const CAT_EMOJI = {
-        'Plomería':'🔧','Electricidad':'⚡','Limpieza':'🧹','Carpintería':'🪚',
-        'Pintura':'🎨','Jardinería':'🌱','Mecánica':'🔩','Tecnología':'💻',
-        'Construcción':'🏗️','Educación':'📚','Salud':'💊','Belleza':'💇',
-        'Gastronomía':'🍳','Transporte':'🚚'
-    };
-
-    function mostrarTab(tab) {
-        tabActual = tab;
-        ['pendientes','activas','historial'].forEach(t => {
-            document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
-            document.getElementById('contenido' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? 'block' : 'none';
-        });
-    }
-
-    // ── CONTADOR REGRESIVO ──
-    function iniciarTimer(id, segundos) {
-        if (timers[id]) clearInterval(timers[id]);
-        const el = document.getElementById('timer-' + id);
-        if (!el) return;
-        let restante = segundos;
-        function tick() {
-            if (!document.getElementById('timer-' + id)) { clearInterval(timers[id]); return; }
-            const mins = Math.floor(restante / 60);
-            const segs = restante % 60;
-            el.textContent = mins > 0 ? `${mins}:${String(segs).padStart(2,'0')}` : `${segs}s`;
-            el.classList.toggle('urgente', restante <= 30);
-            if (restante <= 0) { clearInterval(timers[id]); el.textContent = '—'; }
-            restante--;
-        }
-        tick();
-        timers[id] = setInterval(tick, 1000);
-    }
-
-    // ── RENDER SOLICITUD PENDIENTE ──
-    function renderPendiente(s, esNueva) {
-        const emoji = CAT_EMOJI[s.nombre_categoria] || '🔧';
-        const urgencia = s.urgencia === 'ahora'
-            ? '<span class="urgencia-badge ahora">⚡ Lo necesita ahora</span>'
-            : '<span class="urgencia-badge programar">📅 Programado</span>';
-        return `
-        <div class="card-pendiente${esNueva ? ' nueva' : ''}" id="card-${s.id_solicitud}">
-            <div class="card-header">
-                <div class="card-cat">
-                    <span class="cat-emoji">${emoji}</span>
-                    <div>
-                        <div class="cat-nombre">${s.nombre_categoria || 'Servicio'}</div>
-                        <div class="cat-tipo">${s.titulo || ''}</div>
-                    </div>
-                </div>
-                <div class="timer-wrap">
-                    <div class="timer-num" id="timer-${s.id_solicitud}">5:00</div>
-                    <div class="timer-label">para responder</div>
-                </div>
-            </div>
-            <div class="card-body">
-                ${urgencia}
-                <div class="info-row">
-                    <div class="info-icon-box"><i class="bi bi-person-fill"></i></div>
-                    <div>
-                        <div class="info-label">Cliente</div>
-                        <div class="info-val">${s.nombre_cliente || 'Cliente'}</div>
-                    </div>
-                </div>
-                <div class="info-row">
-                    <div class="info-icon-box"><i class="bi bi-geo-alt-fill"></i></div>
-                    <div>
-                        <div class="info-label">Ubicación</div>
-                        <div class="info-val">${[s.ciudad, s.departamento].filter(Boolean).join(', ') || 'No especificada'}</div>
-                    </div>
-                </div>
-                ${s.descripcion ? `
-                <div class="info-row">
-                    <div class="info-icon-box"><i class="bi bi-chat-text-fill"></i></div>
-                    <div>
-                        <div class="info-label">Descripción</div>
-                        <div class="info-val">${s.descripcion}</div>
-                    </div>
-                </div>` : ''}
-                <div class="info-row">
-                    <div class="info-icon-box"><i class="bi bi-clock-fill"></i></div>
-                    <div>
-                        <div class="info-label">Recibida</div>
-                        <div class="info-val">${s.fecha_solicitud || ''}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-actions">
-                <button class="btn-rechazar" id="btnR-${s.id_solicitud}" onclick="rechazar(${s.id_solicitud})">
-                    ✕ Rechazar
-                </button>
-                <button class="btn-aceptar" id="btnA-${s.id_solicitud}" onclick="aceptar(${s.id_solicitud})">
-                    ✓ Aceptar
-                </button>
-            </div>
-        </div>`;
-    }
-
-    // ── RENDER HISTORIAL ──
-    function renderHistorial(s) {
-        const estado = s.estado || 'pendiente';
-        return `
-        <div class="card-historial">
-            <div class="hist-dot ${estado}"></div>
-            <div class="hist-info">
-                <div class="hist-titulo">${s.titulo || s.nombre_categoria || 'Solicitud'}</div>
-                <div class="hist-meta">${s.nombre_cliente || 'Cliente'} · ${s.ciudad || ''} · ${s.fecha_solicitud || ''}</div>
-            </div>
-            <span class="hist-badge ${estado}">${estado}</span>
-        </div>`;
-    }
-
-    // ── RENDER ACTIVA (con botones de avance) ──
-    function renderActiva(s) {
-        const emoji = CAT_EMOJI[s.nombre_categoria] || '🔧';
-        const estado = s.estado;
-        let accionBtn = '';
-        if (estado === 'aceptada') {
-            accionBtn = `<button class="btn-iniciar" onclick="iniciarServicio(${s.id_solicitud})">
-                🚀 Iniciar trabajo
-            </button>`;
-        } else if (estado === 'en_proceso') {
-            accionBtn = `<button class="btn-completar" onclick="completarServicio(${s.id_solicitud})">
-                ✅ Marcar como completado
-            </button>`;
-        }
-        return `
-        <div class="card-historial" id="activa-${s.id_solicitud}" style="flex-direction:column;align-items:stretch;gap:10px;">
-            <div style="display:flex;align-items:center;gap:12px;">
-                <div class="hist-dot ${estado}" style="width:12px;height:12px;"></div>
-                <div class="hist-info">
-                    <div class="hist-titulo">${emoji} ${s.titulo || s.nombre_categoria || 'Solicitud'}</div>
-                    <div class="hist-meta">${s.nombre_cliente || 'Cliente'} · ${s.ciudad || ''} · ${s.fecha_solicitud || ''}</div>
-                </div>
-                <span class="hist-badge ${estado}">${estado.replace('_',' ')}</span>
-            </div>
-            ${accionBtn}
-        </div>`;
-    }
-
-    // ── CARGAR SOLICITUDES ──
     async function cargarSolicitudes() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('solicitudesContainer').innerHTML = '';
+
         try {
-            const res  = await fetch(`/trabajador/mis_solicitudes_api?id_trabajador=${idTrabajador}`);
-            const data = await res.json();
-            const todas = data.solicitudes || [];
+            const response = await fetch(`/trabajador/mis_solicitudes_api?id_trabajador=${idTrabajador}`);
+            const data = await response.json();
 
-            const pendientes  = todas.filter(s => s.estado === 'pendiente');
-            const activas     = todas.filter(s => ['aceptada','en_proceso'].includes(s.estado));
-            const historial   = todas.filter(s => ['completada','cancelada'].includes(s.estado));
+            todasLasSolicitudes = data.solicitudes || [];
+            document.getElementById('loading').style.display = 'none';
 
-            // Badges
-            const bp = document.getElementById('badgePendientes');
-            bp.textContent = pendientes.length;
-            bp.classList.toggle('show', pendientes.length > 0);
-            const ba = document.getElementById('badgeActivas');
-            ba.textContent = activas.length;
-            ba.classList.toggle('show', activas.length > 0);
-
-            // Subtitle
-            document.getElementById('topSub').textContent =
-                pendientes.length > 0 ? `${pendientes.length} solicitud${pendientes.length > 1 ? 'es' : ''} esperando` : 'Sin solicitudes pendientes';
-
-            // Pendientes
-            const cpEl = document.getElementById('contenidoPendientes');
-            if (!pendientes.length) {
-                cpEl.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><p>No hay solicitudes pendientes</p><p class="sub">Activa tu disponibilidad para recibir trabajos</p></div>`;
+            // Contar pendientes
+            const pendientes = todasLasSolicitudes.filter(s => s.estado === 'pendiente').length;
+            const badge = document.getElementById('countPendiente');
+            if (pendientes > 0) {
+                badge.textContent = pendientes;
+                badge.style.display = 'inline-flex';
             } else {
-                const nuevasIds = new Set(pendientes.map(s => s.id_solicitud));
-                cpEl.innerHTML = pendientes.map(s => renderPendiente(s, !primeraCarga && !ultimasIds.has(s.id_solicitud))).join('');
-                pendientes.forEach(s => iniciarTimer(s.id_solicitud, 300)); // 5 min
-                ultimasIds = nuevasIds;
+                badge.style.display = 'none';
             }
 
-            // Activas
-            const caEl = document.getElementById('contenidoActivas');
-            if (!activas.length) {
-                caEl.innerHTML = `<div class="empty"><div class="empty-icon">🔧</div><p>No tienes trabajos activos</p></div>`;
-            } else {
-                caEl.innerHTML = `<div class="section-label">En curso</div>` + activas.map(renderActiva).join('');
-            }
+            renderizarSolicitudes(tabActual);
 
-            // Historial
-            const chEl = document.getElementById('contenidoHistorial');
-            if (!historial.length) {
-                chEl.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><p>Sin historial aún</p></div>`;
-            } else {
-                chEl.innerHTML = `<div class="section-label">Completados y cancelados</div>` + historial.map(renderHistorial).join('');
-            }
-
-        } catch(e) {
-            document.getElementById('contenidoPendientes').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Error al cargar solicitudes</p></div>`;
+        } catch (error) {
+            document.getElementById('loading').innerHTML = '❌ Error al cargar. <button onclick="cargarSolicitudes()" style="background:#3b82f6;color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer">Reintentar</button>';
         }
     }
 
-    // ── INICIAR SERVICIO ──
-    async function iniciarServicio(idSolicitud) {
-        const btn = document.querySelector(`#activa-${idSolicitud} .btn-iniciar`);
-        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Iniciando...'; }
-        const fd = new FormData();
-        fd.append('id_solicitud', idSolicitud);
-        try {
-            const res  = await fetch('/trabajador/servicio/iniciar', { method:'POST', body:fd });
-            const data = await res.json();
-            if (res.ok && !data.error) {
-                mostrarToast('🚀 Trabajo iniciado — el cliente fue notificado', 'success');
-                cargarSolicitudes();
-            } else {
-                mostrarToast('❌ ' + (data.error || 'Error'), 'error');
-                if (btn) { btn.disabled = false; btn.innerHTML = '🚀 Iniciar trabajo'; }
-            }
-        } catch(e) {
-            mostrarToast('❌ Error de conexión', 'error');
-            if (btn) { btn.disabled = false; btn.innerHTML = '🚀 Iniciar trabajo'; }
+    function cambiarTab(tab, btn) {
+        tabActual = tab;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        renderizarSolicitudes(tab);
+    }
+
+    function renderizarSolicitudes(estado) {
+        const container = document.getElementById('solicitudesContainer');
+        const filtradas = todasLasSolicitudes.filter(s => s.estado === estado);
+
+        if (filtradas.length === 0) {
+            const mensajes = {
+                'pendiente': { icon: '🔔', texto: 'No tienes solicitudes nuevas', sub: 'Activa tu disponibilidad para recibir solicitudes' },
+                'aceptada': { icon: '✅', texto: 'No tienes servicios en curso', sub: 'Acepta solicitudes pendientes para verlas aquí' },
+                'completada': { icon: '🏆', texto: 'Aún no has completado servicios', sub: 'Los servicios completados aparecerán aquí' }
+            };
+            const m = mensajes[estado];
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">${m.icon}</div>
+                    <p class="empty-text"><strong>${m.texto}</strong></p>
+                    <p style="color:#94a3b8;font-size:14px;margin-top:8px">${m.sub}</p>
+                </div>
+            `;
+            return;
         }
+
+        container.innerHTML = filtradas.map(s => crearCard(s)).join('');
     }
 
-    // ── COMPLETAR SERVICIO ──
-    async function completarServicio(idSolicitud) {
-        // Modal de precio
-        const precio = prompt('💰 ¿Cuál es el precio del servicio? (deja en 0 si no aplica)', '0');
-        if (precio === null) return; // canceló
-        const precioNum = parseFloat(precio) || 0;
+    function crearCard(s) {
+        const fecha = new Date(s.fecha_solicitud).toLocaleDateString('es-CO', {
+            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
 
-        const btn = document.querySelector(`#activa-${idSolicitud} .btn-completar`);
-        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Completando...'; }
-        const fd = new FormData();
-        fd.append('id_solicitud', idSolicitud);
-        fd.append('precio_final', precioNum);
+        const acciones = {
+            'pendiente': `
+                <button class="btn btn-aceptar" onclick="cambiarEstado(${s.id_solicitud}, 'aceptada')">
+                    ✅ Aceptar
+                </button>
+                <button class="btn btn-rechazar" onclick="cambiarEstado(${s.id_solicitud}, 'cancelada')">
+                    ❌ Rechazar
+                </button>
+            `,
+            'aceptada': `
+                <button class="btn btn-completar" onclick="cambiarEstado(${s.id_solicitud}, 'completada')">
+                    🏆 Marcar Completado
+                </button>
+                ${s.telefono_cliente ? `
+                <button class="btn btn-whatsapp" onclick="contactarCliente('${s.telefono_cliente}', '${s.nombre_cliente}')">
+                    💬 WhatsApp
+                </button>` : ''}
+            `,
+            'completada': ''
+        };
+
+        return `
+            <div class="solicitud-card ${s.estado}">
+                <div class="solicitud-header">
+                    <div class="solicitud-titulo">${s.titulo}</div>
+                    <span class="badge badge-${s.estado}">${s.estado.replace('_', ' ')}</span>
+                </div>
+
+                <div class="info-row">
+                    🏷️ <strong>Categoría:</strong> ${s.nombre_categoria || s.categoria || 'General'}
+                </div>
+
+                <div class="info-row">
+                    📍 <strong>Dirección:</strong> ${s.direccion_servicio || 'No especificada'}, ${s.ciudad || ''}
+                </div>
+
+                ${s.nombre_cliente ? `
+                <div class="cliente-info">
+                    <div class="info-row" style="margin:0">
+                        👤 <strong>Cliente:</strong> ${s.nombre_cliente}
+                    </div>
+                    ${s.telefono_cliente ? `
+                    <div class="info-row" style="margin:4px 0 0 0">
+                        📞 <strong>Teléfono:</strong> ${s.telefono_cliente}
+                    </div>` : ''}
+                </div>` : ''}
+
+                <div class="descripcion">
+                    📝 ${s.descripcion || 'Sin descripción'}
+                </div>
+
+                <div class="tiempo">📅 ${fecha}</div>
+
+                ${acciones[s.estado] ? `<div class="acciones">${acciones[s.estado]}</div>` : ''}
+            </div>
+        `;
+    }
+
+    async function cambiarEstado(idSolicitud, nuevoEstado) {
+        const mensajes = {
+            'aceptada': '¿Aceptar esta solicitud?',
+            'cancelada': '¿Rechazar esta solicitud?',
+            'completada': '¿Marcar como completada?'
+        };
+
+        if (!confirm(mensajes[nuevoEstado])) return;
+
         try {
-            const res  = await fetch('/trabajador/servicio/completar', { method:'POST', body:fd });
-            const data = await res.json();
-            if (res.ok && !data.error) {
-                mostrarToast('🎉 ¡Servicio completado! El cliente fue notificado', 'success');
-                cargarSolicitudes();
-                mostrarTab('historial');
-            } else {
-                mostrarToast('❌ ' + (data.error || 'Error'), 'error');
-                if (btn) { btn.disabled = false; btn.innerHTML = '✅ Marcar como completado'; }
-            }
-        } catch(e) {
-            mostrarToast('❌ Error de conexión', 'error');
-            if (btn) { btn.disabled = false; btn.innerHTML = '✅ Marcar como completado'; }
-        }
-    }
+            const formData = new FormData();
+            formData.append('id_solicitud', idSolicitud);
+            formData.append('estado', nuevoEstado);
+            formData.append('id_trabajador', idTrabajador);
 
-    // ── ACEPTAR ──
-    async function aceptar(idSolicitud) {
-        const btnA = document.getElementById('btnA-' + idSolicitud);
-        const btnR = document.getElementById('btnR-' + idSolicitud);
-        if (btnA) { btnA.disabled = true; btnA.innerHTML = '⏳ Aceptando...'; }
-        if (btnR) btnR.disabled = true;
-        const fd = new FormData();
-        fd.append('id_solicitud', idSolicitud);
-        fd.append('id_trabajador', idTrabajador);
-        try {
-            const res  = await fetch('/trabajador/solicitud/aceptar', { method:'POST', body:fd });
-            const data = await res.json();
-            if (res.ok && !data.error) {
-                if (timers[idSolicitud]) clearInterval(timers[idSolicitud]);
-                const card = document.getElementById('card-' + idSolicitud);
-                if (card) {
-                    card.style.transition = 'all 0.4s';
-                    card.style.opacity = '0';
-                    card.style.transform = 'scale(0.95)';
-                    setTimeout(() => { card.remove(); cargarSolicitudes(); }, 400);
-                }
-                mostrarToast('✅ Solicitud aceptada', 'success');
-            } else {
-                mostrarToast('❌ ' + (data.error || 'Error al aceptar'), 'error');
-                if (btnA) { btnA.disabled = false; btnA.innerHTML = '✓ Aceptar'; }
-                if (btnR) btnR.disabled = false;
-            }
-        } catch(e) {
-            mostrarToast('❌ Error de conexión', 'error');
-            if (btnA) { btnA.disabled = false; btnA.innerHTML = '✓ Aceptar'; }
-            if (btnR) btnR.disabled = false;
-        }
-    }
-
-    // ── RECHAZAR ──
-    async function rechazar(idSolicitud) {
-        const card = document.getElementById('card-' + idSolicitud);
-        if (card) {
-            card.style.transition = 'all 0.35s';
-            card.style.opacity = '0';
-            card.style.transform = 'translateX(-20px)';
-            setTimeout(() => { card.remove(); }, 350);
-        }
-        if (timers[idSolicitud]) clearInterval(timers[idSolicitud]);
-        mostrarToast('Solicitud rechazada', 'info');
-    }
-
-    // ── TOAST ──
-    function mostrarToast(msg, tipo) {
-        const t = document.createElement('div');
-        const colores = { success:'#667eea', error:'#ef4444', info:'#64748b' };
-        t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${colores[tipo]||'#667eea'};color:white;padding:12px 24px;border-radius:99px;font-weight:700;font-size:0.88rem;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.2);animation:toastIn 0.3s ease;white-space:nowrap;`;
-        t.innerHTML = `<style>@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}</style>${msg}`;
-        document.body.appendChild(t);
-        setTimeout(() => t.remove(), 3000);
-    }
-
-    // ── NOTIFICACIONES ──
-    function sonarNotificacion() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            [0,150,300].forEach(delay => {
-                const osc = ctx.createOscillator(), gain = ctx.createGain();
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.frequency.value = 880; osc.type = 'sine';
-                gain.gain.setValueAtTime(0.3, ctx.currentTime + delay/1000);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay/1000 + 0.3);
-                osc.start(ctx.currentTime + delay/1000);
-                osc.stop(ctx.currentTime + delay/1000 + 0.3);
+            const response = await fetch('/trabajador/solicitud/actualizar', {
+                method: 'POST',
+                body: formData
             });
-        } catch(e) {}
+
+            if (response.ok) {
+                const msg = {
+                    'aceptada': '✅ ¡Solicitud aceptada! El cliente será notificado.',
+                    'cancelada': '❌ Solicitud rechazada.',
+                    'completada': '🏆 ¡Servicio completado!'
+                };
+                alert(msg[nuevoEstado]);
+                cargarSolicitudes();
+            } else {
+                const data = await response.json();
+                alert('Error: ' + (data.error || 'No se pudo actualizar'));
+            }
+        } catch (error) {
+            alert('Error de conexión');
+        }
     }
 
-    // ── POLLING ──
-    async function pollingCheck() {
-        try {
-            const res  = await fetch(`/trabajador/mis_solicitudes_api?id_trabajador=${idTrabajador}`);
-            const data = await res.json();
-            const pendientes = (data.solicitudes || []).filter(s => s.estado === 'pendiente');
-            const nuevasIds  = new Set(pendientes.map(s => s.id_solicitud));
-            if (!primeraCarga) {
-                const nuevas = [...nuevasIds].filter(id => !ultimasIds.has(id));
-                if (nuevas.length > 0) { sonarNotificacion(); cargarSolicitudes(); mostrarTab('pendientes'); }
-            } else { primeraCarga = false; }
-            ultimasIds = nuevasIds;
-        } catch(e) {}
+    function contactarCliente(telefono, nombre) {
+        const msg = encodeURIComponent(`Hola ${nombre}, soy el trabajador de TalentHub. Acabo de aceptar tu solicitud de servicio. ¿Cuándo podemos coordinar?`);
+        window.open(`https://wa.me/57${telefono}?text=${msg}`, '_blank');
     }
 
+    // Cargar al iniciar
     cargarSolicitudes();
-    pollingCheck();
-    setInterval(pollingCheck, 15000);
+
+    // Auto-actualizar cada 30 segundos
+    setInterval(cargarSolicitudes, 30000);
 </script>
 </body>
 </html>
