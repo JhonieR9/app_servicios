@@ -322,16 +322,21 @@
         <!-- Hidden fields -->
         <input type="hidden" id="id_cliente" name="id_cliente" value="1">
         <input type="hidden" id="id_categoria" name="id_categoria">
+        <input type="hidden" id="id_trabajador" name="id_trabajador">
         <input type="hidden" id="titulo" name="titulo">
         <input type="hidden" id="descripcion" name="descripcion">
         <input type="hidden" id="urgenciaHidden" name="urgencia" value="ahora">
         <input type="hidden" id="ciudadHidden" name="ciudad">
         <input type="hidden" id="departamentoHidden" name="departamento">
 
-        <!-- ═══════════════════════════════════════════════════════ -->
-        <!-- PASO 1: CATEGORÍA                                       -->
-        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- PASO 1: CATEGORÍA -->
         <div class="step-panel active" id="step1">
+            <!-- Tarjeta trabajador pre-seleccionado (solo si viene del mapa) -->
+            <div id="trabajadorCard" style="display:none; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border-radius:16px; padding:16px 18px; margin-bottom:16px;">
+                <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; opacity:0.8; margin-bottom:6px;">✅ Trabajador seleccionado</div>
+                <div style="font-size:1rem; font-weight:700;" id="tcNombre"></div>
+                <div style="font-size:0.82rem; opacity:0.85; margin-top:2px;" id="tcCategoria"></div>
+            </div>
             <div class="card">
                 <div class="card-title">¿Qué servicio necesitas?</div>
                 <div class="card-sub">Selecciona la categoría que mejor describe tu necesidad</div>
@@ -489,7 +494,20 @@ let selectedProblem = '';
     const idStorage = localStorage.getItem('id_cliente');
     const id = idUrl || idStorage || '1';
     document.getElementById('id_cliente').value = id;
-    if (idUrl) localStorage.setItem('id_cliente', idUrl); // sincronizar
+    if (idUrl) localStorage.setItem('id_cliente', idUrl);
+    
+    // Leer trabajador pre-seleccionado desde URL
+    const trabajadorId     = params.get('trabajador_id');
+    const trabajadorNombre = params.get('trabajador_nombre');
+    const categoriaURL     = params.get('categoria');
+    
+    if (trabajadorId && trabajadorNombre) {
+        document.getElementById('id_trabajador').value = trabajadorId;
+        const card = document.getElementById('trabajadorCard');
+        card.style.display = 'block';
+        document.getElementById('tcNombre').textContent = '👷 ' + trabajadorNombre;
+        document.getElementById('tcCategoria').textContent = categoriaURL ? '🔧 ' + categoriaURL : '';
+    }
 })();
 
 // Iconos por categoría
