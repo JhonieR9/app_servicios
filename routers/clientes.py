@@ -426,7 +426,49 @@ def cancelar_solicitud(
     
     return {"mensaje": "Solicitud cancelada"}
 
-@router.post("/calificar")
+@router.post("/solicitud/completar")
+def completar_solicitud_cliente(
+    id_solicitud: int = Form(...),
+    fecha_local: str = Form(...)   # El cliente envía su hora local: "2026-05-14T15:30:00"
+):
+    """Solo el cliente puede marcar un servicio como completado"""
+    conexion = conectar_bd()
+    cursor = conexion.cursor(dictionary=True)
+    try:
+        # Verificar que la solicitud existe y está en proceso
+        cursor.execute("""
+            SELECT id_solicitud, id_cliente, id_trabajador, estado
+            FROM solicitudes_servicio
+            WHERE id_solicitud = %s
+        """, (id_solicitud,))
+        sol = cursor.fetchone()
+
+        if not sol:
+            return JSONResponse({"error": "Solicitud no encontrada"}, status_code=404)
+        if sol['estado'] not in ('aceptada', 'en_proceso'):
+            return JSONResponse({"error": f"No se puede completar una solicitud en estado '{sol['estado']}'"}, status_code=400)
+
+        # Guardar la hora local del cliente (no la del servidor)
+        cursor.execute("""
+            UPDATE solicitudes_servicio
+            SET estado = 'completada', fecha_finalizacion = %s
+            WHERE id_solicitud = %s
+        """, (fecha_local, id_solicitud))
+        conexion.commit()
+
+        return JSONResponse({
+            "mensaje": "¡Servicio completado! Gracias por usar TalentHub.",
+            "id_solicitud": id_solicitud,
+            "id_trabajador": sol['id_trabajador']
+        })
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        cursor.close()
+        conexion.close()
+
+
 @router.post("/calificar")
 def calificar_servicio(
     id_solicitud: int = Form(...),

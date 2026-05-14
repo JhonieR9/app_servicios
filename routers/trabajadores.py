@@ -648,28 +648,11 @@ def completar_servicio(
     id_solicitud: int = Form(...),
     precio_final: float = Form(0)
 ):
-    conexion = conectar_bd()
-    cursor = conexion.cursor(dictionary=True)
-    
-    cursor.execute("""
-        UPDATE solicitudes_servicio 
-        SET estado = 'completada', fecha_finalizacion = %s, precio_final = %s
-        WHERE id_solicitud = %s AND estado = 'en_proceso'
-    """, (datetime.now(), precio_final, id_solicitud))
-    conexion.commit()
-
-    # Retornar id_cliente para que el frontend pueda mostrar calificación
-    cursor.execute("SELECT id_cliente, id_trabajador FROM solicitudes_servicio WHERE id_solicitud = %s", (id_solicitud,))
-    sol = cursor.fetchone()
-    cursor.close()
-    conexion.close()
-    
-    return {
-        "mensaje": "Servicio completado exitosamente",
-        "id_cliente": sol['id_cliente'] if sol else None,
-        "id_trabajador": sol['id_trabajador'] if sol else None,
-        "id_solicitud": id_solicitud
-    }
+    """DESHABILITADO: Solo el cliente puede marcar como completado desde su panel"""
+    return JSONResponse(
+        {"error": "El servicio solo puede ser marcado como completado por el cliente"},
+        status_code=403
+    )
 
 @router.get("/historial/{id_trabajador}")
 def historial_trabajador(id_trabajador: int):

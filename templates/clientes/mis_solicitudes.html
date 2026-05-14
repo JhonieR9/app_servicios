@@ -205,6 +205,16 @@
         }
         .section-label::after { content:'';flex:1;height:1px;background:#e2e8f0; }
 
+        .btn-completar {
+            padding:12px; border:2px solid #dcfce7;
+            background:white; color:#16a34a;
+            border-radius:12px; font-weight:700; font-size:0.82rem;
+            cursor:pointer; font-family:'Lato',sans-serif;
+            display:flex;align-items:center;justify-content:center;gap:6px;
+            transition:background 0.2s;
+        }
+        .btn-completar:hover { background:#f0fdf4; }
+
         /* FAB nueva solicitud */
         .fab {
             position:fixed; bottom:24px; right:20px;
@@ -292,6 +302,9 @@
         const cancelBtn = estado === 'pendiente'
             ? `<button class="btn-cancelar-card" onclick="cancelar(${s.id_solicitud})"><i class="bi bi-x-circle"></i> Cancelar</button>`
             : `<div></div>`;
+        const completarBtn = (estado === 'en_proceso' || estado === 'aceptada')
+            ? `<button class="btn-completar" onclick="completarServicio(${s.id_solicitud})"><i class="bi bi-check-circle-fill"></i> Marcar completado</button>`
+            : '';
         return `
         <div class="card-activa">
             <div class="card-activa-header">
@@ -303,10 +316,8 @@
                 <span class="estado-pill ${estado}">${estado.replace('_',' ')}</span>
             </div>
             ${renderProgreso(estado)}
-            <div class="card-activa-btns">
-                <a href="/cliente/seguimiento?id=${s.id_solicitud}" class="btn-seguimiento">
-                    <i class="bi bi-map"></i> Ver seguimiento
-                </a>
+            <div class="card-activa-btns" style="grid-template-columns:${completarBtn ? '1fr' : '1fr 1fr'}">
+                ${completarBtn || `<a href="/cliente/seguimiento?id=${s.id_solicitud}" class="btn-seguimiento"><i class="bi bi-map"></i> Ver seguimiento</a>`}
                 ${cancelBtn}
             </div>
         </div>`;
@@ -395,6 +406,29 @@
         fd.append('motivo', 'Cancelado por el cliente');
         const res = await fetch('/cliente/solicitud/cancelar', { method:'POST', body:fd });
         if (res.ok) { mostrarToast('Solicitud cancelada'); cargarSolicitudes(); }
+    }
+
+    async function completarServicio(idSolicitud) {
+        if (!confirm('¿Confirmas que el servicio fue realizado correctamente?')) return;
+        // Hora local del dispositivo del cliente
+        const ahora = new Date();
+        const fechaLocal = ahora.getFullYear() + '-' +
+            String(ahora.getMonth()+1).padStart(2,'0') + '-' +
+            String(ahora.getDate()).padStart(2,'0') + 'T' +
+            String(ahora.getHours()).padStart(2,'0') + ':' +
+            String(ahora.getMinutes()).padStart(2,'0') + ':' +
+            String(ahora.getSeconds()).padStart(2,'0');
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('fecha_local', fechaLocal);
+        const res = await fetch('/cliente/solicitud/completar', { method:'POST', body:fd });
+        const data = await res.json();
+        if (res.ok) {
+            mostrarToast('✅ ' + data.mensaje);
+            cargarSolicitudes();
+        } else {
+            mostrarToast('❌ ' + (data.error || 'Error al completar'));
+        }
     }
 
     function repetir(categoria) {
