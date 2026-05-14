@@ -455,17 +455,37 @@
                 <div class="card-sub">Para que el profesional pueda contactarte</div>
                 <div class="form-group">
                     <label>Nombre completo *</label>
-                    <input type="text" name="nombre_cliente" placeholder="Tu nombre" required>
+                    <div style="position:relative;">
+                        <i class="bi bi-person" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;"></i>
+                        <input type="text" name="nombre_cliente" id="inputNombre"
+                               placeholder="Tu nombre completo" required
+                               style="padding-left:36px;">
+                    </div>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div class="form-group">
                         <label>Teléfono *</label>
-                        <input type="tel" name="telefono_cliente" placeholder="3001234567" required>
+                        <div style="position:relative;">
+                            <i class="bi bi-phone" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;"></i>
+                            <input type="tel" name="telefono_cliente" id="inputTelefono"
+                                   placeholder="3001234567" required
+                                   style="padding-left:36px;">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>Correo (opcional)</label>
-                        <input type="email" name="correo_cliente" placeholder="tu@correo.com">
+                        <label>Correo *</label>
+                        <div style="position:relative;">
+                            <i class="bi bi-envelope" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;"></i>
+                            <input type="email" name="correo_cliente" id="inputCorreo"
+                                   placeholder="tu@correo.com" required
+                                   style="padding-left:36px;">
+                        </div>
                     </div>
+                </div>
+                <!-- Indicador de datos pre-llenados -->
+                <div id="datosAutoMsg" style="display:none; margin-top:8px; padding:8px 12px;
+                     background:#f0fdf4; border-radius:8px; font-size:0.8rem; color:#16a34a;">
+                    <i class="bi bi-check-circle-fill"></i> Datos cargados desde tu cuenta
                 </div>
             </div>
 
@@ -647,6 +667,36 @@ function goStep(n, isBack) {
     }
     currentStep = n;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Al llegar al paso 3, cargar datos del cliente desde la sesión
+    if (n === 3) cargarDatosCliente();
+}
+
+// Cargar datos del cliente desde la sesión o localStorage
+async function cargarDatosCliente() {
+    const inputNombre  = document.getElementById('inputNombre');
+    const inputTelefono = document.getElementById('inputTelefono');
+    const inputCorreo  = document.getElementById('inputCorreo');
+    const autoMsg      = document.getElementById('datosAutoMsg');
+
+    // Si ya están llenos, no sobreescribir
+    if (inputNombre.value && inputTelefono.value) return;
+
+    try {
+        const res  = await fetch('/cliente/mi-perfil');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.error) return;
+
+        if (data.nombre_completo) inputNombre.value  = data.nombre_completo;
+        if (data.telefono)        inputTelefono.value = data.telefono;
+        if (data.correo)          inputCorreo.value   = data.correo;
+
+        if (data.nombre_completo || data.telefono) {
+            autoMsg.style.display = 'block';
+        }
+    } catch(e) {
+        // Sin sesión — el cliente llena manualmente
+    }
 }
 
 // STEP 1: SELECT CATEGORY

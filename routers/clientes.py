@@ -60,7 +60,7 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 @router.get("/mi-perfil")
 def obtener_mi_perfil_cliente(request: Request):
     """Obtiene datos del cliente autenticado"""
-    token = request.cookies.get("session_token")
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
     if not token:
         return JSONResponse({"error": "No autenticado"}, status_code=401)
     sesion = auth.verificar_sesion(token)
@@ -69,9 +69,12 @@ def obtener_mi_perfil_cliente(request: Request):
     conexion = conectar_bd()
     cursor = conexion.cursor(dictionary=True)
     cursor.execute("""
-        SELECT c.id_cliente, c.nombre_completo, e.correo
+        SELECT c.id_cliente, c.nombre_completo,
+               e.correo,
+               t.telefono
         FROM clientes c
-        LEFT JOIN correo_cliente e ON c.id_cliente = e.id_cliente
+        LEFT JOIN correo_cliente e ON c.id_cliente = e.id_cliente AND e.principal = 1
+        LEFT JOIN telefono_cliente t ON c.id_cliente = t.id_cliente AND t.principal = 1
         WHERE c.id_cliente = %s
     """, (sesion['id_usuario'],))
     cliente = cursor.fetchone()
