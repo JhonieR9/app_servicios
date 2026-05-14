@@ -306,7 +306,7 @@
         </div>
         <div class="step-item" id="stepIndicator2">
             <div class="step-dot">2</div>
-            <div class="step-label">Problema</div>
+            <div class="step-label">Apoyo</div>
         </div>
         <div class="step-item" id="stepIndicator3">
             <div class="step-dot">3</div>
@@ -378,7 +378,7 @@
                     <i class="bi bi-check-circle-fill"></i>
                     <span id="step2CatName"></span>
                 </div>
-                <div class="card-title">¿Cuál es el problema?</div>
+                <div class="card-title">¿Cómo te podemos apoyar?</div>
                 <div class="card-sub">Selecciona el tipo específico de servicio</div>
                 <div class="chips-wrap" id="chipsContainer"></div>
             </div>
@@ -547,8 +547,11 @@ async function cargarCategorias() {
         }
 
         // Separar primeras 10 y el resto
-        const principales = categorias.slice(0, 10);
-        const extras = categorias.slice(10);
+        const categoriasOrdenadas = categorias.slice().sort((a, b) =>
+            a.nombre_categoria.localeCompare(b.nombre_categoria, 'es')
+        );
+        const principales = categoriasOrdenadas.slice(0, 10);
+        const extras = categoriasOrdenadas.slice(10);
 
         // Renderizar función
         function renderCat(cat) {
