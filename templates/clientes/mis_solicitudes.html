@@ -316,9 +316,13 @@
                 <span class="estado-pill ${estado}">${estado.replace('_',' ')}</span>
             </div>
             ${renderProgreso(estado)}
-            <div class="card-activa-btns" style="grid-template-columns:${completarBtn ? '1fr' : '1fr 1fr'}">
-                ${completarBtn || `<a href="/cliente/seguimiento?id=${s.id_solicitud}" class="btn-seguimiento"><i class="bi bi-map"></i> Ver seguimiento</a>`}
-                ${cancelBtn}
+            <div class="card-activa-btns" style="grid-template-columns:1fr 1fr">
+                <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=cliente&id_usuario=${idCliente}"
+                   class="btn-seguimiento" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)">
+                    <i class="bi bi-chat-dots-fill"></i> Chat
+                    <span id="badge-${s.id_solicitud}" style="background:rgba(255,255,255,0.3);border-radius:99px;padding:1px 7px;font-size:0.7rem;display:none"></span>
+                </a>
+                ${completarBtn || cancelBtn || '<div></div>'}
             </div>
         </div>`;
     }
@@ -444,8 +448,24 @@
     }
 
     cargarSolicitudes();
-    // Polling cada 20s para actualizar estados
-    setInterval(cargarSolicitudes, 20000);
+    // Polling cada 20s para actualizar estados y badges de chat
+    setInterval(async () => {
+        await cargarSolicitudes();
+        // Actualizar badges de mensajes no leídos
+        document.querySelectorAll('[id^="badge-"]').forEach(async badge => {
+            const idSol = badge.id.replace('badge-', '');
+            try {
+                const res  = await fetch(`/chat/no-leidos?id_solicitud=${idSol}&tipo_receptor=cliente`);
+                const data = await res.json();
+                if (data.no_leidos > 0) {
+                    badge.textContent = data.no_leidos;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch(e) {}
+        });
+    }, 20000);
 </script>
 </body>
 </html>

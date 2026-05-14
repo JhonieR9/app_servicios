@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from routers import clientes, trabajadores
+from routers import clientes, trabajadores, chat
 
 app = FastAPI(title="TalentHub API", version="1.0.0")
 
@@ -15,6 +15,7 @@ templates = Jinja2Templates(directory="templates")
 # Incluir routers
 app.include_router(clientes.router)
 app.include_router(trabajadores.router)
+app.include_router(chat.router)
 
 # ============================================
 # CREAR TABLAS AL ARRANCAR (si no existen)
@@ -155,6 +156,22 @@ def crear_tablas():
               PRIMARY KEY (`id_calificacion`),
               KEY `idx_cal_trabajador` (`id_trabajador`),
               KEY `idx_cal_solicitud`  (`id_solicitud`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
+        # Tabla chat interno
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `mensajes_chat` (
+              `id_mensaje`      int NOT NULL AUTO_INCREMENT,
+              `id_solicitud`    int NOT NULL,
+              `tipo_remitente`  enum('cliente','trabajador','sistema') NOT NULL,
+              `id_remitente`    int DEFAULT NULL,
+              `mensaje`         text NOT NULL,
+              `leido`           tinyint(1) DEFAULT 0,
+              `fecha_envio`     datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id_mensaje`),
+              KEY `idx_chat_solicitud` (`id_solicitud`),
+              KEY `idx_chat_fecha`     (`fecha_envio`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """)
 
