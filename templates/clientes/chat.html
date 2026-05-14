@@ -327,8 +327,20 @@
     } else {
         cargarInfo();
         cargarMensajes();
+        // Marcar como leídos al abrir
+        const fdLeer = new FormData();
+        fdLeer.append('id_solicitud', idSolicitud);
+        fdLeer.append('tipo_receptor', tipoUsuario);
+        fetch('/chat/leer', { method:'POST', body:fdLeer }).catch(()=>{});
         // Polling cada 4 segundos
-        pollingTimer = setInterval(() => cargarMensajes(true), 4000);
+        pollingTimer = setInterval(() => {
+            cargarMensajes(true);
+            // Marcar leídos periódicamente mientras está en el chat
+            const fd = new FormData();
+            fd.append('id_solicitud', idSolicitud);
+            fd.append('tipo_receptor', tipoUsuario);
+            fetch('/chat/leer', { method:'POST', body:fd }).catch(()=>{});
+        }, 4000);
     }
 
     // Limpiar polling al salir

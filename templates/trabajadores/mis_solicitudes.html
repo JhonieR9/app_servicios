@@ -364,15 +364,25 @@
                 </button>
             `,
             'aceptada': `
-                <button class="btn btn-completar" onclick="cambiarEstado(${s.id_solicitud}, 'completada')">
-                    🏆 Marcar Completado
-                </button>
-                ${s.telefono_cliente ? `
-                <button class="btn btn-whatsapp" onclick="contactarCliente('${s.telefono_cliente}', '${s.nombre_cliente}')">
-                    💬 WhatsApp
-                </button>` : ''}
+                <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=trabajador&id_usuario=${idTrabajador}"
+                   class="btn btn-llamar" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    💬 Chat con cliente
+                    <span id="badge-chat-${s.id_solicitud}" style="background:rgba(255,255,255,0.35);border-radius:99px;padding:1px 7px;font-size:0.7rem;display:none"></span>
+                </a>
             `,
-            'completada': ''
+            'en_proceso': `
+                <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=trabajador&id_usuario=${idTrabajador}"
+                   class="btn btn-llamar" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    💬 Chat con cliente
+                    <span id="badge-chat-${s.id_solicitud}" style="background:rgba(255,255,255,0.35);border-radius:99px;padding:1px 7px;font-size:0.7rem;display:none"></span>
+                </a>
+            `,
+            'completada': `
+                <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=trabajador&id_usuario=${idTrabajador}"
+                   class="btn" style="background:#f1f5f9;color:#64748b;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    💬 Ver conversación
+                </a>
+            `
         };
 
         return `
@@ -457,8 +467,39 @@
     // Cargar al iniciar
     cargarSolicitudes();
 
-    // Auto-actualizar cada 30 segundos
-    setInterval(cargarSolicitudes, 30000);
+    // Auto-actualizar cada 30 segundos + badges de chat
+    setInterval(async () => {
+        await cargarSolicitudes();
+        // Actualizar badges de mensajes no leídos
+        document.querySelectorAll('[id^="badge-chat-"]').forEach(async badge => {
+            const idSol = badge.id.replace('badge-chat-', '');
+            try {
+                const res  = await fetch(`/chat/no-leidos?id_solicitud=${idSol}&tipo_receptor=trabajador`);
+                const data = await res.json();
+                if (data.no_leidos > 0) {
+                    badge.textContent = data.no_leidos;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch(e) {}
+        });
+    }, 30000);
+
+    // Cargar badges inmediatamente al inicio
+    setTimeout(async () => {
+        document.querySelectorAll('[id^="badge-chat-"]').forEach(async badge => {
+            const idSol = badge.id.replace('badge-chat-', '');
+            try {
+                const res  = await fetch(`/chat/no-leidos?id_solicitud=${idSol}&tipo_receptor=trabajador`);
+                const data = await res.json();
+                if (data.no_leidos > 0) {
+                    badge.textContent = data.no_leidos;
+                    badge.style.display = 'inline';
+                }
+            } catch(e) {}
+        });
+    }, 1500);
 </script>
 </body>
 </html>
