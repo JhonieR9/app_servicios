@@ -1356,27 +1356,45 @@ async def restaurar_registro(id_persona: int = Form(...)):
 async def eliminar_permanente(id_persona: int = Form(...)):
     """Eliminar registro permanentemente de la base de datos"""
     import os
-    
+
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión"}, status_code=500)
-    
+
     try:
         cursor = conexion.cursor()
-        
+
         # Obtener archivos antes de eliminar
         cursor.execute("""
-            SELECT foto_identificacion, antecedentes_pdf, recomendaciones_archivo 
-            FROM detalles_persona 
+            SELECT foto_identificacion, antecedentes_pdf, recomendaciones_archivo
+            FROM detalles_persona
             WHERE id_persona = %s
         """, (id_persona,))
-        
         archivos = cursor.fetchone()
-        
-        # Eliminar permanentemente
+
+        # Eliminar registros relacionados en orden para respetar foreign keys
+        tablas_relacionadas = [
+            "DELETE FROM mensajes_chat       WHERE id_remitente = %s AND tipo_remitente = 'trabajador'",
+            "DELETE FROM calificaciones       WHERE id_trabajador = %s",
+            "UPDATE solicitudes_servicio      SET id_trabajador = NULL WHERE id_trabajador = %s",
+            "DELETE FROM disponibilidad       WHERE id_persona = %s",
+            "DELETE FROM servicios_persona    WHERE id_persona = %s",
+            "DELETE FROM experiencia_persona  WHERE id_persona = %s",
+            "DELETE FROM telefono_persona     WHERE id_persona = %s",
+            "DELETE FROM detalles_persona     WHERE id_persona = %s",
+            "DELETE FROM trabajador_categorias WHERE id_trabajador = %s",
+        ]
+
+        for sql in tablas_relacionadas:
+            try:
+                cursor.execute(sql, (id_persona,))
+            except Exception:
+                pass  # Si la tabla no existe, continuar
+
+        # Ahora sí eliminar la persona
         cursor.execute("DELETE FROM personas WHERE id_persona = %s", (id_persona,))
         conexion.commit()
-        
+
         # Eliminar archivos físicos
         if archivos:
             UPLOAD_FOLDER = "static/uploads"
@@ -1385,9 +1403,9 @@ async def eliminar_permanente(id_persona: int = Form(...)):
                     archivo_path = os.path.join(UPLOAD_FOLDER, archivo)
                     if os.path.exists(archivo_path):
                         os.remove(archivo_path)
-        
+
         return JSONResponse({"mensaje": "✅ Registro eliminado permanentemente"})
-        
+
     except Exception as e:
         conexion.rollback()
         return JSONResponse({"error": str(e)}, status_code=500)
