@@ -676,47 +676,42 @@ def historial_trabajador(id_trabajador: int):
 
 @router.get("/disponibles/{id_categoria}")
 def trabajadores_disponibles(id_categoria: int):
+    """Trabajadores disponibles por categoría — usa tablas reales del proyecto"""
     conexion = conectar_bd()
     cursor = conexion.cursor(dictionary=True)
-    
-    cursor.execute("""
-        SELECT 
-            p.id_persona,
-            p.nombre_completo,
-            p.ciudad,
-            tc.experiencia_anos,
-            tc.certificado,
-            COALESCE(vtc.calificacion_promedio, 0) as calificacion,
-            vtc.servicios_completados
-        FROM personas p
-        INNER JOIN trabajador_categorias tc ON p.id_persona = tc.id_trabajador
-        LEFT JOIN vista_trabajadores_calificacion vtc ON p.id_persona = vtc.id_trabajador
-        LEFT JOIN disponibilidad_trabajador dt ON p.id_persona = dt.id_trabajador
-        WHERE tc.id_categoria = %s 
-        AND p.estado = 'activo'
-        AND (dt.disponible = 1 OR dt.disponible IS NULL)
-        ORDER BY vtc.calificacion_promedio DESC
-    """, (id_categoria,))
-    
-    trabajadores = cursor.fetchall()
-    cursor.close()
-    conexion.close()
-    
-    return {"trabajadores": trabajadores}
-
-@router.post("/disponibilidad/actualizar_legacy")
-def actualizar_disponibilidad_legacy(
-    id_trabajador: int = Form(...),
-    disponible: bool = Form(...),
-    latitud: float = Form(None),
-    longitud: float = Form(None)
-):
-    """Endpoint legacy - usar /disponibilidad/actualizar en su lugar"""
-    return {"mensaje": "Use el endpoint actualizado"}
-    cursor.close()
-    conexion.close()
-    
-    return {"mensaje": "Disponibilidad actualizada"}
+    try:
+        cursor.execute("""
+            SELECT 
+                p.id_persona,
+                p.nombre_completo,
+                p.ciudad,
+                sp.anios_experiencia,
+                sp.categoria,
+                COALESCE(AVG(cal.puntuacion), 0) as calificacion,
+                COUNT(DISTINCT sol.id_solicitud) as servicios_completados
+            FROM personas p
+            INNER JOIN servicios_persona sp ON p.id_persona = sp.id_persona
+            LEFT JOIN calificaciones cal ON p.id_persona = cal.id_trabajador
+            LEFT JOIN solicitudes_servicio sol ON p.id_persona = sol.id_trabajador AND sol.estado = 'completada'
+            LEFT JOIN disponibilidad d ON p.id_persona = d.id_persona
+            INNER JOIN categorias_servicio cat ON sp.categoria = cat.nombre_categoria
+            WHERE cat.id_categoria = %s
+            AND (p.estado = 'activo' OR p.estado IS NULL)
+            AND (d.disponible = 1 OR d.disponible IS NULL)
+            GROUP BY p.id_persona, p.nombre_completo, p.ciudad, sp.anios_experiencia, sp.categoria
+            ORDER BY calificacion DESC
+        """, (id_categoria,))
+        trabajadores = cursor.fetchall()
+        for t in trabajadores:
+            for k, v in t.items():
+                if hasattr(v, '__float__'): t[k] = float(v)
+                elif v is None: t[k] = ''
+        return JSONResponse({"trabajadores": trabajadores})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "trabajadores": []}, status_code=500)
+    finally:
+        cursor.close()
+        conexion.close()
 
 
 # ============================================
@@ -1090,10 +1085,168 @@ async def eliminar_registro(id_persona: int = Form(...)):
 
 @router.get("/exportar-excel")
 def exportar_excel():
-    """Exportar registros a Excel (placeholder)"""
-    return JSONResponse({
-        "mensaje": "Funcionalidad de exportación en desarrollo"
-    })
+    """Exportar todos los trabajadores activos a Excel"""
+    from io import BytesIO
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from fastapi.responses import StreamingResponse
+
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"error": "Error de conexión"}, status_code=500)
+
+    try:
+        cursor = conexion.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT
+                p.id_persona,
+                p.numero_documento,
+                p.nombre_completo,
+                p.ciudad,
+                p.departamento,
+                p.fecha_nacimiento,
+                p.nacionalidad,
+                p.fecha_registro
+            FROM personas p
+            WHERE p.estado = 'activo' OR p.estado IS NULL
+            ORDER BY p.id_persona DESC
+        """)
+        registros = cursor.fetchall()
+
+        horarios = {7: '8am-12pm', 8: '2pm-6pm', 9: '6pm-10pm', 10: '24 horas'}
+        dias_map = {11: 'Entre Semana', 12: 'Toda la Semana'}
+
+        filas = []
+        for reg in registros:
+            id_p = reg['id_persona']
+
+            # Teléfono
+            cursor.execute("SELECT telefono FROM telefono_persona WHERE id_persona = %s LIMIT 1", (id_p,))
+            tel = cursor.fetchone()
+            telefono = str(tel['telefono']) if tel else ''
+
+            # Correo
+            cursor.execute("SELECT correo FROM correo_persona WHERE id_persona = %s LIMIT 1", (id_p,))
+            email = cursor.fetchone()
+            correo = str(email['correo']) if email else ''
+
+            # Servicios
+            cursor.execute("""
+                SELECT categoria, descripcion, anios_experiencia, valor_hora
+                FROM servicios_persona WHERE id_persona = %s
+            """, (id_p,))
+            servicios = cursor.fetchall()
+            categorias = ', '.join(s['categoria'] for s in servicios if s.get('categoria'))
+            valor_hora = max((float(s['valor_hora']) for s in servicios if s.get('valor_hora')), default=0)
+            max_exp = max((float(s['anios_experiencia']) for s in servicios if s.get('anios_experiencia')), default=0)
+
+            # Disponibilidad
+            cursor.execute("SELECT id_horario, id_dias FROM disponibilidad WHERE id_persona = %s LIMIT 1", (id_p,))
+            disp = cursor.fetchone()
+            horario = horarios.get(disp['id_horario'], '') if disp else ''
+            dias_disp = dias_map.get(disp['id_dias'], '') if disp else ''
+
+            fecha_reg = reg.get('fecha_registro')
+            if fecha_reg and hasattr(fecha_reg, 'strftime'):
+                from datetime import timedelta
+                fecha_reg = (fecha_reg - timedelta(hours=5)).strftime('%d/%m/%Y %H:%M')
+            else:
+                fecha_reg = str(fecha_reg) if fecha_reg else ''
+
+            fecha_nac = reg.get('fecha_nacimiento')
+            fecha_nac = str(fecha_nac) if fecha_nac else ''
+
+            filas.append([
+                reg['id_persona'],
+                reg.get('numero_documento', ''),
+                reg.get('nombre_completo', ''),
+                telefono,
+                correo,
+                reg.get('ciudad', ''),
+                reg.get('departamento', ''),
+                reg.get('nacionalidad', ''),
+                fecha_nac,
+                categorias,
+                max_exp,
+                valor_hora,
+                horario,
+                dias_disp,
+                fecha_reg,
+            ])
+
+        cursor.close()
+        conexion.close()
+
+        # Crear Excel
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Trabajadores"
+
+        encabezados = [
+            "ID", "Documento", "Nombre Completo", "Teléfono", "Correo",
+            "Ciudad", "Departamento", "Nacionalidad", "Fecha Nacimiento",
+            "Categorías", "Años Experiencia", "Valor Hora ($)",
+            "Horario", "Días Disponibles", "Fecha Registro"
+        ]
+
+        # Estilo encabezado
+        header_fill = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True, size=11)
+        header_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        thin = Side(style="thin", color="CCCCCC")
+        border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+        ws.append(encabezados)
+        for col_idx, _ in enumerate(encabezados, start=1):
+            cell = ws.cell(row=1, column=col_idx)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_align
+            cell.border = border
+
+        ws.row_dimensions[1].height = 30
+
+        # Filas de datos
+        alt_fill = PatternFill(start_color="EBF3FB", end_color="EBF3FB", fill_type="solid")
+        data_align = Alignment(vertical="center", wrap_text=False)
+
+        for row_idx, fila in enumerate(filas, start=2):
+            ws.append(fila)
+            fill = alt_fill if row_idx % 2 == 0 else None
+            for col_idx in range(1, len(encabezados) + 1):
+                cell = ws.cell(row=row_idx, column=col_idx)
+                cell.border = border
+                cell.alignment = data_align
+                if fill:
+                    cell.fill = fill
+
+        # Anchos de columna
+        anchos = [6, 14, 28, 14, 26, 16, 16, 14, 14, 30, 10, 14, 12, 16, 18]
+        for i, ancho in enumerate(anchos, start=1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = ancho
+
+        # Guardar en buffer
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        from datetime import datetime as dt
+        nombre_archivo = f"trabajadores_{dt.now().strftime('%Y%m%d_%H%M')}.xlsx"
+
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={nombre_archivo}"}
+        )
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        if conexion and conexion.is_connected():
+            conexion.close()
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 
 @router.get("/clientes", response_class=HTMLResponse)
 def ver_clientes(request: Request):
