@@ -223,12 +223,172 @@ def mostrar_mi_perfil(request: Request):
 
 @router.get("/perfil/{id_persona}", response_class=HTMLResponse)
 def perfil_publico(request: Request, id_persona: int):
-    """Perfil público del trabajador visible para clientes"""
-    return templates.TemplateResponse("trabajadores/perfil_publico.html", {"request": request, "id_persona": id_persona})
+    """Perfil público del trabajador — SSR con todos los datos"""
+    from datetime import timedelta
+    from fastapi.responses import HTMLResponse as _HTML
+    from fastapi import status
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+
+        # Datos base del trabajador
+        cursor.execute("""
+            SELECT p.id_persona, p.nombre_completo, p.ciudad, p.departamento,
+                   p.estado,
+                   tp.telefono,
+                   dp.foto_identificacion,
+                   (dp.foto_identificacion_data IS NOT NULL
+                    AND LENGTH(dp.foto_identificacion_data) > 0) AS tiene_foto
+            FROM personas p
+            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+            LEFT JOIN detalles_persona dp ON p.id_persona = dp.id_persona
+            WHERE p.id_persona = %s
+              AND (p.estado = 'activo' OR p.estado IS NULL)
+            LIMIT 1
+        """, (id_persona,))
+        perfil = cursor.fetchone()
+
+        if not perfil:
+            raise HTTPException(status_code=404, detail="Trabajador no encontrado")
+
+        # Serializar nulos
+        for k, v in perfil.items():
+            if v is None:
+                perfil[k] = ''
+
+        # Servicios / categorías
+        cursor.execute("""
+            SELECT categoria, descripcion, anios_experiencia, valor_hora,
+                   tiene_ayudante, costo_ayudante
+            FROM servicios_persona
+            WHERE id_persona = %s
+            ORDER BY valor_hora DESC
+        """, (id_persona,))
+        servicios = cursor.fetchall()
+        for s in servicios:
+            for k, v in s.items():
+                if v is None:
+                    s[k] = ''
+                elif isinstance(v, float) or (hasattr(v, '__class__') and v.__class__.__name__ == 'Decimal'):
+                    s[k] = float(v)
+
+        # Calificación promedio y trabajos completados
+        cursor.execute("""
+            SELECT ROUND(AVG(puntuacion), 1) AS promedio, COUNT(*) AS total
+            FROM calificaciones
+            WHERE id_trabajador = %s
+        """, (id_persona,))
+        cal = cursor.fetchone()
+        calificacion   = float(cal['promedio']) if cal and cal['promedio'] else 0.0
+        total_resenas  = int(cal['total'])       if cal else 0
+
+        cursor.execute("""
+            SELECT COUNT(*) AS total
+            FROM solicitudes_servicio
+            WHERE id_trabajador = %s AND estado = 'completada'
+        """, (id_persona,))
+        row = cursor.fetchone()
+        trabajos_completados = int(row['total']) if row else 0
+
+        # Años de experiencia (máximo entre servicios)
+        max_exp = 0
+        for s in servicios:
+            try:
+                exp = float(s.get('anios_experiencia') or 0)
+                if exp > max_exp:
+                    max_exp = exp
+            except Exception:
+                pass
+        anios_experiencia = int(max_exp)
+
+        # Disponibilidad
+        horarios = {7: '8am – 12pm', 8: '2pm – 6pm', 9: '6pm – 10pm', 10: '24 horas'}
+        dias_map = {11: 'Entre semana', 12: 'Toda la semana'}
+        cursor.execute("""
+            SELECT id_horario, id_dias, disponible
+            FROM disponibilidad
+            WHERE id_persona = %s
+            LIMIT 1
+        """, (id_persona,))
+        disp = cursor.fetchone()
+        horario_texto  = horarios.get(disp['id_horario'], '') if disp else ''
+        dias_texto     = dias_map.get(disp['id_dias'], '')    if disp else ''
+        esta_disponible = bool(disp and disp.get('disponible')) if disp else False
+
+        # Reseñas (últimas 8)
+        cursor.execute("""
+            SELECT cal.puntuacion, cal.comentario, cal.fecha_calificacion,
+                   COALESCE(c.nombre_completo, 'Cliente') AS nombre_cliente
+            FROM calificaciones cal
+            LEFT JOIN clientes c ON cal.id_cliente = c.id_cliente
+            WHERE cal.id_trabajador = %s
+              AND cal.comentario IS NOT NULL
+              AND cal.comentario != ''
+            ORDER BY cal.fecha_calificacion DESC
+            LIMIT 8
+        """, (id_persona,))
+        resenas = cursor.fetchall()
+        for r in resenas:
+            if r.get('fecha_calificacion') and hasattr(r['fecha_calificacion'], 'isoformat'):
+                r['fecha_calificacion'] = (r['fecha_calificacion'] - timedelta(hours=5)).strftime('%d/%m/%Y')
+            r['puntuacion'] = int(r['puntuacion']) if r.get('puntuacion') else 0
+            if not r.get('comentario'):
+                r['comentario'] = ''
+
+        # Tarifa principal (mayor valor_hora)
+        tarifa_principal = 0.0
+        tiene_ayudante   = False
+        costo_ayudante   = 0.0
+        for s in servicios:
+            vh = float(s.get('valor_hora') or 0)
+            if vh > tarifa_principal:
+                tarifa_principal = vh
+            if s.get('tiene_ayudante') == 1:
+                tiene_ayudante = True
+                ca = float(s.get('costo_ayudante') or 0)
+                if ca > costo_ayudante:
+                    costo_ayudante = ca
+
+        # Verificado: tiene documentos cargados
+        verificado = bool(perfil.get('tiene_foto'))
+
+        # Iniciales del nombre
+        partes = str(perfil.get('nombre_completo', '')).split()
+        iniciales = ''.join(p[0].upper() for p in partes[:2]) if partes else '?'
+
+        ctx = {
+            "request":            request,
+            "perfil":             perfil,
+            "iniciales":          iniciales,
+            "verificado":         verificado,
+            "servicios":          servicios,
+            "calificacion":       calificacion,
+            "total_resenas":      total_resenas,
+            "trabajos_completados": trabajos_completados,
+            "anios_experiencia":  anios_experiencia,
+            "horario_texto":      horario_texto,
+            "dias_texto":         dias_texto,
+            "esta_disponible":    esta_disponible,
+            "tarifa_principal":   tarifa_principal,
+            "tiene_ayudante":     tiene_ayudante,
+            "costo_ayudante":     costo_ayudante,
+            "resenas":            resenas,
+        }
+        return templates.TemplateResponse("trabajadores/perfil_publico.html", ctx)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
 
 @router.get("/perfil_api/{id_persona}")
 def api_perfil_publico(id_persona: int):
-    """API del perfil público del trabajador"""
+    """API del perfil público del trabajador (mantiene compatibilidad)"""
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor(dictionary=True)
