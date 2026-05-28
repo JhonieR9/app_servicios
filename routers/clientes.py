@@ -395,17 +395,22 @@ def crear_solicitud(
 def historial_cliente(id_cliente: int):
     conexion = conectar_bd()
     cursor = conexion.cursor(dictionary=True)
-    
     cursor.execute("""
-        SELECT * FROM vista_historial_cliente
-        WHERE id_cliente = %s
-        ORDER BY fecha_solicitud DESC
+        SELECT s.id_solicitud, s.titulo, s.estado, s.ciudad, s.departamento,
+               s.fecha_solicitud, s.fecha_finalizacion,
+               cat.nombre_categoria
+        FROM solicitudes_servicio s
+        LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+        WHERE s.id_cliente = %s
+        ORDER BY s.fecha_solicitud DESC
     """, (id_cliente,))
-    
     historial = cursor.fetchall()
+    for h in historial:
+        for k, v in h.items():
+            if hasattr(v, 'isoformat'): h[k] = str(v)
+            elif v is None: h[k] = ''
     cursor.close()
     conexion.close()
-    
     return {"historial": historial}
 
 @router.post("/solicitud/cancelar")
@@ -495,12 +500,31 @@ def calificar_servicio(
     if not id_trabajador:
         return JSONResponse({"error": "No se encontró el trabajador"}, status_code=400)
 
+    # Validar que exista una solicitud completada entre este cliente y este trabajador
+    cursor.execute("""
+        SELECT id_solicitud FROM solicitudes_servicio
+        WHERE id_solicitud = %s
+          AND id_cliente = %s
+          AND id_trabajador = %s
+          AND estado = 'completada'
+        LIMIT 1
+    """, (id_solicitud, id_cliente, id_trabajador))
+    if not cursor.fetchone():
+        cursor.close()
+        conexion.close()
+        return JSONResponse(
+            {"error": "Solo puedes calificar un servicio que hayas completado con este trabajador"},
+            status_code=403
+        )
+
     # Evitar calificación duplicada
     cursor.execute("""
         SELECT id_calificacion FROM calificaciones
         WHERE id_solicitud = %s AND id_cliente = %s
     """, (id_solicitud, id_cliente))
     if cursor.fetchone():
+        cursor.close()
+        conexion.close()
         return JSONResponse({"mensaje": "Ya calificaste este servicio"})
 
     cursor.execute("""
@@ -767,16 +791,16 @@ async def verificar_sms_cliente(
         token = auth.crear_sesion('cliente', id_cliente)
         
         response.set_cookie(
-            key="session_token",
+            key="session_token_cliente",
             value=token,
-            httponly=True,
+            httponly=False,
             max_age=86400,
             samesite="lax"
         )
         
         return JSONResponse({
             "mensaje": "Verificación exitosa",
-            "redirect": "/cliente/dashboard"
+            "redirect": "/cliente/panel"
         })
         
     except Exception as e:
@@ -829,7 +853,8 @@ async def reenviar_codigo_cliente(id_cliente: int = Form(...)):
 @router.get("/logout")
 def logout_cliente(response: Response):
     """Cierra la sesión del cliente"""
-    response.delete_cookie("session_token")
+    response.delete_cookie("session_token_cliente")
+    response.delete_cookie("session_token")  # por compatibilidad
     return RedirectResponse(url="/", status_code=302)
 
 @router.post("/configurar-password")
