@@ -939,3 +939,23 @@ async def guardar_nueva_password_cliente(
     if not ok:
         return JSONResponse({"error": "El enlace es inválido o ya expiró"}, status_code=400)
     return JSONResponse({"mensaje": "Contraseña actualizada correctamente", "redirect": "/cliente/login"})
+
+@router.get("/recuperar/verificar-correo")
+def verificar_correo_cliente(correo: str):
+    """Verifica si un correo está registrado como cliente (para validación en tiempo real)"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT c.id_cliente FROM clientes c
+            INNER JOIN correo_cliente ec ON c.id_cliente = ec.id_cliente
+            WHERE ec.correo = %s AND c.estado = 'activo'
+            LIMIT 1
+        """, (correo,))
+        existe = cursor.fetchone() is not None
+        return JSONResponse({"existe": existe})
+    except Exception as e:
+        return JSONResponse({"existe": False, "error": str(e)})
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
