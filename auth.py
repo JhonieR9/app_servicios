@@ -484,6 +484,7 @@ def enviar_email_recuperacion(correo: str, token: str, tipo_usuario: str, base_u
     Configura SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD en variables de entorno.
     """
     import smtplib
+    import ssl
     import os
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
@@ -493,60 +494,85 @@ def enviar_email_recuperacion(correo: str, token: str, tipo_usuario: str, base_u
     smtp_user = os.getenv("SMTP_USER", "")
     smtp_pass = os.getenv("SMTP_PASSWORD", "")
 
+    ruta = "trabajador" if tipo_usuario == "trabajador" else "cliente"
+    link = f"{base_url}/{ruta}/recuperar/nueva-password?token={token}"
+
     if not smtp_user or not smtp_pass:
-        # Sin credenciales: imprimir en consola (útil en desarrollo)
-        ruta = "trabajador" if tipo_usuario == "trabajador" else "cliente"
-        link = f"{base_url}/{ruta}/recuperar/nueva-password?token={token}"
         print(f"\n{'='*60}")
-        print(f"📧 EMAIL DE RECUPERACIÓN (modo consola)")
+        print(f"EMAIL RECUPERACION (modo consola - sin credenciales SMTP)")
         print(f"   Para: {correo}")
         print(f"   Link: {link}")
         print(f"   Expira en: 1 hora")
         print(f"{'='*60}\n")
         return True
 
-    ruta = "trabajador" if tipo_usuario == "trabajador" else "cliente"
-    link = f"{base_url}/{ruta}/recuperar/nueva-password?token={token}"
-
     html = f"""
-    <div style="font-family:Inter,sans-serif;max-width:480px;margin:0 auto;background:#0a0a0f;color:#f1f5f9;border-radius:16px;overflow:hidden;">
-      <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 28px;text-align:center;">
-        <div style="font-size:2rem;margin-bottom:8px;">🔐</div>
-        <h1 style="margin:0;font-size:1.3rem;font-weight:800;">Recuperar contraseña</h1>
-        <p style="margin:6px 0 0;opacity:0.85;font-size:0.85rem;">TalentHub</p>
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 28px;text-align:center;border-radius:16px 16px 0 0;">
+        <h1 style="margin:0;font-size:1.3rem;font-weight:800;color:white;">Recuperar contrasena - TalentHub</h1>
       </div>
-      <div style="padding:28px;">
-        <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.6;margin-bottom:24px;">
-          Recibimos una solicitud para restablecer la contraseña de tu cuenta.
-          Haz clic en el botón para crear una nueva contraseña. El enlace expira en <strong>1 hora</strong>.
+      <div style="padding:28px;background:#f8fafc;border-radius:0 0 16px 16px;">
+        <p style="color:#374151;font-size:0.9rem;line-height:1.6;margin-bottom:24px;">
+          Recibimos una solicitud para restablecer la contrasena de tu cuenta.
+          Haz clic en el boton para crear una nueva contrasena.
+          El enlace expira en <strong>1 hora</strong>.
         </p>
-        <a href="{link}" style="display:block;text-align:center;background:linear-gradient(135deg,#4f46e5,#7c3aed);
-           color:white;text-decoration:none;padding:14px 24px;border-radius:12px;
-           font-weight:700;font-size:0.95rem;margin-bottom:20px;">
-          Restablecer contraseña
+        <a href="{link}"
+           style="display:block;text-align:center;background:#4f46e5;
+                  color:white;text-decoration:none;padding:14px 24px;border-radius:12px;
+                  font-weight:700;font-size:0.95rem;margin-bottom:20px;">
+          Restablecer contrasena
         </a>
-        <p style="color:#475569;font-size:0.78rem;line-height:1.5;">
-          Si no solicitaste esto, ignora este correo. Tu contraseña no cambiará.<br>
-          O copia este enlace en tu navegador:<br>
-          <span style="color:#a5b4fc;word-break:break-all;">{link}</span>
+        <p style="color:#6b7280;font-size:0.78rem;line-height:1.5;">
+          Si no solicitaste esto, ignora este correo.<br>
+          O copia este enlace: {link}
         </p>
       </div>
     </div>
     """
 
+    last_error = None
+
+    # Intento 1: STARTTLS en el puerto configurado (587 por defecto)
     try:
+        print(f"[EMAIL] Intentando STARTTLS {smtp_host}:{smtp_port} -> {correo}")
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Recuperar contraseña – TalentHub"
+        msg['Subject'] = "Recuperar contrasena - TalentHub"
         msg['From']    = f"TalentHub <{smtp_user}>"
         msg['To']      = correo
         msg.attach(MIMEText(html, 'html'))
 
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
             server.ehlo()
             server.starttls()
+            server.ehlo()
             server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, correo, msg.as_string())
+            server.sendmail(smtp_user, [correo], msg.as_string())
+        print(f"[EMAIL] Enviado correctamente via STARTTLS a {correo}")
         return True
     except Exception as e:
-        print(f"⚠️ Error enviando email: {e}")
-        return False
+        last_error = e
+        print(f"[EMAIL] Fallo STARTTLS: {e}")
+
+    # Intento 2: SSL directo en puerto 465
+    try:
+        print(f"[EMAIL] Intentando SSL {smtp_host}:465 -> {correo}")
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "Recuperar contrasena - TalentHub"
+        msg['From']    = f"TalentHub <{smtp_user}>"
+        msg['To']      = correo
+        msg.attach(MIMEText(html, 'html'))
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_host, 465, context=context, timeout=15) as server:
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, [correo], msg.as_string())
+        print(f"[EMAIL] Enviado correctamente via SSL a {correo}")
+        return True
+    except Exception as e:
+        last_error = e
+        print(f"[EMAIL] Fallo SSL: {e}")
+
+    print(f"[EMAIL] Todos los intentos fallaron. Ultimo error: {last_error}")
+    print(f"[EMAIL] Link de recuperacion (manual): {link}")
+    return False

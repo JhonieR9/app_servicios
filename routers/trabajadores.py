@@ -1920,11 +1920,17 @@ async def solicitar_recuperacion_trabajador(request: Request, correo: str = Form
         token = auth.crear_token_recuperacion('trabajador', correo)
         if token:
             base_url = str(request.base_url).rstrip('/')
-            auth.enviar_email_recuperacion(correo, token, 'trabajador', base_url)
-        # Siempre responder igual para no revelar si el correo existe
+            enviado = auth.enviar_email_recuperacion(correo, token, 'trabajador', base_url)
+            if not enviado:
+                return JSONResponse(
+                    {"error": "No se pudo enviar el correo. Revisa los logs de Railway o contacta soporte."},
+                    status_code=500
+                )
+        # Si no existe el correo, igual responder igual para no revelar info
         return JSONResponse({"mensaje": "Si el correo está registrado, recibirás un enlace en breve."})
     except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+        import traceback; traceback.print_exc()
+        return JSONResponse({"error": f"Error interno: {str(e)}"}, status_code=500)
 
 @router.get("/recuperar/nueva-password", response_class=HTMLResponse)
 def mostrar_nueva_password_trabajador(request: Request, token: str = ""):
