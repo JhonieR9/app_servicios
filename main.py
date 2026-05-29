@@ -159,6 +159,23 @@ def crear_tablas():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """)
 
+        # Tabla tokens de recuperación de contraseña
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `tokens_recuperacion` (
+              `id_token`      int NOT NULL AUTO_INCREMENT,
+              `tipo_usuario`  enum('trabajador','cliente') NOT NULL,
+              `id_usuario`    int NOT NULL,
+              `correo`        varchar(255) NOT NULL,
+              `token`         varchar(100) NOT NULL,
+              `usado`         tinyint(1) DEFAULT 0,
+              `fecha_expiracion` datetime NOT NULL,
+              `fecha_creacion`   datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id_token`),
+              UNIQUE KEY `uk_token` (`token`),
+              KEY `idx_token_usuario` (`tipo_usuario`, `id_usuario`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
         # Tabla chat interno
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS `mensajes_chat` (

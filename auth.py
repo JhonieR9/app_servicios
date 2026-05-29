@@ -367,3 +367,186 @@ def enviar_sms(telefono: str, codigo: str) -> bool:
     # )
     
     return True
+
+# ============================================
+# RECUPERACIÓN DE CONTRASEÑA POR EMAIL
+# ============================================
+
+def crear_token_recuperacion(tipo_usuario: str, correo: str) -> Optional[str]:
+    """
+    Busca el usuario por correo, crea un token de recuperación y lo guarda.
+    Retorna el token si el correo existe, None si no.
+    """
+    conexion = conectar_bd()
+    cursor = conexion.cursor(dictionary=True)
+
+    try:
+        if tipo_usuario == 'trabajador':
+            cursor.execute("""
+                SELECT p.id_persona AS id_usuario, cp.correo
+                FROM personas p
+                INNER JOIN correo_persona cp ON p.id_persona = cp.id_persona
+                WHERE cp.correo = %s AND (p.estado = 'activo' OR p.estado IS NULL)
+                LIMIT 1
+            """, (correo,))
+        else:
+            cursor.execute("""
+                SELECT c.id_cliente AS id_usuario, ec.correo
+                FROM clientes c
+                INNER JOIN correo_cliente ec ON c.id_cliente = ec.id_cliente
+                WHERE ec.correo = %s AND c.estado = 'activo'
+                LIMIT 1
+            """, (correo,))
+
+        usuario = cursor.fetchone()
+        if not usuario:
+            return None
+
+        token = secrets.token_urlsafe(32)
+        expiracion = datetime.now() + timedelta(hours=1)
+
+        cursor.execute("""
+            INSERT INTO tokens_recuperacion
+            (tipo_usuario, id_usuario, correo, token, fecha_expiracion)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (tipo_usuario, usuario['id_usuario'], correo, token, expiracion))
+        conexion.commit()
+        return token
+
+    finally:
+        cursor.close()
+        conexion.close()
+
+
+def verificar_token_recuperacion(token: str) -> Optional[Dict]:
+    """
+    Verifica que el token sea válido y no haya expirado.
+    Retorna los datos del token o None.
+    """
+    conexion = conectar_bd()
+    cursor = conexion.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT * FROM tokens_recuperacion
+            WHERE token = %s AND usado = 0 AND fecha_expiracion > NOW()
+            LIMIT 1
+        """, (token,))
+        return cursor.fetchone()
+    finally:
+        cursor.close()
+        conexion.close()
+
+
+def consumir_token_recuperacion(token: str, nueva_password: str) -> bool:
+    """
+    Valida el token, actualiza la contraseña y marca el token como usado.
+    Retorna True si fue exitoso.
+    """
+    conexion = conectar_bd()
+    cursor = conexion.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT * FROM tokens_recuperacion
+            WHERE token = %s AND usado = 0 AND fecha_expiracion > NOW()
+            LIMIT 1
+        """, (token,))
+        datos = cursor.fetchone()
+        if not datos:
+            return False
+
+        password_hash = hash_password(nueva_password)
+
+        if datos['tipo_usuario'] == 'trabajador':
+            cursor.execute(
+                "UPDATE personas SET password_hash = %s WHERE id_persona = %s",
+                (password_hash, datos['id_usuario'])
+            )
+        else:
+            cursor.execute(
+                "UPDATE clientes SET password_hash = %s WHERE id_cliente = %s",
+                (password_hash, datos['id_usuario'])
+            )
+
+        cursor.execute(
+            "UPDATE tokens_recuperacion SET usado = 1 WHERE id_token = %s",
+            (datos['id_token'],)
+        )
+        conexion.commit()
+        return True
+    finally:
+        cursor.close()
+        conexion.close()
+
+
+def enviar_email_recuperacion(correo: str, token: str, tipo_usuario: str, base_url: str) -> bool:
+    """
+    Envía el correo de recuperación usando SMTP.
+    Configura SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD en variables de entorno.
+    """
+    import smtplib
+    import os
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_pass = os.getenv("SMTP_PASSWORD", "")
+
+    if not smtp_user or not smtp_pass:
+        # Sin credenciales: imprimir en consola (útil en desarrollo)
+        ruta = "trabajador" if tipo_usuario == "trabajador" else "cliente"
+        link = f"{base_url}/{ruta}/recuperar/nueva-password?token={token}"
+        print(f"\n{'='*60}")
+        print(f"📧 EMAIL DE RECUPERACIÓN (modo consola)")
+        print(f"   Para: {correo}")
+        print(f"   Link: {link}")
+        print(f"   Expira en: 1 hora")
+        print(f"{'='*60}\n")
+        return True
+
+    ruta = "trabajador" if tipo_usuario == "trabajador" else "cliente"
+    link = f"{base_url}/{ruta}/recuperar/nueva-password?token={token}"
+
+    html = f"""
+    <div style="font-family:Inter,sans-serif;max-width:480px;margin:0 auto;background:#0a0a0f;color:#f1f5f9;border-radius:16px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 28px;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:8px;">🔐</div>
+        <h1 style="margin:0;font-size:1.3rem;font-weight:800;">Recuperar contraseña</h1>
+        <p style="margin:6px 0 0;opacity:0.85;font-size:0.85rem;">TalentHub</p>
+      </div>
+      <div style="padding:28px;">
+        <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.6;margin-bottom:24px;">
+          Recibimos una solicitud para restablecer la contraseña de tu cuenta.
+          Haz clic en el botón para crear una nueva contraseña. El enlace expira en <strong>1 hora</strong>.
+        </p>
+        <a href="{link}" style="display:block;text-align:center;background:linear-gradient(135deg,#4f46e5,#7c3aed);
+           color:white;text-decoration:none;padding:14px 24px;border-radius:12px;
+           font-weight:700;font-size:0.95rem;margin-bottom:20px;">
+          Restablecer contraseña
+        </a>
+        <p style="color:#475569;font-size:0.78rem;line-height:1.5;">
+          Si no solicitaste esto, ignora este correo. Tu contraseña no cambiará.<br>
+          O copia este enlace en tu navegador:<br>
+          <span style="color:#a5b4fc;word-break:break-all;">{link}</span>
+        </p>
+      </div>
+    </div>
+    """
+
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "Recuperar contraseña – TalentHub"
+        msg['From']    = f"TalentHub <{smtp_user}>"
+        msg['To']      = correo
+        msg.attach(MIMEText(html, 'html'))
+
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.ehlo()
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, correo, msg.as_string())
+        return True
+    except Exception as e:
+        print(f"⚠️ Error enviando email: {e}")
+        return False

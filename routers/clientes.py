@@ -889,3 +889,53 @@ async def configurar_password_cliente(
             {"error": f"Error: {str(e)}"},
             status_code=500
         )
+
+# ============================================
+# RECUPERACIÓN DE CONTRASEÑA - CLIENTES
+# ============================================
+
+@router.get("/recuperar", response_class=HTMLResponse)
+def mostrar_recuperar_cliente(request: Request):
+    """Página para solicitar recuperación de contraseña"""
+    return templates.TemplateResponse("clientes/recuperar_password.html", {"request": request})
+
+@router.post("/recuperar/solicitar")
+async def solicitar_recuperacion_cliente(request: Request, correo: str = Form(...)):
+    """Genera token y envía email de recuperación"""
+    try:
+        token = auth.crear_token_recuperacion('cliente', correo)
+        if token:
+            base_url = str(request.base_url).rstrip('/')
+            auth.enviar_email_recuperacion(correo, token, 'cliente', base_url)
+        return JSONResponse({"mensaje": "Si el correo está registrado, recibirás un enlace en breve."})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.get("/recuperar/nueva-password", response_class=HTMLResponse)
+def mostrar_nueva_password_cliente(request: Request, token: str = ""):
+    """Página para ingresar la nueva contraseña"""
+    datos = auth.verificar_token_recuperacion(token) if token else None
+    if not datos:
+        return templates.TemplateResponse("clientes/recuperar_password.html", {
+            "request": request,
+            "error_token": "El enlace es inválido o ya expiró. Solicita uno nuevo."
+        })
+    return templates.TemplateResponse("clientes/nueva_password.html", {
+        "request": request, "token": token
+    })
+
+@router.post("/recuperar/nueva-password")
+async def guardar_nueva_password_cliente(
+    token: str = Form(...),
+    password: str = Form(...),
+    confirmar_password: str = Form(...)
+):
+    """Guarda la nueva contraseña del cliente"""
+    if password != confirmar_password:
+        return JSONResponse({"error": "Las contraseñas no coinciden"}, status_code=400)
+    if len(password) < 6:
+        return JSONResponse({"error": "Mínimo 6 caracteres"}, status_code=400)
+    ok = auth.consumir_token_recuperacion(token, password)
+    if not ok:
+        return JSONResponse({"error": "El enlace es inválido o ya expiró"}, status_code=400)
+    return JSONResponse({"mensaje": "Contraseña actualizada correctamente", "redirect": "/cliente/login"})
