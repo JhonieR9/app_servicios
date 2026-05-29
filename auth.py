@@ -480,99 +480,103 @@ def consumir_token_recuperacion(token: str, nueva_password: str) -> bool:
 
 def enviar_email_recuperacion(correo: str, token: str, tipo_usuario: str, base_url: str) -> bool:
     """
-    Envía el correo de recuperación usando SMTP.
-    Configura SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD en variables de entorno.
+    Envía el correo de recuperación usando Resend API (HTTP).
+    Requiere variable de entorno: RESEND_API_KEY
+    Fallback: imprime el link en consola si no hay API key.
     """
-    import smtplib
-    import ssl
     import os
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
+    import requests
 
-    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER", "")
-    smtp_pass = os.getenv("SMTP_PASSWORD", "")
+    api_key = os.getenv("RESEND_API_KEY", "")
+    ruta    = "trabajador" if tipo_usuario == "trabajador" else "cliente"
+    link    = f"{base_url}/{ruta}/recuperar/nueva-password?token={token}"
 
-    ruta = "trabajador" if tipo_usuario == "trabajador" else "cliente"
-    link = f"{base_url}/{ruta}/recuperar/nueva-password?token={token}"
-
-    if not smtp_user or not smtp_pass:
+    if not api_key:
         print(f"\n{'='*60}")
-        print(f"EMAIL RECUPERACION (modo consola - sin credenciales SMTP)")
+        print(f"EMAIL RECUPERACION (modo consola - sin RESEND_API_KEY)")
         print(f"   Para: {correo}")
         print(f"   Link: {link}")
         print(f"   Expira en: 1 hora")
         print(f"{'='*60}\n")
         return True
 
-    html = f"""
-    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
-      <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 28px;text-align:center;border-radius:16px 16px 0 0;">
-        <h1 style="margin:0;font-size:1.3rem;font-weight:800;color:white;">Recuperar contrasena - TalentHub</h1>
-      </div>
-      <div style="padding:28px;background:#f8fafc;border-radius:0 0 16px 16px;">
-        <p style="color:#374151;font-size:0.9rem;line-height:1.6;margin-bottom:24px;">
-          Recibimos una solicitud para restablecer la contrasena de tu cuenta.
-          Haz clic en el boton para crear una nueva contrasena.
-          El enlace expira en <strong>1 hora</strong>.
-        </p>
-        <a href="{link}"
-           style="display:block;text-align:center;background:#4f46e5;
-                  color:white;text-decoration:none;padding:14px 24px;border-radius:12px;
-                  font-weight:700;font-size:0.95rem;margin-bottom:20px;">
-          Restablecer contrasena
-        </a>
-        <p style="color:#6b7280;font-size:0.78rem;line-height:1.5;">
-          Si no solicitaste esto, ignora este correo.<br>
-          O copia este enlace: {link}
-        </p>
-      </div>
-    </div>
-    """
+    html = f"""<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="480" cellpadding="0" cellspacing="0"
+             style="background:white;border-radius:16px;overflow:hidden;
+                    box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                     padding:32px 28px;text-align:center;">
+            <div style="font-size:2.5rem;margin-bottom:8px;">&#128272;</div>
+            <h1 style="margin:0;color:white;font-size:1.4rem;font-weight:800;">
+              Recuperar contrasena
+            </h1>
+            <p style="margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:0.85rem;">
+              TalentHub
+            </p>
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px 28px;">
+            <p style="color:#374151;font-size:0.95rem;line-height:1.7;margin:0 0 24px;">
+              Recibimos una solicitud para restablecer la contrasena de tu cuenta.
+              Haz clic en el boton para crear una nueva contrasena.
+              <strong>El enlace expira en 1 hora.</strong>
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding:8px 0 28px;">
+                  <a href="{link}"
+                     style="display:inline-block;background:#4f46e5;color:white;
+                            text-decoration:none;padding:14px 32px;border-radius:12px;
+                            font-weight:700;font-size:1rem;">
+                    Restablecer contrasena
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="color:#9ca3af;font-size:0.78rem;line-height:1.6;margin:0;
+                      border-top:1px solid #f3f4f6;padding-top:20px;">
+              Si no solicitaste esto, ignora este correo. Tu contrasena no cambiara.<br>
+              O copia este enlace en tu navegador:<br>
+              <span style="color:#6366f1;word-break:break-all;">{link}</span>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
 
-    last_error = None
-
-    # Intento 1: STARTTLS en el puerto configurado (587 por defecto)
     try:
-        print(f"[EMAIL] Intentando STARTTLS {smtp_host}:{smtp_port} -> {correo}")
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Recuperar contrasena - TalentHub"
-        msg['From']    = f"TalentHub <{smtp_user}>"
-        msg['To']      = correo
-        msg.attach(MIMEText(html, 'html'))
-
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, [correo], msg.as_string())
-        print(f"[EMAIL] Enviado correctamente via STARTTLS a {correo}")
-        return True
+        print(f"[EMAIL] Enviando via Resend a {correo}")
+        resp = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from":    "TalentHub <onboarding@resend.dev>",
+                "to":      [correo],
+                "subject": "Recuperar contrasena - TalentHub",
+                "html":    html
+            },
+            timeout=10
+        )
+        if resp.status_code in (200, 201):
+            print(f"[EMAIL] Enviado correctamente. ID: {resp.json().get('id')}")
+            return True
+        else:
+            print(f"[EMAIL] Error Resend {resp.status_code}: {resp.text}")
+            return False
     except Exception as e:
-        last_error = e
-        print(f"[EMAIL] Fallo STARTTLS: {e}")
-
-    # Intento 2: SSL directo en puerto 465
-    try:
-        print(f"[EMAIL] Intentando SSL {smtp_host}:465 -> {correo}")
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Recuperar contrasena - TalentHub"
-        msg['From']    = f"TalentHub <{smtp_user}>"
-        msg['To']      = correo
-        msg.attach(MIMEText(html, 'html'))
-
-        context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(smtp_host, 465, context=context, timeout=15) as server:
-            server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, [correo], msg.as_string())
-        print(f"[EMAIL] Enviado correctamente via SSL a {correo}")
-        return True
-    except Exception as e:
-        last_error = e
-        print(f"[EMAIL] Fallo SSL: {e}")
-
-    print(f"[EMAIL] Todos los intentos fallaron. Ultimo error: {last_error}")
-    print(f"[EMAIL] Link de recuperacion (manual): {link}")
-    return False
+        print(f"[EMAIL] Excepcion: {e}")
+        return False
