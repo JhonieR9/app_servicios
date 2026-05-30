@@ -141,3 +141,64 @@ def contar_no_leidos(id_solicitud: int, tipo_receptor: str):
         return JSONResponse({"no_leidos": row["total"] if row else 0})
     finally:
         conexion.close()
+
+# ── Vista admin: todos los chats ─────────────────────────────────
+@router.get("/admin", response_class=HTMLResponse)
+def admin_chats(request: Request):
+    """Panel admin para monitorear todos los chats activos"""
+    return templates.TemplateResponse("trabajadores/admin_chats.html", {"request": request})
+
+@router.get("/admin/listar")
+def listar_todos_chats(buscar: str = "", estado: str = ""):
+    """Lista todas las conversaciones para el admin"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        where = "WHERE 1=1"
+        params = []
+        if estado:
+            where += " AND s.estado = %s"
+            params.append(estado)
+        if buscar:
+            where += " AND (c.nombre_completo LIKE %s OR p.nombre_completo LIKE %s OR s.titulo LIKE %s)"
+            params += [f"%{buscar}%", f"%{buscar}%", f"%{buscar}%"]
+
+        cursor.execute(f"""
+            SELECT
+                s.id_solicitud,
+                s.titulo,
+                s.estado,
+                s.fecha_solicitud,
+                c.nombre_completo  AS nombre_cliente,
+                p.nombre_completo  AS nombre_trabajador,
+                cat.nombre_categoria,
+                (SELECT COUNT(*) FROM mensajes_chat m WHERE m.id_solicitud = s.id_solicitud) AS total_mensajes,
+                (SELECT COUNT(*) FROM mensajes_chat m WHERE m.id_solicitud = s.id_solicitud AND m.leido = 0) AS no_leidos,
+                (SELECT m2.mensaje FROM mensajes_chat m2
+                 WHERE m2.id_solicitud = s.id_solicitud
+                 ORDER BY m2.id_mensaje DESC LIMIT 1) AS ultimo_mensaje,
+                (SELECT m3.fecha_envio FROM mensajes_chat m3
+                 WHERE m3.id_solicitud = s.id_solicitud
+                 ORDER BY m3.id_mensaje DESC LIMIT 1) AS ultima_actividad
+            FROM solicitudes_servicio s
+            LEFT JOIN clientes c   ON s.id_cliente   = c.id_cliente
+            LEFT JOIN personas p   ON s.id_trabajador = p.id_persona
+            LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+            {where}
+            ORDER BY ultima_actividad DESC, s.fecha_solicitud DESC
+            LIMIT 100
+        """, params)
+        chats = cursor.fetchall()
+        for ch in chats:
+            for k, v in ch.items():
+                if v is None:
+                    ch[k] = ''
+                elif hasattr(v, 'isoformat'):
+                    from datetime import timedelta
+                    ch[k] = (v - timedelta(hours=5)).strftime('%d/%m %H:%M')
+        return JSONResponse({"chats": chats})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "chats": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()

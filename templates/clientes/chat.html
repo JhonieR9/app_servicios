@@ -327,19 +327,32 @@
     } else {
         cargarInfo();
         cargarMensajes();
-        // Marcar como leídos al abrir
-        const fdLeer = new FormData();
-        fdLeer.append('id_solicitud', idSolicitud);
-        fdLeer.append('tipo_receptor', tipoUsuario);
-        fetch('/chat/leer', { method:'POST', body:fdLeer }).catch(()=>{});
+        // Marcar como leídos al abrir (solo si no es admin)
+        if (tipoUsuario !== 'sistema') {
+            const fdLeer = new FormData();
+            fdLeer.append('id_solicitud', idSolicitud);
+            fdLeer.append('tipo_receptor', tipoUsuario);
+            fetch('/chat/leer', { method:'POST', body:fdLeer }).catch(()=>{});
+        }
+        // Ocultar input si es admin observador
+        if (tipoUsuario === 'sistema') {
+            document.querySelector('.input-area').style.display = 'none';
+            document.querySelector('.header').style.background = 'linear-gradient(135deg,#1e293b,#334155)';
+            // Badge de admin
+            const badge = document.createElement('div');
+            badge.style.cssText = 'background:rgba(245,158,11,0.2);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);padding:4px 12px;border-radius:99px;font-size:0.7rem;font-weight:700;flex-shrink:0';
+            badge.textContent = '👁 Modo Admin';
+            document.querySelector('.header').appendChild(badge);
+        }
         // Polling cada 4 segundos
         pollingTimer = setInterval(() => {
             cargarMensajes(true);
-            // Marcar leídos periódicamente mientras está en el chat
-            const fd = new FormData();
-            fd.append('id_solicitud', idSolicitud);
-            fd.append('tipo_receptor', tipoUsuario);
-            fetch('/chat/leer', { method:'POST', body:fd }).catch(()=>{});
+            if (tipoUsuario !== 'sistema') {
+                const fd = new FormData();
+                fd.append('id_solicitud', idSolicitud);
+                fd.append('tipo_receptor', tipoUsuario);
+                fetch('/chat/leer', { method:'POST', body:fd }).catch(()=>{});
+            }
         }, 4000);
     }
 

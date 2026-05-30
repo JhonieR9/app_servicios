@@ -340,8 +340,124 @@
     }
 
     function solicitarServicio(id, nombre, categoria) {
-        const idCliente = localStorage.getItem('id_cliente') || 1;
-        window.location.href = `/cliente/solicitar_servicio?id_cliente=${idCliente}&trabajador_id=${id}&trabajador_nombre=${encodeURIComponent(nombre)}&categoria=${encodeURIComponent(categoria)}`;
+        const idCliente = parseInt(localStorage.getItem('id_cliente') || 0);
+        if (!idCliente) {
+            // Sin sesión: ir al formulario normal
+            window.location.href = `/cliente/solicitar_servicio?trabajador_id=${id}&trabajador_nombre=${encodeURIComponent(nombre)}&categoria=${encodeURIComponent(categoria)}`;
+            return;
+        }
+        // Con sesión: mostrar modal de chat directo
+        abrirModalChat(id, nombre, categoria, idCliente);
+    }
+
+    // ── Modal de chat directo ────────────────────────────────────
+    function abrirModalChat(idTrabajador, nombre, categoria, idCliente) {
+        // Crear modal si no existe
+        let modal = document.getElementById('chatModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'chatModal';
+            modal.style.cssText = `
+                position:fixed;inset:0;z-index:9999;
+                background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+                display:flex;align-items:flex-end;justify-content:center;
+                animation:fadeIn 0.2s ease;
+            `;
+            modal.innerHTML = `
+                <style>
+                @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+                @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+                </style>
+                <div style="background:#111118;border-radius:24px 24px 0 0;width:100%;max-width:500px;
+                            padding:24px 20px 32px;animation:slideUp 0.3s ease;
+                            border:1px solid rgba(255,255,255,0.1);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+                        <div>
+                            <div style="font-size:1rem;font-weight:800;color:#f1f5f9" id="modalNombre"></div>
+                            <div style="font-size:0.78rem;color:#6366f1;margin-top:2px" id="modalCategoria"></div>
+                        </div>
+                        <button onclick="cerrarModalChat()"
+                                style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+                                       color:#94a3b8;width:32px;height:32px;border-radius:50%;
+                                       cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center">
+                            ✕
+                        </button>
+                    </div>
+                    <div style="margin-bottom:14px">
+                        <label style="font-size:0.72rem;font-weight:700;color:#64748b;
+                                      letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">
+                            Mensaje inicial (opcional)
+                        </label>
+                        <textarea id="modalMensaje" rows="3"
+                            placeholder="Ej: Hola, necesito ayuda con una tubería rota en mi cocina..."
+                            style="width:100%;background:rgba(255,255,255,0.04);
+                                   border:1px solid rgba(255,255,255,0.1);border-radius:12px;
+                                   color:#f1f5f9;font-family:'Inter',sans-serif;font-size:0.88rem;
+                                   padding:12px 14px;outline:none;resize:none;
+                                   transition:border-color 0.2s"
+                            onfocus="this.style.borderColor='rgba(99,102,241,0.5)'"
+                            onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
+                    </div>
+                    <button id="modalBtn" onclick="confirmarChat()"
+                            style="width:100%;padding:14px;
+                                   background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                                   color:white;border:none;border-radius:12px;
+                                   font-size:0.95rem;font-weight:700;cursor:pointer;
+                                   font-family:'Inter',sans-serif;
+                                   display:flex;align-items:center;justify-content:center;gap:8px;
+                                   box-shadow:0 4px 16px rgba(99,102,241,0.3)">
+                        <i class="bi bi-chat-fill"></i> Iniciar conversación
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', e => { if (e.target === modal) cerrarModalChat(); });
+        }
+
+        // Guardar datos en el modal
+        modal._idTrabajador = idTrabajador;
+        modal._idCliente    = idCliente;
+        modal._categoria    = categoria;
+        document.getElementById('modalNombre').textContent    = '💬 Chatear con ' + nombre;
+        document.getElementById('modalCategoria').textContent = '🔧 ' + categoria;
+        document.getElementById('modalMensaje').value = '';
+        modal.style.display = 'flex';
+    }
+
+    function cerrarModalChat() {
+        const modal = document.getElementById('chatModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    async function confirmarChat() {
+        const modal   = document.getElementById('chatModal');
+        const btn     = document.getElementById('modalBtn');
+        const mensaje = document.getElementById('modalMensaje').value.trim();
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Iniciando...';
+
+        const fd = new FormData();
+        fd.append('id_cliente',      modal._idCliente);
+        fd.append('id_trabajador',   modal._idTrabajador);
+        fd.append('categoria',       modal._categoria);
+        if (mensaje) fd.append('mensaje_inicial', mensaje);
+
+        try {
+            const res  = await fetch('/cliente/iniciar-chat', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo iniciar el chat'));
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-chat-fill"></i> Iniciar conversación';
+            }
+        } catch(e) {
+            alert('Error de conexión');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-chat-fill"></i> Iniciar conversación';
+        }
     }
 </script>
 </body>

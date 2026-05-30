@@ -965,3 +965,88 @@ def verificar_correo_cliente(correo: str):
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
+
+# ============================================
+# CHAT DIRECTO — crear solicitud y abrir chat
+# ============================================
+
+@router.post("/iniciar-chat")
+async def iniciar_chat_directo(
+    id_cliente:    int = Form(...),
+    id_trabajador: int = Form(...),
+    categoria:     str = Form("Servicio general"),
+    mensaje_inicial: str = Form(None)
+):
+    """
+    Crea una solicitud pendiente y un mensaje inicial en el chat.
+    Retorna el id_solicitud para redirigir al chat.
+    """
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+
+        # Datos del trabajador
+        cursor.execute("""
+            SELECT p.nombre_completo, tp.telefono
+            FROM personas p
+            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+            WHERE p.id_persona = %s LIMIT 1
+        """, (id_trabajador,))
+        trabajador = cursor.fetchone()
+        if not trabajador:
+            return JSONResponse({"error": "Trabajador no encontrado"}, status_code=404)
+
+        # Datos del cliente
+        cursor.execute("""
+            SELECT c.nombre_completo FROM clientes c WHERE c.id_cliente = %s LIMIT 1
+        """, (id_cliente,))
+        cliente = cursor.fetchone()
+        nombre_cliente = cliente['nombre_completo'] if cliente else 'Cliente'
+
+        # Buscar id_categoria
+        cursor.execute("""
+            SELECT id_categoria FROM categorias_servicio
+            WHERE nombre_categoria = %s LIMIT 1
+        """, (categoria,))
+        cat = cursor.fetchone()
+        id_categoria = cat['id_categoria'] if cat else None
+
+        # Crear solicitud
+        titulo = f"{categoria} - {trabajador['nombre_completo']}"
+        cursor.execute("""
+            INSERT INTO solicitudes_servicio
+            (id_cliente, id_trabajador, id_categoria, titulo, descripcion, estado, fecha_solicitud)
+            VALUES (%s, %s, %s, %s, %s, 'pendiente', NOW())
+        """, (id_cliente, id_trabajador, id_categoria, titulo,
+              mensaje_inicial or f"Solicitud de {nombre_cliente}"))
+        id_solicitud = cursor.lastrowid
+
+        # Mensaje de sistema
+        cursor.execute("""
+            INSERT INTO mensajes_chat
+            (id_solicitud, tipo_remitente, id_remitente, mensaje, fecha_envio, leido)
+            VALUES (%s, 'sistema', 0, %s, NOW(), 0)
+        """, (id_solicitud,
+              f"💬 {nombre_cliente} inició una conversación sobre {categoria}"))
+
+        # Mensaje inicial del cliente si lo escribió
+        if mensaje_inicial and mensaje_inicial.strip():
+            cursor.execute("""
+                INSERT INTO mensajes_chat
+                (id_solicitud, tipo_remitente, id_remitente, mensaje, fecha_envio, leido)
+                VALUES (%s, 'cliente', %s, %s, NOW(), 0)
+            """, (id_solicitud, id_cliente, mensaje_inicial.strip()))
+
+        conexion.commit()
+        return JSONResponse({
+            "ok": True,
+            "id_solicitud": id_solicitud,
+            "redirect": f"/chat/?id_solicitud={id_solicitud}&tipo=cliente&id_usuario={id_cliente}"
+        })
+    except Exception as e:
+        if conexion: conexion.rollback()
+        import traceback; traceback.print_exc()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Chats – TalentHub Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f1f5f9;min-height:100vh}
+
+        /* TOPBAR */
+        .topbar{background:rgba(17,17,24,0.95);backdrop-filter:blur(12px);
+                border-bottom:1px solid rgba(255,255,255,0.08);
+                padding:14px 20px;display:flex;align-items:center;gap:12px;
+                position:sticky;top:0;z-index:50}
+        .topbar-back{width:36px;height:36px;border-radius:50%;
+                     background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);
+                     display:flex;align-items:center;justify-content:center;
+                     color:#94a3b8;font-size:0.9rem;text-decoration:none;transition:all 0.2s}
+        .topbar-back:hover{background:rgba(255,255,255,0.1);color:#f1f5f9}
+        .topbar-title{font-size:1rem;font-weight:700;color:#f1f5f9;flex:1}
+        .topbar-sub{font-size:0.72rem;color:#64748b}
+        .badge-count{background:rgba(99,102,241,0.2);color:#a5b4fc;
+                     border:1px solid rgba(99,102,241,0.3);
+                     padding:3px 10px;border-radius:99px;font-size:0.72rem;font-weight:700}
+
+        /* FILTROS */
+        .filters{padding:16px 20px;display:flex;gap:10px;flex-wrap:wrap;
+                 border-bottom:1px solid rgba(255,255,255,0.06)}
+        .search-wrap{flex:1;min-width:200px;position:relative}
+        .search-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                       color:#475569;font-size:0.9rem}
+        .search-input{width:100%;padding:10px 12px 10px 36px;
+                      background:rgba(255,255,255,0.04);
+                      border:1px solid rgba(255,255,255,0.1);border-radius:10px;
+                      color:#f1f5f9;font-family:'Inter',sans-serif;font-size:0.85rem;outline:none}
+        .search-input:focus{border-color:rgba(99,102,241,0.4)}
+        .search-input::placeholder{color:#334155}
+        .filter-btn{padding:10px 16px;border-radius:10px;font-size:0.82rem;font-weight:600;
+                    cursor:pointer;border:1px solid rgba(255,255,255,0.1);
+                    background:rgba(255,255,255,0.04);color:#94a3b8;
+                    font-family:'Inter',sans-serif;transition:all 0.2s;white-space:nowrap}
+        .filter-btn:hover{background:rgba(255,255,255,0.08);color:#f1f5f9}
+        .filter-btn.active{background:rgba(99,102,241,0.15);color:#a5b4fc;
+                           border-color:rgba(99,102,241,0.3)}
+
+        /* LISTA */
+        .content{max-width:900px;margin:0 auto;padding:16px 16px 40px}
+        .chat-card{background:#16161f;border:1px solid rgba(255,255,255,0.07);
+                   border-radius:14px;padding:16px;margin-bottom:10px;
+                   cursor:pointer;transition:all 0.2s;display:flex;gap:14px;align-items:flex-start}
+        .chat-card:hover{border-color:rgba(99,102,241,0.3);background:#1c1c28;transform:translateY(-1px)}
+        .chat-avatar{width:44px;height:44px;border-radius:50%;flex-shrink:0;
+                     background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                     display:flex;align-items:center;justify-content:center;
+                     font-size:1rem;font-weight:700;color:white}
+        .chat-body{flex:1;min-width:0}
+        .chat-header-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+        .chat-names{font-size:0.88rem;font-weight:700;color:#f1f5f9;
+                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+        .chat-time{font-size:0.7rem;color:#475569;flex-shrink:0}
+        .chat-service{font-size:0.75rem;color:#6366f1;font-weight:600;margin-bottom:4px}
+        .chat-preview{font-size:0.82rem;color:#64748b;
+                      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .chat-footer{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+
+        /* Badges estado */
+        .badge{display:inline-flex;align-items:center;gap:4px;
+               padding:3px 9px;border-radius:99px;font-size:0.68rem;font-weight:700}
+        .badge-pendiente{background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.2)}
+        .badge-aceptada {background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.2)}
+        .badge-en_proceso{background:rgba(6,182,212,0.15);color:#67e8f9;border:1px solid rgba(6,182,212,0.2)}
+        .badge-completada{background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.2)}
+        .badge-cancelada {background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.2)}
+        .badge-msgs{background:rgba(99,102,241,0.1);color:#a5b4fc;
+                    border:1px solid rgba(99,102,241,0.15);font-size:0.68rem;
+                    padding:3px 8px;border-radius:99px;font-weight:600}
+        .badge-unread{background:#ef4444;color:white;border-radius:99px;
+                      padding:2px 7px;font-size:0.68rem;font-weight:700}
+
+        /* Empty */
+        .empty{text-align:center;padding:60px 20px;color:#475569}
+        .empty i{font-size:2.5rem;display:block;margin-bottom:12px;opacity:0.3}
+
+        /* Loading */
+        .loading{text-align:center;padding:40px;color:#475569;font-size:0.85rem}
+
+        /* Stats bar */
+        .stats-bar{display:flex;gap:12px;padding:12px 20px;
+                   border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap}
+        .stat-pill{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+                   border-radius:10px;padding:8px 14px;font-size:0.78rem;color:#94a3b8;
+                   display:flex;align-items:center;gap:6px}
+        .stat-pill strong{color:#f1f5f9;font-size:0.9rem}
+        .stat-pill i{color:#6366f1}
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <a href="/trabajador/admin/registros" class="topbar-back"><i class="bi bi-arrow-left"></i></a>
+    <div style="flex:1">
+        <div class="topbar-title">Monitor de Chats</div>
+        <div class="topbar-sub">Todas las conversaciones en tiempo real</div>
+    </div>
+    <span class="badge-count" id="totalBadge">—</span>
+    <button onclick="cargarChats()" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);
+            color:#a5b4fc;padding:8px 12px;border-radius:10px;cursor:pointer;font-size:0.82rem;
+            font-family:'Inter',sans-serif;font-weight:600;display:flex;align-items:center;gap:6px">
+        <i class="bi bi-arrow-clockwise"></i> Actualizar
+    </button>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar" id="statsBar"></div>
+
+<!-- FILTROS -->
+<div class="filters">
+    <div class="search-wrap">
+        <i class="bi bi-search"></i>
+        <input type="text" class="search-input" id="searchInput"
+               placeholder="Buscar por cliente, trabajador o servicio..."
+               oninput="filtrarLocal(this.value)">
+    </div>
+    <button class="filter-btn active" onclick="setFiltro('')"     id="f-all">Todos</button>
+    <button class="filter-btn"        onclick="setFiltro('pendiente')"  id="f-pendiente">Pendientes</button>
+    <button class="filter-btn"        onclick="setFiltro('aceptada')"   id="f-aceptada">Aceptados</button>
+    <button class="filter-btn"        onclick="setFiltro('en_proceso')" id="f-en_proceso">En proceso</button>
+    <button class="filter-btn"        onclick="setFiltro('completada')" id="f-completada">Completados</button>
+</div>
+
+<!-- LISTA -->
+<div class="content">
+    <div class="loading" id="loadingEl"><i class="bi bi-hourglass-split"></i> Cargando chats...</div>
+    <div id="chatsList"></div>
+</div>
+
+<script>
+let todosChats = [];
+let filtroEstado = '';
+
+async function cargarChats() {
+    document.getElementById('loadingEl').style.display = 'block';
+    document.getElementById('chatsList').innerHTML = '';
+    try {
+        const res  = await fetch('/chat/admin/listar');
+        const data = await res.json();
+        todosChats = data.chats || [];
+        renderStats();
+        renderChats(todosChats);
+    } catch(e) {
+        document.getElementById('chatsList').innerHTML =
+            '<div class="empty"><i class="bi bi-exclamation-triangle"></i><p>Error cargando chats</p></div>';
+    } finally {
+        document.getElementById('loadingEl').style.display = 'none';
+    }
+}
+
+function renderStats() {
+    const total      = todosChats.length;
+    const pendientes = todosChats.filter(c => c.estado === 'pendiente').length;
+    const activos    = todosChats.filter(c => c.estado === 'en_proceso' || c.estado === 'aceptada').length;
+    const sinLeer    = todosChats.filter(c => parseInt(c.no_leidos) > 0).length;
+
+    document.getElementById('totalBadge').textContent = total + ' chats';
+    document.getElementById('statsBar').innerHTML = `
+        <div class="stat-pill"><i class="bi bi-chat-dots-fill"></i> Total <strong>${total}</strong></div>
+        <div class="stat-pill"><i class="bi bi-clock-fill"></i> Pendientes <strong>${pendientes}</strong></div>
+        <div class="stat-pill"><i class="bi bi-activity"></i> Activos <strong>${activos}</strong></div>
+        <div class="stat-pill"><i class="bi bi-envelope-fill"></i> Sin leer <strong>${sinLeer}</strong></div>
+    `;
+}
+
+function renderChats(chats) {
+    const el = document.getElementById('chatsList');
+    if (!chats.length) {
+        el.innerHTML = '<div class="empty"><i class="bi bi-chat-square-dots"></i><p>No hay conversaciones</p></div>';
+        return;
+    }
+    el.innerHTML = chats.map(ch => {
+        const iniciales = (ch.nombre_cliente || 'C').substring(0,2).toUpperCase();
+        const badgeClass = `badge-${ch.estado || 'pendiente'}`;
+        const estadoLabel = {
+            pendiente:'Pendiente', aceptada:'Aceptada',
+            en_proceso:'En proceso', completada:'Completada', cancelada:'Cancelada'
+        }[ch.estado] || ch.estado;
+
+        const noLeidos = parseInt(ch.no_leidos) || 0;
+        const totalMsg = parseInt(ch.total_mensajes) || 0;
+
+        return `<div class="chat-card" onclick="abrirChat(${ch.id_solicitud})">
+            <div class="chat-avatar">${iniciales}</div>
+            <div class="chat-body">
+                <div class="chat-header-row">
+                    <div class="chat-names">
+                        ${ch.nombre_cliente || 'Cliente'} → ${ch.nombre_trabajador || 'Sin asignar'}
+                    </div>
+                    <div class="chat-time">${ch.ultima_actividad || ch.fecha_solicitud}</div>
+                </div>
+                <div class="chat-service">
+                    <i class="bi bi-tools"></i> ${ch.nombre_categoria || ch.titulo || 'Servicio'}
+                </div>
+                <div class="chat-preview">
+                    ${ch.ultimo_mensaje ? escHtml(ch.ultimo_mensaje).substring(0,80) + (ch.ultimo_mensaje.length > 80 ? '…' : '') : 'Sin mensajes aún'}
+                </div>
+                <div class="chat-footer">
+                    <span class="badge ${badgeClass}">${estadoLabel}</span>
+                    <span class="badge-msgs"><i class="bi bi-chat-fill"></i> ${totalMsg} msgs</span>
+                    ${noLeidos > 0 ? `<span class="badge-unread">${noLeidos} sin leer</span>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function abrirChat(idSolicitud) {
+    // Admin abre el chat en modo observador (tipo=sistema)
+    window.open(`/chat/?id_solicitud=${idSolicitud}&tipo=sistema&id_usuario=0`, '_blank');
+}
+
+function setFiltro(estado) {
+    filtroEstado = estado;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    const id = estado ? `f-${estado}` : 'f-all';
+    document.getElementById(id)?.classList.add('active');
+    aplicarFiltros();
+}
+
+function filtrarLocal(texto) {
+    aplicarFiltros(texto);
+}
+
+function aplicarFiltros(texto) {
+    texto = texto ?? document.getElementById('searchInput').value;
+    let resultado = todosChats;
+    if (filtroEstado) resultado = resultado.filter(c => c.estado === filtroEstado);
+    if (texto.trim()) {
+        const q = texto.toLowerCase();
+        resultado = resultado.filter(c =>
+            (c.nombre_cliente || '').toLowerCase().includes(q) ||
+            (c.nombre_trabajador || '').toLowerCase().includes(q) ||
+            (c.titulo || '').toLowerCase().includes(q) ||
+            (c.nombre_categoria || '').toLowerCase().includes(q)
+        );
+    }
+    renderChats(resultado);
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Cargar al iniciar y auto-refresh cada 30s
+cargarChats();
+setInterval(cargarChats, 30000);
+</script>
+</body>
+</html>
