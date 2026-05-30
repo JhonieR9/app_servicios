@@ -217,24 +217,36 @@ def mostrar_mis_solicitudes(request: Request):
 
 @router.get("/mis_solicitudes_api")
 def listar_mis_solicitudes_cliente(id_cliente: int = None):
-    """API para obtener solicitudes de un cliente"""
+    """API para obtener solicitudes de un cliente con datos del trabajador"""
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión", "solicitudes": []}, status_code=500)
     try:
         cursor = conexion.cursor(dictionary=True)
-        if id_cliente:
-            cursor.execute("""
-                SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
-                       s.ciudad, s.departamento, s.fecha_solicitud,
-                       cat.nombre_categoria
-                FROM solicitudes_servicio s
-                LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
-                WHERE s.id_cliente = %s
-                ORDER BY s.fecha_solicitud DESC
-            """, (id_cliente,))
-        else:
+        if not id_cliente:
             return JSONResponse({"solicitudes": []})
+
+        cursor.execute("""
+            SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
+                   s.ciudad, s.departamento, s.direccion_servicio,
+                   s.fecha_solicitud, s.fecha_aceptacion, s.fecha_finalizacion,
+                   s.id_trabajador,
+                   cat.nombre_categoria,
+                   p.nombre_completo  AS nombre_trabajador,
+                   tp.telefono        AS telefono_trabajador,
+                   cp.correo          AS correo_trabajador,
+                   ROUND(AVG(cal.puntuacion),1) AS calificacion_trabajador
+            FROM solicitudes_servicio s
+            LEFT JOIN categorias_servicio cat ON s.id_categoria  = cat.id_categoria
+            LEFT JOIN personas p              ON s.id_trabajador = p.id_persona
+            LEFT JOIN telefono_persona tp     ON p.id_persona    = tp.id_persona
+            LEFT JOIN correo_persona cp       ON p.id_persona    = cp.id_persona
+            LEFT JOIN calificaciones cal      ON p.id_persona    = cal.id_trabajador
+            WHERE s.id_cliente = %s
+            GROUP BY s.id_solicitud
+            ORDER BY s.fecha_solicitud DESC
+        """, (id_cliente,))
+
         solicitudes = cursor.fetchall()
         from datetime import timedelta
         for s in solicitudes:
@@ -243,6 +255,8 @@ def listar_mis_solicitudes_cliente(id_cliente: int = None):
                     s[k] = (v - timedelta(hours=5)).strftime('%Y-%m-%d %H:%M')
                 elif v is None:
                     s[k] = ''
+                elif hasattr(v, '__float__'):
+                    s[k] = float(v)
         return JSONResponse({"solicitudes": solicitudes})
     except Exception as e:
         return JSONResponse({"error": str(e), "solicitudes": []}, status_code=500)
