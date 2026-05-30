@@ -109,21 +109,20 @@
         .cat-item {
             border: 2px solid #e2e8f0; border-radius: 16px;
             padding: 12px 6px 10px; text-align: center; cursor: pointer;
-            transition: all 0.22s cubic-bezier(.34,1.56,.64,1); background: white;
+            transition: all 0.22s; background: white;
         }
-        .cat-item:hover { border-color: #667eea; background: #f5f3ff; transform: translateY(-3px); box-shadow: 0 6px 18px rgba(102,126,234,0.15); }
+        .cat-item:hover { border-color: #667eea; background: #f5f3ff; transform: translateY(-2px); box-shadow: 0 4px 14px rgba(102,126,234,0.15); }
         .cat-item.selected {
             border-color: #667eea; background: #f5f3ff;
-            box-shadow: 0 6px 18px rgba(102,126,234,0.22);
-            transform: translateY(-3px);
+            box-shadow: 0 4px 14px rgba(102,126,234,0.2);
+            transform: translateY(-2px);
         }
         .cat-item .icon-wrap {
-            width: 44px; height: 44px; border-radius: 12px;
+            width: 42px; height: 42px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 7px; transition: transform 0.2s;
+            margin: 0 auto 6px;
         }
-        .cat-item:hover .icon-wrap, .cat-item.selected .icon-wrap { transform: scale(1.08); }
-        .cat-item .icon-wrap svg { width: 22px; height: 22px; stroke-width: 1.8; }
+        .cat-item .icon-wrap i { font-size: 1.3rem; }
         .cat-item .name {
             font-size: 0.66rem; font-weight: 700; color: #374151;
             line-height: 1.2; font-family: 'Lato', sans-serif;
@@ -536,56 +535,56 @@ let selectedProblem = '';
     }
 })();
 
-// Iconos SVG + color de fondo por categoría
+// Iconos Bootstrap Icons + color de fondo por categoría
 const CAT_CONFIG = {
-    'Plomería':           { bg:'#dbeafe', stroke:'#2563eb', svg:'<path d="M12 22V12m0 0a4 4 0 0 0-4-4H4m8 4a4 4 0 0 1 4-4h4M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm12 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>' },
-    'Plomeria':           { bg:'#dbeafe', stroke:'#2563eb', svg:'<path d="M12 22V12m0 0a4 4 0 0 0-4-4H4m8 4a4 4 0 0 1 4-4h4M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm12 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>' },
-    'Electricidad':       { bg:'#fef9c3', stroke:'#ca8a04', svg:'<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>' },
-    'Limpieza':           { bg:'#dcfce7', stroke:'#16a34a', svg:'<path d="M3 22V12a9 9 0 0 1 18 0v10M12 12v10M8 22v-4m8 4v-4"/>' },
-    'Carpintería':        { bg:'#ffedd5', stroke:'#ea580c', svg:'<path d="m14.5 12.5-8 8a2.119 2.119 0 0 1-3-3l8-8m3 3 2.5-2.5m-3-3 2.5-2.5M20 7l-1-1-2.5 2.5 1 1L20 7zM8 4l1 1-2.5 2.5-1-1L8 4z"/>' },
-    'Carpinteria':        { bg:'#ffedd5', stroke:'#ea580c', svg:'<path d="m14.5 12.5-8 8a2.119 2.119 0 0 1-3-3l8-8m3 3 2.5-2.5m-3-3 2.5-2.5M20 7l-1-1-2.5 2.5 1 1L20 7zM8 4l1 1-2.5 2.5-1-1L8 4z"/>' },
-    'Pintura':            { bg:'#fce7f3', stroke:'#db2777', svg:'<path d="M19 4V2m0 20v-2M2 12H4m16 0h2M6.34 6.34 4.93 4.93m12.73 12.73 1.41 1.41M6.34 17.66l-1.41 1.41M17.66 6.34l1.41-1.41M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/>' },
-    'Jardinería':         { bg:'#dcfce7', stroke:'#15803d', svg:'<path d="M12 22V12M12 12C12 7 7 3 2 3c0 5 4 9 10 9zm0 0c0-5 5-9 10-9-1 5-5 9-10 9z"/>' },
-    'Jardineria':         { bg:'#dcfce7', stroke:'#15803d', svg:'<path d="M12 22V12M12 12C12 7 7 3 2 3c0 5 4 9 10 9zm0 0c0-5 5-9 10-9-1 5-5 9-10 9z"/>' },
-    'Cerrajería':         { bg:'#f3e8ff', stroke:'#7c3aed', svg:'<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>' },
-    'Cerrajeria':         { bg:'#f3e8ff', stroke:'#7c3aed', svg:'<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>' },
-    'Mudanza':            { bg:'#fef3c7', stroke:'#d97706', svg:'<path d="M5 8h14M5 8a2 2 0 1 0 0-4h14a2 2 0 1 0 0 4M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8m-9 4h4"/>' },
-    'Construcción':       { bg:'#ffedd5', stroke:'#c2410c', svg:'<path d="M2 20h20M4 20V10l8-6 8 6v10M10 20v-6h4v6"/>' },
-    'Construccion':       { bg:'#ffedd5', stroke:'#c2410c', svg:'<path d="M2 20h20M4 20V10l8-6 8 6v10M10 20v-6h4v6"/>' },
-    'Vidriería':          { bg:'#e0f2fe', stroke:'#0284c7', svg:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>' },
-    'Vidrieria':          { bg:'#e0f2fe', stroke:'#0284c7', svg:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>' },
-    'Impermeabilización': { bg:'#cffafe', stroke:'#0891b2', svg:'<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>' },
-    'Impermeabilizacion': { bg:'#cffafe', stroke:'#0891b2', svg:'<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>' },
-    'Lavandería':         { bg:'#ede9fe', stroke:'#6d28d9', svg:'<path d="M3 6h18M3 12h18M3 18h18"/>' },
-    'Lavanderia':         { bg:'#ede9fe', stroke:'#6d28d9', svg:'<path d="M3 6h18M3 12h18M3 18h18"/>' },
-    'Control de plagas':  { bg:'#fef9c3', stroke:'#a16207', svg:'<path d="M12 22c4.97 0 9-3.58 9-8 0-1.5-.4-2.9-1.1-4.1M12 22c-4.97 0-9-3.58-9-8 0-1.5.4-2.9 1.1-4.1M12 22V12m0-10v4m-4-2 2 2m4-2-2 2M3 10h3m12 0h3M5 6l2 2m10-2-2 2"/>' },
-    'Tecnología':         { bg:'#dbeafe', stroke:'#1d4ed8', svg:'<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>' },
-    'Tecnologia':         { bg:'#dbeafe', stroke:'#1d4ed8', svg:'<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>' },
-    'Electrodomésticos':  { bg:'#fce7f3', stroke:'#be185d', svg:'<path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"/><path d="M2 20h20M14 12v.01"/>' },
-    'Electrodomesticos':  { bg:'#fce7f3', stroke:'#be185d', svg:'<path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"/><path d="M2 20h20M14 12v.01"/>' },
-    'CCTV y Alarmas':     { bg:'#f1f5f9', stroke:'#475569', svg:'<path d="m15 10 4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.894L15 14M3 8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>' },
-    'Transporte':         { bg:'#fef3c7', stroke:'#b45309', svg:'<path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3m-4 12h8a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-8m0 9a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm8 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>' },
-    'Mecánica':           { bg:'#f3f4f6', stroke:'#374151', svg:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' },
-    'Mecanica':           { bg:'#f3f4f6', stroke:'#374151', svg:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' },
-    'Salud':              { bg:'#fee2e2', stroke:'#dc2626', svg:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>' },
-    'Belleza':            { bg:'#fdf2f8', stroke:'#c026d3', svg:'<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>' },
-    'Gastronomía':        { bg:'#fff7ed', stroke:'#ea580c', svg:'<path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6zM6 17h12"/>' },
-    'Gastronomia':        { bg:'#fff7ed', stroke:'#ea580c', svg:'<path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6zM6 17h12"/>' },
-    'Eventos':            { bg:'#fdf4ff', stroke:'#a21caf', svg:'<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>' },
-    'Fotografía':         { bg:'#f0fdf4', stroke:'#15803d', svg:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>' },
-    'Fotografia':         { bg:'#f0fdf4', stroke:'#15803d', svg:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>' },
-    'Contabilidad':       { bg:'#ecfdf5', stroke:'#059669', svg:'<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>' },
-    'Diseño':             { bg:'#fdf4ff', stroke:'#9333ea', svg:'<path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/>' },
-    'Diseno':             { bg:'#fdf4ff', stroke:'#9333ea', svg:'<path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/>' },
-    'Mensajería':         { bg:'#eff6ff', stroke:'#3b82f6', svg:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>' },
-    'Mensajeria':         { bg:'#eff6ff', stroke:'#3b82f6', svg:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>' },
-    'Idiomas':            { bg:'#f0f9ff', stroke:'#0369a1', svg:'<path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1m8 17-5-5m5 5 5-5m-5 5v-8"/>' },
-    'Masajes':            { bg:'#fdf2f8', stroke:'#db2777', svg:'<path d="M18 11c0-1.1-.9-2-2-2s-2 .9-2 2v3c0 1.1.9 2 2 2s2-.9 2-2M6 11c0-1.1.9-2 2-2s2 .9 2 2v3c0 1.1-.9 2-2 2s-2-.9-2-2"/><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/>' },
-    'Veterinaria':        { bg:'#f0fdf4', stroke:'#16a34a', svg:'<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>' },
-    'Educación':          { bg:'#fef9c3', stroke:'#854d0e', svg:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>' },
-    'Educacion':          { bg:'#fef9c3', stroke:'#854d0e', svg:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>' },
+    'Plomería':           { bg:'#dbeafe', color:'#2563eb', icon:'bi-droplet-fill' },
+    'Plomeria':           { bg:'#dbeafe', color:'#2563eb', icon:'bi-droplet-fill' },
+    'Electricidad':       { bg:'#fef9c3', color:'#ca8a04', icon:'bi-lightning-charge-fill' },
+    'Limpieza':           { bg:'#dcfce7', color:'#16a34a', icon:'bi-stars' },
+    'Carpintería':        { bg:'#ffedd5', color:'#ea580c', icon:'bi-hammer' },
+    'Carpinteria':        { bg:'#ffedd5', color:'#ea580c', icon:'bi-hammer' },
+    'Pintura':            { bg:'#fce7f3', color:'#db2777', icon:'bi-brush-fill' },
+    'Jardinería':         { bg:'#dcfce7', color:'#15803d', icon:'bi-tree-fill' },
+    'Jardineria':         { bg:'#dcfce7', color:'#15803d', icon:'bi-tree-fill' },
+    'Cerrajería':         { bg:'#f3e8ff', color:'#7c3aed', icon:'bi-key-fill' },
+    'Cerrajeria':         { bg:'#f3e8ff', color:'#7c3aed', icon:'bi-key-fill' },
+    'Mudanza':            { bg:'#fef3c7', color:'#d97706', icon:'bi-box-seam-fill' },
+    'Construcción':       { bg:'#ffedd5', color:'#c2410c', icon:'bi-building-fill' },
+    'Construccion':       { bg:'#ffedd5', color:'#c2410c', icon:'bi-building-fill' },
+    'Vidriería':          { bg:'#e0f2fe', color:'#0284c7', icon:'bi-window' },
+    'Vidrieria':          { bg:'#e0f2fe', color:'#0284c7', icon:'bi-window' },
+    'Impermeabilización': { bg:'#cffafe', color:'#0891b2', icon:'bi-shield-fill-check' },
+    'Impermeabilizacion': { bg:'#cffafe', color:'#0891b2', icon:'bi-shield-fill-check' },
+    'Lavandería':         { bg:'#ede9fe', color:'#6d28d9', icon:'bi-basket2-fill' },
+    'Lavanderia':         { bg:'#ede9fe', color:'#6d28d9', icon:'bi-basket2-fill' },
+    'Control de plagas':  { bg:'#fef9c3', color:'#a16207', icon:'bi-bug-fill' },
+    'Tecnología':         { bg:'#dbeafe', color:'#1d4ed8', icon:'bi-laptop-fill' },
+    'Tecnologia':         { bg:'#dbeafe', color:'#1d4ed8', icon:'bi-laptop-fill' },
+    'Electrodomésticos':  { bg:'#fce7f3', color:'#be185d', icon:'bi-plug-fill' },
+    'Electrodomesticos':  { bg:'#fce7f3', color:'#be185d', icon:'bi-plug-fill' },
+    'CCTV y Alarmas':     { bg:'#f1f5f9', color:'#475569', icon:'bi-camera-video-fill' },
+    'Transporte':         { bg:'#fef3c7', color:'#b45309', icon:'bi-truck-front-fill' },
+    'Mecánica':           { bg:'#f3f4f6', color:'#374151', icon:'bi-gear-fill' },
+    'Mecanica':           { bg:'#f3f4f6', color:'#374151', icon:'bi-gear-fill' },
+    'Salud':              { bg:'#fee2e2', color:'#dc2626', icon:'bi-heart-pulse-fill' },
+    'Belleza':            { bg:'#fdf2f8', color:'#c026d3', icon:'bi-scissors' },
+    'Gastronomía':        { bg:'#fff7ed', color:'#ea580c', icon:'bi-egg-fried' },
+    'Gastronomia':        { bg:'#fff7ed', color:'#ea580c', icon:'bi-egg-fried' },
+    'Eventos':            { bg:'#fdf4ff', color:'#a21caf', icon:'bi-balloon-fill' },
+    'Fotografía':         { bg:'#f0fdf4', color:'#15803d', icon:'bi-camera-fill' },
+    'Fotografia':         { bg:'#f0fdf4', color:'#15803d', icon:'bi-camera-fill' },
+    'Contabilidad':       { bg:'#ecfdf5', color:'#059669', icon:'bi-calculator-fill' },
+    'Diseño':             { bg:'#fdf4ff', color:'#9333ea', icon:'bi-palette-fill' },
+    'Diseno':             { bg:'#fdf4ff', color:'#9333ea', icon:'bi-palette-fill' },
+    'Mensajería':         { bg:'#eff6ff', color:'#3b82f6', icon:'bi-send-fill' },
+    'Mensajeria':         { bg:'#eff6ff', color:'#3b82f6', icon:'bi-send-fill' },
+    'Idiomas':            { bg:'#f0f9ff', color:'#0369a1', icon:'bi-translate' },
+    'Masajes':            { bg:'#fdf2f8', color:'#db2777', icon:'bi-person-arms-up' },
+    'Veterinaria':        { bg:'#f0fdf4', color:'#16a34a', icon:'bi-heart-fill' },
+    'Educación':          { bg:'#fef9c3', color:'#854d0e', icon:'bi-book-fill' },
+    'Educacion':          { bg:'#fef9c3', color:'#854d0e', icon:'bi-book-fill' },
 };
-const CAT_DEFAULT = { bg:'#f1f5f9', stroke:'#64748b', svg:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' };
+const CAT_DEFAULT = { bg:'#f1f5f9', color:'#64748b', icon:'bi-tools' };
 
 // Cargar categorías dinámicamente desde la base de datos
 async function cargarCategorias() {
@@ -615,10 +614,7 @@ async function cargarCategorias() {
             const cfg = CAT_CONFIG[cat.nombre_categoria] || CAT_DEFAULT;
             return `<div class="cat-item" onclick="selCat(this,${cat.id_categoria},'${cat.nombre_categoria.replace(/'/g,"\\'")}')">
                 <div class="icon-wrap" style="background:${cfg.bg}">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                         stroke="${cfg.stroke}" stroke-linecap="round" stroke-linejoin="round">
-                        ${cfg.svg}
-                    </svg>
+                    <i class="bi ${cfg.icon}" style="color:${cfg.color}"></i>
                 </div>
                 <div class="name">${cat.nombre_categoria}</div>
             </div>`;
