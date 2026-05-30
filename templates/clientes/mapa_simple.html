@@ -156,8 +156,7 @@
             letter-spacing: 0.5px;
         }
         .popup-btn.solicitar { background: linear-gradient(135deg, #667eea, #764ba2); }
-        .popup-btn.whatsapp  { background: #25D366; }
-        .popup-btn.llamar    { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .popup-btn.solicitar { background: linear-gradient(135deg,#4f46e5,#7c3aed); }
 
         /* Marcador usuario */
         .user-marker {
@@ -321,7 +320,6 @@
                 <div class="popup-inner">
                     <div class="popup-nombre">${t.nombre}</div>
                     <div class="popup-info">📍 ${t.distancia} km de distancia</div>
-                    <div class="popup-info">📞 ${t.telefono}</div>
                     <div class="popup-info">⭐ ${t.experiencia} años de experiencia</div>
                     ${t.calificacion > 0
                         ? `<div class="popup-info">${'★'.repeat(Math.round(t.calificacion))}${'☆'.repeat(5-Math.round(t.calificacion))} <strong>${t.calificacion}</strong> (${t.total_calificaciones} reseñas)</div>`
@@ -331,12 +329,6 @@
                     <div class="popup-btns">
                         <button class="popup-btn solicitar" onclick="solicitarServicio(${t.id}, '${t.nombre}', '${t.categoria}')">
                             📋 Solicitar Servicio
-                        </button>
-                        <button class="popup-btn whatsapp" onclick="contactar('${t.telefono}', '${t.nombre}')">
-                            💬 WhatsApp
-                        </button>
-                        <button class="popup-btn llamar" onclick="llamar('${t.telefono}')">
-                            📞 Llamar
                         </button>
                     </div>
                 </div>
@@ -379,15 +371,6 @@
         } catch (e) {
             document.getElementById('statusBadge').textContent = '❌ Error de conexión';
         }
-    }
-
-    function contactar(telefono, nombre) {
-        const msg = encodeURIComponent(`Hola ${nombre}, vi tu perfil en TalentHub y me gustaría solicitar tus servicios.`);
-        window.open(`https://wa.me/57${telefono}?text=${msg}`, '_blank');
-    }
-
-    function llamar(telefono) {
-        window.location.href = `tel:+57${telefono}`;
     }
 
     function solicitarServicio(id, nombre, categoria) {

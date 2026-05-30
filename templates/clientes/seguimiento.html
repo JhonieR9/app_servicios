@@ -163,8 +163,7 @@
             display:flex;align-items:center;justify-content:center;gap:6px;
             transition:all 0.2s;
         }
-        .btn-trab.whatsapp { background:#25D366;color:white; }
-        .btn-trab.llamar   { background:linear-gradient(135deg,#667eea,#764ba2);color:white; }
+        .btn-trab.chat { background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white; }
         .btn-trab:hover { transform:translateY(-2px); }
 
         /* BOTÓN CANCELAR */
@@ -262,11 +261,8 @@
             </div>
         </div>
         <div class="trab-btns">
-            <button class="btn-trab whatsapp" id="btnWhatsapp" onclick="contactarWhatsapp()">
-                💬 WhatsApp
-            </button>
-            <button class="btn-trab llamar" id="btnLlamar" onclick="llamar()">
-                📞 Llamar
+            <button class="btn-trab chat" id="btnChat" onclick="abrirChatSeguimiento()">
+                💬 Chatear en TalentHub
             </button>
         </div>
     </div>
@@ -516,15 +512,12 @@
         if (m) m.remove();
     }
 
-    function contactarWhatsapp() {
-        if (!trabTelefono) return;
-        const msg = encodeURIComponent('Hola ' + trabNombreVal + ', soy el cliente de TalentHub. ¿Cómo va mi solicitud?');
-        window.open('https://wa.me/57' + trabTelefono + '?text=' + msg, '_blank');
-    }
-
-    function llamar() {
-        if (!trabTelefono) return;
-        window.location.href = 'tel:+57' + trabTelefono;
+    function abrirChatSeguimiento() {
+        const idSolicitud = new URLSearchParams(window.location.search).get('id');
+        const idCliente   = localStorage.getItem('id_cliente') || 0;
+        if (idSolicitud) {
+            window.location.href = `/chat/?id_solicitud=${idSolicitud}&tipo=cliente&id_usuario=${idCliente}`;
+        }
     }
 
     async function cancelarSolicitud() {

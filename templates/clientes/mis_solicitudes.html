@@ -262,6 +262,10 @@
     const idCliente = urlParams.get('id_cliente') || localStorage.getItem('id_cliente') || 1;
     let tabActual   = 'activas';
 
+    function abrirChat(idSolicitud, idTrabajador, nombreTrabajador, idCli) {
+        window.location.href = `/chat/?id_solicitud=${idSolicitud}&tipo=cliente&id_usuario=${idCli}`;
+    }
+
     const CAT_EMOJI = {
         'Plomería':'🔧','Electricidad':'⚡','Limpieza':'🧹','Carpintería':'🪚',
         'Pintura':'🎨','Jardinería':'🌱','Mecánica':'🔩','Tecnología':'💻',
@@ -321,23 +325,13 @@
                     </div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:6px">
-                    ${s.telefono_trabajador ? `
-                    <a href="tel:+57${s.telefono_trabajador}"
+                    <a onclick="abrirChat(${s.id_solicitud}, ${s.id_trabajador || 0}, '${(s.nombre_trabajador||'').replace(/'/g,"\\'")}', idCliente)"
                        style="display:flex;align-items:center;justify-content:center;
                               width:34px;height:34px;border-radius:50%;
-                              background:#dcfce7;color:#16a34a;text-decoration:none;font-size:0.9rem"
-                       title="Llamar">
-                        <i class="bi bi-telephone-fill"></i>
-                    </a>` : ''}
-                    ${s.telefono_trabajador ? `
-                    <a href="https://wa.me/57${s.telefono_trabajador}?text=${encodeURIComponent('Hola '+s.nombre_trabajador+', te contacto por mi solicitud en TalentHub.')}"
-                       target="_blank"
-                       style="display:flex;align-items:center;justify-content:center;
-                              width:34px;height:34px;border-radius:50%;
-                              background:#d1fae5;color:#059669;text-decoration:none;font-size:0.9rem"
-                       title="WhatsApp">
-                        <i class="bi bi-whatsapp"></i>
-                    </a>` : ''}
+                              background:#ede9fe;color:#7c3aed;text-decoration:none;font-size:0.9rem;cursor:pointer"
+                       title="Chat en TalentHub">
+                        <i class="bi bi-chat-dots-fill"></i>
+                    </a>
                 </div>
             </div>`;
         } else if (estado === 'pendiente') {
