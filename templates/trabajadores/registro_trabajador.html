@@ -912,84 +912,128 @@
                         </div>
                     </div>
 
-                                        <!-- SECCION 7: MEDIOS DE PAGO -->
+                    <!-- SECCION 7: MEDIOS DE PAGO -->
                     <div class="section">
                         <h4 class="section-title">
                             <i class="bi bi-credit-card-2-front"></i> Medios de Pago
                         </h4>
                         <div class="row g-3">
                             <div class="col-md-12">
-                                <label class="form-label required-label">Como prefieres recibir tus pagos?</label>
+                                <label class="form-label required-label">¿Cómo prefieres recibir tus pagos?</label>
                                 <div class="row g-2 mt-1">
                                     <div class="col-6 col-md-4">
                                         <label style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer">
-                                            <input type="radio" name="medio_pago" value="nequi" required style="accent-color:#667eea" onchange="toggleBanco(this.value)">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">Nequi</span>
+                                            <input type="radio" name="medio_pago" value="nequi" required style="accent-color:#667eea" onchange="togglePago(this.value)">
+                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">📱 Nequi</span>
                                         </label>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <label style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer">
-                                            <input type="radio" name="medio_pago" value="bancolombia" required style="accent-color:#667eea" onchange="toggleBanco(this.value)">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">Bancolombia</span>
+                                            <input type="radio" name="medio_pago" value="daviplata" required style="accent-color:#667eea" onchange="togglePago(this.value)">
+                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">💳 Daviplata</span>
                                         </label>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <label style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer">
-                                            <input type="radio" name="medio_pago" value="daviplata" required style="accent-color:#667eea" onchange="toggleBanco(this.value)">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">Daviplata</span>
+                                            <input type="radio" name="medio_pago" value="bre_b" required style="accent-color:#667eea" onchange="togglePago(this.value)">
+                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">📲 Bre-B</span>
                                         </label>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <label style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer">
-                                            <input type="radio" name="medio_pago" value="davivienda" required style="accent-color:#667eea" onchange="toggleBanco(this.value)">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">Davivienda</span>
+                                            <input type="radio" name="medio_pago" value="bancolombia" required style="accent-color:#667eea" onchange="togglePago(this.value)">
+                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">🏦 Bancolombia</span>
                                         </label>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <label style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer">
-                                            <input type="radio" name="medio_pago" value="transferencia" required style="accent-color:#667eea" onchange="toggleBanco(this.value)">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">Transferencia Bancaria</span>
+                                            <input type="radio" name="medio_pago" value="davivienda" required style="accent-color:#667eea" onchange="togglePago(this.value)">
+                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">🏦 Davivienda</span>
                                         </label>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <label style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer">
-                                            <input type="radio" name="medio_pago" value="cuenta_bancaria" required style="accent-color:#667eea" onchange="toggleBanco(this.value)">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">Cuenta Bancaria</span>
+                                            <input type="radio" name="medio_pago" value="transferencia" required style="accent-color:#667eea" onchange="togglePago(this.value)">
+                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">🔄 Transferencia</span>
                                         </label>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <label style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer">
-                                            <input type="radio" name="medio_pago" value="bre_b" required style="accent-color:#667eea" onchange="toggleBanco(this.value)">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">Bre-B</span>
+                                            <input type="radio" name="medio_pago" value="cuenta_bancaria" required style="accent-color:#667eea" onchange="togglePago(this.value)">
+                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">🏛️ Cuenta Bancaria</span>
                                         </label>
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <label style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer">
-                                            <input type="radio" name="medio_pago" value="efectivo" required style="accent-color:#667eea" onchange="toggleBanco(this.value)">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">Efectivo</span>
+                                            <input type="radio" name="medio_pago" value="efectivo" required style="accent-color:#667eea" onchange="togglePago(this.value)">
+                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">💵 Efectivo</span>
                                         </label>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-12" id="campo-banco" style="display:none">
-                                <label class="form-label">Banco</label>
-                                <select class="form-select" name="banco" id="banco_select">
-                                    <option value="">Seleccionar banco...</option>
-                                    <option value="Bancolombia">Bancolombia</option>
-                                    <option value="Davivienda">Davivienda</option>
-                                    <option value="Banco de Bogota">Banco de Bogota</option>
-                                    <option value="BBVA">BBVA</option>
-                                    <option value="Banco Popular">Banco Popular</option>
-                                    <option value="Banco Agrario">Banco Agrario</option>
-                                    <option value="Banco de Occidente">Banco de Occidente</option>
-                                    <option value="Banco Caja Social">Banco Caja Social</option>
-                                    <option value="Banco Falabella">Banco Falabella</option>
-                                    <option value="Banco Pichincha">Banco Pichincha</option>
-                                    <option value="Banco Itau">Banco Itau</option>
-                                    <option value="Scotiabank Colpatria">Scotiabank Colpatria</option>
-                                    <option value="Otro">Otro</option>
-                                </select>
+
+                            <!-- Campos para billeteras digitales (Nequi, Daviplata, Bre-B) -->
+                            <div id="campos-billetera" style="display:none" class="col-md-12">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label required-label">Número de celular registrado</label>
+                                        <input type="tel" class="form-control" name="numero_cuenta" id="numero_billetera"
+                                               placeholder="Ej: 3001234567" maxlength="10">
+                                        <small class="text-muted">El número asociado a tu billetera digital</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Titular de la cuenta</label>
+                                        <input type="text" class="form-control" name="titular_cuenta" id="titular_billetera"
+                                               placeholder="Nombre completo del titular">
+                                    </div>
+                                </div>
                             </div>
+
+                            <!-- Campos para cuentas bancarias -->
+                            <div id="campos-banco" style="display:none" class="col-md-12">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label required-label">Banco</label>
+                                        <select class="form-select" name="banco" id="banco_select">
+                                            <option value="">Seleccionar banco...</option>
+                                            <option value="Bancolombia">Bancolombia</option>
+                                            <option value="Davivienda">Davivienda</option>
+                                            <option value="Banco de Bogota">Banco de Bogotá</option>
+                                            <option value="BBVA">BBVA</option>
+                                            <option value="Banco Popular">Banco Popular</option>
+                                            <option value="Banco Agrario">Banco Agrario</option>
+                                            <option value="Banco de Occidente">Banco de Occidente</option>
+                                            <option value="Banco Caja Social">Banco Caja Social</option>
+                                            <option value="Banco Falabella">Banco Falabella</option>
+                                            <option value="Banco Pichincha">Banco Pichincha</option>
+                                            <option value="Banco Itau">Banco Itaú</option>
+                                            <option value="Scotiabank Colpatria">Scotiabank Colpatria</option>
+                                            <option value="Otro">Otro</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-label">Tipo de cuenta</label>
+                                        <select class="form-select" name="tipo_cuenta" id="tipo_cuenta">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="ahorros">Cuenta de Ahorros</option>
+                                            <option value="corriente">Cuenta Corriente</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-label">Número de cuenta</label>
+                                        <input type="text" class="form-control" name="numero_cuenta" id="numero_cuenta_banco"
+                                               placeholder="Ej: 12345678901" maxlength="20"
+                                               pattern="[0-9]+" title="Solo números">
+                                        <small class="text-muted">Solo números, sin guiones ni espacios</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label required-label">Titular de la cuenta</label>
+                                        <input type="text" class="form-control" name="titular_cuenta" id="titular_banco"
+                                               placeholder="Nombre completo como aparece en el banco">
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -1086,19 +1130,37 @@
     // ============================================
     function fillDaneDepto(sel) {
 
-    // MEDIOS DE PAGO — mostrar/ocultar campo banco
-    function toggleBanco(valor) {
-        var necesitaBanco = ['bancolombia','davivienda','transferencia','cuenta_bancaria'];
-        var campo = document.getElementById('campo-banco');
-        var select = document.getElementById('banco_select');
-        if (necesitaBanco.includes(valor)) {
-            campo.style.display = 'block';
-            select.required = true;
-        } else {
-            campo.style.display = 'none';
-            select.required = false;
-            select.value = '';
+    // MEDIOS DE PAGO — campos dinámicos según método seleccionado
+    function togglePago(valor) {
+        var billeteras = ['nequi', 'daviplata', 'bre_b'];
+        var bancos     = ['bancolombia', 'davivienda', 'transferencia', 'cuenta_bancaria'];
+
+        var divBilletera = document.getElementById('campos-billetera');
+        var divBanco     = document.getElementById('campos-banco');
+
+        // Ocultar todo primero
+        divBilletera.style.display = 'none';
+        divBanco.style.display     = 'none';
+
+        // Quitar required de todos los campos adicionales
+        ['numero_billetera','titular_billetera','banco_select','tipo_cuenta','numero_cuenta_banco','titular_banco']
+            .forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.required = false;
+            });
+
+        if (billeteras.includes(valor)) {
+            divBilletera.style.display = 'block';
+            document.getElementById('numero_billetera').required = true;
+            document.getElementById('titular_billetera').required = true;
+        } else if (bancos.includes(valor)) {
+            divBanco.style.display = 'block';
+            document.getElementById('banco_select').required      = true;
+            document.getElementById('tipo_cuenta').required       = true;
+            document.getElementById('numero_cuenta_banco').required = true;
+            document.getElementById('titular_banco').required     = true;
         }
+        // efectivo: no muestra nada adicional
     }
         var opt = sel.options[sel.selectedIndex];
         var dane  = opt.getAttribute('data-dane')  || '';

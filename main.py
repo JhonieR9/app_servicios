@@ -144,8 +144,11 @@ def crear_tablas():
 
         # Columnas medio_pago y banco en detalles_persona
         for col, definition in [
-            ('medio_pago', "varchar(50) DEFAULT NULL"),
-            ('banco',      "varchar(100) DEFAULT NULL"),
+            ('medio_pago',    "varchar(50) DEFAULT NULL"),
+            ('banco',         "varchar(100) DEFAULT NULL"),
+            ('tipo_cuenta',   "varchar(20) DEFAULT NULL"),
+            ('numero_cuenta', "varchar(30) DEFAULT NULL"),
+            ('titular_cuenta',"varchar(120) DEFAULT NULL"),
         ]:
             try:
                 cursor.execute(f"ALTER TABLE detalles_persona ADD COLUMN {col} {definition}")

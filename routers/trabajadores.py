@@ -556,7 +556,10 @@ async def crear_trabajador(
     acepta_terminos: str = Form(None),
     permisos_ubicacion: str = Form(None),
     medio_pago: str = Form(None),
-    banco: str = Form(None)
+    banco: str = Form(None),
+    tipo_cuenta: str = Form(None),
+    numero_cuenta: str = Form(None),
+    titular_cuenta: str = Form(None)
 ):
     """Crear nuevo trabajador con todos sus datos"""
     import os
@@ -693,15 +696,16 @@ async def crear_trabajador(
              foto_identificacion_data, foto_identificacion_tipo,
              antecedentes_data, antecedentes_tipo,
              recomendaciones_data, recomendaciones_tipo,
-             medio_pago, banco)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             medio_pago, banco, tipo_cuenta, numero_cuenta, titular_cuenta)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (id_persona, habilidades_tipo, resumen_servicios, antecedentes_filename, 
               foto_filename, acepta_terminos_val, permisos_ubicacion_val, 
               recomendaciones or '', recomend_filename,
               foto_bytes, foto_tipo,
               antecedentes_bytes, antecedentes_tipo,
               recomend_bytes, recomend_tipo,
-              medio_pago or '', banco or ''))
+              medio_pago or '', banco or '', tipo_cuenta or '',
+              numero_cuenta or '', titular_cuenta or ''))
         
         conexion.commit()
 
