@@ -109,12 +109,15 @@
     async function reenviarVerificacion(btn) {
         btn.disabled = true;
         btn.textContent = 'Enviando...';
+        // Obtener id_cliente desde localStorage o URL
+        const params = new URLSearchParams(window.location.search);
+        const idCliente = params.get('id') || localStorage.getItem('id_cliente');
         try {
             const res = await fetch('/cliente/reenviar-verificacion', {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: '{}'
+                body: JSON.stringify({ id_cliente: idCliente ? parseInt(idCliente) : null })
             });
             const data = await res.json();
             if (data.mensaje) {

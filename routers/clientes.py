@@ -1178,15 +1178,28 @@ def verificar_email_cliente(request: Request, token: str = ""):
     })
 
 @router.post("/reenviar-verificacion")
-async def reenviar_verificacion_cliente(request: Request):
-    """Reenvía el email de verificación al cliente autenticado"""
+async def reenviar_verificacion_cliente(request: Request, id_cliente: int = None):
+    """Reenvía el email de verificación al cliente — acepta sesión o id_cliente directo"""
     import os
-    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
-    if not token:
+
+    # Intentar obtener id desde sesión
+    if not id_cliente:
+        token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+        if token:
+            sesion = auth.verificar_sesion(token)
+            if sesion and sesion['tipo_usuario'] == 'cliente':
+                id_cliente = sesion['id_usuario']
+
+    # Intentar desde body JSON
+    if not id_cliente:
+        try:
+            body = await request.json()
+            id_cliente = body.get("id_cliente")
+        except Exception:
+            pass
+
+    if not id_cliente:
         return JSONResponse({"error": "No autenticado"}, status_code=401)
-    sesion = auth.verificar_sesion(token)
-    if not sesion or sesion['tipo_usuario'] != 'cliente':
-        return JSONResponse({"error": "Sesión inválida"}, status_code=401)
 
     conexion = conectar_bd()
     try:
@@ -1196,7 +1209,7 @@ async def reenviar_verificacion_cliente(request: Request):
             FROM correo_cliente ec
             INNER JOIN clientes c ON ec.id_cliente = c.id_cliente
             WHERE ec.id_cliente = %s AND ec.principal = 1 LIMIT 1
-        """, (sesion['id_usuario'],))
+        """, (id_cliente,))
         row = cursor.fetchone()
         if not row:
             return JSONResponse({"error": "No se encontró correo registrado"}, status_code=404)
@@ -1204,15 +1217,13 @@ async def reenviar_verificacion_cliente(request: Request):
             return JSONResponse({"mensaje": "Tu correo ya está verificado."})
 
         base_url = os.getenv("APP_URL", "https://web-production-191f4.up.railway.app")
-        # Ejecutar de forma síncrona para capturar errores reales
         ok = auth.enviar_email_bienvenida(
-            row['correo'], row['nombre_completo'], 'cliente',
-            sesion['id_usuario'], base_url
+            row['correo'], row['nombre_completo'], 'cliente', id_cliente, base_url
         )
         if ok:
             return JSONResponse({"mensaje": f"Correo de verificación reenviado a {row['correo']}"})
         else:
-            return JSONResponse({"error": "No se pudo enviar el correo. Revisa que RESEND_API_KEY esté configurada en Railway."}, status_code=500)
+            return JSONResponse({"error": "No se pudo enviar el correo. Revisa GMAIL_USER y GMAIL_PASS en Railway."}, status_code=500)
     except Exception as e:
         import traceback; traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
