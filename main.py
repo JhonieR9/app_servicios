@@ -142,6 +142,16 @@ def crear_tablas():
         except Exception:
             pass
 
+        # Columnas medio_pago y banco en detalles_persona
+        for col, definition in [
+            ('medio_pago', "varchar(50) DEFAULT NULL"),
+            ('banco',      "varchar(100) DEFAULT NULL"),
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE detalles_persona ADD COLUMN {col} {definition}")
+            except Exception:
+                pass
+
         # Tabla calificaciones
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS `calificaciones` (
