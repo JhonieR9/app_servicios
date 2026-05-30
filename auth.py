@@ -726,3 +726,184 @@ def notificar_nueva_solicitud(
     except Exception as e:
         print(f"[NOTIF] Excepcion: {e}")
         return False
+
+# ============================================
+# EMAIL DE BIENVENIDA Y VERIFICACIÓN
+# ============================================
+
+def enviar_email_bienvenida(
+    correo: str,
+    nombre: str,
+    tipo_usuario: str,   # 'cliente' o 'trabajador'
+    id_usuario: int,
+    base_url: str
+) -> bool:
+    """
+    Envía email de bienvenida con link de verificación al registrarse.
+    Usa la misma tabla tokens_recuperacion con tipo_verificacion implícito en el token.
+    """
+    import os
+    import requests
+
+    api_key = os.getenv("RESEND_API_KEY", "")
+
+    # Crear token de verificación (reutilizamos la tabla tokens_recuperacion)
+    token = secrets.token_urlsafe(32)
+    expiracion = datetime.now() + timedelta(hours=48)
+
+    try:
+        conexion = conectar_bd()
+        cursor   = conexion.cursor()
+        cursor.execute("""
+            INSERT INTO tokens_recuperacion
+            (tipo_usuario, id_usuario, correo, token, fecha_expiracion)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (tipo_usuario, id_usuario, correo, token, expiracion))
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+    except Exception as e:
+        print(f"[BIENVENIDA] Error guardando token: {e}")
+        return False
+
+    ruta  = "cliente" if tipo_usuario == "cliente" else "trabajador"
+    link  = f"{base_url}/{ruta}/verificar-email?token={token}"
+    nombre_corto = nombre.split()[0] if nombre else nombre
+
+    if not api_key:
+        print(f"\n{'='*60}")
+        print(f"EMAIL BIENVENIDA (modo consola)")
+        print(f"   Para: {correo} ({nombre})")
+        print(f"   Link verificacion: {link}")
+        print(f"{'='*60}\n")
+        return True
+
+    color_grad = "#059669, #0891b2" if tipo_usuario == "cliente" else "#4f46e5, #7c3aed"
+    emoji_tipo = "🔍" if tipo_usuario == "cliente" else "💼"
+
+    html = f"""<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="480" cellpadding="0" cellspacing="0"
+             style="background:white;border-radius:16px;overflow:hidden;
+                    box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:linear-gradient(135deg,{color_grad});
+                     padding:32px 28px;text-align:center;">
+            <div style="font-size:2.5rem;margin-bottom:8px;">{emoji_tipo}</div>
+            <h1 style="margin:0;color:white;font-size:1.4rem;font-weight:800;">
+              Bienvenido a TalentHub
+            </h1>
+            <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:0.88rem;">
+              Tu cuenta ha sido creada exitosamente
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 28px;">
+            <p style="color:#374151;font-size:0.95rem;line-height:1.7;margin:0 0 20px;">
+              Hola <strong>{nombre_corto}</strong>, gracias por unirte a TalentHub.
+              Para confirmar tu correo electronico y activar todas las funciones de tu cuenta,
+              haz clic en el boton:
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding:8px 0 28px;">
+                  <a href="{link}"
+                     style="display:inline-block;background:linear-gradient(135deg,{color_grad});
+                            color:white;text-decoration:none;padding:14px 36px;
+                            border-radius:12px;font-weight:700;font-size:1rem;">
+                    Verificar mi correo
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <div style="background:#f8fafc;border-radius:12px;padding:16px 18px;margin-bottom:20px;">
+              <p style="margin:0;color:#374151;font-size:0.88rem;line-height:1.6;">
+                <strong>¿Que puedes hacer en TalentHub?</strong><br>
+                {"• Solicitar servicios profesionales a domicilio<br>• Ver trabajadores en el mapa<br>• Chatear directamente con profesionales" if tipo_usuario == "cliente" else "• Recibir solicitudes de clientes<br>• Gestionar tu disponibilidad<br>• Construir tu reputacion con resenas"}
+              </p>
+            </div>
+            <p style="color:#9ca3af;font-size:0.75rem;text-align:center;margin:0;line-height:1.5;">
+              Este enlace expira en 48 horas.<br>
+              Si no creaste esta cuenta, ignora este correo.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+    try:
+        print(f"[BIENVENIDA] Enviando a {correo}")
+        resp = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from":    "TalentHub <onboarding@resend.dev>",
+                "to":      [correo],
+                "subject": f"Bienvenido a TalentHub, {nombre_corto}! Verifica tu correo",
+                "html":    html
+            },
+            timeout=10
+        )
+        if resp.status_code in (200, 201):
+            print(f"[BIENVENIDA] Enviado. ID: {resp.json().get('id')}")
+            return True
+        else:
+            print(f"[BIENVENIDA] Error {resp.status_code}: {resp.text}")
+            return False
+    except Exception as e:
+        print(f"[BIENVENIDA] Excepcion: {e}")
+        return False
+
+
+def verificar_email_token(token: str) -> Optional[Dict]:
+    """
+    Verifica el token de email, marca el correo como verificado y consume el token.
+    Retorna dict con tipo_usuario e id_usuario si fue exitoso, None si falló.
+    """
+    conexion = conectar_bd()
+    cursor   = conexion.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT * FROM tokens_recuperacion
+            WHERE token = %s AND usado = 0 AND fecha_expiracion > NOW()
+            LIMIT 1
+        """, (token,))
+        datos = cursor.fetchone()
+        if not datos:
+            return None
+
+        # Marcar correo como verificado
+        if datos['tipo_usuario'] == 'cliente':
+            cursor.execute("""
+                UPDATE correo_cliente SET verificado = 1
+                WHERE id_cliente = %s AND correo = %s
+            """, (datos['id_usuario'], datos['correo']))
+        else:
+            cursor.execute("""
+                UPDATE correo_persona SET verificado = 1
+                WHERE id_persona = %s AND correo = %s
+            """, (datos['id_usuario'], datos['correo']))
+
+        # Consumir token
+        cursor.execute(
+            "UPDATE tokens_recuperacion SET usado = 1 WHERE id_token = %s",
+            (datos['id_token'],)
+        )
+        conexion.commit()
+        return datos
+    except Exception as e:
+        print(f"[VERIFICAR EMAIL] Error: {e}")
+        return None
+    finally:
+        cursor.close()
+        conexion.close()

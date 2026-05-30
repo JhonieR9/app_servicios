@@ -41,7 +41,7 @@ def obtener_mi_perfil(request: Request):
     cursor = conexion.cursor(dictionary=True)
     cursor.execute("""
         SELECT p.id_persona, p.nombre_completo, p.numero_documento, p.ciudad, p.departamento,
-               tp.telefono, cp.correo
+               tp.telefono, cp.correo, cp.verificado AS email_verificado
         FROM personas p
         LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
         LEFT JOIN correo_persona cp ON p.id_persona = cp.id_persona
@@ -700,7 +700,18 @@ async def crear_trabajador(
               recomend_bytes, recomend_tipo))
         
         conexion.commit()
-        
+
+        # Email de bienvenida + verificación en background (si tiene correo)
+        if correo:
+            try:
+                import threading, os
+                base_url = os.getenv("APP_URL", "https://web-production-191f4.up.railway.app")
+                def _bienvenida_trabajador():
+                    auth.enviar_email_bienvenida(correo, nombre_completo, 'trabajador', id_persona, base_url)
+                threading.Thread(target=_bienvenida_trabajador, daemon=True).start()
+            except Exception:
+                pass
+
         return {
             "mensaje": f"✅ Registro exitoso: {nombre_completo} fue registrado",
             "id_persona": id_persona,
@@ -1977,6 +1988,73 @@ def verificar_correo_trabajador(correo: str):
         return JSONResponse({"existe": existe})
     except Exception as e:
         return JSONResponse({"existe": False, "error": str(e)})
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+# ============================================
+# VERIFICACIÓN DE EMAIL
+# ============================================
+
+@router.get("/verificar-email", response_class=HTMLResponse)
+def verificar_email_trabajador(request: Request, token: str = ""):
+    """Verifica el email del trabajador desde el link del correo"""
+    if not token:
+        return templates.TemplateResponse("verificacion_email.html", {
+            "request": request, "exito": False,
+            "mensaje": "Enlace inválido. Asegúrate de copiar el link completo del correo.",
+            "redirect": "/trabajador/login"
+        })
+    datos = auth.verificar_email_token(token)
+    if datos:
+        return templates.TemplateResponse("verificacion_email.html", {
+            "request": request, "exito": True,
+            "mensaje": "¡Tu correo ha sido verificado exitosamente! Ya puedes acceder a todas las funciones de TalentHub.",
+            "redirect": "/trabajador/login"
+        })
+    return templates.TemplateResponse("verificacion_email.html", {
+        "request": request, "exito": False,
+        "mensaje": "El enlace es inválido o ya expiró. Inicia sesión para solicitar uno nuevo.",
+        "redirect": "/trabajador/login"
+    })
+
+@router.post("/reenviar-verificacion")
+async def reenviar_verificacion_trabajador(request: Request):
+    """Reenvía el email de verificación al trabajador autenticado"""
+    import os
+    token = request.cookies.get("session_token")
+    if not token:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'trabajador':
+        return JSONResponse({"error": "Sesión inválida"}, status_code=401)
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT cp.correo, cp.verificado, p.nombre_completo
+            FROM correo_persona cp
+            INNER JOIN personas p ON cp.id_persona = p.id_persona
+            WHERE cp.id_persona = %s LIMIT 1
+        """, (sesion['id_usuario'],))
+        row = cursor.fetchone()
+        if not row:
+            return JSONResponse({"error": "No se encontró correo registrado"}, status_code=404)
+        if row['verificado']:
+            return JSONResponse({"mensaje": "Tu correo ya está verificado."})
+
+        base_url = os.getenv("APP_URL", "https://web-production-191f4.up.railway.app")
+        import threading
+        def _reenviar():
+            auth.enviar_email_bienvenida(
+                row['correo'], row['nombre_completo'], 'trabajador',
+                sesion['id_usuario'], base_url
+            )
+        threading.Thread(target=_reenviar, daemon=True).start()
+        return JSONResponse({"mensaje": f"Correo de verificación reenviado a {row['correo']}"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
     finally:
         if conexion and conexion.is_connected():
             conexion.close()

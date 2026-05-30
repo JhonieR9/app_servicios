@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verificación de correo — TalentHub</title>
+  <link rel="stylesheet" href="/static/css/talenthub.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e0e7ff 100%);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      padding: 24px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(79,70,229,0.12);
+      padding: 48px 40px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+    }
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      display: block;
+    }
+    .card h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .card.exito h1 { color: #059669; }
+    .card.error h1 { color: #dc2626; }
+    .card p {
+      color: #6b7280;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 13px 32px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-primary {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+    }
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ecfdf5;
+      color: #059669;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .badge.error-badge {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+  </style>
+</head>
+<body>
+  <div class="card {% if exito %}exito{% else %}error{% endif %}">
+    {% if exito %}
+      <span class="icon">✅</span>
+      <div class="badge">
+        <span>●</span> Correo verificado
+      </div>
+      <h1>¡Listo, {{ nombre or 'bienvenido' }}!</h1>
+      <p>{{ mensaje }}</p>
+      <a href="{{ redirect or '/' }}" class="btn btn-primary">Ir al inicio de sesión</a>
+    {% else %}
+      <span class="icon">❌</span>
+      <div class="badge error-badge">
+        <span>●</span> Enlace inválido
+      </div>
+      <h1>No se pudo verificar</h1>
+      <p>{{ mensaje }}</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="{{ redirect or '/' }}" class="btn btn-primary">Iniciar sesión</a>
+        <a href="/" class="btn btn-secondary">Ir al inicio</a>
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>
