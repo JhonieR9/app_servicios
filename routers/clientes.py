@@ -1217,10 +1217,17 @@ async def reenviar_verificacion_cliente(request: Request, id_cliente: int = None
             return JSONResponse({"mensaje": "Tu correo ya está verificado."})
 
         base_url = os.getenv("APP_URL", "https://web-production-191f4.up.railway.app")
-        ok = auth.enviar_email_bienvenida(
-            row['correo'], row['nombre_completo'], 'cliente', id_cliente, base_url
-        )
-        if ok:
+        # Lanzar en background para no bloquear la respuesta
+        import threading
+        resultado = [False]
+        def _enviar():
+            resultado[0] = auth.enviar_email_bienvenida(
+                row['correo'], row['nombre_completo'], 'cliente', id_cliente, base_url
+            )
+        t = threading.Thread(target=_enviar, daemon=True)
+        t.start()
+        t.join(timeout=15)  # esperar máximo 15s
+        if resultado[0]:
             return JSONResponse({"mensaje": f"Correo de verificación reenviado a {row['correo']}"})
         else:
             return JSONResponse({"error": "No se pudo enviar el correo. Revisa GMAIL_USER y GMAIL_PASS en Railway."}, status_code=500)

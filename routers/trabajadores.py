@@ -2045,15 +2045,20 @@ async def reenviar_verificacion_trabajador(request: Request):
             return JSONResponse({"mensaje": "Tu correo ya está verificado."})
 
         base_url = os.getenv("APP_URL", "https://web-production-191f4.up.railway.app")
-        # Ejecutar de forma síncrona para capturar errores reales
-        ok = auth.enviar_email_bienvenida(
-            row['correo'], row['nombre_completo'], 'trabajador',
-            sesion['id_usuario'], base_url
-        )
-        if ok:
+        import threading
+        resultado = [False]
+        def _enviar():
+            resultado[0] = auth.enviar_email_bienvenida(
+                row['correo'], row['nombre_completo'], 'trabajador',
+                sesion['id_usuario'], base_url
+            )
+        t = threading.Thread(target=_enviar, daemon=True)
+        t.start()
+        t.join(timeout=15)
+        if resultado[0]:
             return JSONResponse({"mensaje": f"Correo de verificación reenviado a {row['correo']}"})
         else:
-            return JSONResponse({"error": "No se pudo enviar el correo. Revisa que RESEND_API_KEY esté configurada en Railway."}, status_code=500)
+            return JSONResponse({"error": "No se pudo enviar el correo. Revisa GMAIL_USER y GMAIL_PASS en Railway."}, status_code=500)
     except Exception as e:
         import traceback; traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
