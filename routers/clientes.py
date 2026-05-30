@@ -382,6 +382,49 @@ def crear_solicitud(
         id_solicitud = cursor.lastrowid
 
         # Ya NO se acepta automáticamente — el trabajador decide
+        # Notificar por email a trabajadores con esa categoría (en background)
+        try:
+            import threading
+            def _notificar():
+                try:
+                    from config import DB_CONFIG
+                    import mysql.connector, os
+                    conn2 = mysql.connector.connect(**DB_CONFIG)
+                    cur2  = conn2.cursor(dictionary=True)
+                    # Buscar trabajadores activos con esa categoría y correo registrado
+                    cur2.execute("""
+                        SELECT DISTINCT p.id_persona, p.nombre_completo,
+                               cp.correo, p.ciudad
+                        FROM personas p
+                        INNER JOIN servicios_persona sp ON p.id_persona = sp.id_persona
+                        INNER JOIN correo_persona cp    ON p.id_persona = cp.id_persona
+                        LEFT JOIN  disponibilidad d     ON p.id_persona = d.id_persona
+                        WHERE sp.id_categoria = %s
+                          AND (p.estado = 'activo' OR p.estado IS NULL)
+                          AND (d.disponible = 1 OR d.disponible IS NULL)
+                        LIMIT 20
+                    """, (id_categoria,))
+                    trabajadores_notif = cur2.fetchall()
+                    cur2.close(); conn2.close()
+
+                    base_url = os.getenv("APP_URL", "https://talenthub.up.railway.app")
+                    for t in trabajadores_notif:
+                        auth.notificar_nueva_solicitud(
+                            correo_trabajador = t['correo'],
+                            nombre_trabajador = t['nombre_completo'],
+                            nombre_cliente    = str(id_cliente),
+                            categoria         = nombre_cat,
+                            descripcion       = descripcion or '',
+                            ciudad            = ciudad or '',
+                            id_solicitud      = id_solicitud,
+                            base_url          = base_url
+                        )
+                except Exception as ex:
+                    print(f"[NOTIF] Error en hilo: {ex}")
+            threading.Thread(target=_notificar, daemon=True).start()
+        except Exception:
+            pass
+
         return {"mensaje": "Solicitud creada exitosamente", "id_solicitud": id_solicitud}
 
     except Exception as e:
@@ -1038,6 +1081,38 @@ async def iniciar_chat_directo(
             """, (id_solicitud, id_cliente, mensaje_inicial.strip()))
 
         conexion.commit()
+
+        # Notificar al trabajador específico por email
+        try:
+            import threading, os
+            correo_t = None
+            cur_email = conexion.cursor(dictionary=True) if conexion.is_connected() else None
+            if cur_email:
+                cur_email.execute(
+                    "SELECT correo FROM correo_persona WHERE id_persona = %s LIMIT 1",
+                    (id_trabajador,)
+                )
+                row = cur_email.fetchone()
+                correo_t = row['correo'] if row else None
+                cur_email.close()
+
+            if correo_t:
+                base_url = os.getenv("APP_URL", "https://talenthub.up.railway.app")
+                def _notif():
+                    auth.notificar_nueva_solicitud(
+                        correo_trabajador = correo_t,
+                        nombre_trabajador = trabajador['nombre_completo'],
+                        nombre_cliente    = nombre_cliente,
+                        categoria         = categoria,
+                        descripcion       = mensaje_inicial or '',
+                        ciudad            = '',
+                        id_solicitud      = id_solicitud,
+                        base_url          = base_url
+                    )
+                threading.Thread(target=_notif, daemon=True).start()
+        except Exception as ex:
+            print(f"[NOTIF] Error chat directo: {ex}")
+
         return JSONResponse({
             "ok": True,
             "id_solicitud": id_solicitud,

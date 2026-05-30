@@ -580,3 +580,149 @@ def enviar_email_recuperacion(correo: str, token: str, tipo_usuario: str, base_u
     except Exception as e:
         print(f"[EMAIL] Excepcion: {e}")
         return False
+
+# ============================================
+# NOTIFICACIONES DE SOLICITUD POR EMAIL
+# ============================================
+
+def notificar_nueva_solicitud(
+    correo_trabajador: str,
+    nombre_trabajador: str,
+    nombre_cliente: str,
+    categoria: str,
+    descripcion: str,
+    ciudad: str,
+    id_solicitud: int,
+    base_url: str
+) -> bool:
+    """
+    Envía email al trabajador cuando llega una nueva solicitud.
+    Usa Resend API igual que la recuperación de contraseña.
+    """
+    import os
+    import requests
+
+    api_key = os.getenv("RESEND_API_KEY", "")
+    link    = f"{base_url}/trabajador/panel"
+
+    if not api_key:
+        print(f"\n{'='*60}")
+        print(f"NUEVA SOLICITUD (modo consola - sin RESEND_API_KEY)")
+        print(f"   Para: {correo_trabajador} ({nombre_trabajador})")
+        print(f"   Cliente: {nombre_cliente}")
+        print(f"   Categoria: {categoria}")
+        print(f"   Ciudad: {ciudad}")
+        print(f"{'='*60}\n")
+        return True
+
+    html = f"""<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="480" cellpadding="0" cellspacing="0"
+             style="background:white;border-radius:16px;overflow:hidden;
+                    box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                     padding:28px;text-align:center;">
+            <div style="font-size:2.5rem;margin-bottom:8px;">🔔</div>
+            <h1 style="margin:0;color:white;font-size:1.3rem;font-weight:800;">
+              Nueva solicitud de servicio
+            </h1>
+            <p style="margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:0.85rem;">
+              TalentHub
+            </p>
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:28px;">
+            <p style="color:#374151;font-size:0.95rem;line-height:1.7;margin:0 0 20px;">
+              Hola <strong>{nombre_trabajador}</strong>, tienes una nueva solicitud esperando tu respuesta.
+            </p>
+            <!-- Detalles -->
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="background:#f8fafc;border-radius:12px;overflow:hidden;margin-bottom:24px;">
+              <tr>
+                <td style="padding:14px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;letter-spacing:1px;">Cliente</span><br>
+                  <span style="font-size:0.95rem;font-weight:700;color:#111827;">{nombre_cliente}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:14px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;letter-spacing:1px;">Servicio</span><br>
+                  <span style="font-size:0.95rem;font-weight:700;color:#4f46e5;">{categoria}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:14px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;letter-spacing:1px;">Ciudad</span><br>
+                  <span style="font-size:0.95rem;color:#111827;">📍 {ciudad or 'No especificada'}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:14px 18px;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;letter-spacing:1px;">Descripcion</span><br>
+                  <span style="font-size:0.88rem;color:#374151;line-height:1.5;">
+                    {(descripcion or 'Sin descripcion')[:200]}{'...' if len(descripcion or '') > 200 else ''}
+                  </span>
+                </td>
+              </tr>
+            </table>
+            <!-- CTA -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <a href="{link}"
+                     style="display:inline-block;background:#4f46e5;color:white;
+                            text-decoration:none;padding:14px 32px;border-radius:12px;
+                            font-weight:700;font-size:1rem;">
+                    Ver solicitud en TalentHub
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="color:#9ca3af;font-size:0.75rem;text-align:center;
+                      margin:20px 0 0;line-height:1.5;">
+              Responde pronto — los clientes prefieren trabajadores que contestan rapido.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+    try:
+        print(f"[NOTIF] Enviando alerta de solicitud a {correo_trabajador}")
+        resp = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from":    "TalentHub <onboarding@resend.dev>",
+                "to":      [correo_trabajador],
+                "subject": f"Nueva solicitud: {categoria} - TalentHub",
+                "html":    html
+            },
+            timeout=10
+        )
+        if resp.status_code in (200, 201):
+            print(f"[NOTIF] Enviado. ID: {resp.json().get('id')}")
+            return True
+        else:
+            print(f"[NOTIF] Error Resend {resp.status_code}: {resp.text}")
+            return False
+    except Exception as e:
+        print(f"[NOTIF] Excepcion: {e}")
+        return False
