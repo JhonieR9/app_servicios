@@ -33,18 +33,6 @@
         </div>
     </div>
 
-    <!-- Banner verificación de correo -->
-    <div id="banner-verificacion" style="display:none;background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <span style="font-size:1.3rem">📧</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:0.85rem;font-weight:700;color:#92400e;">Verifica tu correo electrónico</div>
-        <div style="font-size:0.78rem;color:#b45309;margin-top:2px;">Revisa tu bandeja de entrada y haz clic en el enlace que te enviamos.</div>
-      </div>
-      <button onclick="reenviarVerificacion(this)" style="background:#f59e0b;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">
-        Reenviar correo
-      </button>
-    </div>
-
     <!-- Menú -->
     <div class="th-section-title"><i class="bi bi-grid-2x2-fill"></i> ¿Qué necesitas?</div>
     <div class="th-menu-grid">
@@ -99,38 +87,7 @@
             document.getElementById('nombreCliente').textContent = data.nombre_completo || 'Cliente';
             document.getElementById('correoCliente').textContent = data.correo || '';
             document.getElementById('bienvenida').textContent = 'Bienvenido, ' + (data.nombre_completo || '').split(' ')[0];
-            // Mostrar banner si el correo no está verificado
-            if (data.correo && data.email_verificado === false) {
-                document.getElementById('banner-verificacion').style.display = 'flex';
-            }
         } catch(e) { document.getElementById('nombreCliente').textContent = 'Cliente'; }
-    }
-
-    async function reenviarVerificacion(btn) {
-        btn.disabled = true;
-        btn.textContent = 'Enviando...';
-        // Obtener id_cliente desde localStorage o URL
-        const params = new URLSearchParams(window.location.search);
-        const idCliente = params.get('id') || localStorage.getItem('id_cliente');
-        try {
-            const res = await fetch('/cliente/reenviar-verificacion', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_cliente: idCliente ? parseInt(idCliente) : null })
-            });
-            const data = await res.json();
-            if (data.mensaje) {
-                btn.textContent = '✅ Enviado';
-                btn.style.background = '#059669';
-            } else {
-                btn.textContent = '❌ ' + (data.error || 'Error');
-                btn.disabled = false;
-            }
-        } catch(e) {
-            btn.textContent = '❌ Error de red';
-            btn.disabled = false;
-        }
     }
     cargarPerfil();
 </script>

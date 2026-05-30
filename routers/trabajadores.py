@@ -701,17 +701,6 @@ async def crear_trabajador(
         
         conexion.commit()
 
-        # Email de bienvenida + verificación en background (si tiene correo)
-        if correo:
-            try:
-                import threading, os
-                base_url = os.getenv("APP_URL", "https://web-production-191f4.up.railway.app")
-                def _bienvenida_trabajador():
-                    auth.enviar_email_bienvenida(correo, nombre_completo, 'trabajador', id_persona, base_url)
-                threading.Thread(target=_bienvenida_trabajador, daemon=True).start()
-            except Exception:
-                pass
-
         return {
             "mensaje": f"✅ Registro exitoso: {nombre_completo} fue registrado",
             "id_persona": id_persona,

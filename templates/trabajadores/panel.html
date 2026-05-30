@@ -72,18 +72,6 @@
 
 <div class="th-content" style="position:relative;z-index:1;padding-top:20px">
 
-    <!-- Banner verificación de correo -->
-    <div id="banner-verificacion" style="display:none;background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:12px 16px;margin-bottom:16px;align-items:center;gap:12px;flex-wrap:wrap;">
-      <span style="font-size:1.3rem">📧</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:0.85rem;font-weight:700;color:#92400e;">Verifica tu correo electrónico</div>
-        <div style="font-size:0.78rem;color:#b45309;margin-top:2px;">Revisa tu bandeja de entrada y haz clic en el enlace que te enviamos.</div>
-      </div>
-      <button onclick="reenviarVerificacion(this)" style="background:#f59e0b;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">
-        Reenviar correo
-      </button>
-    </div>
-
     <!-- Perfil -->
     <div class="th-profile-card">
         <div class="th-avatar th-avatar-purple">👤</div>
@@ -216,36 +204,7 @@
                 idTrabajador = data.id_persona;
                 cargarStats(data.id_persona);
             }
-            // Mostrar banner si el correo no está verificado
-            if (data.correo && data.email_verificado === false) {
-                const banner = document.getElementById('banner-verificacion');
-                if (banner) banner.style.display = 'flex';
-            }
         } catch(e) { document.getElementById('nombreTrabajador').textContent = 'Trabajador'; }
-    }
-
-    async function reenviarVerificacion(btn) {
-        btn.disabled = true;
-        btn.textContent = 'Enviando...';
-        try {
-            const res = await fetch('/trabajador/reenviar-verificacion', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: '{}'
-            });
-            const data = await res.json();
-            if (data.mensaje) {
-                btn.textContent = '✅ Enviado';
-                btn.style.background = '#059669';
-            } else {
-                btn.textContent = '❌ ' + (data.error || 'Error');
-                btn.disabled = false;
-            }
-        } catch(e) {
-            btn.textContent = '❌ Error de red';
-            btn.disabled = false;
-        }
     }
     }
 
