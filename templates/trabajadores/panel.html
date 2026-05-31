@@ -438,6 +438,7 @@
                     acciones = `
                         <div class="sol-actions">
                             <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=trabajador&id_usuario=${idTrabajador}" class="btn-chat-sol" style="flex:1">💬 Chat con cliente</a>
+                            <button class="btn-rechazar-sol" onclick="accionSol(${s.id_solicitud},'cancelada')" title="Cancelar servicio">✗</button>
                         </div>`;
                 }
 
