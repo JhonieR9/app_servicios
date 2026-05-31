@@ -1229,3 +1229,37 @@ async def reenviar_verificacion_cliente(request: Request, id_cliente: int = None
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
+
+@router.get("/buscar")
+def buscar_cliente(nombre: str = "", correo: str = ""):
+    """Busca clientes por nombre o correo — para uso admin"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        if correo:
+            cursor.execute("""
+                SELECT c.id_cliente, c.nombre_completo, ec.correo, c.fecha_registro
+                FROM clientes c
+                LEFT JOIN correo_cliente ec ON c.id_cliente = ec.id_cliente
+                WHERE ec.correo LIKE %s
+                LIMIT 10
+            """, (f"%{correo}%",))
+        else:
+            cursor.execute("""
+                SELECT c.id_cliente, c.nombre_completo, ec.correo, c.fecha_registro
+                FROM clientes c
+                LEFT JOIN correo_cliente ec ON c.id_cliente = ec.id_cliente
+                WHERE c.nombre_completo LIKE %s
+                LIMIT 10
+            """, (f"%{nombre}%",))
+        resultados = cursor.fetchall()
+        for r in resultados:
+            for k, v in r.items():
+                if hasattr(v, 'isoformat'): r[k] = str(v)
+                elif v is None: r[k] = ''
+        return JSONResponse({"clientes": resultados})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
