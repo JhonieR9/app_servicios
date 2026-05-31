@@ -864,12 +864,14 @@ function selUrgencia(tipo) {
         fechaInput.value = '';
         hidden.value = 'ahora';
         submitBtn.innerHTML = '<i class="bi bi-lightning-fill"></i> Buscar Profesional Ahora';
+        submitBtn.onclick = irAPaso4;
     } else {
         btnProgramar.classList.add('selected-programar');
         fechaWrap.classList.add('show');
         fechaInput.setAttribute('required','required');
         hidden.value = 'programar';
         submitBtn.innerHTML = '<i class="bi bi-calendar-check"></i> Programar Servicio';
+        submitBtn.onclick = irAPaso4;
     }
 }
 
@@ -1097,23 +1099,26 @@ async function cargarProfesionales() {
             </div>`;
         } else {
             trabajadores.forEach(t => {
+                const idNum = parseInt(t.id_persona) || 0;
                 const iniciales = (t.nombre_completo || 'P').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
-                const estrellas = t.calificacion > 0
-                    ? '★'.repeat(Math.round(t.calificacion)) + '☆'.repeat(5-Math.round(t.calificacion)) + ` ${t.calificacion}`
+                const calNum = parseFloat(t.calificacion) || 0;
+                const estrellas = calNum > 0
+                    ? '★'.repeat(Math.round(calNum)) + '☆'.repeat(5-Math.round(calNum)) + ` ${calNum}`
                     : 'Sin calificaciones';
-                const trabajos = t.servicios_completados > 0 ? `${t.servicios_completados} trabajos` : 'Nuevo';
+                const trabajos = parseInt(t.servicios_completados) > 0 ? `${t.servicios_completados} trabajos` : 'Nuevo';
+                const nombreSafe = (t.nombre_completo || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 html += `
-                    <div class="prof-card" id="prof-${t.id_persona}" onclick="selProf(${t.id_persona}, '${(t.nombre_completo||'').replace(/'/g,"\\'")}')">
+                    <div class="prof-card" id="prof-${idNum}" onclick="selProf(${idNum}, '${nombreSafe}')">
                         <div class="prof-avatar">${iniciales}</div>
                         <div class="prof-info">
-                            <div class="prof-nombre">${t.nombre_completo}</div>
+                            <div class="prof-nombre">${t.nombre_completo || 'Profesional'}</div>
                             <div class="prof-meta">
                                 <span class="prof-stars">${estrellas}</span>
                                 <span>📍 ${t.ciudad || ciudad}</span>
                                 <span>✅ ${trabajos}</span>
                             </div>
                         </div>
-                        <div class="prof-check" id="check-${t.id_persona}"></div>
+                        <div class="prof-check" id="check-${idNum}"></div>
                     </div>`;
             });
         }
@@ -1149,7 +1154,8 @@ function selProf(id, nombre) {
     }
 
     trabajadorSeleccionado = id;
-    document.getElementById('id_trabajador').value = id || '';
+    // Solo enviar id_trabajador si se eligió uno específico
+    document.getElementById('id_trabajador').value = id ? id : '';
     document.getElementById('btnConfirmar').disabled = false;
 
     // Actualizar texto del botón
