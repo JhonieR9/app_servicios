@@ -6,6 +6,125 @@
     <title>Mi Panel - TalentHub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/talenthub.css">
+    <style>
+        /* ── Stats ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 12px;
+            text-align: center;
+        }
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        .stat-label { font-size: 0.68rem; color: var(--muted); margin-top: 4px; font-weight: 500; }
+        .stat-icon  { font-size: 1.1rem; margin-bottom: 4px; }
+
+        /* ── Solicitud activa card ── */
+        .activa-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: border-color .2s;
+        }
+        .activa-card:hover { border-color: #6366f1; }
+        .activa-dot {
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+        }
+        .activa-dot.pendiente  { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,.5); }
+        .activa-dot.aceptada   { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,.5); }
+        .activa-dot.en_proceso { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,.5); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+        .activa-info { flex: 1; min-width: 0; }
+        .activa-titulo { font-size: 0.85rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .activa-meta   { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+        .activa-badge  { font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
+        .badge-pendiente  { background: #fef3c7; color: #92400e; }
+        .badge-aceptada   { background: #dbeafe; color: #1e40af; }
+        .badge-en_proceso { background: #d1fae5; color: #065f46; }
+
+        /* ── Acceso rápido ── */
+        .quick-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .quick-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: border-color .2s, transform .15s;
+        }
+        .quick-btn:hover { border-color: #6366f1; transform: translateY(-2px); }
+        .quick-icon {
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+        .qi-green  { background: rgba(16,185,129,.15); }
+        .qi-purple { background: rgba(99,102,241,.15); }
+        .qi-cyan   { background: rgba(6,182,212,.15); }
+        .qi-amber  { background: rgba(245,158,11,.15); }
+        .quick-label { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+        .quick-sub   { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+
+        /* ── Categorías rápidas ── */
+        .cat-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            margin-bottom: 18px;
+            scrollbar-width: none;
+        }
+        .cat-scroll::-webkit-scrollbar { display: none; }
+        .cat-chip {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            padding: 7px 14px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            text-decoration: none;
+            transition: all .2s;
+            flex-shrink: 0;
+        }
+        .cat-chip:hover { background: #6366f1; color: white; border-color: #6366f1; }
+
+        /* ── Empty state ── */
+        .empty-activas {
+            text-align: center;
+            padding: 20px;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+    </style>
 </head>
 <body>
 <div class="th-bg"></div>
@@ -21,75 +140,251 @@
     </a>
 </div>
 
-<div class="th-content" style="position:relative;z-index:1;padding-top:24px">
+<div class="th-content" style="position:relative;z-index:1;padding-top:20px">
 
     <!-- Perfil -->
-    <div class="th-profile-card">
-        <div class="th-avatar th-avatar-cyan">👤</div>
-        <div>
+    <div class="th-profile-card" style="margin-bottom:18px">
+        <div class="th-avatar th-avatar-cyan" id="avatarInicial">👤</div>
+        <div style="flex:1">
             <div style="font-weight:700;font-size:1rem" id="nombreCliente">Cargando...</div>
-            <div style="font-size:0.8rem;color:var(--muted);margin-top:2px" id="correoCliente"></div>
-            <span class="th-badge th-badge-cyan" style="margin-top:6px">✅ Cliente activo</span>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:2px" id="correoCliente"></div>
+            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+                <span class="th-badge th-badge-cyan">✅ Cliente activo</span>
+                <span class="th-badge" id="badgeSolicitudes" style="display:none;background:rgba(245,158,11,.15);color:#f59e0b"></span>
+            </div>
         </div>
     </div>
 
-    <!-- Menú -->
-    <div class="th-section-title"><i class="bi bi-grid-2x2-fill"></i> ¿Qué necesitas?</div>
-    <div class="th-menu-grid">
-        <a href="/cliente/solicitar_servicio" class="th-menu-item" id="link-solicitar">
-            <div class="th-menu-icon th-menu-icon-green"><i class="bi bi-search" style="color:#10b981"></i></div>
-            <div class="th-menu-label">Solicitar</div>
-            <div class="th-menu-sub">Buscar profesional</div>
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-val" id="statTotal">-</div>
+            <div class="stat-label">Solicitudes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🔧</div>
+            <div class="stat-val" id="statActivas">-</div>
+            <div class="stat-label">Activas</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🎉</div>
+            <div class="stat-val" id="statCompletadas">-</div>
+            <div class="stat-label">Completadas</div>
+        </div>
+    </div>
+
+    <!-- Solicitudes activas -->
+    <div class="th-section-title"><i class="bi bi-activity"></i> Solicitudes activas</div>
+    <div id="activasContainer">
+        <div class="empty-activas">Cargando...</div>
+    </div>
+
+    <!-- Acceso rápido -->
+    <div class="th-section-title" style="margin-top:4px"><i class="bi bi-lightning-fill"></i> Acceso rápido</div>
+    <div class="quick-grid">
+        <a href="/cliente/solicitar_servicio" class="quick-btn" id="link-solicitar">
+            <div class="quick-icon qi-green"><i class="bi bi-search" style="color:#10b981"></i></div>
+            <div>
+                <div class="quick-label">Solicitar</div>
+                <div class="quick-sub">Buscar profesional</div>
+            </div>
         </a>
-        <a href="/cliente/mapa" class="th-menu-item" id="link-mapa">
-            <div class="th-menu-icon th-menu-icon-purple"><i class="bi bi-map-fill" style="color:#6366f1"></i></div>
-            <div class="th-menu-label">Ver Mapa</div>
-            <div class="th-menu-sub">Trabajadores cerca</div>
+        <a href="/cliente/mapa" class="quick-btn" id="link-mapa">
+            <div class="quick-icon qi-purple"><i class="bi bi-map-fill" style="color:#6366f1"></i></div>
+            <div>
+                <div class="quick-label">Ver Mapa</div>
+                <div class="quick-sub">Profesionales cerca</div>
+            </div>
         </a>
-        <a href="/cliente/mis_solicitudes" class="th-menu-item" id="link-solicitudes-cliente">
-            <div class="th-menu-icon th-menu-icon-cyan"><i class="bi bi-list-check" style="color:#06b6d4"></i></div>
-            <div class="th-menu-label">Mis Solicitudes</div>
-            <div class="th-menu-sub">Historial</div>
+        <a href="/cliente/mis_solicitudes" class="quick-btn" id="link-solicitudes-cliente">
+            <div class="quick-icon qi-cyan"><i class="bi bi-list-check" style="color:#06b6d4"></i></div>
+            <div>
+                <div class="quick-label">Mis Solicitudes</div>
+                <div class="quick-sub">Ver historial</div>
+            </div>
         </a>
-        <a href="/cliente/logout" class="th-menu-item">
-            <div class="th-menu-icon th-menu-icon-orange"><i class="bi bi-box-arrow-left" style="color:#f59e0b"></i></div>
-            <div class="th-menu-label">Cerrar Sesión</div>
-            <div class="th-menu-sub">Salir</div>
+        <a href="/cliente/seguimiento" class="quick-btn" id="link-seguimiento">
+            <div class="quick-icon qi-amber"><i class="bi bi-geo-alt-fill" style="color:#f59e0b"></i></div>
+            <div>
+                <div class="quick-label">Seguimiento</div>
+                <div class="quick-sub">Estado del servicio</div>
+            </div>
         </a>
+    </div>
+
+    <!-- Categorías rápidas -->
+    <div class="th-section-title"><i class="bi bi-grid-fill"></i> Servicios populares</div>
+    <div class="cat-scroll" id="catScroll">
+        <!-- se llena dinámicamente -->
     </div>
 
 </div>
 
 <script>
+    let idCliente = null;
+
+    const CATEGORIAS_POPULARES = [
+        {emoji:'🔧', nombre:'Plomería'},
+        {emoji:'⚡', nombre:'Electricidad'},
+        {emoji:'🧹', nombre:'Limpieza'},
+        {emoji:'🎨', nombre:'Pintura'},
+        {emoji:'🪚', nombre:'Carpintería'},
+        {emoji:'🌱', nombre:'Jardinería'},
+        {emoji:'💻', nombre:'Tecnología'},
+        {emoji:'🏗️', nombre:'Construcción'},
+        {emoji:'🔩', nombre:'Mecánica'},
+        {emoji:'💇', nombre:'Belleza'},
+    ];
+
+    const ESTADO_LABEL = {
+        pendiente: 'Buscando profesional',
+        aceptada: 'Profesional asignado',
+        en_proceso: 'En proceso 🔧'
+    };
+
     async function cargarPerfil() {
         const params = new URLSearchParams(window.location.search);
         const nombre = params.get('nombre');
-        const id = params.get('id');
+        const id     = params.get('id');
+
+        if (id) {
+            idCliente = id;
+            localStorage.setItem('id_cliente', id);
+        } else {
+            idCliente = localStorage.getItem('id_cliente');
+        }
 
         if (nombre) {
-            document.getElementById('nombreCliente').textContent = nombre;
-            document.getElementById('bienvenida').textContent = 'Bienvenido, ' + nombre.split(' ')[0];
-            if (id) {
-                localStorage.setItem('id_cliente', id);
-                const linkSol = document.getElementById('link-solicitudes-cliente');
-                if (linkSol) linkSol.href = '/cliente/mis_solicitudes?id_cliente=' + id;
-                const linkMapa = document.getElementById('link-mapa');
-                if (linkMapa) linkMapa.href = '/cliente/mapa?id_cliente=' + id;
-                const linkSolicitar = document.getElementById('link-solicitar');
-                if (linkSolicitar) linkSolicitar.href = '/cliente/solicitar_servicio?id_cliente=' + id;
-            }
-            return;
+            setNombre(nombre);
         }
-        try {
-            const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
-            if (!res.ok) { document.getElementById('nombreCliente').textContent = 'Cliente'; return; }
-            const data = await res.json();
-            document.getElementById('nombreCliente').textContent = data.nombre_completo || 'Cliente';
-            document.getElementById('correoCliente').textContent = data.correo || '';
-            document.getElementById('bienvenida').textContent = 'Bienvenido, ' + (data.nombre_completo || '').split(' ')[0];
-        } catch(e) { document.getElementById('nombreCliente').textContent = 'Cliente'; }
+
+        // Actualizar links con id
+        if (idCliente) {
+            document.getElementById('link-solicitudes-cliente').href = '/cliente/mis_solicitudes?id_cliente=' + idCliente;
+            document.getElementById('link-mapa').href               = '/cliente/mapa?id_cliente=' + idCliente;
+            document.getElementById('link-solicitar').href          = '/cliente/solicitar_servicio?id_cliente=' + idCliente;
+        }
+
+        // Cargar perfil desde API si no vino en URL
+        if (!nombre) {
+            try {
+                const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
+                if (res.ok) {
+                    const data = await res.json();
+                    setNombre(data.nombre_completo || 'Cliente');
+                    if (data.correo) document.getElementById('correoCliente').textContent = data.correo;
+                    if (data.id_cliente && !idCliente) {
+                        idCliente = data.id_cliente;
+                        localStorage.setItem('id_cliente', idCliente);
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // Cargar stats y activas en paralelo
+        if (idCliente) {
+            cargarStats();
+            cargarActivas();
+        }
+
+        // Llenar categorías
+        llenarCategorias();
     }
+
+    function setNombre(nombre) {
+        document.getElementById('nombreCliente').textContent = nombre;
+        document.getElementById('bienvenida').textContent = 'Hola, ' + nombre.split(' ')[0] + ' 👋';
+        // Avatar con iniciales
+        const partes = nombre.split(' ');
+        const iniciales = partes.slice(0,2).map(p => p[0]).join('').toUpperCase();
+        const av = document.getElementById('avatarInicial');
+        av.textContent = iniciales || '👤';
+        av.style.fontSize = '1rem';
+        av.style.fontWeight = '800';
+    }
+
+    async function cargarStats() {
+        try {
+            const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
+            const data = await res.json();
+            const todas = data.solicitudes || [];
+            const activas    = todas.filter(s => ['pendiente','aceptada','en_proceso'].includes(s.estado));
+            const completadas = todas.filter(s => s.estado === 'completada');
+
+            document.getElementById('statTotal').textContent      = todas.length;
+            document.getElementById('statActivas').textContent    = activas.length;
+            document.getElementById('statCompletadas').textContent = completadas.length;
+
+            if (activas.length > 0) {
+                const badge = document.getElementById('badgeSolicitudes');
+                badge.textContent = activas.length + ' activa' + (activas.length > 1 ? 's' : '');
+                badge.style.display = 'inline-flex';
+            }
+        } catch(e) {}
+    }
+
+    async function cargarActivas() {
+        const container = document.getElementById('activasContainer');
+        try {
+            const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
+            const data = await res.json();
+            const activas = (data.solicitudes || []).filter(s =>
+                ['pendiente','aceptada','en_proceso'].includes(s.estado)
+            ).slice(0, 4);
+
+            if (activas.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-activas">
+                        <div style="font-size:2rem;margin-bottom:8px">📭</div>
+                        <div>No tienes solicitudes activas</div>
+                        <a href="/cliente/solicitar_servicio${idCliente ? '?id_cliente='+idCliente : ''}"
+                           style="color:#6366f1;font-weight:700;text-decoration:none;display:inline-block;margin-top:8px">
+                            + Solicitar un servicio
+                        </a>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = activas.map(s => {
+                const estadoLabel = ESTADO_LABEL[s.estado] || s.estado;
+                const badgeClass  = 'badge-' + s.estado;
+                const trab = s.nombre_trabajador
+                    ? `<span style="color:#6366f1">👷 ${s.nombre_trabajador}</span>`
+                    : `<span>Sin asignar aún</span>`;
+                return `
+                <div class="activa-card" onclick="irASolicitud(${s.id_solicitud})">
+                    <span class="activa-dot ${s.estado}"></span>
+                    <div class="activa-info">
+                        <div class="activa-titulo">${s.nombre_categoria || s.titulo || 'Servicio'}</div>
+                        <div class="activa-meta">${trab} · ${s.fecha_solicitud ? s.fecha_solicitud.slice(5,16) : ''}</div>
+                    </div>
+                    <span class="activa-badge ${badgeClass}">${estadoLabel}</span>
+                </div>`;
+            }).join('');
+        } catch(e) {
+            container.innerHTML = '<div class="empty-activas">Error cargando solicitudes</div>';
+        }
+    }
+
+    function irASolicitud(idSolicitud) {
+        window.location.href = '/cliente/mis_solicitudes?id_cliente=' + idCliente + '#sol-' + idSolicitud;
+    }
+
+    function llenarCategorias() {
+        const scroll = document.getElementById('catScroll');
+        const base   = '/cliente/solicitar_servicio' + (idCliente ? '?id_cliente=' + idCliente + '&' : '?');
+        scroll.innerHTML = CATEGORIAS_POPULARES.map(c =>
+            `<a href="${base}categoria=${encodeURIComponent(c.nombre)}" class="cat-chip">
+                ${c.emoji} ${c.nombre}
+            </a>`
+        ).join('');
+    }
+
     cargarPerfil();
+
+    // Refrescar activas cada 30s
+    setInterval(() => { if (idCliente) { cargarActivas(); cargarStats(); } }, 30000);
 </script>
 </body>
 </html>
