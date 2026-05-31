@@ -364,6 +364,10 @@
                 </button>
             `,
             'aceptada': `
+                <button class="btn btn-aceptar" onclick="cambiarEstado(${s.id_solicitud}, 'en_proceso')"
+                        style="background:linear-gradient(135deg,#0ea5e9,#0284c7);color:white;border:none;">
+                    🔧 Iniciar servicio
+                </button>
                 <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=trabajador&id_usuario=${idTrabajador}"
                    class="btn btn-llamar" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
                     💬 Chat con cliente
