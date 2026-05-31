@@ -259,8 +259,15 @@
         document.getElementById('dispTitle').textContent = activo ? 'Disponible' : 'Desconectado';
         document.getElementById('dispSub').textContent = activo ? '🟢 Visible para clientes cercanos' : 'Activa para recibir solicitudes';
 
-        const id = idTrabajador || localStorage.getItem('id_trabajador');
-        if (!id) return;
+        // Obtener id desde todas las fuentes posibles
+        const params = new URLSearchParams(window.location.search);
+        const id = idTrabajador || params.get('id') || localStorage.getItem('id_trabajador');
+        if (!id) {
+            console.warn('No se encontró id_trabajador para actualizar disponibilidad');
+            return;
+        }
+        // Guardar para usos futuros
+        if (id) localStorage.setItem('id_trabajador', id);
 
         if (activo && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async (pos) => {
