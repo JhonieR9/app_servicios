@@ -776,19 +776,21 @@ async def login_cliente(
                 status_code=401
             )
         
-        # Verificar si requiere verificación SMS
-        conexion = conectar_bd()
-        cursor = conexion.cursor(dictionary=True)
-        
-        cursor.execute("""
-            SELECT valor FROM configuracion_seguridad
-            WHERE clave = 'requiere_verificacion_sms'
-        """)
-        config = cursor.fetchone()
-        requiere_sms = config and config['valor'] == '1'
-        
-        cursor.close()
-        conexion.close()
+        # Verificar si requiere verificación SMS (tabla puede no existir)
+        requiere_sms = False
+        try:
+            conexion = conectar_bd()
+            cursor = conexion.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT valor FROM configuracion_seguridad
+                WHERE clave = 'requiere_verificacion_sms'
+            """)
+            config = cursor.fetchone()
+            requiere_sms = config and config['valor'] == '1'
+            cursor.close()
+            conexion.close()
+        except Exception:
+            requiere_sms = False
         
         if requiere_sms and cliente.get('telefono'):
             codigo = auth.crear_codigo_verificacion(

@@ -1143,8 +1143,18 @@
     // LLENAR DEPARTAMENTO Y DANE
     // ============================================
     function fillDaneDepto(sel) {
+        var opt = sel.options[sel.selectedIndex];
+        var dane  = opt.getAttribute('data-dane')  || '';
+        var depto = opt.getAttribute('data-depto') || '';
+        var ciudad = opt.value || '';
+        document.getElementById('codigo_dane').value = dane;
+        document.getElementById('departamento_field').value = depto;
+        opt.text = ciudad;
+    }
 
-    // MEDIOS DE PAGO — campos dinámicos según método seleccionado
+    // ============================================
+    // MEDIOS DE PAGO — campos dinámicos
+    // ============================================
     var LABELS_PAGO = {
         'nequi':'📱 Nequi','daviplata':'💳 Daviplata','bre_b':'📲 Bre-B',
         'bancolombia':'🏦 Bancolombia','davivienda':'🏦 Davivienda',
@@ -1157,10 +1167,8 @@
         var checks = document.querySelectorAll('input[name="metodos_pago[]"]:checked');
         var seleccionados = Array.from(checks).map(function(c){ return c.value; });
 
-        // Actualizar campo oculto con lista separada por comas
         document.getElementById('medio_pago_hidden').value = seleccionados.join(',');
 
-        // Resaltar los seleccionados
         document.querySelectorAll('input[name="metodos_pago[]"]').forEach(function(cb) {
             var lbl = cb.closest('label');
             if (cb.checked) {
@@ -1176,18 +1184,14 @@
         var bloquePrincipal = document.getElementById('bloque-principal');
 
         if (seleccionados.length === 0) {
-            // Nada seleccionado — ocultar todo
             bloquePrincipal.style.display = 'none';
             ocultarCamposDetalle();
         } else if (seleccionados.length === 1) {
-            // Solo uno — es automáticamente el principal
             bloquePrincipal.style.display = 'none';
             selectPrincipal.value = seleccionados[0];
             togglePago(seleccionados[0]);
         } else {
-            // Varios — mostrar selector de principal
             bloquePrincipal.style.display = 'block';
-            // Reconstruir opciones del select
             selectPrincipal.innerHTML = '<option value="">Seleccionar método principal...</option>';
             seleccionados.forEach(function(v) {
                 var opt = document.createElement('option');
@@ -1195,7 +1199,6 @@
                 opt.textContent = LABELS_PAGO[v] || v;
                 selectPrincipal.appendChild(opt);
             });
-            // Si el principal actual ya no está en la lista, limpiar campos
             if (!seleccionados.includes(selectPrincipal.value)) {
                 selectPrincipal.value = '';
                 ocultarCamposDetalle();
@@ -1226,14 +1229,6 @@
             document.getElementById('numero_cuenta_banco').required  = true;
             document.getElementById('titular_banco').required        = true;
         }
-    }
-        var opt = sel.options[sel.selectedIndex];
-        var dane  = opt.getAttribute('data-dane')  || '';
-        var depto = opt.getAttribute('data-depto') || '';
-        var ciudad = opt.value || '';
-        document.getElementById('codigo_dane').value = dane;
-        document.getElementById('departamento_field').value = depto;
-        opt.text = ciudad;
     }
 
     // ============================================
@@ -1329,6 +1324,23 @@
             if (arch && !arch.files.length) {
                 mostrarAlerta('danger', 'Debes subir <strong>' + archivos[j].label + '</strong>');
                 arch.scrollIntoView({behavior:'smooth', block:'center'});
+                return;
+            }
+        }
+
+        // Validar medios de pago
+        var metodosMarcados = document.querySelectorAll('input[name="metodos_pago[]"]:checked');
+        if (metodosMarcados.length === 0) {
+            mostrarAlerta('danger', 'Debes seleccionar al menos un <strong>Método de Pago</strong>');
+            document.getElementById('grid-metodos').scrollIntoView({behavior:'smooth', block:'center'});
+            return;
+        }
+        // Si hay varios, verificar que eligió el principal
+        if (metodosMarcados.length > 1) {
+            var principal = document.getElementById('select-principal').value;
+            if (!principal) {
+                mostrarAlerta('danger', 'Debes seleccionar tu <strong>Método de Pago Principal</strong>');
+                document.getElementById('bloque-principal').scrollIntoView({behavior:'smooth', block:'center'});
                 return;
             }
         }
