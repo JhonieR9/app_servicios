@@ -291,6 +291,36 @@
         @media (max-width: 400px) {
             .cat-grid { grid-template-columns: repeat(3, 1fr); }
         }
+
+        /* ── Tarjetas de profesionales ── */
+        .prof-card {
+            border: 2px solid #e2e8f0; border-radius: 16px;
+            padding: 14px 16px; margin-bottom: 10px; cursor: pointer;
+            transition: all 0.22s; background: white;
+            display: flex; align-items: center; gap: 14px;
+        }
+        .prof-card:hover { border-color: #667eea; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(102,126,234,.15); }
+        .prof-card.selected { border-color: #667eea; background: #f5f3ff; box-shadow: 0 4px 16px rgba(102,126,234,.2); }
+        .prof-avatar {
+            width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; font-weight: 800; color: white;
+        }
+        .prof-info { flex: 1; min-width: 0; }
+        .prof-nombre { font-size: 0.92rem; font-weight: 700; color: #0f172a; }
+        .prof-meta   { font-size: 0.75rem; color: #64748b; margin-top: 3px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .prof-stars  { color: #f59e0b; font-size: 0.8rem; }
+        .prof-check  { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #e2e8f0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+        .prof-card.selected .prof-check { background: #667eea; border-color: #667eea; color: white; font-size: 0.8rem; }
+        .prof-sin-asignar {
+            border: 2px dashed #e2e8f0; border-radius: 16px;
+            padding: 14px 16px; margin-bottom: 10px; cursor: pointer;
+            transition: all 0.22s; background: #fafafa;
+            display: flex; align-items: center; gap: 14px;
+        }
+        .prof-sin-asignar:hover { border-color: #94a3b8; }
+        .prof-sin-asignar.selected { border-color: #667eea; background: #f5f3ff; }
     </style>
 </head>
 <body>
@@ -316,6 +346,10 @@
         <div class="step-item" id="stepIndicator3">
             <div class="step-dot">3</div>
             <div class="step-label">Detalles</div>
+        </div>
+        <div class="step-item" id="stepIndicator4">
+            <div class="step-dot">4</div>
+            <div class="step-label">Profesional</div>
         </div>
     </div>
 </div>
@@ -494,10 +528,36 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn-next" id="btnSubmit">
+            <button type="button" class="btn-next" id="btnSubmit" onclick="irAPaso4()">
                 <i class="bi bi-search"></i> Buscar Profesionales
             </button>
             <button type="button" class="btn-back-step" onclick="goStep(2)">
+                <i class="bi bi-arrow-left"></i> Volver
+            </button>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- PASO 4: ELEGIR PROFESIONAL                              -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div class="step-panel" id="step4">
+            <div class="card">
+                <div id="step4Summary" class="summary-pill" style="display:none">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span id="step4Title"></span>
+                </div>
+                <div class="card-title">Elige tu profesional</div>
+                <div class="card-sub" id="step4Sub">Profesionales disponibles cerca de ti</div>
+                <div id="listaProfesionales" style="margin-top:4px">
+                    <div style="text-align:center;padding:24px;color:#94a3b8">
+                        <div style="font-size:2rem;margin-bottom:8px">🔍</div>
+                        Buscando profesionales...
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn-next" id="btnConfirmar" onclick="confirmarSolicitud()" disabled>
+                <i class="bi bi-check-circle-fill"></i> Confirmar Solicitud
+            </button>
+            <button type="button" class="btn-back-step" onclick="goStep(3)">
                 <i class="bi bi-arrow-left"></i> Volver
             </button>
         </div>
@@ -713,15 +773,15 @@ function goStep(n, isBack) {
     next.classList.remove('back-anim');
     if (isBack) next.classList.add('back-anim');
     next.classList.add('active');
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 4; i++) {
         const ind = document.getElementById('stepIndicator' + i);
+        if (!ind) continue;
         ind.classList.remove('active','done');
         if (i < n) ind.classList.add('done');
         else if (i === n) ind.classList.add('active');
     }
     currentStep = n;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Al llegar al paso 3, cargar datos del cliente desde la sesión
     if (n === 3) cargarDatosCliente();
 }
 
@@ -969,16 +1029,17 @@ if (catURL) {
 // FORM SUBMIT
 document.getElementById('formSolicitud').addEventListener('submit', async function(e) {
     e.preventDefault();
+});
+
+let trabajadorSeleccionado = null;
+
+async function irAPaso4() {
     const alertEl = document.getElementById('alertBox');
 
-    if (!selectedCatId) {
+    // Validaciones del paso 3
+    if (!document.getElementById('direccionInput').value.trim()) {
         alertEl.className = 'alert error'; alertEl.style.display = 'block';
-        alertEl.textContent = 'Por favor selecciona una categoria';
-        return;
-    }
-    if (!selectedProblem) {
-        alertEl.className = 'alert error'; alertEl.style.display = 'block';
-        alertEl.textContent = 'Por favor selecciona el tipo de problema';
+        alertEl.textContent = 'Por favor ingresa la dirección del servicio';
         return;
     }
     if (!document.getElementById('ciudadHidden').value) {
@@ -986,36 +1047,154 @@ document.getElementById('formSolicitud').addEventListener('submit', async functi
         alertEl.textContent = 'Por favor selecciona tu ciudad';
         return;
     }
+    if (!document.getElementById('inputNombre').value.trim()) {
+        alertEl.className = 'alert error'; alertEl.style.display = 'block';
+        alertEl.textContent = 'Por favor ingresa tu nombre';
+        return;
+    }
+    alertEl.style.display = 'none';
 
-    const btn = document.getElementById('btnSubmit');
-    const orig = btn.innerHTML;
-    btn.disabled = true;
+    // Ir al paso 4 y cargar profesionales
+    goStep(4);
+    document.getElementById('step4Title').textContent = selectedCatName + ' - ' + selectedProblem;
+    document.getElementById('step4Summary').style.display = 'inline-flex';
+    document.getElementById('step4Sub').textContent = 'Profesionales de ' + selectedCatName + ' disponibles';
+
+    await cargarProfesionales();
+}
+
+async function cargarProfesionales() {
+    const lista = document.getElementById('listaProfesionales');
+    const ciudad = document.getElementById('ciudadHidden').value;
+
+    lista.innerHTML = `<div style="text-align:center;padding:24px;color:#94a3b8">
+        <div style="font-size:2rem;margin-bottom:8px">🔍</div>
+        Buscando profesionales en ${ciudad}...
+    </div>`;
+
+    try {
+        // Buscar trabajadores disponibles con esa categoría
+        const url = `/trabajador/disponibles/${selectedCatId}`;
+        const res  = await fetch(url);
+        const data = await res.json();
+        const trabajadores = data.trabajadores || [];
+
+        // Opción "sin preferencia" siempre disponible
+        let html = `
+            <div class="prof-sin-asignar" id="prof-cualquiera" onclick="selProf(null, 'cualquiera')">
+                <div class="prof-avatar" style="background:linear-gradient(135deg,#94a3b8,#64748b)">🎲</div>
+                <div class="prof-info">
+                    <div class="prof-nombre">El primero disponible</div>
+                    <div class="prof-meta"><span>Asignación automática · más rápido</span></div>
+                </div>
+                <div class="prof-check" id="check-cualquiera">✓</div>
+            </div>`;
+
+        if (trabajadores.length === 0) {
+            html += `<div style="text-align:center;padding:16px;color:#94a3b8;font-size:0.85rem">
+                No hay profesionales registrados para esta categoría aún.<br>
+                Tu solicitud será enviada a todos los disponibles.
+            </div>`;
+        } else {
+            trabajadores.forEach(t => {
+                const iniciales = (t.nombre_completo || 'P').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
+                const estrellas = t.calificacion > 0
+                    ? '★'.repeat(Math.round(t.calificacion)) + '☆'.repeat(5-Math.round(t.calificacion)) + ` ${t.calificacion}`
+                    : 'Sin calificaciones';
+                const trabajos = t.servicios_completados > 0 ? `${t.servicios_completados} trabajos` : 'Nuevo';
+                html += `
+                    <div class="prof-card" id="prof-${t.id_persona}" onclick="selProf(${t.id_persona}, '${(t.nombre_completo||'').replace(/'/g,"\\'")}')">
+                        <div class="prof-avatar">${iniciales}</div>
+                        <div class="prof-info">
+                            <div class="prof-nombre">${t.nombre_completo}</div>
+                            <div class="prof-meta">
+                                <span class="prof-stars">${estrellas}</span>
+                                <span>📍 ${t.ciudad || ciudad}</span>
+                                <span>✅ ${trabajos}</span>
+                            </div>
+                        </div>
+                        <div class="prof-check" id="check-${t.id_persona}"></div>
+                    </div>`;
+            });
+        }
+
+        lista.innerHTML = html;
+
+        // Pre-seleccionar "cualquiera" por defecto
+        selProf(null, 'cualquiera');
+
+    } catch(e) {
+        lista.innerHTML = `<div style="text-align:center;padding:16px;color:#ef4444">
+            Error cargando profesionales. Puedes continuar sin seleccionar uno.
+        </div>`;
+        selProf(null, 'cualquiera');
+    }
+}
+
+function selProf(id, nombre) {
+    // Quitar selección anterior
+    document.querySelectorAll('.prof-card, .prof-sin-asignar').forEach(el => {
+        el.classList.remove('selected');
+        const check = el.querySelector('.prof-check');
+        if (check) check.textContent = '';
+    });
+
+    // Seleccionar nuevo
+    const elId = id ? `prof-${id}` : 'prof-cualquiera';
+    const el   = document.getElementById(elId);
+    if (el) {
+        el.classList.add('selected');
+        const check = el.querySelector('.prof-check');
+        if (check) check.textContent = '✓';
+    }
+
+    trabajadorSeleccionado = id;
+    document.getElementById('id_trabajador').value = id || '';
+    document.getElementById('btnConfirmar').disabled = false;
+
+    // Actualizar texto del botón
+    const btn = document.getElementById('btnConfirmar');
+    if (id) {
+        btn.innerHTML = `<i class="bi bi-check-circle-fill"></i> Solicitar a ${nombre.split(' ')[0]}`;
+    } else {
+        btn.innerHTML = `<i class="bi bi-check-circle-fill"></i> Confirmar Solicitud`;
+    }
+}
+
+async function confirmarSolicitud() {
+    const alertEl = document.getElementById('alertBox');
+    const btn     = document.getElementById('btnConfirmar');
+    btn.disabled  = true;
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
 
-    const formData = new FormData(e.target);
+    const formData = new FormData(document.getElementById('formSolicitud'));
 
     try {
         const response = await fetch('/cliente/solicitud/crear', { method:'POST', body: formData });
         const data = await response.json();
         if (response.ok) {
             alertEl.className = 'alert success'; alertEl.style.display = 'block';
-            alertEl.textContent = data.mensaje || 'Solicitud enviada. Buscando profesionales...';
+            alertEl.textContent = data.mensaje || '¡Solicitud enviada! Buscando profesional...';
             setTimeout(function() {
                 if (data.id_solicitud) {
                     window.location.href = '/cliente/seguimiento?id=' + data.id_solicitud;
                 } else {
-                    window.location.href = '/cliente/mapa?categoria=' + encodeURIComponent(selectedCatName);
+                    window.location.href = '/cliente/mis_solicitudes?id_cliente=' + document.getElementById('id_cliente').value;
                 }
             }, 1200);
         } else {
             alertEl.className = 'alert error'; alertEl.style.display = 'block';
             alertEl.textContent = data.error || 'No se pudo enviar la solicitud';
-            btn.disabled = false; btn.innerHTML = orig;
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Confirmar Solicitud';
         }
     } catch (err) {
-        window.location.href = '/cliente/mapa?categoria=' + encodeURIComponent(selectedCatName);
+        alertEl.className = 'alert error'; alertEl.style.display = 'block';
+        alertEl.textContent = 'Error de conexión. Intenta de nuevo.';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Confirmar Solicitud';
     }
-});
+}
 </script>
 
 </body>
