@@ -249,10 +249,11 @@
         const id     = params.get('id');
 
         if (id) {
-            idCliente = id;
-            localStorage.setItem('id_cliente', id);
+            idCliente = parseInt(id);
+            localStorage.setItem('id_cliente', idCliente);
         } else {
-            idCliente = localStorage.getItem('id_cliente');
+            const stored = localStorage.getItem('id_cliente');
+            idCliente = stored ? parseInt(stored) : null;
         }
 
         if (nombre) {
