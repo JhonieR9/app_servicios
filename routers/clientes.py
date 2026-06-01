@@ -399,13 +399,14 @@ def crear_solicitud(
         """, (id_categoria, nombre_cat))
         conexion.commit()
 
-        # Si se seleccionó un trabajador específico, asignarlo directamente
+        # Si se seleccionó un trabajador específico, asignarlo pero dejar en pendiente
+        # El trabajador debe aceptar o rechazar
         if id_trab:
             sql = """
             INSERT INTO solicitudes_servicio 
             (id_cliente, id_categoria, id_trabajador, titulo, descripcion, direccion_servicio, 
-             ciudad, departamento, fecha_programada, estado, fecha_aceptacion)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'aceptada', NOW())
+             ciudad, departamento, fecha_programada, estado)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'pendiente')
             """
             cursor.execute(sql, (
                 id_cliente, id_categoria, id_trab, titulo, descripcion, direccion_servicio,
