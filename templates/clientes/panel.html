@@ -204,7 +204,7 @@
                 <div class="quick-sub">Ver historial</div>
             </div>
         </a>
-        <a href="/cliente/seguimiento" class="quick-btn" id="link-seguimiento">
+        <a href="#" class="quick-btn" id="link-seguimiento" onclick="irASeguimiento(event)">
             <div class="quick-icon qi-amber"><i class="bi bi-geo-alt-fill" style="color:#f59e0b"></i></div>
             <div>
                 <div class="quick-label">Seguimiento</div>
@@ -354,7 +354,7 @@
                     ? `<span style="color:#6366f1">👷 ${s.nombre_trabajador}</span>`
                     : `<span>Sin asignar aún</span>`;
                 return `
-                <div class="activa-card" onclick="irASolicitud(${s.id_solicitud})">
+                <div class="activa-card" onclick="window.location.href='/cliente/seguimiento?id=${s.id_solicitud}'">
                     <span class="activa-dot ${s.estado}"></span>
                     <div class="activa-info">
                         <div class="activa-titulo">${s.nombre_categoria || s.titulo || 'Servicio'}</div>
@@ -370,6 +370,31 @@
 
     function irASolicitud(idSolicitud) {
         window.location.href = '/cliente/mis_solicitudes?id_cliente=' + idCliente + '#sol-' + idSolicitud;
+    }
+
+    async function irASeguimiento(e) {
+        e.preventDefault();
+        // Buscar la solicitud activa más reciente
+        if (!idCliente) {
+            window.location.href = '/cliente/seguimiento';
+            return;
+        }
+        try {
+            const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
+            const data = await res.json();
+            const activas = (data.solicitudes || []).filter(s =>
+                ['pendiente','aceptada','en_proceso'].includes(s.estado)
+            );
+            if (activas.length > 0) {
+                // Ir a la más reciente
+                window.location.href = '/cliente/seguimiento?id=' + activas[0].id_solicitud;
+            } else {
+                // Sin activas — ir a mis solicitudes
+                window.location.href = '/cliente/mis_solicitudes?id_cliente=' + idCliente;
+            }
+        } catch(e) {
+            window.location.href = '/cliente/seguimiento';
+        }
     }
 
     function llenarCategorias() {
