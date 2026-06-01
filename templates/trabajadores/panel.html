@@ -308,10 +308,12 @@
                 const res = await fetch('/trabajador/mi-perfil', { credentials: 'include' });
                 if (res.ok) {
                     const data = await res.json();
-                    setNombre(data.nombre_completo, data.numero_documento);
-                    if (data.id_persona && !idTrabajador) {
-                        idTrabajador = data.id_persona;
-                        localStorage.setItem('id_trabajador', idTrabajador);
+                    if (!data.error) {
+                        setNombre(data.nombre_completo, data.numero_documento);
+                        if (data.id_persona && !idTrabajador) {
+                            idTrabajador = data.id_persona;
+                            localStorage.setItem('id_trabajador', idTrabajador);
+                        }
                     }
                 }
             } catch(e) {}
@@ -343,7 +345,21 @@
             document.getElementById('statTotal').textContent      = d.total_solicitudes || 0;
             document.getElementById('statPendientes').textContent  = d.pendientes || 0;
             document.getElementById('statCompletadas').textContent = d.completadas || 0;
-            document.getElementById('statIngresos').textContent    = d.completadas || 0; // trabajos completados
+            document.getElementById('statIngresos').textContent    = d.completadas || 0;
+
+            // Si el nombre aún no cargó, intentar desde perfil completo
+            if (document.getElementById('nombreTrabajador').textContent === 'Cargando...') {
+                try {
+                    const rp = await fetch('/trabajador/perfil_completo?id=' + idTrabajador);
+                    if (rp.ok) {
+                        const dp = await rp.json();
+                        if (dp.nombre_completo) setNombre(dp.nombre_completo, dp.numero_documento);
+                    }
+                } catch(e) {
+                    document.getElementById('nombreTrabajador').textContent = 'Profesional';
+                    document.getElementById('bienvenida').textContent = 'Bienvenido 👋';
+                }
+            }
 
             // Calificación
             if (d.calificacion > 0) {
