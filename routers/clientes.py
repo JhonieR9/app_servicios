@@ -370,7 +370,7 @@ def crear_solicitud(
             if sesion and sesion.get('tipo_usuario') == 'cliente':
                 id_cliente = sesion['id_usuario']
         if not id_cliente:
-            id_cliente = 1  # fallback para pruebas sin login
+            return JSONResponse({"error": "Debes iniciar sesión para solicitar un servicio"}, status_code=401)
     # Mapa de id_categoria → nombre (igual que en el frontend)
     CATEGORIAS = {
         1: 'Plomería', 2: 'Electricidad', 3: 'Limpieza', 4: 'Carpintería',

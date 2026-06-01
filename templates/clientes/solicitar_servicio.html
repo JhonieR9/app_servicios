@@ -601,9 +601,21 @@ let selectedProblem = '';
     const params = new URLSearchParams(window.location.search);
     const idUrl  = params.get('id_cliente');
     const idStorage = localStorage.getItem('id_cliente');
-    const id = idUrl || idStorage || '1';
+    const id = idUrl || idStorage || '';
     document.getElementById('id_cliente').value = id;
     if (idUrl) localStorage.setItem('id_cliente', idUrl);
+
+    // Si no hay id, intentar obtenerlo desde la sesión
+    if (!id) {
+        fetch('/cliente/mi-perfil', { credentials: 'include' })
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (data && data.id_cliente) {
+                    document.getElementById('id_cliente').value = data.id_cliente;
+                    localStorage.setItem('id_cliente', data.id_cliente);
+                }
+            }).catch(() => {});
+    }
     
     // Leer trabajador pre-seleccionado desde URL
     const trabajadorId     = params.get('trabajador_id');
