@@ -327,7 +327,12 @@
 
     function renderizarSolicitudes(estado) {
         const container = document.getElementById('solicitudesContainer');
-        const filtradas = todasLasSolicitudes.filter(s => s.estado === estado);
+        // "aceptada" muestra también en_proceso
+        const filtradas = todasLasSolicitudes.filter(s =>
+            estado === 'aceptada'
+                ? (s.estado === 'aceptada' || s.estado === 'en_proceso')
+                : s.estado === estado
+        );
 
         if (filtradas.length === 0) {
             const mensajes = {
