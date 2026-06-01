@@ -1214,18 +1214,31 @@ async function confirmarSolicitud() {
 
     const formData = new FormData(document.getElementById('formSolicitud'));
 
+    // Debug: mostrar qué se está enviando
+    console.log('[Solicitud] id_cliente:', formData.get('id_cliente'));
+    console.log('[Solicitud] id_categoria:', formData.get('id_categoria'));
+    console.log('[Solicitud] titulo:', formData.get('titulo'));
+    console.log('[Solicitud] ciudad:', formData.get('ciudad'));
+    console.log('[Solicitud] id_trabajador:', formData.get('id_trabajador'));
+
     try {
         const response = await fetch('/cliente/solicitud/crear', { method:'POST', body: formData });
         const data = await response.json();
-        if (response.ok) {
+        console.log('[Solicitud] Respuesta:', data);
+
+        if (response.ok && data.id_solicitud) {
             alertEl.className = 'alert success'; alertEl.style.display = 'block';
             alertEl.textContent = data.mensaje || '¡Solicitud enviada! Buscando profesional...';
+            const idCliente = document.getElementById('id_cliente').value;
             setTimeout(function() {
-                if (data.id_solicitud) {
-                    window.location.href = '/cliente/seguimiento?id=' + data.id_solicitud;
-                } else {
-                    window.location.href = '/cliente/mis_solicitudes?id_cliente=' + document.getElementById('id_cliente').value;
-                }
+                window.location.href = '/cliente/seguimiento?id=' + data.id_solicitud + '&id_cliente=' + idCliente;
+            }, 1200);
+        } else if (response.ok) {
+            // Creó pero sin id — ir a mis solicitudes
+            alertEl.className = 'alert success'; alertEl.style.display = 'block';
+            alertEl.textContent = data.mensaje || '¡Solicitud enviada!';
+            setTimeout(function() {
+                window.location.href = '/cliente/mis_solicitudes?id_cliente=' + document.getElementById('id_cliente').value;
             }, 1200);
         } else {
             alertEl.className = 'alert error'; alertEl.style.display = 'block';
@@ -1234,6 +1247,7 @@ async function confirmarSolicitud() {
             btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Confirmar Solicitud';
         }
     } catch (err) {
+        console.error('[Solicitud] Error:', err);
         alertEl.className = 'alert error'; alertEl.style.display = 'block';
         alertEl.textContent = 'Error de conexión. Intenta de nuevo.';
         btn.disabled = false;
