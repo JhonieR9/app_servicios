@@ -351,8 +351,16 @@ def crear_solicitud(
     ciudad: str = Form(...),
     departamento: str = Form(...),
     fecha_programada: str = Form(None),
-    id_trabajador: int = Form(None)
+    id_trabajador: str = Form(None)   # string para manejar '' sin error
 ):
+    # Convertir id_trabajador a int si viene con valor
+    id_trab = None
+    if id_trabajador and str(id_trabajador).strip():
+        try:
+            id_trab = int(id_trabajador)
+        except (ValueError, TypeError):
+            id_trab = None
+
     # Intentar obtener id_cliente desde la sesión si no viene en el form
     if not id_cliente:
         token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
@@ -377,22 +385,43 @@ def crear_solicitud(
     try:
         # Asegurar que la categoría existe en la tabla
         nombre_cat = CATEGORIAS.get(id_categoria, 'Otro')
+        # Buscar nombre real de la categoría en BD
+        cursor2 = conexion.cursor(dictionary=True)
+        cursor2.execute("SELECT nombre_categoria FROM categorias_servicio WHERE id_categoria = %s LIMIT 1", (id_categoria,))
+        cat_row = cursor2.fetchone()
+        if cat_row:
+            nombre_cat = cat_row['nombre_categoria']
+        cursor2.close()
+
         cursor.execute("""
             INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, estado)
             VALUES (%s, %s, 'activo')
         """, (id_categoria, nombre_cat))
         conexion.commit()
 
-        sql = """
-        INSERT INTO solicitudes_servicio 
-        (id_cliente, id_categoria, titulo, descripcion, direccion_servicio, 
-         ciudad, departamento, fecha_programada, estado)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pendiente')
-        """
-        cursor.execute(sql, (
-            id_cliente, id_categoria, titulo, descripcion, direccion_servicio,
-            ciudad, departamento, fecha_programada if fecha_programada else None
-        ))
+        # Si se seleccionó un trabajador específico, asignarlo directamente
+        if id_trab:
+            sql = """
+            INSERT INTO solicitudes_servicio 
+            (id_cliente, id_categoria, id_trabajador, titulo, descripcion, direccion_servicio, 
+             ciudad, departamento, fecha_programada, estado, fecha_aceptacion)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'aceptada', NOW())
+            """
+            cursor.execute(sql, (
+                id_cliente, id_categoria, id_trab, titulo, descripcion, direccion_servicio,
+                ciudad, departamento, fecha_programada if fecha_programada else None
+            ))
+        else:
+            sql = """
+            INSERT INTO solicitudes_servicio 
+            (id_cliente, id_categoria, titulo, descripcion, direccion_servicio, 
+             ciudad, departamento, fecha_programada, estado)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pendiente')
+            """
+            cursor.execute(sql, (
+                id_cliente, id_categoria, titulo, descripcion, direccion_servicio,
+                ciudad, departamento, fecha_programada if fecha_programada else None
+            ))
         conexion.commit()
         id_solicitud = cursor.lastrowid
 
