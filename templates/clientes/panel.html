@@ -223,6 +223,8 @@
 
 <script>
     let idCliente = null;
+    // Rastrear estados anteriores para detectar cambios
+    let estadosAnteriores = {};
 
     const CATEGORIAS_POPULARES = [
         {emoji:'🔧', nombre:'Plomería'},
@@ -242,6 +244,51 @@
         aceptada: 'Profesional asignado',
         en_proceso: 'En proceso 🔧'
     };
+
+    // ── Notificación sonora (cliente) ──
+    function sonarNotificacionCliente() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            // Melodía Do-Mi-Sol (más suave que la del trabajador)
+            [523, 659, 784].forEach((f, i) => {
+                const osc = ctx.createOscillator(), gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.value = f; osc.type = 'sine';
+                gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.18);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.4);
+                osc.start(ctx.currentTime + i * 0.18);
+                osc.stop(ctx.currentTime + i * 0.18 + 0.4);
+            });
+        } catch(e) {}
+    }
+
+    // ── Banner de cambio de estado ──
+    function mostrarBannerCliente(estado, nombreTrab) {
+        const msgs = {
+            aceptada:   `✅ ¡${nombreTrab || 'Un profesional'} aceptó tu solicitud!`,
+            en_proceso: `🔧 El profesional está trabajando ahora`,
+            completada: `🎉 ¡Tu servicio fue completado!`
+        };
+        const msg = msgs[estado];
+        if (!msg) return;
+        let b = document.getElementById('clienteBanner');
+        if (!b) {
+            b = document.createElement('div');
+            b.id = 'clienteBanner';
+            b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;' +
+                'background:linear-gradient(135deg,#059669,#0891b2);color:white;' +
+                'padding:14px 20px;display:flex;align-items:center;justify-content:space-between;' +
+                'font-weight:700;font-size:0.9rem;box-shadow:0 4px 20px rgba(16,185,129,.4);' +
+                'animation:slideDown .4s ease;';
+            b.innerHTML = '<style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style>' +
+                '<span id="clienteBannerTxt"></span>' +
+                '<button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,.2);border:none;' +
+                'color:white;border-radius:8px;padding:4px 10px;font-weight:700;cursor:pointer">✕</button>';
+            document.body.prepend(b);
+            setTimeout(() => { if (b && b.parentElement) b.remove(); }, 8000);
+        }
+        document.getElementById('clienteBannerTxt').textContent = msg;
+    }
 
     async function cargarPerfil() {
         const params = new URLSearchParams(window.location.search);
@@ -337,6 +384,22 @@
             const activas = (data.solicitudes || []).filter(s =>
                 ['pendiente','aceptada','en_proceso'].includes(s.estado)
             ).slice(0, 4);
+
+            // ── Detectar cambios de estado ──
+            activas.forEach(s => {
+                const estadoPrev = estadosAnteriores[s.id_solicitud];
+                const estadoNow  = s.estado;
+                if (estadoPrev && estadoPrev !== estadoNow) {
+                    // El estado cambió — notificar al cliente
+                    sonarNotificacionCliente();
+                    mostrarBannerCliente(estadoNow, s.nombre_trabajador);
+                }
+                estadosAnteriores[s.id_solicitud] = estadoNow;
+            });
+            // Inicializar estados en la primera carga (sin notificar)
+            if (Object.keys(estadosAnteriores).length === 0) {
+                activas.forEach(s => { estadosAnteriores[s.id_solicitud] = s.estado; });
+            }
 
             if (activas.length === 0) {
                 container.innerHTML = `

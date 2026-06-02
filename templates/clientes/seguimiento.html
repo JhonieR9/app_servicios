@@ -307,14 +307,35 @@
 </div>
 
 <script>
-    const params     = new URLSearchParams(window.location.search);
+    const params      = new URLSearchParams(window.location.search);
     const idSolicitud = params.get('id');
-    let trabTelefono = '';
+    let trabTelefono  = '';
     let trabNombreVal = '';
-    let estadoActual = '';
+    let estadoActual  = '';
+    let trabId        = null;
 
+    // ── Sin id en URL: mostrar pantalla de selección ──
     if (!idSolicitud) {
-        document.querySelector('.content').innerHTML = '<div style="text-align:center;padding:60px 20px;color:white"><p>Solicitud no encontrada</p></div>';
+        document.querySelector('.content').innerHTML = `
+            <div style="text-align:center;padding:60px 20px">
+                <div style="font-size:3rem;margin-bottom:16px">📋</div>
+                <div style="color:white;font-size:1.1rem;font-weight:700;margin-bottom:8px">
+                    No hay solicitud activa
+                </div>
+                <div style="color:rgba(255,255,255,0.7);font-size:0.88rem;margin-bottom:24px">
+                    Ve a "Mis solicitudes" para seleccionar una a seguir
+                </div>
+                <a href="/cliente/mis_solicitudes"
+                   style="background:white;color:#667eea;padding:14px 28px;border-radius:14px;
+                          font-weight:700;text-decoration:none;font-size:0.95rem;display:inline-block">
+                    Ver mis solicitudes →
+                </a>
+                <br><br>
+                <a href="/cliente/panel"
+                   style="color:rgba(255,255,255,0.7);font-size:0.82rem;text-decoration:none">
+                    ← Volver al panel
+                </a>
+            </div>`;
     }
 
     const ESTADOS = {
@@ -351,6 +372,24 @@
         if (!idSolicitud) return;
         try {
             const res  = await fetch('/cliente/seguimiento_api?id=' + idSolicitud);
+            if (res.status === 404) {
+                document.querySelector('.content').innerHTML = `
+                    <div style="text-align:center;padding:60px 20px">
+                        <div style="font-size:3rem;margin-bottom:16px">🔍</div>
+                        <div style="color:white;font-size:1.1rem;font-weight:700;margin-bottom:8px">
+                            Solicitud no encontrada
+                        </div>
+                        <div style="color:rgba(255,255,255,0.7);font-size:0.88rem;margin-bottom:24px">
+                            La solicitud #${idSolicitud} no existe o fue eliminada
+                        </div>
+                        <a href="/cliente/mis_solicitudes"
+                           style="background:white;color:#667eea;padding:14px 28px;border-radius:14px;
+                                  font-weight:700;text-decoration:none;font-size:0.95rem;display:inline-block">
+                            Ver mis solicitudes →
+                        </a>
+                    </div>`;
+                return;
+            }
             const data = await res.json();
             if (data.error) return;
 
@@ -373,6 +412,11 @@
                 actualizarTimeline(estado);
                 document.getElementById('cancelarWrap').style.display =
                     estado === 'pendiente' ? 'block' : 'none';
+                // Detener polling si está completada o cancelada
+                if (estado === 'completada' || estado === 'cancelada') {
+                    clearInterval(window._seguimientoInterval);
+                    document.querySelector('.refresh-bar').style.display = 'none';
+                }
             }
 
             // Info solicitud
@@ -439,8 +483,6 @@
     }
 
     // ── MODAL CALIFICACIÓN ──
-    let trabId = null;
-
     function mostrarModalCalificacion(data) {
         // No mostrar si ya calificó
         if (localStorage.getItem('calificado_' + idSolicitud)) return;
@@ -533,7 +575,7 @@
     }
 
     cargarSeguimiento();
-    setInterval(cargarSeguimiento, 10000);
+    window._seguimientoInterval = setInterval(cargarSeguimiento, 10000);
 </script>
 </body>
 </html>

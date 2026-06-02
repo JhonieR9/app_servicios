@@ -231,14 +231,15 @@
             const res  = await fetch(`/chat/mensajes?id_solicitud=${idSolicitud}&desde_id=${ultimoId}`);
             const data = await res.json();
             if (data.mensajes && data.mensajes.length > 0) {
-                ultimoId = data.mensajes[data.mensajes.length - 1].id_mensaje;
+                const nuevosId = data.mensajes[data.mensajes.length - 1].id_mensaje;
                 if (ultimoId === 0) {
                     // Primera carga: renderizar todos
                     renderMensajes(data.mensajes);
                 } else {
-                    // Nuevos mensajes: agregar al final
+                    // Polling: solo agregar los nuevos al final
                     agregarNuevosMensajes(data.mensajes);
                 }
+                ultimoId = nuevosId;
             } else if (!silencioso && ultimoId === 0) {
                 renderMensajes([]);
             }
