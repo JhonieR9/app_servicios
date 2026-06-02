@@ -256,40 +256,36 @@
             idCliente = stored ? parseInt(stored) : null;
         }
 
-        if (nombre) {
-            setNombre(nombre);
-        }
-
-        // Actualizar links con id
-        if (idCliente) {
-            document.getElementById('link-solicitudes-cliente').href = '/cliente/mis_solicitudes?id_cliente=' + idCliente;
-            document.getElementById('link-mapa').href               = '/cliente/mapa?id_cliente=' + idCliente;
-            document.getElementById('link-solicitar').href          = '/cliente/solicitar_servicio?id_cliente=' + idCliente;
-        }
-
-        // Cargar perfil desde API si no vino en URL
-        if (!nombre) {
-            try {
-                const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
-                if (res.ok) {
-                    const data = await res.json();
-                    setNombre(data.nombre_completo || 'Cliente');
+        // SIEMPRE intentar obtener datos desde la sesión para tener el id real
+        try {
+            const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
+            if (res.ok) {
+                const data = await res.json();
+                if (!data.error) {
+                    if (!nombre) setNombre(data.nombre_completo || 'Cliente');
                     if (data.correo) document.getElementById('correoCliente').textContent = data.correo;
-                    if (data.id_cliente && !idCliente) {
+                    // El id_cliente de la sesión siempre tiene prioridad
+                    if (data.id_cliente) {
                         idCliente = data.id_cliente;
                         localStorage.setItem('id_cliente', idCliente);
                     }
                 }
-            } catch(e) {}
+            }
+        } catch(e) {}
+
+        if (nombre && !document.getElementById('nombreCliente').textContent.trim()) {
+            setNombre(nombre);
         }
 
-        // Cargar stats y activas en paralelo
+        // Actualizar todos los links con el id correcto
         if (idCliente) {
+            document.getElementById('link-solicitudes-cliente').href = '/cliente/mis_solicitudes?id_cliente=' + idCliente;
+            document.getElementById('link-mapa').href               = '/cliente/mapa?id_cliente=' + idCliente;
+            document.getElementById('link-solicitar').href          = '/cliente/solicitar_servicio?id_cliente=' + idCliente;
             cargarStats();
             cargarActivas();
         }
 
-        // Llenar categorías
         llenarCategorias();
     }
 
