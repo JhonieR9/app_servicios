@@ -492,7 +492,7 @@
     async function enviarCalificacion() {
         if (!estrellasSel) { alert('Selecciona una calificación'); return; }
         const comentario = document.getElementById('comentCalif').value;
-        const idClienteLocal = localStorage.getItem('id_cliente') || 1;
+        const idClienteLocal = localStorage.getItem('id_cliente') || '';
         const fd = new FormData();
         fd.append('id_solicitud', idSolicitud);
         fd.append('id_cliente', idClienteLocal);

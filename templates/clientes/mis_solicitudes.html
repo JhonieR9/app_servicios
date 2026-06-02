@@ -259,8 +259,22 @@
 
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const idCliente = urlParams.get('id_cliente') || localStorage.getItem('id_cliente') || 1;
+    let idCliente = urlParams.get('id_cliente') || localStorage.getItem('id_cliente');
     let tabActual   = 'activas';
+
+    async function obtenerIdClienteSesion() {
+        try {
+            const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.id_cliente) {
+                    localStorage.setItem('id_cliente', data.id_cliente);
+                    return data.id_cliente;
+                }
+            }
+        } catch (e) {}
+        return null;
+    }
 
     function abrirChat(idSolicitud, idTrabajador, nombreTrabajador, idCli) {
         window.location.href = `/chat/?id_solicitud=${idSolicitud}&tipo=cliente&id_usuario=${idCli}`;
@@ -408,6 +422,20 @@
 
     async function cargarSolicitudes() {
         try {
+            if (!idCliente) {
+                idCliente = await obtenerIdClienteSesion();
+            }
+            if (!idCliente) {
+                document.getElementById('contenidoActivas').innerHTML = `
+                    <div class="empty">
+                        <div class="empty-icon">⚠️</div>
+                        <p>No se encontró tu cliente</p>
+                        <p class="sub">Por favor inicia sesión de nuevo para ver tus solicitudes.</p>
+                    </div>`;
+                document.getElementById('contenidoHistorial').innerHTML = '';
+                document.getElementById('topSub').textContent = 'No autenticado';
+                return;
+            }
             const res  = await fetch(`/cliente/mis_solicitudes_api?id_cliente=${idCliente}`);
             const data = await res.json();
             const todas = data.solicitudes || [];

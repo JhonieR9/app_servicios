@@ -225,6 +225,12 @@ def listar_mis_solicitudes_cliente(id_cliente: int = None):
     try:
         cursor = conexion.cursor(dictionary=True)
         if not id_cliente:
+            token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+            if token:
+                sesion = auth.verificar_sesion(token)
+                if sesion and sesion.get('tipo_usuario') == 'cliente':
+                    id_cliente = sesion['id_usuario']
+        if not id_cliente:
             return JSONResponse({"solicitudes": []})
 
         cursor.execute("""
