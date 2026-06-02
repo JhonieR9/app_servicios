@@ -435,10 +435,11 @@
         const mensajes = {
             'aceptada': '¿Aceptar esta solicitud?',
             'cancelada': '¿Rechazar esta solicitud?',
-            'completada': '¿Marcar como completada?'
+            'completada': '¿Marcar como completada?',
+            'en_proceso': '¿Iniciar el servicio ahora?'
         };
 
-        if (!confirm(mensajes[nuevoEstado])) return;
+        if (!confirm(mensajes[nuevoEstado] || '¿Confirmar?')) return;
 
         try {
             const formData = new FormData();
@@ -451,21 +452,34 @@
                 body: formData
             });
 
+            const data = await response.json();
             if (response.ok) {
                 const msg = {
-                    'aceptada': '✅ ¡Solicitud aceptada! El cliente será notificado.',
-                    'cancelada': '❌ Solicitud rechazada.',
-                    'completada': '🏆 ¡Servicio completado!'
+                    'aceptada':   '✅ ¡Solicitud aceptada! El cliente fue notificado.',
+                    'cancelada':  '❌ Solicitud rechazada.',
+                    'completada': '🏆 ¡Servicio completado!',
+                    'en_proceso': '🔧 Servicio iniciado.'
                 };
-                alert(msg[nuevoEstado]);
+                mostrarToast(msg[nuevoEstado] || '✅ Actualizado');
                 cargarSolicitudes();
             } else {
-                const data = await response.json();
-                alert('Error: ' + (data.error || 'No se pudo actualizar'));
+                mostrarToast('❌ ' + (data.error || 'No se pudo actualizar'), true);
             }
         } catch (error) {
-            alert('Error de conexión');
+            mostrarToast('❌ Error de conexión', true);
         }
+    }
+
+    function mostrarToast(msg, esError) {
+        const t = document.createElement('div');
+        t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+            background:${esError ? '#ef4444' : '#1e3a8a'};color:white;
+            padding:12px 22px;border-radius:12px;font-size:0.88rem;font-weight:700;
+            z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.3);
+            animation:fadeIn 0.3s ease;max-width:90vw;text-align:center`;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3500);
     }
 
     function contactarCliente(telefono, nombre) {

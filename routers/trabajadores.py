@@ -147,7 +147,7 @@ def actualizar_estado_solicitud(
     estado: str = Form(...),
     id_trabajador: int = Form(None)
 ):
-    """Permite al trabajador aceptar, rechazar o completar una solicitud"""
+    """Permite al trabajador aceptar, rechazar, iniciar o completar una solicitud"""
     estados_validos = ['aceptada', 'cancelada', 'completada', 'en_proceso']
     if estado not in estados_validos:
         return JSONResponse({"error": "Estado no válido"}, status_code=400)
@@ -159,12 +159,32 @@ def actualizar_estado_solicitud(
         cursor = conexion.cursor()
 
         if estado == 'aceptada' and id_trabajador:
-            # Al aceptar, asignar el trabajador
+            # Race condition fix: solo actualizar si todavía está pendiente
             cursor.execute("""
                 UPDATE solicitudes_servicio
-                SET estado = %s, id_trabajador = %s
-                WHERE id_solicitud = %s
+                SET estado = %s, id_trabajador = %s, fecha_aceptacion = NOW()
+                WHERE id_solicitud = %s AND estado = 'pendiente'
             """, (estado, id_trabajador, id_solicitud))
+            if cursor.rowcount == 0:
+                conexion.rollback()
+                return JSONResponse(
+                    {"error": "Esta solicitud ya fue aceptada por otro trabajador"},
+                    status_code=409
+                )
+        elif estado == 'en_proceso':
+            # Registrar fecha de inicio del servicio
+            cursor.execute("""
+                UPDATE solicitudes_servicio
+                SET estado = %s, fecha_inicio = NOW()
+                WHERE id_solicitud = %s AND estado = 'aceptada'
+            """, (estado, id_solicitud))
+        elif estado == 'completada':
+            # Registrar fecha de finalización
+            cursor.execute("""
+                UPDATE solicitudes_servicio
+                SET estado = %s, fecha_finalizacion = NOW()
+                WHERE id_solicitud = %s AND estado = 'en_proceso'
+            """, (estado, id_solicitud))
         else:
             cursor.execute("""
                 UPDATE solicitudes_servicio
@@ -466,12 +486,21 @@ def obtener_stats_trabajador(id_trabajador: int):
         """, (id_trabajador,))
         pendientes = cursor.fetchone()['total']
 
-        # Solicitudes completadas
+        # Solicitudes completadas (total histórico)
         cursor.execute("""
             SELECT COUNT(*) as total FROM solicitudes_servicio
             WHERE id_trabajador = %s AND estado = 'completada'
         """, (id_trabajador,))
-        completadas = cursor.fetchone()['total']
+        completadas_total = cursor.fetchone()['total']
+
+        # Solicitudes completadas este mes
+        cursor.execute("""
+            SELECT COUNT(*) as total FROM solicitudes_servicio
+            WHERE id_trabajador = %s AND estado = 'completada'
+            AND MONTH(fecha_finalizacion) = MONTH(CURDATE())
+            AND YEAR(fecha_finalizacion) = YEAR(CURDATE())
+        """, (id_trabajador,))
+        completadas_mes = cursor.fetchone()['total']
 
         # Calificación promedio
         cursor.execute("""
@@ -515,7 +544,8 @@ def obtener_stats_trabajador(id_trabajador: int):
         return JSONResponse({
             "total_solicitudes": total_solicitudes,
             "pendientes": pendientes,
-            "completadas": completadas,
+            "completadas": completadas_total,
+            "completadas_mes": completadas_mes,
             "calificacion": calificacion,
             "total_calificaciones": total_cal,
             "disponible": disponible,

@@ -260,7 +260,13 @@
         // Prioridad 2: sesión del servidor (más confiable que localStorage)
         try {
             const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
-            if (res.ok) {
+            if (res.status === 401) {
+                // Sesión expirada — solo redirigir si tampoco tenemos id en URL ni localStorage
+                if (!id && !localStorage.getItem('id_cliente')) {
+                    window.location.href = '/cliente/login?expired=1';
+                    return;
+                }
+            } else if (res.ok) {
                 const data = await res.json();
                 if (!data.error && data.id_cliente) {
                     // La sesión SIEMPRE sobreescribe - es la fuente de verdad
@@ -270,7 +276,7 @@
                     if (data.correo) document.getElementById('correoCliente').textContent = data.correo;
                 }
             }
-            // Si 401 (no autenticado) o cualquier error, continuar sin sesión
+            // Si cualquier otro error, continuar sin sesión
         } catch(e) {}
 
         // Prioridad 3: localStorage (solo si la sesión falló)

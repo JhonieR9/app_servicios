@@ -255,7 +255,7 @@
 </div>
 
 <!-- FAB nueva solicitud -->
-<a href="/cliente/solicitar_servicio" class="fab" title="Nueva solicitud">+</a>
+<a href="/cliente/solicitar_servicio" id="fabNueva" class="fab" title="Nueva solicitud">+</a>
 
 <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -265,6 +265,11 @@
     async function obtenerIdClienteSesion() {
         try {
             const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
+            if (res.status === 401) {
+                // Sesión expirada — redirigir a login
+                window.location.href = '/cliente/login?expired=1';
+                return null;
+            }
             if (res.ok) {
                 const data = await res.json();
                 if (data && data.id_cliente) {
@@ -429,13 +434,20 @@
                 document.getElementById('contenidoActivas').innerHTML = `
                     <div class="empty">
                         <div class="empty-icon">⚠️</div>
-                        <p>No se encontró tu cliente</p>
-                        <p class="sub">Por favor inicia sesión de nuevo para ver tus solicitudes.</p>
+                        <p>No se encontró tu sesión</p>
+                        <p class="sub">Por favor inicia sesión de nuevo.</p>
+                        <a href="/cliente/login" class="btn-nueva" style="margin-top:12px">
+                            <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+                        </a>
                     </div>`;
                 document.getElementById('contenidoHistorial').innerHTML = '';
                 document.getElementById('topSub').textContent = 'No autenticado';
                 return;
             }
+
+            // Actualizar FAB con id_cliente correcto
+            document.getElementById('fabNueva').href = '/cliente/solicitar_servicio?id_cliente=' + idCliente;
+
             const res  = await fetch(`/cliente/mis_solicitudes_api?id_cliente=${idCliente}`);
             const data = await res.json();
             const todas = data.solicitudes || [];

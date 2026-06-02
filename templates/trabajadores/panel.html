@@ -306,7 +306,13 @@
         if (!nombre) {
             try {
                 const res = await fetch('/trabajador/mi-perfil', { credentials: 'include' });
-                if (res.ok) {
+                if (res.status === 401) {
+                    // Sesión expirada — redirigir a login solo si no tenemos id guardado
+                    if (!idTrabajador) {
+                        window.location.href = '/trabajador/login?expired=1';
+                        return;
+                    }
+                } else if (res.ok) {
                     const data = await res.json();
                     if (!data.error) {
                         setNombre(data.nombre_completo, data.numero_documento);
@@ -345,7 +351,7 @@
             document.getElementById('statTotal').textContent      = d.total_solicitudes || 0;
             document.getElementById('statPendientes').textContent  = d.pendientes || 0;
             document.getElementById('statCompletadas').textContent = d.completadas || 0;
-            document.getElementById('statIngresos').textContent    = d.completadas || 0;
+            document.getElementById('statIngresos').textContent    = d.completadas_mes || 0;
 
             // Si el nombre aún no cargó, intentar desde perfil completo
             if (document.getElementById('nombreTrabajador').textContent === 'Cargando...') {
@@ -495,9 +501,26 @@
         try {
             const res = await fetch('/trabajador/solicitud/actualizar', { method:'POST', body:fd });
             const data = await res.json();
-            if (res.ok) { cargarSolicitudesActivas(); cargarStats(); }
-            else alert(data.error || 'Error al actualizar');
-        } catch(e) { alert('Error de conexión'); }
+            if (res.ok) {
+                cargarSolicitudesActivas();
+                cargarStats();
+            } else {
+                mostrarToastPanel(data.error || 'Error al actualizar', 'error');
+            }
+        } catch(e) { mostrarToastPanel('Error de conexión', 'error'); }
+    }
+
+    // ── Toast panel trabajador ──
+    function mostrarToastPanel(msg, tipo) {
+        const t = document.createElement('div');
+        const bg = tipo === 'error' ? '#ef4444' : '#10b981';
+        t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+            background:${bg};color:white;padding:12px 20px;border-radius:12px;
+            font-size:0.85rem;font-weight:700;z-index:9999;
+            box-shadow:0 4px 16px rgba(0,0,0,0.25);animation:fadeUp .3s ease`;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3500);
     }
 
     // ── Disponibilidad ──

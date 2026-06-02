@@ -431,10 +431,25 @@ def crear_solicitud(
         id_solicitud = cursor.lastrowid
 
         # Ya NO se acepta automáticamente — el trabajador decide
+        # Obtener nombre real del cliente para la notificación
+        nombre_cliente_notif = str(id_cliente)
+        try:
+            cursor_nc = conexion.cursor(dictionary=True)
+            cursor_nc.execute(
+                "SELECT nombre_completo FROM clientes WHERE id_cliente = %s LIMIT 1",
+                (id_cliente,)
+            )
+            row_nc = cursor_nc.fetchone()
+            if row_nc and row_nc.get('nombre_completo'):
+                nombre_cliente_notif = row_nc['nombre_completo']
+            cursor_nc.close()
+        except Exception:
+            pass
+
         # Notificar por email a trabajadores con esa categoría (en background)
         try:
             import threading
-            def _notificar():
+            def _notificar(nombre_cli=nombre_cliente_notif):
                 try:
                     from config import DB_CONFIG
                     import mysql.connector, os
@@ -456,12 +471,12 @@ def crear_solicitud(
                     trabajadores_notif = cur2.fetchall()
                     cur2.close(); conn2.close()
 
-                    base_url = os.getenv("APP_URL", "https://talenthub.up.railway.app")
+                    base_url = os.getenv("APP_URL", "https://web-production-191f4.up.railway.app")
                     for t in trabajadores_notif:
                         auth.notificar_nueva_solicitud(
                             correo_trabajador = t['correo'],
                             nombre_trabajador = t['nombre_completo'],
-                            nombre_cliente    = str(id_cliente),
+                            nombre_cliente    = nombre_cli,
                             categoria         = nombre_cat,
                             descripcion       = descripcion or '',
                             ciudad            = ciudad or '',

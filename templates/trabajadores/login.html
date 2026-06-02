@@ -100,6 +100,13 @@
 
     <div id="alert" class="alert"></div>
 
+    <!-- Banner sesión expirada -->
+    <div id="alertExpired" style="display:none;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);
+         border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;color:#f59e0b;
+         align-items:center;gap:8px">
+        ⏰ Tu sesión expiró. Vuelve a ingresar.
+    </div>
+
     <form id="formLogin">
         <div class="form-group">
             <label class="form-label">NÚMERO DE DOCUMENTO</label>
@@ -147,6 +154,11 @@
     }
 
     const alertEl = document.getElementById('alert');
+
+    // Mostrar banner si viene de sesión expirada
+    if (new URLSearchParams(window.location.search).get('expired') === '1') {
+        document.getElementById('alertExpired').style.display = 'flex';
+    }
 
     document.getElementById('formLogin').addEventListener('submit', async (e) => {
         e.preventDefault();

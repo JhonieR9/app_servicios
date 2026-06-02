@@ -124,7 +124,7 @@ def crear_sesion(tipo_usuario: str, id_usuario: int, ip_address: str = None, use
     cursor = conexion.cursor()
     
     token = generar_token()
-    expiracion = datetime.now() + timedelta(hours=24)
+    expiracion = datetime.now() + timedelta(days=7)
     
     cursor.execute("""
         INSERT INTO sesiones
