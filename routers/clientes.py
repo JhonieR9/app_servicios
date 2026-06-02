@@ -217,7 +217,7 @@ def mostrar_mis_solicitudes(request: Request):
     return templates.TemplateResponse("clientes/mis_solicitudes.html", {"request": request})
 
 @router.get("/mis_solicitudes_api")
-def listar_mis_solicitudes_cliente(id_cliente: int = None):
+def listar_mis_solicitudes_cliente(request: Request, id_cliente: int = None):
     """API para obtener solicitudes de un cliente con datos del trabajador"""
     conexion = conectar_bd()
     if not conexion:
