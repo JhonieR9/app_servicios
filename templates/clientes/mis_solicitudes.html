@@ -333,12 +333,17 @@
             trabajadorHtml = `
             <div style="margin:0 18px 14px;background:#f8fafc;border-radius:14px;padding:14px;
                         display:flex;align-items:center;gap:12px;border:1px solid #e2e8f0">
-                <div style="width:42px;height:42px;border-radius:50%;flex-shrink:0;
-                            background:linear-gradient(135deg,#4f46e5,#7c3aed);
-                            display:flex;align-items:center;justify-content:center;
-                            font-size:0.9rem;font-weight:700;color:white">${iniciales}</div>
+                <a href="/trabajador/perfil/${s.id_trabajador}" style="text-decoration:none;flex-shrink:0">
+                    <div style="width:42px;height:42px;border-radius:50%;
+                                background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                                display:flex;align-items:center;justify-content:center;
+                                font-size:0.9rem;font-weight:700;color:white">${iniciales}</div>
+                </a>
                 <div style="flex:1;min-width:0">
-                    <div style="font-size:0.88rem;font-weight:700;color:#0f172a">${s.nombre_trabajador}</div>
+                    <a href="/trabajador/perfil/${s.id_trabajador}"
+                       style="font-size:0.88rem;font-weight:700;color:#0f172a;text-decoration:none">
+                        ${s.nombre_trabajador}
+                    </a>
                     <div style="font-size:0.72rem;color:#64748b;margin-top:2px;display:flex;align-items:center;gap:6px">
                         <span>👷 Profesional asignado</span> ${estrellas}
                     </div>
@@ -400,6 +405,12 @@
         const trabajadorInfo = s.nombre_trabajador
             ? `<div style="font-size:0.72rem;color:#64748b;margin-top:2px">
                    👷 ${s.nombre_trabajador}
+                   ${s.id_trabajador
+                       ? `<a href="/trabajador/perfil/${s.id_trabajador}"
+                             style="margin-left:6px;color:#667eea;font-weight:700;text-decoration:none;font-size:0.7rem">
+                              Ver perfil →
+                          </a>`
+                       : ''}
                </div>`
             : '';
         return `

@@ -1463,11 +1463,11 @@ def listar_clientes():
         cursor = conexion.cursor(dictionary=True)
         cursor.execute("""
             SELECT c.id_cliente, c.nombre_completo, c.estado, c.fecha_registro,
-                   e.correo, t.telefono
+                   e.correo, t.telefono,
+                   (SELECT COUNT(*) FROM solicitudes_servicio s WHERE s.id_cliente = c.id_cliente) AS total_solicitudes
             FROM clientes c
-            LEFT JOIN correo_cliente e ON c.id_cliente = e.id_cliente
-            LEFT JOIN telefono_cliente t ON c.id_cliente = t.id_cliente
-            WHERE c.estado = 'activo'
+            LEFT JOIN correo_cliente e ON c.id_cliente = e.id_cliente AND e.principal = 1
+            LEFT JOIN telefono_cliente t ON c.id_cliente = t.id_cliente AND t.principal = 1
             ORDER BY c.id_cliente DESC
         """)
         clientes = cursor.fetchall()
@@ -1475,15 +1475,60 @@ def listar_clientes():
         for cl in clientes:
             for k, v in cl.items():
                 if hasattr(v, 'isoformat'):
-                    v_col = v - timedelta(hours=5)
-                    cl[k] = v_col.strftime('%Y-%m-%d %H:%M')
+                    cl[k] = (v - timedelta(hours=5)).strftime('%Y-%m-%d %H:%M')
                 elif v is None:
                     cl[k] = ''
-        cursor.execute("SELECT COUNT(*) as total FROM clientes WHERE estado = 'activo'")
+        cursor.execute("SELECT COUNT(*) as total FROM clientes")
         total = cursor.fetchone()['total']
         return JSONResponse({"clientes": clientes, "total": total})
     except Exception as e:
         return JSONResponse({"error": str(e), "clientes": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+@router.post("/clientes/eliminar")
+def eliminar_cliente(id_cliente: int = Form(...)):
+    """Desactiva un cliente (soft delete — no borra datos)"""
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"error": "Error de conexión"}, status_code=500)
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        # Verificar que existe
+        cursor.execute("SELECT id_cliente, nombre_completo FROM clientes WHERE id_cliente = %s", (id_cliente,))
+        cl = cursor.fetchone()
+        if not cl:
+            return JSONResponse({"error": "Cliente no encontrado"}, status_code=404)
+        # Soft delete — desactivar
+        cursor.execute("UPDATE clientes SET estado = 'inactivo' WHERE id_cliente = %s", (id_cliente,))
+        conexion.commit()
+        return JSONResponse({"mensaje": f"Cliente '{cl['nombre_completo']}' desactivado correctamente"})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+@router.post("/clientes/reactivar")
+def reactivar_cliente(id_cliente: int = Form(...)):
+    """Reactiva un cliente desactivado"""
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"error": "Error de conexión"}, status_code=500)
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("SELECT id_cliente, nombre_completo FROM clientes WHERE id_cliente = %s", (id_cliente,))
+        cl = cursor.fetchone()
+        if not cl:
+            return JSONResponse({"error": "Cliente no encontrado"}, status_code=404)
+        cursor.execute("UPDATE clientes SET estado = 'activo' WHERE id_cliente = %s", (id_cliente,))
+        conexion.commit()
+        return JSONResponse({"mensaje": f"Cliente '{cl['nombre_completo']}' reactivado correctamente"})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
     finally:
         if conexion and conexion.is_connected():
             conexion.close()

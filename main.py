@@ -288,6 +288,131 @@ async def servir_upload(filename: str):
     from fastapi.responses import JSONResponse
     return JSONResponse({"error": "Archivo no encontrado"}, status_code=404)
 
+# ============================================
+# MANEJO DE ERRORES PERSONALIZADOS
+# ============================================
+
+from fastapi.exceptions import HTTPException as FastAPIHTTPException
+from starlette.requests import Request as StarletteRequest
+from starlette.responses import HTMLResponse as StarletteHTML
+
+@app.exception_handler(404)
+async def not_found_handler(request: StarletteRequest, exc: FastAPIHTTPException):
+    html = """<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página no encontrada - TalentHub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a0a0f;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .bg {
+            position: fixed; inset: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 50% at 20% 20%, rgba(99,102,241,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 80%, rgba(139,92,246,0.1) 0%, transparent 60%);
+        }
+        .card {
+            position: relative; z-index: 1;
+            background: #111118;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 48px 32px;
+            width: 100%; max-width: 440px;
+            text-align: center;
+            box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+        }
+        .error-num {
+            font-size: 5rem; font-weight: 900; line-height: 1;
+            background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .icon { font-size: 2.5rem; margin-bottom: 16px; display: block; }
+        h2 { color: #f1f5f9; font-size: 1.3rem; font-weight: 700; margin-bottom: 10px; }
+        p { color: #64748b; font-size: 0.9rem; line-height: 1.6; margin-bottom: 32px; }
+        .btns { display: flex; flex-direction: column; gap: 10px; }
+        .btn {
+            padding: 14px 24px; border-radius: 12px; font-weight: 700;
+            font-size: 0.9rem; text-decoration: none; display: block;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white; box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+        }
+        .btn-primary:hover { transform: translateY(-2px); color: white; }
+        .btn-secondary {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #94a3b8;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #f1f5f9; }
+    </style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="card">
+    <span class="icon">🔍</span>
+    <div class="error-num">404</div>
+    <h2>Página no encontrada</h2>
+    <p>La ruta que buscas no existe o fue movida.<br>Verifica el enlace o regresa a un lugar seguro.</p>
+    <div class="btns">
+        <a href="/" class="btn btn-primary"><i class="bi bi-house-fill"></i> Ir al inicio</a>
+        <a href="javascript:history.back()" class="btn btn-secondary">← Volver atrás</a>
+    </div>
+</div>
+</body>
+</html>"""
+    return StarletteHTML(content=html, status_code=404)
+
+@app.exception_handler(500)
+async def server_error_handler(request: StarletteRequest, exc: Exception):
+    html = """<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error del servidor - TalentHub</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',sans-serif; background:#0a0a0f; min-height:100vh;
+               display:flex; align-items:center; justify-content:center; padding:20px; }
+        .card { background:#111118; border:1px solid rgba(255,255,255,0.08); border-radius:24px;
+                padding:48px 32px; width:100%; max-width:440px; text-align:center;
+                box-shadow:0 32px 64px rgba(0,0,0,0.5); }
+        .error-num { font-size:5rem; font-weight:900; line-height:1;
+                     background:linear-gradient(135deg,#fca5a5,#f87171);
+                     -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
+        h2 { color:#f1f5f9; font-size:1.3rem; font-weight:700; margin-bottom:10px; }
+        p { color:#64748b; font-size:0.9rem; line-height:1.6; margin-bottom:32px; }
+        .btn { padding:14px 24px; border-radius:12px; font-weight:700; font-size:0.9rem;
+               text-decoration:none; display:block; background:rgba(255,255,255,0.04);
+               border:1px solid rgba(255,255,255,0.08); color:#94a3b8; transition:all 0.2s; }
+        .btn:hover { background:rgba(255,255,255,0.08); color:#f1f5f9; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div style="font-size:2.5rem;margin-bottom:16px">⚠️</div>
+    <div class="error-num">500</div>
+    <h2>Error interno del servidor</h2>
+    <p>Algo salió mal de nuestro lado. Estamos trabajando para solucionarlo.<br>Intenta de nuevo en unos minutos.</p>
+    <a href="/" class="btn">← Volver al inicio</a>
+</div>
+</body>
+</html>"""
+    return StarletteHTML(content=html, status_code=500)
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

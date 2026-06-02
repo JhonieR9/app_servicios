@@ -12,6 +12,7 @@
             background: white; padding: 20px 24px; margin-bottom: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-radius: 12px;
             display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px;
         }
         .page-header h1 { font-size: 1.4rem; font-weight: 700; color: #0f172a; margin: 0; }
         .stat-badge {
@@ -23,14 +24,45 @@
             background: white; border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden;
         }
-        .table th { font-size: 0.78rem; color: #64748b; font-weight: 600; border: none; background: #f8fafc; padding: 12px 16px; }
+        .table th {
+            font-size: 0.75rem; color: #64748b; font-weight: 700;
+            border: none; background: #f8fafc; padding: 12px 16px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
         .table td { font-size: 0.88rem; vertical-align: middle; padding: 12px 16px; border-color: #f1f5f9; }
-        .badge-activo { background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; }
-        .search-box { max-width: 300px; }
+        .badge-activo   { background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 99px; font-size: 0.72rem; font-weight: 700; }
+        .badge-inactivo { background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 99px; font-size: 0.72rem; font-weight: 700; }
+        .search-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+        .search-box { max-width: 300px; flex: 1; }
         .btn-back { background: #f1f5f9; border: none; color: #374151; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 0.85rem; }
         .btn-back:hover { background: #e2e8f0; color: #374151; }
         .empty { text-align: center; padding: 60px; color: #94a3b8; }
         .empty i { font-size: 3rem; display: block; margin-bottom: 12px; }
+        .btn-deactivate {
+            padding: 4px 10px; font-size: 0.72rem; font-weight: 700;
+            border: none; border-radius: 8px; cursor: pointer;
+            background: #fee2e2; color: #dc2626; transition: background 0.2s;
+        }
+        .btn-deactivate:hover { background: #fecaca; }
+        .btn-reactivate {
+            padding: 4px 10px; font-size: 0.72rem; font-weight: 700;
+            border: none; border-radius: 8px; cursor: pointer;
+            background: #dcfce7; color: #16a34a; transition: background 0.2s;
+        }
+        .btn-reactivate:hover { background: #bbf7d0; }
+        .toast-fixed {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: #0f172a; color: white; padding: 12px 24px;
+            border-radius: 12px; font-size: 0.88rem; font-weight: 600;
+            z-index: 9999; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        }
+        .stats-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-mini {
+            background: white; border-radius: 12px; padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); flex: 1; min-width: 120px;
+        }
+        .stat-mini-val { font-size: 1.6rem; font-weight: 800; color: #0f172a; line-height: 1; }
+        .stat-mini-label { font-size: 0.72rem; color: #64748b; margin-top: 4px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -44,9 +76,35 @@
         <span class="stat-badge" id="totalBadge">Cargando...</span>
     </div>
 
-    <!-- Búsqueda -->
-    <div class="mb-3">
-        <input type="text" class="form-control search-box" id="searchInput" placeholder="🔍 Buscar por nombre, correo o teléfono..." oninput="filtrar()">
+    <!-- Mini stats -->
+    <div class="stats-row">
+        <div class="stat-mini">
+            <div class="stat-mini-val" id="statTotal">-</div>
+            <div class="stat-mini-label">Total clientes</div>
+        </div>
+        <div class="stat-mini">
+            <div class="stat-mini-val" style="color:#16a34a" id="statActivos">-</div>
+            <div class="stat-mini-label">Activos</div>
+        </div>
+        <div class="stat-mini">
+            <div class="stat-mini-val" style="color:#dc2626" id="statInactivos">-</div>
+            <div class="stat-mini-label">Inactivos</div>
+        </div>
+        <div class="stat-mini">
+            <div class="stat-mini-val" style="color:#6366f1" id="statConSolicitudes">-</div>
+            <div class="stat-mini-label">Con solicitudes</div>
+        </div>
+    </div>
+
+    <!-- Búsqueda y filtros -->
+    <div class="search-row">
+        <input type="text" class="form-control search-box" id="searchInput"
+               placeholder="🔍 Buscar por nombre, correo o teléfono..." oninput="filtrar()">
+        <select class="form-select" style="max-width:160px" id="estadoFilter" onchange="filtrar()">
+            <option value="">Todos</option>
+            <option value="activo">Solo activos</option>
+            <option value="inactivo">Solo inactivos</option>
+        </select>
     </div>
 
     <!-- Tabla -->
@@ -59,12 +117,16 @@
                         <th>NOMBRE</th>
                         <th>CORREO</th>
                         <th>TELÉFONO</th>
+                        <th>SOLICITUDES</th>
                         <th>ESTADO</th>
-                        <th>FECHA REGISTRO</th>
+                        <th>REGISTRO</th>
+                        <th>ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody id="tablaClientes">
-                    <tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div> Cargando...</td></tr>
+                    <tr><td colspan="8" class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-primary"></div> Cargando...
+                    </td></tr>
                 </tbody>
             </table>
         </div>
@@ -72,22 +134,49 @@
 
     <div id="noResultados" class="empty" style="display:none">
         <i class="bi bi-emoji-frown"></i>
-        No se encontraron clientes
+        No se encontraron clientes con esos filtros
     </div>
 </div>
 
 {% include "trabajadores/_sidebar.html" %}
+
+<div class="toast-fixed" id="toastMsg"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let todosLosClientes = [];
 
     async function cargarClientes() {
-        const res = await fetch('/trabajador/clientes/listar');
+        const res  = await fetch('/trabajador/clientes/listar');
         const data = await res.json();
         todosLosClientes = data.clientes || [];
-        document.getElementById('totalBadge').textContent = `${data.total} clientes`;
-        renderizar(todosLosClientes);
+
+        // Stats
+        const total    = todosLosClientes.length;
+        const activos  = todosLosClientes.filter(c => c.estado === 'activo').length;
+        const conSols  = todosLosClientes.filter(c => parseInt(c.total_solicitudes) > 0).length;
+        document.getElementById('statTotal').textContent          = total;
+        document.getElementById('statActivos').textContent        = activos;
+        document.getElementById('statInactivos').textContent      = total - activos;
+        document.getElementById('statConSolicitudes').textContent = conSols;
+        document.getElementById('totalBadge').textContent         = `${total} clientes`;
+
+        filtrar();
+    }
+
+    function filtrar() {
+        const q      = document.getElementById('searchInput').value.toLowerCase();
+        const estado = document.getElementById('estadoFilter').value;
+
+        const filtrados = todosLosClientes.filter(c => {
+            const matchSearch = !q ||
+                (c.nombre_completo || '').toLowerCase().includes(q) ||
+                (c.correo || '').toLowerCase().includes(q) ||
+                (c.telefono || '').includes(q);
+            const matchEstado = !estado || c.estado === estado;
+            return matchSearch && matchEstado;
+        });
+        renderizar(filtrados);
     }
 
     function renderizar(clientes) {
@@ -100,26 +189,67 @@
             return;
         }
         noRes.style.display = 'none';
-        tbody.innerHTML = clientes.map(c => `
-            <tr>
-                <td><span class="badge bg-light text-dark">#${c.id_cliente}</span></td>
-                <td><strong>${c.nombre_completo || '-'}</strong></td>
-                <td>${c.correo || '<span class="text-muted">Sin correo</span>'}</td>
-                <td>${c.telefono || '<span class="text-muted">Sin teléfono</span>'}</td>
-                <td><span class="badge-activo">✅ Activo</span></td>
-                <td><small class="text-muted">${c.fecha_registro || '-'}</small></td>
-            </tr>
-        `).join('');
+
+        tbody.innerHTML = clientes.map(c => {
+            const activo   = c.estado === 'activo';
+            const estadoBadge = activo
+                ? '<span class="badge-activo">✅ Activo</span>'
+                : '<span class="badge-inactivo">🚫 Inactivo</span>';
+            const actionBtn = activo
+                ? `<button class="btn-deactivate" onclick="cambiarEstado(${c.id_cliente}, 'eliminar')">
+                       <i class="bi bi-person-slash"></i> Desactivar
+                   </button>`
+                : `<button class="btn-reactivate" onclick="cambiarEstado(${c.id_cliente}, 'reactivar')">
+                       <i class="bi bi-person-check"></i> Reactivar
+                   </button>`;
+            const sols = parseInt(c.total_solicitudes) || 0;
+            const solsLabel = sols > 0
+                ? `<span style="background:#ede9fe;color:#6d28d9;padding:3px 8px;border-radius:99px;font-size:0.72rem;font-weight:700">${sols}</span>`
+                : '<span style="color:#cbd5e1;font-size:0.8rem">—</span>';
+
+            return `
+                <tr>
+                    <td><span style="background:#f1f5f9;color:#475569;padding:3px 8px;border-radius:6px;font-size:0.78rem;font-weight:600">#${c.id_cliente}</span></td>
+                    <td><strong>${c.nombre_completo || '—'}</strong></td>
+                    <td style="color:#475569">${c.correo || '<span style="color:#cbd5e1">Sin correo</span>'}</td>
+                    <td style="color:#475569">${c.telefono || '<span style="color:#cbd5e1">Sin teléfono</span>'}</td>
+                    <td>${solsLabel}</td>
+                    <td>${estadoBadge}</td>
+                    <td><small style="color:#94a3b8">${c.fecha_registro || '—'}</small></td>
+                    <td>${actionBtn}</td>
+                </tr>`;
+        }).join('');
     }
 
-    function filtrar() {
-        const q = document.getElementById('searchInput').value.toLowerCase();
-        const filtrados = todosLosClientes.filter(c =>
-            (c.nombre_completo || '').toLowerCase().includes(q) ||
-            (c.correo || '').toLowerCase().includes(q) ||
-            (c.telefono || '').includes(q)
-        );
-        renderizar(filtrados);
+    async function cambiarEstado(idCliente, accion) {
+        const msg = accion === 'eliminar'
+            ? '¿Desactivar este cliente? Podrás reactivarlo después.'
+            : '¿Reactivar este cliente?';
+        if (!confirm(msg)) return;
+
+        const endpoint = accion === 'eliminar'
+            ? '/trabajador/clientes/eliminar'
+            : '/trabajador/clientes/reactivar';
+
+        const fd = new FormData();
+        fd.append('id_cliente', idCliente);
+        const res  = await fetch(endpoint, { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (res.ok) {
+            mostrarToast('✅ ' + data.mensaje);
+            await cargarClientes();
+        } else {
+            mostrarToast('❌ ' + (data.error || 'Error'), true);
+        }
+    }
+
+    function mostrarToast(msg, esError) {
+        const t = document.getElementById('toastMsg');
+        t.textContent = msg;
+        t.style.background = esError ? '#dc2626' : '#0f172a';
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3500);
     }
 
     cargarClientes();
