@@ -248,6 +248,9 @@
         const nombre = params.get('nombre');
         const id     = params.get('id');
 
+        // Mostrar nombre inmediatamente si viene en la URL
+        if (nombre) setNombre(nombre);
+
         if (id) {
             idCliente = parseInt(id);
             localStorage.setItem('id_cliente', idCliente);
@@ -256,15 +259,16 @@
             idCliente = stored ? parseInt(stored) : null;
         }
 
-        // SIEMPRE intentar obtener datos desde la sesión para tener el id real
+        // Siempre consultar la sesión para obtener el ID real y datos actualizados
         try {
             const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
             if (res.ok) {
                 const data = await res.json();
                 if (!data.error) {
-                    if (!nombre) setNombre(data.nombre_completo || 'Cliente');
+                    // Solo sobreescribir nombre si no vino en URL
+                    if (!nombre && data.nombre_completo) setNombre(data.nombre_completo);
                     if (data.correo) document.getElementById('correoCliente').textContent = data.correo;
-                    // El id_cliente de la sesión siempre tiene prioridad
+                    // El id de la sesión siempre tiene prioridad
                     if (data.id_cliente) {
                         idCliente = data.id_cliente;
                         localStorage.setItem('id_cliente', idCliente);
@@ -272,10 +276,6 @@
                 }
             }
         } catch(e) {}
-
-        if (nombre && !document.getElementById('nombreCliente').textContent.trim()) {
-            setNombre(nombre);
-        }
 
         // Actualizar todos los links con el id correcto
         if (idCliente) {
