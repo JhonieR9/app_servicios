@@ -1293,3 +1293,30 @@ def buscar_cliente(nombre: str = "", correo: str = ""):
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
+
+@router.get("/debug/solicitudes-recientes")
+def debug_solicitudes_recientes():
+    """Diagnóstico: últimas 10 solicitudes con id_cliente y nombre"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT s.id_solicitud, s.id_cliente, s.estado, s.titulo,
+                   s.fecha_solicitud,
+                   c.nombre_completo as nombre_cliente
+            FROM solicitudes_servicio s
+            LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+            ORDER BY s.id_solicitud DESC
+            LIMIT 10
+        """)
+        rows = cursor.fetchall()
+        for r in rows:
+            for k, v in r.items():
+                if hasattr(v, 'isoformat'): r[k] = str(v)
+                elif v is None: r[k] = ''
+        return JSONResponse({"solicitudes": rows})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
