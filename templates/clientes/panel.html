@@ -251,31 +251,32 @@
         // Mostrar nombre inmediatamente si viene en la URL
         if (nombre) setNombre(nombre);
 
+        // Prioridad 1: id de la URL
         if (id) {
             idCliente = parseInt(id);
             localStorage.setItem('id_cliente', idCliente);
-        } else {
-            const stored = localStorage.getItem('id_cliente');
-            idCliente = stored ? parseInt(stored) : null;
         }
 
-        // Siempre consultar la sesión para obtener el ID real y datos actualizados
+        // Prioridad 2: sesión del servidor (más confiable que localStorage)
         try {
             const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
             if (res.ok) {
                 const data = await res.json();
-                if (!data.error) {
-                    // Solo sobreescribir nombre si no vino en URL
+                if (!data.error && data.id_cliente) {
+                    // La sesión SIEMPRE sobreescribe - es la fuente de verdad
+                    idCliente = data.id_cliente;
+                    localStorage.setItem('id_cliente', idCliente);
                     if (!nombre && data.nombre_completo) setNombre(data.nombre_completo);
                     if (data.correo) document.getElementById('correoCliente').textContent = data.correo;
-                    // El id de la sesión siempre tiene prioridad
-                    if (data.id_cliente) {
-                        idCliente = data.id_cliente;
-                        localStorage.setItem('id_cliente', idCliente);
-                    }
                 }
             }
         } catch(e) {}
+
+        // Prioridad 3: localStorage (solo si la sesión falló)
+        if (!idCliente) {
+            const stored = localStorage.getItem('id_cliente');
+            idCliente = stored ? parseInt(stored) : null;
+        }
 
         // Actualizar todos los links con el id correcto
         if (idCliente) {
