@@ -1373,6 +1373,178 @@
             btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar Registro';
         }
     }
+
+    // ============================================
+    // VALIDACIÓN EN TIEMPO REAL
+    // ============================================
+    function setFieldState(el, ok, msg) {
+        // Quitar clases previas
+        el.classList.remove('is-valid', 'is-invalid');
+        var fb = el.parentElement.querySelector('.live-feedback');
+        if (!fb) {
+            fb = document.createElement('div');
+            fb.className = 'live-feedback';
+            fb.style.cssText = 'font-size:0.75rem;margin-top:4px;font-weight:600';
+            el.parentElement.appendChild(fb);
+        }
+        if (ok === null) { fb.textContent = ''; return; }   // neutro
+        if (ok) {
+            el.classList.add('is-valid');
+            fb.style.color = '#16a34a';
+            fb.textContent = '✓ ' + (msg || 'Correcto');
+        } else {
+            el.classList.add('is-invalid');
+            fb.style.color = '#dc2626';
+            fb.textContent = '✗ ' + msg;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // ── Número de documento ──
+        var numDoc = document.querySelector('[name="numero_documento"]');
+        if (numDoc) {
+            numDoc.addEventListener('input', function() {
+                var v = this.value.replace(/\D/g, '');
+                this.value = v;
+                if (v.length === 0)         setFieldState(this, null);
+                else if (v.length < 6)      setFieldState(this, false, 'Mínimo 6 dígitos');
+                else if (v.length > 15)     setFieldState(this, false, 'Máximo 15 dígitos');
+                else                        setFieldState(this, true, v.length + ' dígitos');
+            });
+        }
+
+        // ── Nombre completo ──
+        var nombre = document.querySelector('[name="nombre_completo"]');
+        if (nombre) {
+            nombre.addEventListener('input', function() {
+                var v = this.value.trim();
+                var partes = v.split(/\s+/).filter(p => p.length > 1);
+                if (v.length === 0)         setFieldState(this, null);
+                else if (v.length < 3)      setFieldState(this, false, 'Muy corto');
+                else if (partes.length < 2) setFieldState(this, false, 'Ingresa nombre y apellido');
+                else                        setFieldState(this, true, 'Nombre completo válido');
+            });
+        }
+
+        // ── Celular ──
+        var celular = document.querySelector('[name="celular"]');
+        if (celular) {
+            celular.addEventListener('input', function() {
+                var v = this.value.replace(/\D/g, '');
+                this.value = v;
+                if (v.length === 0)     setFieldState(this, null);
+                else if (v.length !== 10) setFieldState(this, false, 'Debe tener exactamente 10 dígitos (ej: 3001234567)');
+                else if (v[0] !== '3')    setFieldState(this, false, 'Los celulares colombianos comienzan con 3');
+                else                      setFieldState(this, true, 'Número válido');
+            });
+        }
+
+        // ── Correo electrónico (opcional pero válido si se llena) ──
+        var correo = document.querySelector('[name="correo"]');
+        if (correo) {
+            correo.addEventListener('input', function() {
+                var v = this.value.trim();
+                if (v.length === 0) { setFieldState(this, null); return; }
+                var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+                setFieldState(this, ok, ok ? 'Correo válido' : 'Formato inválido (ej: nombre@correo.com)');
+            });
+        }
+
+        // ── Valor por hora ── (todos los campos habilidad_valor[])
+        function validarValorHora(el) {
+            var v = parseFloat(el.value);
+            if (!el.value)      { setFieldState(el, null); return; }
+            if (isNaN(v) || v < 5000)     setFieldState(el, false, 'Mínimo $5.000 COP/hora');
+            else if (v > 1000000)         setFieldState(el, false, 'Máximo $1.000.000 COP/hora');
+            else {
+                var fmt = '$' + v.toLocaleString('es-CO') + ' COP/h';
+                setFieldState(el, true, fmt);
+            }
+        }
+        document.querySelectorAll('[name="habilidad_valor[]"]').forEach(function(el) {
+            el.addEventListener('input', function() { validarValorHora(this); });
+        });
+
+        // ── Años de experiencia ──
+        function validarExp(el) {
+            var v = parseFloat(el.value);
+            if (el.value === '')    { setFieldState(el, null); return; }
+            if (isNaN(v) || v < 0) setFieldState(el, false, 'No puede ser negativo');
+            else if (v > 50)       setFieldState(el, false, 'Máximo 50 años');
+            else                   setFieldState(el, true, v + (v === 1 ? ' año' : ' años'));
+        }
+        document.querySelectorAll('[name="habilidad_exp[]"]').forEach(function(el) {
+            el.addEventListener('input', function() { validarExp(this); });
+        });
+
+        // ── Fecha de nacimiento: mínimo 18 años ──
+        var fechaNac = document.querySelector('[name="fecha_nacimiento"]');
+        if (fechaNac) {
+            // Establecer máximo como hace 18 años
+            var hoy18 = new Date();
+            hoy18.setFullYear(hoy18.getFullYear() - 18);
+            fechaNac.max = hoy18.toISOString().split('T')[0];
+
+            fechaNac.addEventListener('change', function() {
+                var nac = new Date(this.value);
+                var hoy = new Date();
+                var edad = hoy.getFullYear() - nac.getFullYear();
+                var m    = hoy.getMonth() - nac.getMonth();
+                if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+                if (edad < 18)  setFieldState(this, false, 'Debes tener al menos 18 años');
+                else if (edad > 80) setFieldState(this, false, 'Fecha no válida');
+                else            setFieldState(this, true, edad + ' años');
+            });
+        }
+
+        // ── Número de cuenta bancaria ──
+        var numCuenta = document.getElementById('numero_cuenta');
+        if (numCuenta) {
+            numCuenta.addEventListener('input', function() {
+                var v = this.value.replace(/\D/g, '');
+                this.value = v;
+                if (!v) { setFieldState(this, null); return; }
+                if (v.length < 6)   setFieldState(this, false, 'Muy corto — mínimo 6 dígitos');
+                else if (v.length > 20) setFieldState(this, false, 'Muy largo — máximo 20 dígitos');
+                else                setFieldState(this, true, v.length + ' dígitos');
+            });
+        }
+
+        // ── Número de billetera (Nequi/Daviplata/Bre-B) ──
+        var numBilletera = document.getElementById('numero_billetera');
+        if (numBilletera) {
+            numBilletera.addEventListener('input', function() {
+                var v = this.value.replace(/\D/g, '');
+                this.value = v;
+                if (!v) { setFieldState(this, null); return; }
+                if (v.length !== 10) setFieldState(this, false, 'Debe ser un celular de 10 dígitos');
+                else if (v[0] !== '3') setFieldState(this, false, 'Los celulares colombianos comienzan con 3');
+                else                  setFieldState(this, true, 'Número válido');
+            });
+        }
+
+        // ── Al agregar nuevo servicio, attach listeners ──
+        var btnAgregar = document.getElementById('btnAgregarHabilidad');
+        if (btnAgregar) {
+            btnAgregar.addEventListener('click', function() {
+                setTimeout(function() {
+                    document.querySelectorAll('[name="habilidad_valor[]"]').forEach(function(el) {
+                        if (!el._valListener) {
+                            el._valListener = true;
+                            el.addEventListener('input', function() { validarValorHora(this); });
+                        }
+                    });
+                    document.querySelectorAll('[name="habilidad_exp[]"]').forEach(function(el) {
+                        if (!el._expListener) {
+                            el._expListener = true;
+                            el.addEventListener('input', function() { validarExp(this); });
+                        }
+                    });
+                }, 100);
+            });
+        }
+    });
     </script>
 </body>
 </html>

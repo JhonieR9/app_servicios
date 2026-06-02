@@ -1,38 +1,45 @@
 {
   "name": "TalentHub - Servicios a Domicilio",
   "short_name": "TalentHub",
-  "description": "Encuentra profesionales cerca de ti para cualquier servicio",
+  "description": "Encuentra profesionales cerca de ti para cualquier servicio a domicilio",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#1e3a8a",
-  "theme_color": "#2563eb",
-  "orientation": "portrait",
+  "background_color": "#0a0a0f",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "lang": "es",
   "icons": [
     {
-      "src": "/static/icon-192.png",
+      "src": "/static/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/icon-512.png",
+      "src": "/static/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["utilities", "lifestyle"],
-  "lang": "es",
+  "categories": ["utilities", "lifestyle", "business"],
   "shortcuts": [
     {
-      "name": "Solicitar Servicio",
+      "name": "Solicitar servicio",
+      "short_name": "Solicitar",
       "url": "/cliente/solicitar_servicio",
-      "description": "Pide un servicio rápidamente"
+      "description": "Pide un servicio rápidamente",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Registrarme como Trabajador",
-      "url": "/trabajador/registro",
-      "description": "Registra tu hoja de vida"
+      "name": "Mi panel",
+      "short_name": "Panel",
+      "url": "/cliente/panel",
+      "description": "Ver mi panel de cliente",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
 }

@@ -254,15 +254,28 @@
     <!-- Trabajador asignado -->
     <div class="trabajador-card" id="trabajadorCard">
         <div class="trab-header">
-            <div class="trab-avatar">👷</div>
+            <div class="trab-avatar" id="trabAvatar">👷</div>
             <div>
                 <div class="trab-nombre" id="trabNombre">Profesional</div>
                 <div class="trab-cat" id="trabCat"></div>
             </div>
         </div>
+
+        <!-- Últimos mensajes del chat (preview inline) -->
+        <div id="chatPreviewWrap" style="display:none;margin-bottom:12px">
+            <div style="font-size:0.68rem;font-weight:700;color:#7c3aed;text-transform:uppercase;
+                        letter-spacing:1px;margin-bottom:8px">💬 Últimos mensajes</div>
+            <div id="chatPreviewList"
+                 style="background:white;border-radius:12px;padding:10px 12px;
+                        max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+            </div>
+        </div>
+
         <div class="trab-btns">
             <button class="btn-trab chat" id="btnChat" onclick="abrirChatSeguimiento()">
-                💬 Chatear en TalentHub
+                💬 Abrir chat completo
+                <span id="chatBadgeSeg" style="background:rgba(255,255,255,0.3);border-radius:99px;
+                      padding:1px 7px;font-size:0.7rem;display:none"></span>
             </button>
         </div>
     </div>
@@ -444,6 +457,13 @@
                 trabTelefono  = data.trabajador.telefono || '';
                 trabNombreVal = data.trabajador.nombre   || 'Profesional';
                 trabId        = data.id_trabajador || null;
+                // Iniciales en el avatar
+                const parts = (data.trabajador.nombre || '').split(' ');
+                const ini   = parts.slice(0,2).map(p=>p[0]).join('').toUpperCase() || '👷';
+                document.getElementById('trabAvatar').textContent    = ini;
+                document.getElementById('trabAvatar').style.fontSize = '1.1rem';
+                // Cargar preview del chat
+                cargarChatPreview();
             }
 
         } catch(e) { console.log('Error seguimiento:', e); }
@@ -562,6 +582,54 @@
         }
     }
 
+    // ── PREVIEW CHAT INLINE ──
+    async function cargarChatPreview() {
+        if (!idSolicitud) return;
+        try {
+            const res  = await fetch(`/chat/mensajes?id_solicitud=${idSolicitud}&desde_id=0`);
+            const data = await res.json();
+            const msgs = (data.mensajes || []).slice(-4); // últimos 4
+
+            const wrap = document.getElementById('chatPreviewWrap');
+            const list = document.getElementById('chatPreviewList');
+
+            if (!msgs.length) { wrap.style.display = 'none'; return; }
+
+            wrap.style.display = 'block';
+            const idCli = parseInt(localStorage.getItem('id_cliente') || 0);
+
+            list.innerHTML = msgs.map(m => {
+                const esMio = (m.tipo_remitente === 'cliente' && m.id_remitente === idCli);
+                const hora  = (m.fecha_envio || '').split(' ')[1] || '';
+                const esc   = String(m.mensaje).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                return `
+                <div style="display:flex;flex-direction:column;align-items:${esMio?'flex-end':'flex-start'}">
+                    ${!esMio ? `<div style="font-size:0.65rem;font-weight:700;color:#7c3aed;margin-bottom:2px">${m.nombre_remitente||''}</div>` : ''}
+                    <div style="background:${esMio?'linear-gradient(135deg,#667eea,#764ba2)':'#f1f5f9'};
+                                color:${esMio?'white':'#0f172a'};
+                                padding:7px 12px;border-radius:${esMio?'14px 14px 4px 14px':'14px 14px 14px 4px'};
+                                font-size:0.82rem;line-height:1.4;max-width:85%">
+                        ${esc}
+                    </div>
+                    <div style="font-size:0.62rem;color:#94a3b8;margin-top:2px">${hora}</div>
+                </div>`;
+            }).join('');
+
+            // Badge mensajes no leídos
+            try {
+                const r2  = await fetch(`/chat/no-leidos?id_solicitud=${idSolicitud}&tipo_receptor=cliente`);
+                const d2  = await r2.json();
+                const badge = document.getElementById('chatBadgeSeg');
+                if (d2.no_leidos > 0) {
+                    badge.textContent = d2.no_leidos + ' nuevo' + (d2.no_leidos > 1 ? 's' : '');
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch(e) {}
+        } catch(e) {}
+    }
+
     async function cancelarSolicitud() {
         if (!confirm('¿Seguro que deseas cancelar esta solicitud?')) return;
         const fd = new FormData();
@@ -575,7 +643,11 @@
     }
 
     cargarSeguimiento();
-    window._seguimientoInterval = setInterval(cargarSeguimiento, 10000);
+    window._seguimientoInterval = setInterval(() => {
+        cargarSeguimiento();
+        // Si el trabajador está asignado, actualizar preview de chat también
+        if (trabId) cargarChatPreview();
+    }, 10000);
 </script>
 </body>
 </html>
