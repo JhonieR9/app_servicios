@@ -270,6 +270,7 @@
                     if (data.correo) document.getElementById('correoCliente').textContent = data.correo;
                 }
             }
+            // Si 401 (no autenticado) o cualquier error, continuar sin sesión
         } catch(e) {}
 
         // Prioridad 3: localStorage (solo si la sesión falló)

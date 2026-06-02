@@ -242,15 +242,13 @@ def listar_mis_solicitudes_cliente(request: Request, id_cliente: int = None):
                    p.nombre_completo  AS nombre_trabajador,
                    tp.telefono        AS telefono_trabajador,
                    cp.correo          AS correo_trabajador,
-                   ROUND(AVG(cal.puntuacion),1) AS calificacion_trabajador
+                   (SELECT ROUND(AVG(c2.puntuacion),1) FROM calificaciones c2 WHERE c2.id_trabajador = p.id_persona) AS calificacion_trabajador
             FROM solicitudes_servicio s
             LEFT JOIN categorias_servicio cat ON s.id_categoria  = cat.id_categoria
             LEFT JOIN personas p              ON s.id_trabajador = p.id_persona
             LEFT JOIN telefono_persona tp     ON p.id_persona    = tp.id_persona
             LEFT JOIN correo_persona cp       ON p.id_persona    = cp.id_persona
-            LEFT JOIN calificaciones cal      ON p.id_persona    = cal.id_trabajador
             WHERE s.id_cliente = %s
-            GROUP BY s.id_solicitud
             ORDER BY s.fecha_solicitud DESC
         """, (id_cliente,))
 
