@@ -1877,15 +1877,20 @@ async def eliminar_permanente(id_persona: int = Form(...)):
 
         # Eliminar registros relacionados en orden para respetar foreign keys
         tablas_relacionadas = [
-            "DELETE FROM mensajes_chat       WHERE id_remitente = %s AND tipo_remitente = 'trabajador'",
-            "DELETE FROM calificaciones       WHERE id_trabajador = %s",
-            "UPDATE solicitudes_servicio      SET id_trabajador = NULL WHERE id_trabajador = %s",
-            "DELETE FROM disponibilidad       WHERE id_persona = %s",
-            "DELETE FROM servicios_persona    WHERE id_persona = %s",
-            "DELETE FROM experiencia_persona  WHERE id_persona = %s",
-            "DELETE FROM telefono_persona     WHERE id_persona = %s",
-            "DELETE FROM detalles_persona     WHERE id_persona = %s",
-            "DELETE FROM trabajador_categorias WHERE id_trabajador = %s",
+            "DELETE FROM push_subscriptions   WHERE tipo_usuario = 'trabajador' AND id_usuario = %s",
+            "DELETE FROM mensajes_chat        WHERE id_remitente = %s AND tipo_remitente = 'trabajador'",
+            "DELETE FROM calificaciones        WHERE id_trabajador = %s",
+            "UPDATE solicitudes_servicio       SET id_trabajador = NULL WHERE id_trabajador = %s",
+            "DELETE FROM disponibilidad        WHERE id_persona = %s",
+            "DELETE FROM servicios_persona     WHERE id_persona = %s",
+            "DELETE FROM experiencia_persona   WHERE id_persona = %s",
+            "DELETE FROM telefono_persona      WHERE id_persona = %s",
+            "DELETE FROM correo_persona        WHERE id_persona = %s",
+            "DELETE FROM detalles_persona      WHERE id_persona = %s",
+            "DELETE FROM sesiones              WHERE tipo_usuario = 'trabajador' AND id_usuario = %s",
+            "DELETE FROM codigos_verificacion  WHERE tipo_usuario = 'trabajador' AND id_usuario = %s",
+            "DELETE FROM tokens_recuperacion   WHERE tipo_usuario = 'trabajador' AND id_usuario = %s",
+            "DELETE FROM trabajador_categorias  WHERE id_trabajador = %s",
         ]
 
         for sql in tablas_relacionadas:
