@@ -206,6 +206,21 @@ def crear_tablas():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """)
 
+        # Tabla suscripciones push (Web Push / VAPID)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `push_subscriptions` (
+              `id`           int NOT NULL AUTO_INCREMENT,
+              `tipo_usuario` enum('trabajador','cliente') NOT NULL DEFAULT 'trabajador',
+              `id_usuario`   int NOT NULL,
+              `endpoint`     text NOT NULL,
+              `p256dh`       text NOT NULL,
+              `auth`         text NOT NULL,
+              `fecha_reg`    datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              KEY `idx_push_usuario` (`tipo_usuario`, `id_usuario`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -287,6 +302,138 @@ async def servir_upload(filename: str):
 
     from fastapi.responses import JSONResponse
     return JSONResponse({"error": "Archivo no encontrado"}, status_code=404)
+
+# ============================================
+# WEB PUSH — VAPID
+# ============================================
+
+# Claves VAPID (generadas una sola vez — NO cambiar en producción)
+# Para regenerar: python -c "from cryptography..."
+VAPID_PUBLIC  = "BM66qRWQGKRktcIccA8tJ3k10D6Bslu8jjQufR89ATky-v9aKXacOD9IHxaxLR9ZdOO6A7wVxudhXCrONhZoOfo"
+VAPID_PRIVATE = "JyFRkexRUVZRSaX93z-_Y5H_OYSVOIGyQ3QrOJ28M9A"
+VAPID_CLAIMS  = {"sub": "mailto:admin@talenthub.app"}
+
+@app.get("/push/vapid-public")
+def get_vapid_public():
+    """Devuelve la clave pública VAPID para que el frontend la use al suscribirse."""
+    return {"publicKey": VAPID_PUBLIC}
+
+@app.post("/push/subscribe")
+async def push_subscribe(request: Request):
+    """Guarda o actualiza la suscripción push de un usuario."""
+    from fastapi.responses import JSONResponse as _JSON
+    import mysql.connector, json
+    from config import DB_CONFIG
+    try:
+        body = await request.json()
+        tipo_usuario = body.get("tipo_usuario", "trabajador")
+        id_usuario   = int(body.get("id_usuario", 0))
+        endpoint     = body.get("endpoint", "")
+        p256dh       = body.get("keys", {}).get("p256dh", "")
+        auth         = body.get("keys", {}).get("auth", "")
+
+        if not endpoint or not p256dh or not auth or not id_usuario:
+            return _JSON({"error": "Datos incompletos"}, status_code=400)
+
+        conn   = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        # Borrar suscripciones anteriores del mismo usuario en este dispositivo
+        cursor.execute("""
+            DELETE FROM push_subscriptions
+            WHERE tipo_usuario = %s AND id_usuario = %s AND endpoint = %s
+        """, (tipo_usuario, id_usuario, endpoint))
+        cursor.execute("""
+            INSERT INTO push_subscriptions (tipo_usuario, id_usuario, endpoint, p256dh, auth)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (tipo_usuario, id_usuario, endpoint, p256dh, auth))
+        conn.commit()
+        cursor.close(); conn.close()
+        return _JSON({"ok": True})
+    except Exception as e:
+        return _JSON({"error": str(e)}, status_code=500)
+
+@app.post("/push/unsubscribe")
+async def push_unsubscribe(request: Request):
+    """Elimina la suscripción push de un usuario."""
+    from fastapi.responses import JSONResponse as _JSON
+    import mysql.connector
+    from config import DB_CONFIG
+    try:
+        body     = await request.json()
+        endpoint = body.get("endpoint", "")
+        if not endpoint:
+            return _JSON({"error": "endpoint requerido"}, status_code=400)
+        conn   = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM push_subscriptions WHERE endpoint = %s", (endpoint,))
+        conn.commit()
+        cursor.close(); conn.close()
+        return _JSON({"ok": True})
+    except Exception as e:
+        return _JSON({"error": str(e)}, status_code=500)
+
+
+def enviar_push_trabajadores(id_categoria: int, titulo_notif: str, cuerpo: str, url_destino: str = "/trabajador/panel"):
+    """
+    Envía notificación push a todos los trabajadores suscritos
+    que tengan esa categoría de servicio.
+    """
+    import threading
+    def _enviar():
+        try:
+            import mysql.connector, json, os
+            from config import DB_CONFIG
+            from pywebpush import webpush, WebPushException
+
+            conn   = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor(dictionary=True)
+
+            # Trabajadores con esa categoría que tienen suscripción activa
+            cursor.execute("""
+                SELECT DISTINCT ps.endpoint, ps.p256dh, ps.auth
+                FROM push_subscriptions ps
+                INNER JOIN servicios_persona sp ON ps.id_usuario = sp.id_persona
+                WHERE ps.tipo_usuario = 'trabajador'
+                  AND sp.id_categoria = %s
+            """, (id_categoria,))
+            suscripciones = cursor.fetchall()
+            cursor.close(); conn.close()
+
+            payload = json.dumps({
+                "title": titulo_notif,
+                "body":  cuerpo,
+                "url":   url_destino,
+                "icon":  "/static/icons/icon-192.png",
+                "badge": "/static/icons/icon-192.png"
+            })
+
+            for sub in suscripciones:
+                try:
+                    webpush(
+                        subscription_info={
+                            "endpoint": sub["endpoint"],
+                            "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}
+                        },
+                        data=payload,
+                        vapid_private_key=VAPID_PRIVATE,
+                        vapid_claims=VAPID_CLAIMS
+                    )
+                except WebPushException as ex:
+                    # Suscripción expirada o inválida — limpiar
+                    if ex.response and ex.response.status_code in (404, 410):
+                        try:
+                            conn2   = mysql.connector.connect(**DB_CONFIG)
+                            cur2    = conn2.cursor()
+                            cur2.execute("DELETE FROM push_subscriptions WHERE endpoint = %s", (sub["endpoint"],))
+                            conn2.commit(); cur2.close(); conn2.close()
+                        except Exception: pass
+                    print(f"[PUSH] Error: {ex}")
+                except Exception as ex:
+                    print(f"[PUSH] Error general: {ex}")
+        except Exception as ex:
+            print(f"[PUSH] Error hilo: {ex}")
+    threading.Thread(target=_enviar, daemon=True).start()
+
 
 # ============================================
 # MANEJO DE ERRORES PERSONALIZADOS

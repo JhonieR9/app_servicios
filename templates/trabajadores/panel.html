@@ -559,6 +559,66 @@
 
     cargarPerfil();
     setInterval(() => { if (idTrabajador) cargarSolicitudesActivas(); }, 20000);
+
+    // ── WEB PUSH — suscribirse al cargar el panel ──
+    async function suscribirPush() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        try {
+            const reg = await navigator.serviceWorker.ready;
+
+            // Obtener clave pública VAPID del servidor
+            const resKey = await fetch('/push/vapid-public');
+            const { publicKey } = await resKey.json();
+
+            // Convertir clave base64url → Uint8Array
+            function urlBase64ToUint8Array(base64String) {
+                const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+                const raw     = atob(base64);
+                return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+            }
+
+            // Verificar si ya hay suscripción activa
+            let sub = await reg.pushManager.getSubscription();
+
+            if (!sub) {
+                // Solicitar permiso si no lo tenemos
+                const perm = await Notification.requestPermission();
+                if (perm !== 'granted') {
+                    console.log('[PUSH] Permiso denegado');
+                    return;
+                }
+                // Crear nueva suscripción
+                sub = await reg.pushManager.subscribe({
+                    userVisibleOnly:      true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+            }
+
+            // Guardar en el servidor
+            const id = idTrabajador || localStorage.getItem('id_trabajador');
+            if (!id) return;
+
+            const subJson = sub.toJSON();
+            await fetch('/push/subscribe', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({
+                    tipo_usuario: 'trabajador',
+                    id_usuario:   parseInt(id),
+                    endpoint:     subJson.endpoint,
+                    keys:         subJson.keys
+                })
+            });
+            console.log('[PUSH] ✅ Suscripción activa');
+        } catch(e) {
+            console.log('[PUSH] Error al suscribir:', e);
+        }
+    }
+
+    // Suscribir después de cargar el perfil (para tener idTrabajador)
+    setTimeout(suscribirPush, 3000);
+
 </script>
 </body>
 </html>
