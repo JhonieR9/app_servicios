@@ -1233,19 +1233,124 @@ def obtener_estadisticas():
             if r.get('fecha_registro'):
                 r['fecha_registro'] = str(r['fecha_registro'])
 
+        # ── MÉTRICAS DE SOLICITUDES ────────────────────────────────
+
+        # Totales por estado
+        cursor.execute("""
+            SELECT estado, COUNT(*) as total
+            FROM solicitudes_servicio
+            GROUP BY estado
+        """)
+        rows = cursor.fetchall()
+        sol_por_estado = {r['estado']: r['total'] for r in rows}
+        total_solicitudes   = sum(sol_por_estado.values())
+        sol_pendientes      = sol_por_estado.get('pendiente',  0)
+        sol_aceptadas       = sol_por_estado.get('aceptada',   0)
+        sol_en_proceso      = sol_por_estado.get('en_proceso', 0)
+        sol_completadas     = sol_por_estado.get('completada', 0)
+        sol_canceladas      = sol_por_estado.get('cancelada',  0)
+
+        # Tasa de conversión: completadas / (completadas + canceladas) * 100
+        base_conv = sol_completadas + sol_canceladas
+        tasa_conversion = round(sol_completadas / base_conv * 100, 1) if base_conv > 0 else 0
+
+        # Solicitudes por día (últimos 14 días)
+        cursor.execute("""
+            SELECT DATE(fecha_solicitud) as dia, COUNT(*) as total
+            FROM solicitudes_servicio
+            WHERE fecha_solicitud >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+            GROUP BY dia ORDER BY dia ASC
+        """)
+        sol_por_dia = [{"dia": str(r['dia']), "total": r['total']} for r in cursor.fetchall()]
+
+        # Top categorías más solicitadas
+        cursor.execute("""
+            SELECT COALESCE(cat.nombre_categoria, s.titulo) as categoria, COUNT(*) as total
+            FROM solicitudes_servicio s
+            LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+            GROUP BY categoria ORDER BY total DESC LIMIT 8
+        """)
+        top_categorias_sol = cursor.fetchall()
+
+        # Tiempo promedio de respuesta (minutos entre fecha_solicitud y fecha_aceptacion)
+        cursor.execute("""
+            SELECT ROUND(AVG(TIMESTAMPDIFF(MINUTE, fecha_solicitud, fecha_aceptacion)), 0) as promedio_min
+            FROM solicitudes_servicio
+            WHERE fecha_aceptacion IS NOT NULL AND fecha_solicitud IS NOT NULL
+        """)
+        row = cursor.fetchone()
+        tiempo_respuesta_min = int(row['promedio_min']) if row and row['promedio_min'] else None
+
+        # Top trabajadores (por trabajos completados)
+        cursor.execute("""
+            SELECT p.nombre_completo, COUNT(*) as completados,
+                   ROUND(AVG(cal.puntuacion), 1) as calificacion
+            FROM solicitudes_servicio s
+            INNER JOIN personas p ON s.id_trabajador = p.id_persona
+            LEFT JOIN calificaciones cal ON s.id_solicitud = cal.id_solicitud
+            WHERE s.estado = 'completada'
+            GROUP BY s.id_trabajador, p.nombre_completo
+            ORDER BY completados DESC LIMIT 5
+        """)
+        top_trabajadores = cursor.fetchall()
+        for t in top_trabajadores:
+            if t['calificacion'] is None:
+                t['calificacion'] = 0
+            else:
+                t['calificacion'] = float(t['calificacion'])
+
+        # Solicitudes este mes vs mes anterior
+        cursor.execute("""
+            SELECT COUNT(*) as total FROM solicitudes_servicio
+            WHERE MONTH(fecha_solicitud) = MONTH(CURDATE())
+              AND YEAR(fecha_solicitud)  = YEAR(CURDATE())
+        """)
+        sol_este_mes = cursor.fetchone()['total']
+
+        cursor.execute("""
+            SELECT COUNT(*) as total FROM solicitudes_servicio
+            WHERE MONTH(fecha_solicitud) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+              AND YEAR(fecha_solicitud)  = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+        """)
+        sol_mes_anterior = cursor.fetchone()['total']
+
+        # Clientes recurrentes (más de 1 solicitud)
+        cursor.execute("""
+            SELECT COUNT(*) as total FROM (
+                SELECT id_cliente FROM solicitudes_servicio
+                GROUP BY id_cliente HAVING COUNT(*) > 1
+            ) sub
+        """)
+        clientes_recurrentes = cursor.fetchone()['total']
+
         return JSONResponse({
-            "total_activos": total_activos,
-            "total_eliminados": total_eliminados,
-            "total_clientes": total_clientes,
-            "total_todos": total_todos,
-            "registros_hoy": registros_hoy,
-            "registros_semana": registros_semana,
-            "tarifa_promedio": tarifa_promedio,
-            "por_categoria": por_categoria,
-            "por_ciudad": por_ciudad,
-            "por_departamento": por_departamento,
-            "por_mes": por_mes,
-            "ultimos_registros": ultimos_registros
+            "total_activos":       total_activos,
+            "total_eliminados":    total_eliminados,
+            "total_clientes":      total_clientes,
+            "total_todos":         total_todos,
+            "registros_hoy":       registros_hoy,
+            "registros_semana":    registros_semana,
+            "tarifa_promedio":     tarifa_promedio,
+            "por_categoria":       por_categoria,
+            "por_ciudad":          por_ciudad,
+            "por_departamento":    por_departamento,
+            "por_mes":             por_mes,
+            "ultimos_registros":   ultimos_registros,
+            # Solicitudes
+            "total_solicitudes":      total_solicitudes,
+            "sol_pendientes":         sol_pendientes,
+            "sol_aceptadas":          sol_aceptadas,
+            "sol_en_proceso":         sol_en_proceso,
+            "sol_completadas":        sol_completadas,
+            "sol_canceladas":         sol_canceladas,
+            "tasa_conversion":        tasa_conversion,
+            "sol_por_dia":            sol_por_dia,
+            "top_categorias_sol":     top_categorias_sol,
+            "tiempo_respuesta_min":   tiempo_respuesta_min,
+            "top_trabajadores":       top_trabajadores,
+            "sol_este_mes":           sol_este_mes,
+            "sol_mes_anterior":       sol_mes_anterior,
+            "clientes_recurrentes":   clientes_recurrentes,
         })
         
     except Exception as e:

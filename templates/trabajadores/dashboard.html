@@ -172,6 +172,51 @@
         </div>
     </div>
 
+    <!-- ══ SECCIÓN SOLICITUDES ══════════════════════════════════ -->
+    <div class="topbar mt-2 mb-3" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white">
+        <div>
+            <h4 style="color:white"><i class="bi bi-briefcase-fill me-2"></i>Analíticas de Negocio</h4>
+            <small style="color:rgba(255,255,255,0.75)">Solicitudes, conversión y rendimiento</small>
+        </div>
+    </div>
+
+    <!-- Stats de solicitudes -->
+    <div class="row g-3 mb-4" id="sol-cards">
+        <div class="col-12 loading"><div class="spinner-border"></div></div>
+    </div>
+
+    <!-- Gráficas solicitudes fila 1 -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <h6><i class="bi bi-graph-up-arrow" style="color:#4f46e5"></i> Solicitudes por día (últimos 14 días)</h6>
+                <canvas id="chartSolDia" height="100"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-card">
+                <h6><i class="bi bi-pie-chart-fill" style="color:#4f46e5"></i> Por estado</h6>
+                <canvas id="chartSolEstado" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficas solicitudes fila 2 -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <h6><i class="bi bi-bar-chart-fill" style="color:#4f46e5"></i> Categorías más solicitadas</h6>
+                <canvas id="chartTopCatSol" height="180"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <h6><i class="bi bi-trophy-fill" style="color:#f59e0b"></i> Top trabajadores</h6>
+                <div id="topTrabajadores"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Últimos registros -->
     <div class="table-card">
         <h6><i class="bi bi-clock-history"></i> Últimos Registros</h6>
@@ -222,6 +267,12 @@
             renderTopCiudades(data.por_ciudad);
             renderChartDepartamentos(data.por_departamento);
             renderUltimosRegistros(data.ultimos_registros);
+            // Analíticas de negocio
+            renderSolCards(data);
+            renderChartSolDia(data.sol_por_dia || []);
+            renderChartSolEstado(data);
+            renderChartTopCatSol(data.top_categorias_sol || []);
+            renderTopTrabajadores(data.top_trabajadores || []);
         } catch(e) {
             console.error('Error cargando datos:', e);
         }
@@ -422,6 +473,189 @@
 
     // Cargar al iniciar
     cargarDatos();
+
+    // ── ANALÍTICAS DE SOLICITUDES ──────────────────────────────
+
+    function renderSolCards(d) {
+        const mesAnterior = d.sol_mes_anterior || 0;
+        const esteMes     = d.sol_este_mes || 0;
+        const diffMes     = mesAnterior > 0
+            ? ((esteMes - mesAnterior) / mesAnterior * 100).toFixed(0)
+            : null;
+        const tiempoStr = d.tiempo_respuesta_min != null
+            ? (d.tiempo_respuesta_min >= 60
+                ? Math.round(d.tiempo_respuesta_min / 60) + 'h'
+                : d.tiempo_respuesta_min + 'min')
+            : '—';
+
+        document.getElementById('sol-cards').innerHTML = `
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-send-fill"></i></div>
+                    <div class="stat-info">
+                        <h3>${d.total_solicitudes || 0}</h3>
+                        <p>Total solicitudes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-check-circle-fill"></i></div>
+                    <div class="stat-info">
+                        <h3>${d.sol_completadas || 0}</h3>
+                        <p>Completadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="bi bi-percent"></i></div>
+                    <div class="stat-info">
+                        <h3>${d.tasa_conversion || 0}%</h3>
+                        <p>Tasa conversión</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon orange"><i class="bi bi-clock-history"></i></div>
+                    <div class="stat-info">
+                        <h3 style="font-size:1.4rem">${tiempoStr}</h3>
+                        <p>Tiempo respuesta</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon teal"><i class="bi bi-calendar-month-fill"></i></div>
+                    <div class="stat-info">
+                        <h3>${esteMes}</h3>
+                        <p>Este mes ${diffMes !== null ? `<span style="color:${diffMes>=0?'#16a34a':'#dc2626'};font-size:0.75rem">${diffMes>=0?'▲':'▼'}${Math.abs(diffMes)}%</span>` : ''}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fef3c7;color:#d97706"><i class="bi bi-arrow-repeat"></i></div>
+                    <div class="stat-info">
+                        <h3>${d.clientes_recurrentes || 0}</h3>
+                        <p>Clientes recurrentes</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    let chartSolDia, chartSolEstado, chartTopCatSol;
+
+    function renderChartSolDia(datos) {
+        if (chartSolDia) chartSolDia.destroy();
+        if (!datos.length) return;
+        chartSolDia = new Chart(document.getElementById('chartSolDia'), {
+            type: 'line',
+            data: {
+                labels: datos.map(d => {
+                    const f = new Date(d.dia + 'T00:00:00');
+                    return f.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+                }),
+                datasets: [{
+                    label: 'Solicitudes',
+                    data: datos.map(d => d.total),
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(99,102,241,0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#4f46e5',
+                    pointRadius: 4,
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function renderChartSolEstado(d) {
+        if (chartSolEstado) chartSolEstado.destroy();
+        const labels = ['Pendiente','Aceptada','En proceso','Completada','Cancelada'];
+        const values = [d.sol_pendientes||0, d.sol_aceptadas||0, d.sol_en_proceso||0, d.sol_completadas||0, d.sol_canceladas||0];
+        const colores = ['#f59e0b','#3b82f6','#10b981','#8b5cf6','#ef4444'];
+        chartSolEstado = new Chart(document.getElementById('chartSolEstado'), {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{ data: values, backgroundColor: colores, borderWidth: 2, borderColor: '#fff' }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 6 } } }
+            }
+        });
+    }
+
+    function renderChartTopCatSol(datos) {
+        if (chartTopCatSol) chartTopCatSol.destroy();
+        if (!datos.length) return;
+        chartTopCatSol = new Chart(document.getElementById('chartTopCatSol'), {
+            type: 'bar',
+            data: {
+                labels: datos.map(d => d.categoria),
+                datasets: [{
+                    data: datos.map(d => d.total),
+                    backgroundColor: COLORES,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+                    y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+                }
+            }
+        });
+    }
+
+    function renderTopTrabajadores(datos) {
+        const el = document.getElementById('topTrabajadores');
+        if (!datos.length) {
+            el.innerHTML = '<p class="text-muted text-center py-4">Sin datos aún</p>';
+            return;
+        }
+        const max = datos[0].completados;
+        el.innerHTML = datos.map((t, i) => {
+            const medallas = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+            const estrellas = t.calificacion > 0
+                ? `<span style="color:#f59e0b;font-size:0.78rem">★ ${t.calificacion}</span>`
+                : '';
+            return `
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+                <div style="font-size:1.4rem;flex-shrink:0">${medallas[i] || (i+1)}</div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:0.88rem;font-weight:700;color:#1e293b;
+                                white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                        ${t.nombre_completo} ${estrellas}
+                    </div>
+                    <div style="height:6px;background:#f1f5f9;border-radius:4px;margin-top:4px">
+                        <div style="height:6px;border-radius:4px;
+                                    background:linear-gradient(90deg,#4f46e5,#7c3aed);
+                                    width:${(t.completados/max*100).toFixed(0)}%"></div>
+                    </div>
+                </div>
+                <div style="font-size:0.85rem;font-weight:700;color:#4f46e5;flex-shrink:0">
+                    ${t.completados} ✅
+                </div>
+            </div>`;
+        }).join('');
+    }
 </script>
 </body>
 </html>
