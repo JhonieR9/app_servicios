@@ -617,7 +617,20 @@
     }
 
     // Suscribir después de cargar el perfil (para tener idTrabajador)
-    setTimeout(suscribirPush, 3000);
+    // Reintenta hasta 10s si idTrabajador aún no está disponible
+    function intentarSuscribirPush(intentos) {
+        intentos = intentos || 0;
+        const id = idTrabajador || localStorage.getItem('id_trabajador');
+        if (id) {
+            idTrabajador = id; // asegurar que está seteado
+            suscribirPush();
+        } else if (intentos < 10) {
+            setTimeout(() => intentarSuscribirPush(intentos + 1), 1000);
+        } else {
+            console.log('[PUSH] No se encontró idTrabajador tras 10 intentos');
+        }
+    }
+    setTimeout(() => intentarSuscribirPush(0), 2000);
 
 </script>
 </body>

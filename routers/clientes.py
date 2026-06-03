@@ -485,14 +485,13 @@ def crear_solicitud(
                         )
                     # Push notifications nativas
                     try:
-                        import sys, os as _os
-                        sys.path.insert(0, _os.path.dirname(_os.path.dirname(__file__)))
                         import main as _main
                         _main.enviar_push_trabajadores(
-                            id_categoria  = id_categoria,
-                            titulo_notif  = f"🔔 Nueva solicitud: {nombre_cat}",
-                            cuerpo        = f"{nombre_cli} en {ciudad or 'tu zona'} — {(descripcion or '')[:80]}",
-                            url_destino   = "/trabajador/panel"
+                            id_categoria    = id_categoria,
+                            nombre_categoria = nombre_cat,
+                            titulo_notif    = f"🔔 Nueva solicitud: {nombre_cat}",
+                            cuerpo          = f"{nombre_cli} en {ciudad or 'tu zona'} — {(descripcion or '')[:80]}",
+                            url_destino     = "/trabajador/panel"
                         )
                     except Exception as _pe:
                         print(f"[PUSH] No se pudo enviar: {_pe}")

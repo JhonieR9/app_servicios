@@ -373,31 +373,41 @@ async def push_unsubscribe(request: Request):
         return _JSON({"error": str(e)}, status_code=500)
 
 
-def enviar_push_trabajadores(id_categoria: int, titulo_notif: str, cuerpo: str, url_destino: str = "/trabajador/panel"):
+def enviar_push_trabajadores(id_categoria: int, nombre_categoria: str, titulo_notif: str, cuerpo: str, url_destino: str = "/trabajador/panel"):
     """
     Envía notificación push a todos los trabajadores suscritos
     que tengan esa categoría de servicio.
+    Acepta tanto el id como el nombre de la categoría porque servicios_persona
+    guarda el texto (ej. 'Carpintería'), no el id numérico.
     """
     import threading
     def _enviar():
         try:
-            import mysql.connector, json, os
+            import mysql.connector, json
             from config import DB_CONFIG
-            from pywebpush import webpush, WebPushException
+            try:
+                from pywebpush import webpush, WebPushException
+            except ImportError:
+                print("[PUSH] pywebpush no instalado — omitiendo push")
+                return
 
             conn   = mysql.connector.connect(**DB_CONFIG)
             cursor = conn.cursor(dictionary=True)
 
-            # Trabajadores con esa categoría que tienen suscripción activa
+            # servicios_persona.categoria es texto, no id
             cursor.execute("""
                 SELECT DISTINCT ps.endpoint, ps.p256dh, ps.auth
                 FROM push_subscriptions ps
                 INNER JOIN servicios_persona sp ON ps.id_usuario = sp.id_persona
                 WHERE ps.tipo_usuario = 'trabajador'
-                  AND sp.id_categoria = %s
-            """, (id_categoria,))
+                  AND sp.categoria = %s
+            """, (nombre_categoria,))
             suscripciones = cursor.fetchall()
             cursor.close(); conn.close()
+
+            if not suscripciones:
+                print(f"[PUSH] Sin suscripciones para categoría '{nombre_categoria}'")
+                return
 
             payload = json.dumps({
                 "title": titulo_notif,
@@ -418,6 +428,7 @@ def enviar_push_trabajadores(id_categoria: int, titulo_notif: str, cuerpo: str, 
                         vapid_private_key=VAPID_PRIVATE,
                         vapid_claims=VAPID_CLAIMS
                     )
+                    print(f"[PUSH] ✅ Enviado a endpoint ...{sub['endpoint'][-20:]}")
                 except WebPushException as ex:
                     # Suscripción expirada o inválida — limpiar
                     if ex.response and ex.response.status_code in (404, 410):
@@ -426,8 +437,10 @@ def enviar_push_trabajadores(id_categoria: int, titulo_notif: str, cuerpo: str, 
                             cur2    = conn2.cursor()
                             cur2.execute("DELETE FROM push_subscriptions WHERE endpoint = %s", (sub["endpoint"],))
                             conn2.commit(); cur2.close(); conn2.close()
+                            print(f"[PUSH] Suscripción expirada eliminada")
                         except Exception: pass
-                    print(f"[PUSH] Error: {ex}")
+                    else:
+                        print(f"[PUSH] WebPushException: {ex}")
                 except Exception as ex:
                     print(f"[PUSH] Error general: {ex}")
         except Exception as ex:
