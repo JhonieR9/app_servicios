@@ -299,15 +299,22 @@
             border-radius: 16px !important;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
+            min-width: 240px;
+        }
+        .th-popup .mapboxgl-popup-tip {
+            border-top-color: #4f46e5 !important;
         }
         .th-popup .mapboxgl-popup-close-button {
-            color: rgba(255,255,255,0.8) !important;
-            font-size: 1.1rem !important;
-            top: 4px !important; right: 6px !important;
+            color: rgba(255,255,255,0.9) !important;
+            font-size: 1.2rem !important;
+            top: 6px !important; right: 8px !important;
             background: none !important; border: none !important;
-            z-index: 10;
+            z-index: 10; line-height: 1;
         }
         .th-popup .mapboxgl-popup-close-button:hover { color: white !important; }
+        /* Permitir que el popup salga del contenedor del mapa */
+        #mapaStep4 { overflow: visible !important; }
+        #mapaStep4 canvas { border-radius: 14px; }
 
         /* ── Tarjetas de profesionales ── */
         .prof-card {
@@ -566,7 +573,7 @@
                 <div class="card-sub" id="step4Sub">Toca un marcador para seleccionar al profesional</div>
 
                 <!-- Mapa -->
-                <div id="mapaStep4" style="width:100%;height:320px;border-radius:14px;overflow:hidden;margin:12px 0 0;background:#e2e8f0;position:relative">
+                <div id="mapaStep4" style="width:100%;height:400px;border-radius:14px;overflow:hidden;margin:12px 0 0;background:#e2e8f0;position:relative">
                     <div id="mapaLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f1f5f9;z-index:10;border-radius:14px;flex-direction:column;gap:8px;color:#64748b;font-size:0.85rem">
                         <div style="font-size:2rem">🗺️</div>
                         Cargando mapa...
@@ -1268,16 +1275,26 @@ async function cargarMapaProfesionales() {
                 </div>`;
 
                 const popup = new mapboxgl.Popup({
-                    offset: 28,
+                    offset: [0, -52],
                     closeButton: true,
-                    maxWidth: '240px',
-                    className: 'th-popup'
+                    maxWidth: '260px',
+                    className: 'th-popup',
+                    anchor: 'bottom'
                 }).setHTML(popupHtml);
 
-                new mapboxgl.Marker({ element: el })
+                const marker = new mapboxgl.Marker({ element: el })
                     .setLngLat([lng, lat])
                     .setPopup(popup)
                     .addTo(mapaStep4);
+
+                // Al abrir el popup, centrar el mapa para que sea completamente visible
+                popup.on('open', () => {
+                    mapaStep4.easeTo({
+                        center: [lng, lat],
+                        offset: [0, 80],  // desplazar hacia abajo para que el popup (arriba) quede visible
+                        duration: 300
+                    });
+                });
 
                 bounds.extend([lng, lat]);
             });
