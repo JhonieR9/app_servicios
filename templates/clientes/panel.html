@@ -267,7 +267,8 @@
         const msgs = {
             aceptada:   `✅ ¡${nombreTrab || 'Un profesional'} aceptó tu solicitud!`,
             en_proceso: `🔧 El profesional está trabajando ahora`,
-            completada: `🎉 ¡Tu servicio fue completado!`
+            completada: `🎉 ¡Tu servicio fue completado!`,
+            rechazada:  `🔄 El profesional rechazó — buscando otro automáticamente...`
         };
         const msg = msgs[estado];
         if (!msg) return;
@@ -390,9 +391,14 @@
                 const estadoPrev = estadosAnteriores[s.id_solicitud];
                 const estadoNow  = s.estado;
                 if (estadoPrev && estadoPrev !== estadoNow) {
-                    // El estado cambió — notificar al cliente
                     sonarNotificacionCliente();
-                    mostrarBannerCliente(estadoNow, s.nombre_trabajador);
+                    // Mensaje según el nuevo estado
+                    if (estadoNow === 'pendiente' && estadoPrev === 'aceptada') {
+                        // El trabajador rechazó → volvió a pendiente
+                        mostrarBannerCliente('rechazada', '');
+                    } else {
+                        mostrarBannerCliente(estadoNow, s.nombre_trabajador);
+                    }
                 }
                 estadosAnteriores[s.id_solicitud] = estadoNow;
             });

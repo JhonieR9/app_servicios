@@ -488,8 +488,8 @@
     // ── Acción sobre solicitud ──
     async function accionSol(idSolicitud, nuevoEstado) {
         const confirmMsg = {
-            aceptada: '¿Aceptar esta solicitud?',
-            cancelada: '¿Rechazar esta solicitud?',
+            aceptada:   '¿Aceptar esta solicitud?',
+            cancelada:  '¿Rechazar esta solicitud? Quedará disponible para otros profesionales.',
             en_proceso: '¿Iniciar el servicio ahora?'
         }[nuevoEstado] || '¿Confirmar?';
         if (!confirm(confirmMsg)) return;

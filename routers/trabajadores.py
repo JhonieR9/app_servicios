@@ -171,6 +171,35 @@ def actualizar_estado_solicitud(
                     {"error": "Esta solicitud ya fue aceptada por otro trabajador"},
                     status_code=409
                 )
+
+        elif estado == 'cancelada':
+            # Verificar el estado actual de la solicitud
+            cursor_check = conexion.cursor()
+            cursor_check.execute("""
+                SELECT estado, id_trabajador FROM solicitudes_servicio
+                WHERE id_solicitud = %s
+            """, (id_solicitud,))
+            sol = cursor_check.fetchone()
+            cursor_check.close()
+
+            if sol and sol[0] in ('pendiente', 'aceptada') and sol[1]:
+                # Tenía trabajador asignado → liberar: volver a pendiente sin trabajador
+                # El cliente no tiene que repetir el proceso, otros trabajadores pueden tomar la solicitud
+                cursor.execute("""
+                    UPDATE solicitudes_servicio
+                    SET estado = 'pendiente', id_trabajador = NULL, fecha_aceptacion = NULL
+                    WHERE id_solicitud = %s
+                """, (id_solicitud,))
+                conexion.commit()
+                return JSONResponse({"mensaje": "Solicitud liberada — otros profesionales pueden tomarla"})
+            else:
+                # Sin trabajador asignado (cancelación del cliente) o en proceso → cancelar normal
+                cursor.execute("""
+                    UPDATE solicitudes_servicio
+                    SET estado = 'cancelada'
+                    WHERE id_solicitud = %s
+                """, (id_solicitud,))
+
         elif estado == 'en_proceso':
             # Registrar fecha de inicio del servicio
             cursor.execute("""
@@ -178,6 +207,7 @@ def actualizar_estado_solicitud(
                 SET estado = %s, fecha_inicio = NOW()
                 WHERE id_solicitud = %s AND estado = 'aceptada'
             """, (estado, id_solicitud))
+
         elif estado == 'completada':
             # Registrar fecha de finalización
             cursor.execute("""
@@ -185,6 +215,7 @@ def actualizar_estado_solicitud(
                 SET estado = %s, fecha_finalizacion = NOW()
                 WHERE id_solicitud = %s AND estado = 'en_proceso'
             """, (estado, id_solicitud))
+
         else:
             cursor.execute("""
                 UPDATE solicitudes_servicio
