@@ -359,13 +359,25 @@
                 </div>
             </div>`;
         } else if (estado === 'pendiente') {
+            const mins = parseInt(s.minutos_pendiente) || 0;
+            const esTimeout = mins >= 120;
             trabajadorHtml = `
-            <div style="margin:0 18px 14px;background:#fef9c3;border-radius:14px;padding:12px 14px;
-                        display:flex;align-items:center;gap:10px;border:1px solid #fde68a">
-                <span style="font-size:1.2rem">🔍</span>
+            <div style="margin:0 18px 14px;background:${esTimeout ? '#fffbeb' : '#fef9c3'};
+                        border-radius:14px;padding:12px 14px;
+                        display:flex;align-items:center;gap:10px;
+                        border:1px solid ${esTimeout ? '#fde68a' : '#fde68a'}">
+                <span style="font-size:1.2rem">${esTimeout ? '⏳' : '🔍'}</span>
                 <div>
-                    <div style="font-size:0.82rem;font-weight:700;color:#92400e">Buscando profesional...</div>
-                    <div style="font-size:0.72rem;color:#a16207;margin-top:1px">Te notificaremos cuando alguien acepte</div>
+                    <div style="font-size:0.82rem;font-weight:700;color:#92400e">
+                        ${esTimeout
+                            ? `Llevamos ${Math.floor(mins/60)}h buscando profesional...`
+                            : 'Buscando profesional...'}
+                    </div>
+                    <div style="font-size:0.72rem;color:#a16207;margin-top:1px">
+                        ${esTimeout
+                            ? 'Pocos disponibles ahora. ¿Esperas o cancelamos?'
+                            : 'Te notificaremos cuando alguien acepte'}
+                    </div>
                 </div>
             </div>`;
         }

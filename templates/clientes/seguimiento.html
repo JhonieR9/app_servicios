@@ -444,6 +444,11 @@
                     (data.fecha_solicitud || '') + ' · 💰 $' + parseFloat(data.precio_final).toLocaleString('es-CO');
             }
 
+            // Verificar timeout (solo si sigue pendiente)
+            if (estado === 'pendiente' && data.minutos_pendiente) {
+                verificarTimeout(data.minutos_pendiente, estado);
+            }
+
             if (data.fecha_solicitud)    document.getElementById('tl-time-pendiente').textContent  = data.fecha_solicitud;
             if (data.fecha_aceptacion)   document.getElementById('tl-time-aceptada').textContent   = data.fecha_aceptacion;
             if (data.fecha_inicio)       document.getElementById('tl-time-en_proceso').textContent = data.fecha_inicio;
@@ -574,7 +579,81 @@
         if (m) m.remove();
     }
 
-    function abrirChatSeguimiento() {
+    // ── TIMEOUT BANNER ──
+    const TIMEOUT_MINUTOS = 120; // 2 horas
+    let timeoutBannerMostrado = false;
+
+    function verificarTimeout(minutosPendiente, estado) {
+        if (estado !== 'pendiente') return;
+        if (timeoutBannerMostrado) return;
+        if (minutosPendiente < TIMEOUT_MINUTOS) return;
+
+        timeoutBannerMostrado = true;
+        let banner = document.getElementById('timeoutBanner');
+        if (banner) return;
+
+        banner = document.createElement('div');
+        banner.id = 'timeoutBanner';
+        banner.style.cssText = `
+            background:white;border-radius:18px;padding:20px;
+            margin-bottom:16px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.1);
+            border-left:4px solid #f59e0b;
+        `;
+        banner.innerHTML = `
+            <div style="display:flex;align-items:flex-start;gap:12px">
+                <div style="font-size:1.8rem;flex-shrink:0">⏳</div>
+                <div style="flex:1">
+                    <div style="font-weight:700;color:#92400e;font-size:0.95rem;margin-bottom:4px">
+                        Llevamos más de ${Math.floor(minutosPendiente / 60)}h buscando profesional
+                    </div>
+                    <div style="color:#78350f;font-size:0.82rem;line-height:1.5;margin-bottom:14px">
+                        Todos los profesionales disponibles están ocupados o no han respondido.
+                        ¿Qué quieres hacer?
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap">
+                        <button onclick="seguirEsperando()"
+                            style="flex:1;min-width:120px;padding:10px 14px;
+                                   background:#fef3c7;color:#92400e;border:2px solid #fde68a;
+                                   border-radius:10px;font-weight:700;cursor:pointer;
+                                   font-family:'Lato',sans-serif;font-size:0.82rem">
+                            ⏰ Seguir esperando
+                        </button>
+                        <button onclick="cancelarSolicitud()"
+                            style="flex:1;min-width:120px;padding:10px 14px;
+                                   background:#fee2e2;color:#dc2626;border:2px solid #fecaca;
+                                   border-radius:10px;font-weight:700;cursor:pointer;
+                                   font-family:'Lato',sans-serif;font-size:0.82rem">
+                            ❌ Cancelar solicitud
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Insertar antes del cancelar normal
+        const cancelarWrap = document.getElementById('cancelarWrap');
+        if (cancelarWrap && cancelarWrap.parentNode) {
+            cancelarWrap.parentNode.insertBefore(banner, cancelarWrap);
+            cancelarWrap.style.display = 'none'; // ocultar el cancelar simple, ya está en el banner
+        } else {
+            document.querySelector('.content').appendChild(banner);
+        }
+    }
+
+    function seguirEsperando() {
+        const banner = document.getElementById('timeoutBanner');
+        if (banner) banner.remove();
+        timeoutBannerMostrado = false; // resetear para que vuelva a aparecer en otro ciclo si sigue pendiente
+        // Mostrar confirmación
+        const t = document.createElement('div');
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
+            'background:#059669;color:white;padding:12px 20px;border-radius:12px;' +
+            'font-size:0.85rem;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2)';
+        t.textContent = '✅ Ok, seguimos buscando...';
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
         const idSolicitud = new URLSearchParams(window.location.search).get('id');
         const idCliente   = localStorage.getItem('id_cliente') || 0;
         if (idSolicitud) {

@@ -171,7 +171,8 @@ def api_seguimiento(id: int):
             SELECT s.id_solicitud, s.titulo, s.estado, s.ciudad, s.departamento,
                    s.fecha_solicitud, s.fecha_aceptacion, s.fecha_inicio, s.fecha_finalizacion,
                    s.id_trabajador, s.precio_final,
-                   COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria
+                   COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
+                   TIMESTAMPDIFF(MINUTE, s.fecha_solicitud, NOW()) as minutos_pendiente
             FROM solicitudes_servicio s
             LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
             WHERE s.id_solicitud = %s
@@ -179,6 +180,10 @@ def api_seguimiento(id: int):
         sol = cursor.fetchone()
         if not sol:
             return JSONResponse({"error": "No encontrada"}, status_code=404)
+
+        # Guardar minutos_pendiente antes de serializar fechas
+        minutos_pendiente = int(sol.get('minutos_pendiente') or 0)
+        sol['minutos_pendiente'] = minutos_pendiente
 
         from datetime import timedelta
         for k in ['fecha_solicitud','fecha_aceptacion','fecha_inicio','fecha_finalizacion']:
@@ -242,7 +247,8 @@ def listar_mis_solicitudes_cliente(request: Request, id_cliente: int = None):
                    p.nombre_completo  AS nombre_trabajador,
                    tp.telefono        AS telefono_trabajador,
                    cp.correo          AS correo_trabajador,
-                   (SELECT ROUND(AVG(c2.puntuacion),1) FROM calificaciones c2 WHERE c2.id_trabajador = p.id_persona) AS calificacion_trabajador
+                   (SELECT ROUND(AVG(c2.puntuacion),1) FROM calificaciones c2 WHERE c2.id_trabajador = p.id_persona) AS calificacion_trabajador,
+                   TIMESTAMPDIFF(MINUTE, s.fecha_solicitud, NOW()) AS minutos_pendiente
             FROM solicitudes_servicio s
             LEFT JOIN categorias_servicio cat ON s.id_categoria  = cat.id_categoria
             LEFT JOIN personas p              ON s.id_trabajador = p.id_persona
