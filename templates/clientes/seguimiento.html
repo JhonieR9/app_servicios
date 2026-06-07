@@ -404,7 +404,11 @@
                 return;
             }
             const data = await res.json();
-            if (data.error) return;
+            if (data.error) {
+                console.error('[SEGUIMIENTO] Error API:', data.error);
+                document.getElementById('topSub').textContent = 'Error: ' + data.error;
+                return;
+            }
 
             const estado = data.estado || 'pendiente';
             const estadoAnterior = estadoActual;

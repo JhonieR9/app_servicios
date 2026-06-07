@@ -170,8 +170,8 @@ def api_seguimiento(id: int):
         cursor.execute("""
             SELECT s.id_solicitud, s.titulo, s.estado, s.ciudad, s.departamento,
                    s.fecha_solicitud, s.fecha_aceptacion, s.fecha_inicio, s.fecha_finalizacion,
-                   s.id_trabajador, s.precio_final,
-                   COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
+                   s.id_trabajador, s.precio_final, s.id_categoria,
+                   COALESCE(cat.nombre_categoria, s.titulo, CONCAT('Categoría ', s.id_categoria), 'Servicio') as nombre_categoria,
                    TIMESTAMPDIFF(MINUTE, s.fecha_solicitud, NOW()) as minutos_pendiente
             FROM solicitudes_servicio s
             LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
