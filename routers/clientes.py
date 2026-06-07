@@ -196,6 +196,11 @@ def api_seguimiento(id: int):
         if sol.get('precio_final') is not None:
             sol['precio_final'] = float(sol['precio_final'])
 
+        # Garantizar que campos string no sean None
+        for k in ['titulo', 'estado', 'ciudad', 'departamento', 'nombre_categoria']:
+            if sol.get(k) is None:
+                sol[k] = ''
+
         if sol.get('id_trabajador'):
             cursor.execute("""
                 SELECT p.nombre_completo, tp.telefono
@@ -549,14 +554,17 @@ def cancelar_solicitud(
     sql = """
     UPDATE solicitudes_servicio 
     SET estado = 'cancelada', motivo_cancelacion = %s
-    WHERE id_solicitud = %s AND estado IN ('pendiente', 'aceptada')
+    WHERE id_solicitud = %s AND estado IN ('pendiente', 'aceptada', 'en_proceso')
     """
     
     cursor.execute(sql, (motivo, id_solicitud))
     conexion.commit()
+    afectadas = cursor.rowcount
     cursor.close()
     conexion.close()
     
+    if afectadas == 0:
+        return JSONResponse({"error": "No se pudo cancelar — la solicitud ya está completada o cancelada"}, status_code=400)
     return {"mensaje": "Solicitud cancelada"}
 
 @router.post("/solicitud/completar")

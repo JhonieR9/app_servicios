@@ -433,9 +433,9 @@
             }
 
             // Info solicitud
-            document.getElementById('infoServicio').textContent  = data.nombre_categoria || data.titulo || '—';
-            document.getElementById('infoUbicacion').textContent = [data.ciudad, data.departamento].filter(Boolean).join(', ') || '—';
-            document.getElementById('infoFecha').textContent     = data.fecha_solicitud || '—';
+            document.getElementById('infoServicio').textContent  = data.nombre_categoria || data.titulo || 'Servicio';
+            document.getElementById('infoUbicacion').textContent = [data.ciudad, data.departamento].filter(v => v && v !== 'None').join(', ') || 'Sin ubicación';
+            document.getElementById('infoFecha').textContent     = data.fecha_solicitud || 'Sin fecha';
             document.getElementById('topSub').textContent        = 'Solicitud #' + idSolicitud;
 
             // Precio si está completada
