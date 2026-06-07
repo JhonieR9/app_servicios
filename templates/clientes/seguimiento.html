@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Seguimiento - TalentHub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -431,8 +434,11 @@
                     estado === 'pendiente' ? 'block' : 'none';
                 // Detener polling si está completada o cancelada
                 if (estado === 'completada' || estado === 'cancelada') {
-                    clearInterval(window._seguimientoInterval);
-                    document.querySelector('.refresh-bar').style.display = 'none';
+                    if (window._seguimientoInterval) {
+                        clearInterval(window._seguimientoInterval);
+                    }
+                    const rb = document.querySelector('.refresh-bar');
+                    if (rb) rb.style.display = 'none';
                 }
             }
 
