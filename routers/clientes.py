@@ -794,6 +794,7 @@ def obtener_trabajadores_cercanos(
                     "telefono": str(trabajador.get('telefono') or 'N/A'),
                     "experiencia": experiencia,
                     "categoria": servicios[0]['categoria'] if servicios else 'General',
+                    "tarifa": float(servicios[0].get('valor_hora') or 0) if servicios else 0,
                     "servicios": servicios,
                     "latitud": float(trabajador_lat),
                     "longitud": float(trabajador_lng),

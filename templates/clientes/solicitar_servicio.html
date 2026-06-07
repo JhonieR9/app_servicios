@@ -293,6 +293,22 @@
             .cat-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
+        /* ── Popup Mapbox personalizado ── */
+        .th-popup .mapboxgl-popup-content {
+            padding: 0 !important;
+            border-radius: 16px !important;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
+        }
+        .th-popup .mapboxgl-popup-close-button {
+            color: rgba(255,255,255,0.8) !important;
+            font-size: 1.1rem !important;
+            top: 4px !important; right: 6px !important;
+            background: none !important; border: none !important;
+            z-index: 10;
+        }
+        .th-popup .mapboxgl-popup-close-button:hover { color: white !important; }
+
         /* ── Tarjetas de profesionales ── */
         .prof-card {
             border: 2px solid #e2e8f0; border-radius: 16px;
@@ -1154,6 +1170,7 @@ async function cargarMapaProfesionales() {
                 const calNum = parseFloat(t.calificacion) || 0;
                 const estrellas = calNum > 0 ? '★'.repeat(Math.round(calNum)) + ' ' + calNum : 'Sin calificaciones';
                 const nombreSafe = (t.nombre || '').replace(/'/g, "\\'");
+                const categoriaSafe = (t.categoria || '').replace(/'/g, "\\'");
 
                 const el = document.createElement('div');
                 el.style.cssText = 'width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);border:3px solid white;box-shadow:0 3px 12px rgba(102,126,234,.5);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:white;cursor:pointer;transition:transform .2s;';
@@ -1161,15 +1178,103 @@ async function cargarMapaProfesionales() {
                 el.onmouseenter = () => el.style.transform = 'scale(1.15)';
                 el.onmouseleave = () => el.style.transform = 'scale(1)';
 
-                const popup = new mapboxgl.Popup({ offset: 28, closeButton: false })
-                    .setHTML(`<div style="font-family:sans-serif;min-width:160px;padding:4px">
-                        <div style="font-weight:700;font-size:0.9rem;color:#0f172a;margin-bottom:4px">${t.nombre}</div>
-                        <div style="font-size:0.75rem;color:#64748b;margin-bottom:6px">${estrellas} · ${t.distancia} km</div>
-                        <button onclick="selProfMapa(${t.id},'${nombreSafe}','${estrellas}',${t.distancia})"
-                            style="width:100%;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:8px;padding:8px;font-weight:700;font-size:0.82rem;cursor:pointer">
-                            ✓ Seleccionar
-                        </button>
-                    </div>`);
+                // Estrellas visuales
+                const numEst = calNum > 0 ? Math.round(calNum) : 0;
+                const estrellasHtml = calNum > 0
+                    ? `${'★'.repeat(numEst)}${'☆'.repeat(5 - numEst)}`
+                    : '☆☆☆☆☆';
+
+                // Tarifa formateada
+                const tarifaHtml = t.tarifa > 0
+                    ? `💰 $${parseInt(t.tarifa).toLocaleString('es-CO')}/h`
+                    : '';
+
+                // Experiencia
+                const expHtml = t.experiencia > 0
+                    ? `${t.experiencia} año${t.experiencia !== 1 ? 's' : ''} exp.`
+                    : '';
+
+                // Estado disponibilidad
+                const dispHtml = `<span style="display:inline-flex;align-items:center;gap:4px;
+                    background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:99px;
+                    font-size:0.65rem;font-weight:700">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block"></span>
+                    Disponible
+                </span>`;
+
+                const popupHtml = `
+                <div style="font-family:'Lato',sans-serif;width:220px;overflow:hidden">
+
+                    <!-- Header con avatar y nombre -->
+                    <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                                padding:14px 14px 10px;
+                                display:flex;align-items:center;gap:10px">
+                        <div style="width:48px;height:48px;border-radius:50%;flex-shrink:0;
+                                    background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-size:1rem;font-weight:800;color:white">
+                            ${iniciales}
+                        </div>
+                        <div style="flex:1;min-width:0">
+                            <div style="font-weight:800;font-size:0.92rem;color:white;
+                                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                                ${t.nombre}
+                            </div>
+                            <div style="font-size:0.72rem;color:rgba(255,255,255,0.8);margin-top:2px">
+                                🔧 ${t.categoria || 'Profesional'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cuerpo con stats -->
+                    <div style="padding:12px 14px">
+
+                        <!-- Calificación y reseñas -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                            <div>
+                                <span style="color:#f59e0b;font-size:0.88rem;letter-spacing:1px">${estrellasHtml}</span>
+                                <span style="font-size:0.72rem;color:#64748b;margin-left:4px">
+                                    ${calNum > 0 ? calNum + ' · ' + (t.total_calificaciones || 0) + ' reseñas' : 'Sin reseñas aún'}
+                                </span>
+                            </div>
+                            ${dispHtml}
+                        </div>
+
+                        <!-- Pills de info -->
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+                            <span style="background:#f1f5f9;color:#475569;padding:3px 8px;border-radius:99px;font-size:0.68rem;font-weight:600">
+                                📍 ${t.distancia} km
+                            </span>
+                            ${expHtml ? `<span style="background:#f1f5f9;color:#475569;padding:3px 8px;border-radius:99px;font-size:0.68rem;font-weight:600">🏅 ${expHtml}</span>` : ''}
+                            ${tarifaHtml ? `<span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:99px;font-size:0.68rem;font-weight:600">${tarifaHtml}</span>` : ''}
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div style="display:flex;gap:6px">
+                            <button onclick="selProfMapa(${t.id},'${nombreSafe}','${estrellas}',${t.distancia})"
+                                style="flex:1;background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                                       color:white;border:none;border-radius:10px;padding:9px 8px;
+                                       font-weight:700;font-size:0.78rem;cursor:pointer;
+                                       font-family:'Lato',sans-serif;letter-spacing:0.3px">
+                                ✓ Seleccionar
+                            </button>
+                            <a href="/trabajador/perfil/${t.id}" target="_blank"
+                                style="background:#f1f5f9;color:#475569;border:none;border-radius:10px;
+                                       padding:9px 10px;font-weight:700;font-size:0.78rem;cursor:pointer;
+                                       text-decoration:none;display:flex;align-items:center;
+                                       white-space:nowrap;font-family:'Lato',sans-serif">
+                                👤 Ver
+                            </a>
+                        </div>
+                    </div>
+                </div>`;
+
+                const popup = new mapboxgl.Popup({
+                    offset: 28,
+                    closeButton: true,
+                    maxWidth: '240px',
+                    className: 'th-popup'
+                }).setHTML(popupHtml);
 
                 new mapboxgl.Marker({ element: el })
                     .setLngLat([lng, lat])
