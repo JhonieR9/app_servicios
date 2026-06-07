@@ -1173,10 +1173,8 @@ async function cargarMapaProfesionales() {
                 const categoriaSafe = (t.categoria || '').replace(/'/g, "\\'");
 
                 const el = document.createElement('div');
-                el.style.cssText = 'width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);border:3px solid white;box-shadow:0 3px 12px rgba(102,126,234,.5);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:white;cursor:pointer;transition:transform .2s;';
+                el.style.cssText = 'width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);border:3px solid white;box-shadow:0 3px 12px rgba(102,126,234,.5);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:white;cursor:pointer;';
                 el.textContent = iniciales;
-                el.onmouseenter = () => el.style.transform = 'scale(1.15)';
-                el.onmouseleave = () => el.style.transform = 'scale(1)';
 
                 // Estrellas visuales
                 const numEst = calNum > 0 ? Math.round(calNum) : 0;
