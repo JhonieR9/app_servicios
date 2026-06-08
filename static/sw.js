@@ -1,6 +1,6 @@
-// Service Worker - TalentHub PWA v3
-const CACHE_NAME    = 'talenthub-v3';
-const STATIC_CACHE  = 'talenthub-static-v3';
+// Service Worker - TalentHub PWA v4
+const CACHE_NAME    = 'talenthub-v4';
+const STATIC_CACHE  = 'talenthub-static-v4';
 
 // Recursos estáticos que siempre queremos offline
 const STATIC_ASSETS = [

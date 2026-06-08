@@ -330,6 +330,14 @@
     let estadoActual  = '';
     let trabId        = null;
 
+    // Debug temporal — mostrar qué ID tiene
+    console.log('[SEGUIMIENTO] id en URL:', idSolicitud, '| URL completa:', window.location.href);
+
+    // Mostrar ID inmediatamente para diagnóstico
+    if (idSolicitud) {
+        document.getElementById('topSub').textContent = 'Solicitud #' + idSolicitud + ' — cargando...';
+    }
+
     // ── Sin id en URL: mostrar pantalla de selección ──
     if (!idSolicitud) {
         document.querySelector('.content').innerHTML = `
