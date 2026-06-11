@@ -885,6 +885,61 @@ def completar_servicio(
         status_code=403
     )
 
+@router.post("/calificar-cliente")
+def calificar_cliente(
+    id_solicitud:  int  = Form(...),
+    id_trabajador: int  = Form(...),
+    id_cliente:    int  = Form(...),
+    puntuacion:    int  = Form(...),
+    comentario:    str  = Form(None)
+):
+    """El trabajador califica al cliente tras completar el servicio."""
+    if not (1 <= puntuacion <= 5):
+        return JSONResponse({"error": "La puntuación debe estar entre 1 y 5"}, status_code=400)
+
+    conexion = conectar_bd()
+    cursor   = conexion.cursor(dictionary=True)
+    try:
+        # Verificar que el servicio existe, está completado y fue atendido por este trabajador
+        cursor.execute("""
+            SELECT id_solicitud FROM solicitudes_servicio
+            WHERE id_solicitud = %s
+              AND id_trabajador = %s
+              AND id_cliente    = %s
+              AND estado        = 'completada'
+            LIMIT 1
+        """, (id_solicitud, id_trabajador, id_cliente))
+        if not cursor.fetchone():
+            return JSONResponse(
+                {"error": "Solo puedes calificar un servicio que hayas completado con este cliente"},
+                status_code=403
+            )
+
+        # Evitar duplicado
+        cursor.execute("""
+            SELECT id_calificacion FROM calificaciones
+            WHERE id_solicitud    = %s
+              AND id_trabajador   = %s
+              AND tipo_calificacion = 'trabajador_a_cliente'
+        """, (id_solicitud, id_trabajador))
+        if cursor.fetchone():
+            return JSONResponse({"mensaje": "Ya calificaste a este cliente"})
+
+        cursor.execute("""
+            INSERT INTO calificaciones
+                (id_solicitud, id_cliente, id_trabajador, tipo_calificacion, puntuacion, comentario)
+            VALUES (%s, %s, %s, 'trabajador_a_cliente', %s, %s)
+        """, (id_solicitud, id_cliente, id_trabajador, puntuacion, comentario))
+        conexion.commit()
+        return JSONResponse({"mensaje": "¡Gracias! Calificación enviada."})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        cursor.close()
+        conexion.close()
+
+
 @router.get("/historial/{id_trabajador}")
 def historial_trabajador(id_trabajador: int):
     conexion = conectar_bd()
@@ -1591,7 +1646,7 @@ def ver_clientes(request: Request):
 
 @router.get("/clientes/listar")
 def listar_clientes():
-    """API para obtener todos los clientes registrados"""
+    """API para obtener todos los clientes registrados con su calificación promedio como cliente"""
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión", "clientes": []}, status_code=500)
@@ -1600,7 +1655,11 @@ def listar_clientes():
         cursor.execute("""
             SELECT c.id_cliente, c.nombre_completo, c.estado, c.fecha_registro,
                    e.correo, t.telefono,
-                   (SELECT COUNT(*) FROM solicitudes_servicio s WHERE s.id_cliente = c.id_cliente) AS total_solicitudes
+                   (SELECT COUNT(*) FROM solicitudes_servicio s WHERE s.id_cliente = c.id_cliente) AS total_solicitudes,
+                   (SELECT ROUND(AVG(cal.puntuacion),1)
+                    FROM calificaciones cal
+                    WHERE cal.id_cliente = c.id_cliente
+                      AND cal.tipo_calificacion = 'trabajador_a_cliente') AS calificacion_como_cliente
             FROM clientes c
             LEFT JOIN correo_cliente e ON c.id_cliente = e.id_cliente AND e.principal = 1
             LEFT JOIN telefono_cliente t ON c.id_cliente = t.id_cliente AND t.principal = 1

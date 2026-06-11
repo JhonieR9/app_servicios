@@ -391,6 +391,10 @@
                    class="btn" style="background:#f1f5f9;color:#64748b;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
                     💬 Ver conversación
                 </a>
+                <button class="btn" onclick="abrirCalificarCliente(${s.id_solicitud},${s.id_cliente || 0},'${(s.nombre_cliente||'').replace(/'/g,"\\'")}')"
+                    style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    ⭐ Calificar cliente
+                </button>
             `
         };
 
@@ -485,6 +489,118 @@
     function contactarCliente(telefono, nombre) {
         const msg = encodeURIComponent(`Hola ${nombre}, soy el trabajador de TalentHub. Acabo de aceptar tu solicitud de servicio. ¿Cuándo podemos coordinar?`);
         window.open(`https://wa.me/57${telefono}?text=${msg}`, '_blank');
+    }
+
+    // ── CALIFICAR CLIENTE ─────────────────────────────────────────
+    function abrirCalificarCliente(idSolicitud, idCliente, nombreCliente) {
+        // No mostrar si ya calificó
+        if (localStorage.getItem('cal_cli_' + idSolicitud)) {
+            mostrarToast('Ya calificaste a este cliente', false);
+            return;
+        }
+
+        let modal = document.getElementById('modalCalCliente');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modalCalCliente';
+            modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:flex-end;justify-content:center;';
+            modal.innerHTML = `
+                <style>
+                    @keyframes slideUpCal{from{transform:translateY(100%)}to{transform:translateY(0)}}
+                    .cal-sheet{background:white;border-radius:24px 24px 0 0;padding:28px 24px 40px;
+                               width:100%;max-width:480px;animation:slideUpCal 0.35s ease;}
+                    .cal-star{font-size:2.4rem;cursor:pointer;transition:transform 0.15s;
+                              filter:grayscale(1);opacity:0.35;}
+                    .cal-star.active{filter:none;opacity:1;transform:scale(1.2);}
+                </style>
+                <div class="cal-sheet">
+                    <div style="text-align:center;margin-bottom:18px">
+                        <div style="font-size:2rem;margin-bottom:6px">⭐</div>
+                        <div style="font-size:1.1rem;font-weight:800;color:#1e293b" id="calCliNombre"></div>
+                        <div style="font-size:0.82rem;color:#64748b;margin-top:4px">¿Cómo fue trabajar con este cliente?</div>
+                    </div>
+                    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:20px" id="calCliStars">
+                        ${[1,2,3,4,5].map(n=>`<span class="cal-star" onclick="selStarCli(${n})">⭐</span>`).join('')}
+                    </div>
+                    <textarea id="calCliComentario" rows="3"
+                        placeholder="Ej: Cliente puntual, explicó bien lo que necesitaba (opcional)..."
+                        style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;
+                               font-family:'Segoe UI',sans-serif;font-size:0.88rem;resize:none;
+                               outline:none;color:#1e293b;margin-bottom:14px"
+                        onfocus="this.style.borderColor='#1e3a8a'"
+                        onblur="this.style.borderColor='#e2e8f0'"></textarea>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                        <button onclick="cerrarCalCli()"
+                            style="padding:13px;border:2px solid #e2e8f0;background:white;
+                                   color:#64748b;border-radius:12px;font-weight:700;cursor:pointer">
+                            Cancelar
+                        </button>
+                        <button id="btnEnviarCalCli" onclick="enviarCalCliente()"
+                            style="padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);
+                                   color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer">
+                            ⭐ Enviar
+                        </button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', e => { if (e.target === modal) cerrarCalCli(); });
+        }
+
+        modal._idSolicitud  = idSolicitud;
+        modal._idCliente    = idCliente;
+        modal._puntuacion   = 0;
+        document.getElementById('calCliNombre').textContent = '👤 ' + nombreCliente;
+        document.getElementById('calCliComentario').value   = '';
+        [1,2,3,4,5].forEach(i => {
+            const s = document.querySelector(`#calCliStars .cal-star:nth-child(${i})`);
+            if (s) { s.classList.remove('active'); }
+        });
+        modal.style.display = 'flex';
+    }
+
+    function selStarCli(val) {
+        const modal = document.getElementById('modalCalCliente');
+        modal._puntuacion = val;
+        document.querySelectorAll('#calCliStars .cal-star').forEach((s, i) => {
+            s.classList.toggle('active', i < val);
+            s.style.transform = i === val - 1 ? 'scale(1.3)' : 'scale(1)';
+            setTimeout(() => { s.style.transform = i < val ? 'scale(1.15)' : 'scale(1)'; }, 200);
+        });
+    }
+
+    function cerrarCalCli() {
+        const m = document.getElementById('modalCalCliente');
+        if (m) m.style.display = 'none';
+    }
+
+    async function enviarCalCliente() {
+        const modal = document.getElementById('modalCalCliente');
+        if (!modal._puntuacion) { mostrarToast('Selecciona una calificación', true); return; }
+        const btn = document.getElementById('btnEnviarCalCli');
+        btn.disabled = true; btn.textContent = 'Enviando...';
+
+        const fd = new FormData();
+        fd.append('id_solicitud',  modal._idSolicitud);
+        fd.append('id_trabajador', idTrabajador);
+        fd.append('id_cliente',    modal._idCliente);
+        fd.append('puntuacion',    modal._puntuacion);
+        fd.append('comentario',    document.getElementById('calCliComentario').value);
+
+        try {
+            const res  = await fetch('/trabajador/calificar-cliente', { method:'POST', body:fd });
+            const data = await res.json();
+            cerrarCalCli();
+            if (res.ok) {
+                localStorage.setItem('cal_cli_' + modal._idSolicitud, '1');
+                mostrarToast('✅ ' + data.mensaje);
+            } else {
+                mostrarToast('❌ ' + (data.error || 'Error al calificar'), true);
+            }
+        } catch(e) {
+            mostrarToast('❌ Error de conexión', true);
+        } finally {
+            btn.disabled = false; btn.textContent = '⭐ Enviar';
+        }
     }
 
     // Cargar al iniciar
