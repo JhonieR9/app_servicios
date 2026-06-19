@@ -150,6 +150,8 @@ def crear_tablas():
             ('tipo_cuenta',         "varchar(20) DEFAULT NULL"),
             ('numero_cuenta',       "varchar(30) DEFAULT NULL"),
             ('titular_cuenta',      "varchar(120) DEFAULT NULL"),
+            ('arl',                 "varchar(100) DEFAULT NULL"),
+            ('eps',                 "varchar(100) DEFAULT NULL"),
         ]:
             try:
                 cursor.execute(f"ALTER TABLE detalles_persona ADD COLUMN {col} {definition}")
@@ -190,7 +192,12 @@ def crear_tablas():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """)
 
-        # Tabla chat interno
+        # Columna tags en calificaciones (para chips descriptivos)
+        try:
+            cursor.execute("ALTER TABLE calificaciones ADD COLUMN tags varchar(500) DEFAULT NULL")
+        except Exception:
+            pass  # Ya existe
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS `mensajes_chat` (
               `id_mensaje`      int NOT NULL AUTO_INCREMENT,

@@ -616,7 +616,8 @@ def calificar_servicio(
     id_cliente: int = Form(...),
     id_trabajador: int = Form(0),
     puntuacion: int = Form(...),
-    comentario: str = Form(None)
+    comentario: str = Form(None),
+    tags: str = Form(None)
 ):
     if puntuacion < 1 or puntuacion > 5:
         return {"error": "La puntuación debe estar entre 1 y 5"}
@@ -662,9 +663,9 @@ def calificar_servicio(
 
     cursor.execute("""
         INSERT INTO calificaciones
-        (id_solicitud, id_cliente, id_trabajador, tipo_calificacion, puntuacion, comentario)
-        VALUES (%s, %s, %s, 'cliente_a_trabajador', %s, %s)
-    """, (id_solicitud, id_cliente, id_trabajador, puntuacion, comentario))
+        (id_solicitud, id_cliente, id_trabajador, tipo_calificacion, puntuacion, comentario, tags)
+        VALUES (%s, %s, %s, 'cliente_a_trabajador', %s, %s, %s)
+    """, (id_solicitud, id_cliente, id_trabajador, puntuacion, comentario, tags))
     conexion.commit()
     cursor.close()
     conexion.close()

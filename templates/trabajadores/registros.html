@@ -610,6 +610,17 @@
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Disponibilidad:</span><span class="badge bg-success">${reg.horario} (${reg.dias_disponibles})</span>
                                 </li>
+                                ${reg.arl || reg.eps ? `
+                                <li class="list-group-item">
+                                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                                        <i class="bi bi-shield-plus" style="color:#16a34a;font-size:0.9rem"></i>
+                                        <span style="font-size:0.78rem;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px">Seguridad Social</span>
+                                    </div>
+                                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                        ${reg.arl ? `<span style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:600"><i class="bi bi-heart-pulse"></i> ARL: ${reg.arl}</span>` : '<span style="background:#f9fafb;border:1px solid #e5e7eb;color:#9ca3af;padding:3px 10px;border-radius:99px;font-size:0.75rem">ARL: No registra</span>'}
+                                        ${reg.eps ? `<span style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:600"><i class="bi bi-hospital"></i> EPS: ${reg.eps}</span>` : '<span style="background:#f9fafb;border:1px solid #e5e7eb;color:#9ca3af;padding:3px 10px;border-radius:99px;font-size:0.75rem">EPS: No registra</span>'}
+                                    </div>
+                                </li>` : ''}
                             </ul>
                             <div class="mb-3">
                                 <strong>Servicios y Tarifas:</strong>
@@ -717,6 +728,8 @@
                 detalles += `Teléfono: ${reg.telefono}\n`;
                 if (reg.correo) detalles += `Correo: ${reg.correo}\n`;
                 detalles += `Experiencia: ${reg.anios_experiencia} años\n`;
+                if (reg.arl) detalles += `ARL: ${reg.arl}\n`;
+                if (reg.eps) detalles += `EPS: ${reg.eps}\n`;
                 detalles += `\nServicios:\n`;
                 if (reg.servicios) {
                     reg.servicios.forEach((s, i) => {

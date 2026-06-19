@@ -621,7 +621,9 @@ async def crear_trabajador(
     tipo_cuenta: str = Form(None),
     numero_cuenta: str = Form(None),
     titular_cuenta: str = Form(None),
-    medio_pago_principal: str = Form(None)
+    medio_pago_principal: str = Form(None),
+    arl: str = Form(None),
+    eps: str = Form(None)
 ):
     """Crear nuevo trabajador con todos sus datos"""
     import os
@@ -758,8 +760,9 @@ async def crear_trabajador(
              foto_identificacion_data, foto_identificacion_tipo,
              antecedentes_data, antecedentes_tipo,
              recomendaciones_data, recomendaciones_tipo,
-             medio_pago, banco, tipo_cuenta, numero_cuenta, titular_cuenta, medio_pago_principal)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             medio_pago, banco, tipo_cuenta, numero_cuenta, titular_cuenta, medio_pago_principal,
+             arl, eps)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (id_persona, habilidades_tipo, resumen_servicios, antecedentes_filename, 
               foto_filename, acepta_terminos_val, permisos_ubicacion_val, 
               recomendaciones or '', recomend_filename,
@@ -768,7 +771,8 @@ async def crear_trabajador(
               recomend_bytes, recomend_tipo,
               medio_pago or '', banco or '', tipo_cuenta or '',
               numero_cuenta or '', titular_cuenta or '',
-              medio_pago_principal or medio_pago or ''))
+              medio_pago_principal or medio_pago or '',
+              arl or '', eps or ''))
         
         conexion.commit()
 
@@ -891,7 +895,8 @@ def calificar_cliente(
     id_trabajador: int  = Form(...),
     id_cliente:    int  = Form(...),
     puntuacion:    int  = Form(...),
-    comentario:    str  = Form(None)
+    comentario:    str  = Form(None),
+    tags:          str  = Form(None)
 ):
     """El trabajador califica al cliente tras completar el servicio."""
     if not (1 <= puntuacion <= 5):
@@ -927,9 +932,9 @@ def calificar_cliente(
 
         cursor.execute("""
             INSERT INTO calificaciones
-                (id_solicitud, id_cliente, id_trabajador, tipo_calificacion, puntuacion, comentario)
-            VALUES (%s, %s, %s, 'trabajador_a_cliente', %s, %s)
-        """, (id_solicitud, id_cliente, id_trabajador, puntuacion, comentario))
+                (id_solicitud, id_cliente, id_trabajador, tipo_calificacion, puntuacion, comentario, tags)
+            VALUES (%s, %s, %s, 'trabajador_a_cliente', %s, %s, %s)
+        """, (id_solicitud, id_cliente, id_trabajador, puntuacion, comentario, tags))
         conexion.commit()
         return JSONResponse({"mensaje": "¡Gracias! Calificación enviada."})
     except Exception as e:
@@ -1137,6 +1142,8 @@ def listar_registros():
             reg['antecedentes_pdf'] = ''
             reg['recomendaciones'] = ''
             reg['recomendaciones_archivo'] = ''
+            reg['arl'] = ''
+            reg['eps'] = ''
             reg['horario'] = 'N/A'
             reg['dias_disponibles'] = 'N/A'
             reg['servicios'] = []
@@ -1153,6 +1160,7 @@ def listar_registros():
 
                 cursor.execute("""
                     SELECT foto_identificacion, antecedentes_pdf, recomendaciones, recomendaciones_archivo,
+                           arl, eps,
                            (foto_identificacion_data IS NOT NULL AND LENGTH(foto_identificacion_data) > 0) as tiene_foto,
                            (antecedentes_data IS NOT NULL AND LENGTH(antecedentes_data) > 0) as tiene_ant,
                            (recomendaciones_data IS NOT NULL AND LENGTH(recomendaciones_data) > 0) as tiene_rec
@@ -1164,6 +1172,8 @@ def listar_registros():
                     reg['antecedentes_pdf'] = str(detalles.get('antecedentes_pdf') or '')
                     reg['recomendaciones'] = str(detalles.get('recomendaciones') or '')
                     reg['recomendaciones_archivo'] = str(detalles.get('recomendaciones_archivo') or '')
+                    reg['arl'] = str(detalles.get('arl') or '')
+                    reg['eps'] = str(detalles.get('eps') or '')
                     # URLs para servir desde BD
                     if detalles.get('tiene_foto'):
                         reg['foto_identificacion_url'] = f"/trabajador/archivo/{reg['id_persona']}/foto"
