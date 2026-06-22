@@ -503,10 +503,8 @@ def _enviar_gmail(destinatario: str, asunto: str, html: str) -> bool:
         print(f"{'='*60}\n")
         return True
 
-    # Remitente: usa el dominio verificado en Resend, o onboarding@resend.dev para pruebas
-    from_email = gmail_user if gmail_user else "onboarding@resend.dev"
-    # Si no tienes dominio verificado en Resend, usa onboarding@resend.dev
-    # Una vez verifiques tu dominio, usa tu correo real
+    # Remitente: Resend requiere dominio verificado. Usa onboarding@resend.dev para sandbox.
+    from_email = "onboarding@resend.dev"
 
     try:
         resp = _req.post(
