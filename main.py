@@ -270,6 +270,20 @@ def mostrar_solo_formulario(request: Request):
 def health_check():
     return {"status": "ok", "message": "TalentHub API is running"}
 
+# ── TWA / Play Store — Digital Asset Links ──────────────────────────
+@app.get("/.well-known/assetlinks.json")
+def asset_links():
+    """Requerido por Google para verificar el dominio en TWA (Play Store)"""
+    import json
+    from fastapi.responses import Response as _Resp
+    ruta = os.path.join("static", ".well-known", "assetlinks.json")
+    try:
+        with open(ruta, "r") as f:
+            contenido = f.read()
+        return _Resp(content=contenido, media_type="application/json")
+    except Exception:
+        return _Resp(content="[]", media_type="application/json")
+
 @app.get("/uploads/{filename}")
 async def servir_upload(filename: str):
     """Sirve archivos desde BD cuando no existen en disco"""
