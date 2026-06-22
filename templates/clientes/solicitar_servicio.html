@@ -867,24 +867,10 @@ async function cargarDatosCliente() {
         if (data.telefono)        inputTelefono.value  = data.telefono;
         if (data.correo)          inputCorreo.value    = data.correo;
 
-        // Bloquear campos — el cliente no necesita re-escribir nada
-        inputNombre.readOnly   = true;
-        inputTelefono.readOnly = true;
-        inputCorreo.readOnly   = true;
-
-        // Estilo visual de "solo lectura"
-        const roStyle = 'background:#f8fafc;color:#374151;border-color:#e2e8f0;cursor:default;';
-        inputNombre.style.cssText   += roStyle;
-        inputTelefono.style.cssText += roStyle;
-        inputCorreo.style.cssText   += roStyle;
-
-        // Mensaje más claro
+        // Mensaje informativo
         autoMsg.innerHTML = `
             <i class="bi bi-check-circle-fill" style="color:#16a34a"></i>
-            Datos cargados desde tu cuenta
-            <a href="/cliente/panel" style="margin-left:8px;color:#667eea;font-size:0.75rem;font-weight:700;text-decoration:none;">
-                Editar perfil →
-            </a>`;
+            Datos cargados desde tu cuenta — puedes editarlos si lo necesitas`;
         autoMsg.style.display = 'block';
 
     } catch(e) {
