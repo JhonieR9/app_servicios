@@ -511,7 +511,7 @@ def _enviar_gmail(destinatario: str, asunto: str, html: str) -> bool:
         msg["To"]      = destinatario
         msg.attach(MIMEText(html, "html", "utf-8"))
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
             server.login(gmail_user, gmail_pass)
             server.sendmail(gmail_user, destinatario, msg.as_string())
 

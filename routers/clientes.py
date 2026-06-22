@@ -1046,12 +1046,12 @@ async def solicitar_recuperacion_cliente(request: Request, correo: str = Form(..
         token = auth.crear_token_recuperacion('cliente', correo)
         if token:
             base_url = str(request.base_url).rstrip('/')
-            enviado = auth.enviar_email_recuperacion(correo, token, 'cliente', base_url)
-            if not enviado:
-                return JSONResponse(
-                    {"error": "No se pudo enviar el correo. Revisa los logs de Railway o contacta soporte."},
-                    status_code=500
-                )
+            # Enviar en background para no bloquear la respuesta
+            import threading
+            def _enviar():
+                auth.enviar_email_recuperacion(correo, token, 'cliente', base_url)
+            threading.Thread(target=_enviar, daemon=True).start()
+        # Siempre responder igual — no revelar si el correo existe o no
         return JSONResponse({"mensaje": "Si el correo está registrado, recibirás un enlace en breve."})
     except Exception as e:
         import traceback; traceback.print_exc()
