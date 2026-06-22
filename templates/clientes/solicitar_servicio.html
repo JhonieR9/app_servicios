@@ -848,27 +848,45 @@ function goStep(n, isBack) {
 
 // Cargar datos del cliente desde la sesión o localStorage
 async function cargarDatosCliente() {
-    const inputNombre  = document.getElementById('inputNombre');
+    const inputNombre   = document.getElementById('inputNombre');
     const inputTelefono = document.getElementById('inputTelefono');
-    const inputCorreo  = document.getElementById('inputCorreo');
-    const autoMsg      = document.getElementById('datosAutoMsg');
-
-    // Si ya están llenos, no sobreescribir
-    if (inputNombre.value && inputTelefono.value) return;
+    const inputCorreo   = document.getElementById('inputCorreo');
+    const autoMsg       = document.getElementById('datosAutoMsg');
 
     try {
-        const res  = await fetch('/cliente/mi-perfil');
+        const res  = await fetch('/cliente/mi-perfil', { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json();
         if (data.error) return;
 
-        if (data.nombre_completo) inputNombre.value  = data.nombre_completo;
-        if (data.telefono)        inputTelefono.value = data.telefono;
-        if (data.correo)          inputCorreo.value   = data.correo;
+        const tieneDatos = data.nombre_completo || data.telefono;
+        if (!tieneDatos) return;
 
-        if (data.nombre_completo || data.telefono) {
-            autoMsg.style.display = 'block';
-        }
+        // Pre-llenar
+        if (data.nombre_completo) inputNombre.value   = data.nombre_completo;
+        if (data.telefono)        inputTelefono.value  = data.telefono;
+        if (data.correo)          inputCorreo.value    = data.correo;
+
+        // Bloquear campos — el cliente no necesita re-escribir nada
+        inputNombre.readOnly   = true;
+        inputTelefono.readOnly = true;
+        inputCorreo.readOnly   = true;
+
+        // Estilo visual de "solo lectura"
+        const roStyle = 'background:#f8fafc;color:#374151;border-color:#e2e8f0;cursor:default;';
+        inputNombre.style.cssText   += roStyle;
+        inputTelefono.style.cssText += roStyle;
+        inputCorreo.style.cssText   += roStyle;
+
+        // Mensaje más claro
+        autoMsg.innerHTML = `
+            <i class="bi bi-check-circle-fill" style="color:#16a34a"></i>
+            Datos cargados desde tu cuenta
+            <a href="/cliente/panel" style="margin-left:8px;color:#667eea;font-size:0.75rem;font-weight:700;text-decoration:none;">
+                Editar perfil →
+            </a>`;
+        autoMsg.style.display = 'block';
+
     } catch(e) {
         // Sin sesión — el cliente llena manualmente
     }
