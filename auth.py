@@ -479,60 +479,59 @@ def consumir_token_recuperacion(token: str, nueva_password: str) -> bool:
 
 
 # ============================================
-# FUNCIÓN CENTRAL DE ENVÍO POR GMAIL SMTP
+# FUNCIÓN CENTRAL DE ENVÍO DE EMAIL (RESEND API)
 # ============================================
 
 def _enviar_gmail(destinatario: str, asunto: str, html: str) -> bool:
     """
-    Envía un email usando Gmail SMTP.
-    Requiere variables de entorno: GMAIL_USER y GMAIL_PASS (contraseña de aplicación).
-    Fallback a consola si no están configuradas.
+    Envía un email usando Resend API (HTTP).
+    Requiere variable de entorno: RESEND_API_KEY.
+    Fallback a consola si no está configurada.
+    Mantiene nombre _enviar_gmail por compatibilidad con el resto del código.
     """
     import os
-    import smtplib
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
+    import requests as _req
 
+    resend_key = os.getenv("RESEND_API_KEY", "")
     gmail_user = os.getenv("GMAIL_USER", "")
-    gmail_pass = os.getenv("GMAIL_PASS", "")
 
-    if not gmail_user or not gmail_pass:
+    if not resend_key:
         print(f"\n{'='*60}")
-        print(f"[EMAIL] Sin GMAIL_USER/GMAIL_PASS — modo consola")
+        print(f"[EMAIL] Sin RESEND_API_KEY — modo consola")
         print(f"   Para: {destinatario}")
         print(f"   Asunto: {asunto}")
         print(f"{'='*60}\n")
         return True
 
+    # Remitente: usa el dominio verificado en Resend, o onboarding@resend.dev para pruebas
+    from_email = gmail_user if gmail_user else "onboarding@resend.dev"
+    # Si no tienes dominio verificado en Resend, usa onboarding@resend.dev
+    # Una vez verifiques tu dominio, usa tu correo real
+
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = asunto
-        msg["From"]    = f"TalentHub <{gmail_user}>"
-        msg["To"]      = destinatario
-        msg.attach(MIMEText(html, "html", "utf-8"))
+        resp = _req.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {resend_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": f"TalentHub <{from_email}>",
+                "to": [destinatario],
+                "subject": asunto,
+                "html": html
+            },
+            timeout=15
+        )
 
-        # Intentar puerto 587 (STARTTLS) primero — Railway a veces bloquea 465
-        try:
-            with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(gmail_user, gmail_pass)
-                server.sendmail(gmail_user, destinatario, msg.as_string())
-            print(f"[EMAIL] Enviado a {destinatario} (puerto 587) ✓")
+        if resp.status_code in (200, 201):
+            print(f"[EMAIL] ✅ Enviado a {destinatario} via Resend")
             return True
-        except Exception as e587:
-            print(f"[EMAIL] Puerto 587 falló: {e587}, intentando 465...")
-
-        # Fallback a 465 (SSL directo)
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
-            server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, destinatario, msg.as_string())
-
-        print(f"[EMAIL] Enviado a {destinatario} (puerto 465) ✓")
-        return True
+        else:
+            print(f"[EMAIL] ❌ Resend error {resp.status_code}: {resp.text}")
+            return False
     except Exception as e:
-        print(f"[EMAIL] Error Gmail SMTP: {e}")
+        print(f"[EMAIL] ❌ Error Resend: {e}")
         return False
 
 

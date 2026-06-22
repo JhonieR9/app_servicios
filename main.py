@@ -272,70 +272,58 @@ def health_check():
 
 @app.get("/health/email-test")
 def test_email():
-    """Diagnóstico de SMTP — verificar si Gmail funciona (solo admin)"""
+    """Diagnóstico de email — verificar si Resend funciona"""
     import os
-    import smtplib
-    from email.mime.text import MIMEText
+    import requests as _req
 
+    resend_key = os.getenv("RESEND_API_KEY", "")
     gmail_user = os.getenv("GMAIL_USER", "")
-    gmail_pass = os.getenv("GMAIL_PASS", "")
 
-    if not gmail_user or not gmail_pass:
+    if not resend_key:
         return {
             "status": "error",
-            "detail": "Variables GMAIL_USER o GMAIL_PASS no configuradas",
-            "GMAIL_USER": gmail_user or "(vacío)",
-            "GMAIL_PASS_len": len(gmail_pass)
+            "detail": "Variable RESEND_API_KEY no configurada en Railway",
+            "RESEND_API_KEY_len": 0,
+            "GMAIL_USER": gmail_user or "(vacío)"
         }
+
+    from_email = gmail_user if gmail_user else "onboarding@resend.dev"
+    to_email = gmail_user if gmail_user else "delivered@resend.dev"
 
     try:
-        msg = MIMEText("Test de email desde TalentHub Railway", "plain", "utf-8")
-        msg["Subject"] = "Test SMTP TalentHub"
-        msg["From"] = f"TalentHub <{gmail_user}>"
-        msg["To"] = gmail_user  # se envía a sí mismo
+        resp = _req.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {resend_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": f"TalentHub <{from_email}>",
+                "to": [to_email],
+                "subject": "Test Email TalentHub",
+                "html": "<p>Este es un email de prueba desde TalentHub en Railway.</p>"
+            },
+            timeout=15
+        )
 
-        # Probar puerto 587 (STARTTLS)
-        try:
-            with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(gmail_user, gmail_pass)
-                server.sendmail(gmail_user, gmail_user, msg.as_string())
+        if resp.status_code in (200, 201):
             return {
                 "status": "ok",
-                "detail": f"Email enviado via puerto 587 (STARTTLS) a {gmail_user}",
-                "puerto": 587
+                "detail": f"Email de prueba enviado a {to_email} via Resend",
+                "resend_response": resp.json()
             }
-        except Exception as e587:
-            error_587 = str(e587)
-
-        # Probar puerto 465 (SSL)
-        try:
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
-                server.login(gmail_user, gmail_pass)
-                server.sendmail(gmail_user, gmail_user, msg.as_string())
+        else:
             return {
-                "status": "ok",
-                "detail": f"Email enviado via puerto 465 (SSL) a {gmail_user}",
-                "puerto": 465
+                "status": "error",
+                "detail": f"Resend respondió {resp.status_code}",
+                "resend_error": resp.text,
+                "from": from_email,
+                "to": to_email
             }
-        except Exception as e465:
-            error_465 = str(e465)
-
-        return {
-            "status": "error",
-            "detail": "Ambos puertos fallaron",
-            "error_587": error_587,
-            "error_465": error_465,
-            "GMAIL_USER": gmail_user
-        }
     except Exception as e:
         return {
             "status": "error",
-            "detail": str(e),
-            "GMAIL_USER": gmail_user,
-            "GMAIL_PASS_len": len(gmail_pass)
+            "detail": str(e)
         }
 
 # ── TWA / Play Store — Digital Asset Links ──────────────────────────
