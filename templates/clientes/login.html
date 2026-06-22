@@ -233,6 +233,11 @@
                 alertEl.className = 'alert success';
                 alertEl.textContent = '✅ ' + data.mensaje;
                 alertEl.style.display = 'block';
+                // Guardar datos en localStorage para pre-llenar formularios
+                if (data.nombre)     localStorage.setItem('cliente_nombre',   data.nombre);
+                if (data.telefono)   localStorage.setItem('cliente_telefono', data.telefono);
+                if (data.correo)     localStorage.setItem('cliente_correo',   data.correo);
+                if (data.id_cliente) localStorage.setItem('id_cliente',       data.id_cliente);
                 setTimeout(() => window.location.href = data.redirect || '/cliente/panel', 1000);
             } else {
                 alertEl.className = 'alert error';

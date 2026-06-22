@@ -899,6 +899,9 @@ async def login_cliente(
             return JSONResponse({
                 "requiere_verificacion_sms": False,
                 "id_cliente": cliente['id_cliente'],
+                "nombre": nombre,
+                "telefono": str(cliente.get('telefono') or ''),
+                "correo": cliente.get('correo', ''),
                 "mensaje": "Login exitoso",
                 "redirect": f"/cliente/panel?nombre={nombre}&id={cliente['id_cliente']}"
             })
