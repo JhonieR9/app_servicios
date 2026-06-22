@@ -76,6 +76,7 @@ def crear_tablas():
                 (28, 'Contabilidad',       'Declaraciones de renta y asesoría fiscal'),
                 (29, 'Diseño',             'Diseño gráfico, logos y publicidad'),
                 (30, 'Mensajería',         'Envío de paquetes y documentos'),
+                (31, 'Mascotas',           'Paseo, cuidado, guardería y grooming de mascotas'),
             ]
             for id_cat, nombre, descripcion in categorias:
                 cursor.execute(
@@ -83,6 +84,16 @@ def crear_tablas():
                     (id_cat, nombre, descripcion)
                 )
             print(f"✅ {len(categorias)} categorías insertadas")
+
+        # Insertar Mascotas si no existe (para BDs que ya tenían datos)
+        try:
+            cursor.execute("""
+                INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, descripcion, estado)
+                VALUES (31, 'Mascotas', 'Paseo, cuidado, guardería y grooming de mascotas', 'activo')
+            """)
+            conexion.commit()
+        except Exception:
+            pass
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS `solicitudes_servicio` (
