@@ -294,15 +294,41 @@ def test_email():
         msg["From"] = f"TalentHub <{gmail_user}>"
         msg["To"] = gmail_user  # se envía a sí mismo
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
-            server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, gmail_user, msg.as_string())
+        # Probar puerto 587 (STARTTLS)
+        try:
+            with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(gmail_user, gmail_pass)
+                server.sendmail(gmail_user, gmail_user, msg.as_string())
+            return {
+                "status": "ok",
+                "detail": f"Email enviado via puerto 587 (STARTTLS) a {gmail_user}",
+                "puerto": 587
+            }
+        except Exception as e587:
+            error_587 = str(e587)
+
+        # Probar puerto 465 (SSL)
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
+                server.login(gmail_user, gmail_pass)
+                server.sendmail(gmail_user, gmail_user, msg.as_string())
+            return {
+                "status": "ok",
+                "detail": f"Email enviado via puerto 465 (SSL) a {gmail_user}",
+                "puerto": 465
+            }
+        except Exception as e465:
+            error_465 = str(e465)
 
         return {
-            "status": "ok",
-            "detail": f"Email de prueba enviado a {gmail_user}",
-            "GMAIL_USER": gmail_user,
-            "GMAIL_PASS_len": len(gmail_pass)
+            "status": "error",
+            "detail": "Ambos puertos fallaron",
+            "error_587": error_587,
+            "error_465": error_465,
+            "GMAIL_USER": gmail_user
         }
     except Exception as e:
         return {

@@ -511,11 +511,25 @@ def _enviar_gmail(destinatario: str, asunto: str, html: str) -> bool:
         msg["To"]      = destinatario
         msg.attach(MIMEText(html, "html", "utf-8"))
 
+        # Intentar puerto 587 (STARTTLS) primero — Railway a veces bloquea 465
+        try:
+            with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(gmail_user, gmail_pass)
+                server.sendmail(gmail_user, destinatario, msg.as_string())
+            print(f"[EMAIL] Enviado a {destinatario} (puerto 587) ✓")
+            return True
+        except Exception as e587:
+            print(f"[EMAIL] Puerto 587 falló: {e587}, intentando 465...")
+
+        # Fallback a 465 (SSL directo)
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
             server.login(gmail_user, gmail_pass)
             server.sendmail(gmail_user, destinatario, msg.as_string())
 
-        print(f"[EMAIL] Enviado a {destinatario} ✓")
+        print(f"[EMAIL] Enviado a {destinatario} (puerto 465) ✓")
         return True
     except Exception as e:
         print(f"[EMAIL] Error Gmail SMTP: {e}")
