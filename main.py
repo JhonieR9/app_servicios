@@ -270,6 +270,48 @@ def mostrar_solo_formulario(request: Request):
 def health_check():
     return {"status": "ok", "message": "TalentHub API is running"}
 
+@app.get("/health/email-test")
+def test_email():
+    """Diagnóstico de SMTP — verificar si Gmail funciona (solo admin)"""
+    import os
+    import smtplib
+    from email.mime.text import MIMEText
+
+    gmail_user = os.getenv("GMAIL_USER", "")
+    gmail_pass = os.getenv("GMAIL_PASS", "")
+
+    if not gmail_user or not gmail_pass:
+        return {
+            "status": "error",
+            "detail": "Variables GMAIL_USER o GMAIL_PASS no configuradas",
+            "GMAIL_USER": gmail_user or "(vacío)",
+            "GMAIL_PASS_len": len(gmail_pass)
+        }
+
+    try:
+        msg = MIMEText("Test de email desde TalentHub Railway", "plain", "utf-8")
+        msg["Subject"] = "Test SMTP TalentHub"
+        msg["From"] = f"TalentHub <{gmail_user}>"
+        msg["To"] = gmail_user  # se envía a sí mismo
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
+            server.login(gmail_user, gmail_pass)
+            server.sendmail(gmail_user, gmail_user, msg.as_string())
+
+        return {
+            "status": "ok",
+            "detail": f"Email de prueba enviado a {gmail_user}",
+            "GMAIL_USER": gmail_user,
+            "GMAIL_PASS_len": len(gmail_pass)
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "detail": str(e),
+            "GMAIL_USER": gmail_user,
+            "GMAIL_PASS_len": len(gmail_pass)
+        }
+
 # ── TWA / Play Store — Digital Asset Links ──────────────────────────
 @app.get("/.well-known/assetlinks.json")
 def asset_links():
