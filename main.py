@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from routers import clientes, trabajadores, chat
 
-app = FastAPI(title="TalentHub API", version="1.2.0")
+app = FastAPI(title="TalentHub API", version="1.2.1")
 
 # Montar archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
