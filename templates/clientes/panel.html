@@ -219,6 +219,40 @@
         <!-- se llena dinámicamente -->
     </div>
 
+    <!-- Mi cuenta -->
+    <div class="th-section-title"><i class="bi bi-gear-fill"></i> Mi cuenta</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px">
+        <div style="font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:14px">Editar mis datos</div>
+        <div style="display:grid;gap:10px">
+            <div style="display:flex;gap:10px">
+                <input type="text" id="editNombre" placeholder="Nombre completo"
+                    style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:10px;
+                           background:var(--bg);color:var(--text);font-size:0.88rem;outline:none">
+                <input type="tel" id="editTelefono" placeholder="Teléfono"
+                    style="width:40%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;
+                           background:var(--bg);color:var(--text);font-size:0.88rem;outline:none">
+            </div>
+            <input type="email" id="editCorreo" placeholder="Correo electrónico"
+                style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;
+                       background:var(--bg);color:var(--text);font-size:0.88rem;outline:none">
+            <button onclick="guardarDatosCliente()" id="btnGuardarCliente"
+                style="padding:12px;background:linear-gradient(135deg,#059669,#0891b2);
+                       color:white;border:none;border-radius:10px;font-weight:700;
+                       font-size:0.88rem;cursor:pointer;transition:all .2s">
+                <i class="bi bi-check-circle"></i> Guardar cambios
+            </button>
+            <div id="msgGuardarCliente" style="display:none;text-align:center;padding:8px;
+                 border-radius:8px;font-size:0.82rem;font-weight:600"></div>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:18px 0 14px">
+        <button onclick="darDeBaja()"
+            style="width:100%;padding:11px;background:rgba(239,68,68,.08);
+                   color:#ef4444;border:1px solid rgba(239,68,68,.2);border-radius:10px;
+                   font-weight:700;font-size:0.82rem;cursor:pointer">
+            <i class="bi bi-person-x"></i> Darme de baja
+        </button>
+    </div>
+
 </div>
 
 <script>
@@ -484,6 +518,73 @@
 
     // Refrescar activas cada 30s
     setInterval(() => { if (idCliente) { cargarActivas(); cargarStats(); } }, 30000);
+
+    // ── Llenar campos de edición con datos actuales ──
+    async function llenarCamposEdicion() {
+        try {
+            const res = await fetch('/cliente/mi-perfil', { credentials:'include' });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.error) return;
+            document.getElementById('editNombre').value   = data.nombre_completo || '';
+            document.getElementById('editTelefono').value = String(data.telefono || '');
+            document.getElementById('editCorreo').value   = data.correo || '';
+        } catch(e) {}
+    }
+    setTimeout(llenarCamposEdicion, 500);
+
+    // ── Guardar datos del cliente ──
+    async function guardarDatosCliente() {
+        const btn = document.getElementById('btnGuardarCliente');
+        const msg = document.getElementById('msgGuardarCliente');
+        btn.disabled = true; btn.textContent = 'Guardando...';
+
+        const fd = new FormData();
+        fd.append('nombre', document.getElementById('editNombre').value);
+        fd.append('telefono', document.getElementById('editTelefono').value);
+        fd.append('correo', document.getElementById('editCorreo').value);
+
+        try {
+            const res = await fetch('/cliente/perfil/editar', { method:'POST', body:fd, credentials:'include' });
+            const data = await res.json();
+            if (res.ok) {
+                msg.style.background = 'rgba(16,185,129,.15)'; msg.style.color = '#059669';
+                msg.textContent = '✅ ' + (data.mensaje || 'Datos actualizados');
+                // Actualizar localStorage
+                localStorage.setItem('cliente_nombre', document.getElementById('editNombre').value);
+                localStorage.setItem('cliente_telefono', document.getElementById('editTelefono').value);
+                localStorage.setItem('cliente_correo', document.getElementById('editCorreo').value);
+            } else {
+                msg.style.background = 'rgba(239,68,68,.15)'; msg.style.color = '#ef4444';
+                msg.textContent = '❌ ' + (data.error || 'Error');
+            }
+            msg.style.display = 'block';
+        } catch(e) {
+            msg.style.background = 'rgba(239,68,68,.15)'; msg.style.color = '#ef4444';
+            msg.textContent = '❌ Error de conexión'; msg.style.display = 'block';
+        } finally {
+            btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar cambios';
+            setTimeout(() => { msg.style.display = 'none'; }, 4000);
+        }
+    }
+
+    // ── Darse de baja ──
+    async function darDeBaja() {
+        if (!confirm('¿Estás seguro de que quieres darte de baja? Tu cuenta será desactivada y no podrás solicitar servicios.')) return;
+        if (!confirm('Esta acción desactivará tu cuenta. ¿Confirmas?')) return;
+        try {
+            const fd = new FormData();
+            fd.append('id_cliente', idCliente);
+            const res = await fetch('/cliente/baja', { method:'POST', body:fd, credentials:'include' });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Tu cuenta ha sido desactivada. Lamentamos verte partir.');
+                window.location.href = '/';
+            } else {
+                alert(data.error || 'Error al procesar la baja');
+            }
+        } catch(e) { alert('Error de conexión'); }
+    }
 </script>
 </body>
 </html>

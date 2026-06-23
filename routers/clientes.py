@@ -829,6 +829,83 @@ def obtener_trabajadores_cercanos(
 
 
 # ============================================
+# EDITAR PERFIL Y BAJA - CLIENTES
+# ============================================
+
+@router.post("/perfil/editar")
+def editar_perfil_cliente(
+    request: Request,
+    nombre:   str = Form(None),
+    telefono: str = Form(None),
+    correo:   str = Form(None)
+):
+    """Permite al cliente actualizar sus datos"""
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    if not token:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'cliente':
+        return JSONResponse({"error": "Sesión inválida"}, status_code=401)
+
+    id_cliente = sesion['id_usuario']
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+
+        if nombre:
+            cursor.execute("UPDATE clientes SET nombre_completo = %s WHERE id_cliente = %s", (nombre, id_cliente))
+
+        if telefono:
+            cursor.execute("SELECT id_telefono FROM telefono_cliente WHERE id_cliente = %s AND principal = 1 LIMIT 1", (id_cliente,))
+            if cursor.fetchone():
+                cursor.execute("UPDATE telefono_cliente SET telefono = %s WHERE id_cliente = %s AND principal = 1", (telefono, id_cliente))
+            else:
+                cursor.execute("INSERT INTO telefono_cliente (id_cliente, telefono, tipo_telefono, principal) VALUES (%s, %s, 'celular', 1)", (id_cliente, telefono))
+
+        if correo:
+            cursor.execute("SELECT id_correo FROM correo_cliente WHERE id_cliente = %s AND principal = 1 LIMIT 1", (id_cliente,))
+            if cursor.fetchone():
+                cursor.execute("UPDATE correo_cliente SET correo = %s WHERE id_cliente = %s AND principal = 1", (correo, id_cliente))
+            else:
+                cursor.execute("INSERT INTO correo_cliente (id_cliente, correo, verificado, principal) VALUES (%s, %s, 0, 1)", (id_cliente, correo))
+
+        conexion.commit()
+        return JSONResponse({"mensaje": "Datos actualizados correctamente"})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+@router.post("/baja")
+def dar_de_baja_cliente(
+    request: Request,
+    id_cliente: int = Form(None)
+):
+    """Desactiva la cuenta del cliente (soft delete)"""
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    if not token:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'cliente':
+        return JSONResponse({"error": "Sesión inválida"}, status_code=401)
+
+    id_real = sesion['id_usuario']
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("UPDATE clientes SET estado = 'inactivo' WHERE id_cliente = %s", (id_real,))
+        conexion.commit()
+        return JSONResponse({"mensaje": "Cuenta desactivada"})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+# ============================================
 # AUTENTICACIÓN - LOGIN Y VERIFICACIÓN
 # ============================================
 
