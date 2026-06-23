@@ -82,7 +82,7 @@ def listar_mis_solicitudes(id_trabajador: int = None):
             if cats:
                 placeholders = ','.join(['%s'] * len(cats))
                 cursor.execute(f"""
-                    SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
+                    SELECT s.id_solicitud, s.id_cliente, s.titulo, s.descripcion, s.estado,
                            s.ciudad, s.departamento, s.direccion_servicio, s.fecha_solicitud,
                            COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
                            c.nombre_completo as nombre_cliente,
@@ -98,7 +98,7 @@ def listar_mis_solicitudes(id_trabajador: int = None):
                 """, (id_trabajador, *cats))
             else:
                 cursor.execute("""
-                    SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
+                    SELECT s.id_solicitud, s.id_cliente, s.titulo, s.descripcion, s.estado,
                            s.ciudad, s.departamento, s.direccion_servicio, s.fecha_solicitud,
                            COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
                            c.nombre_completo as nombre_cliente,
@@ -113,7 +113,7 @@ def listar_mis_solicitudes(id_trabajador: int = None):
                 """, (id_trabajador,))
         else:
             cursor.execute("""
-                SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
+                SELECT s.id_solicitud, s.id_cliente, s.titulo, s.descripcion, s.estado,
                        s.ciudad, s.departamento, s.direccion_servicio, s.fecha_solicitud,
                        COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
                        c.nombre_completo as nombre_cliente,
