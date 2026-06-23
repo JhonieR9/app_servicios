@@ -100,6 +100,9 @@
                     <p>Latitud: <span id="lat">-</span></p>
                     <p>Longitud: <span id="lng">-</span></p>
                     <p>Última actualización: <span id="lastUpdate">-</span></p>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="forzarActualizacion()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar ubicación ahora
+                    </button>
                 </div>
 
                 <button class="toggle-btn inactive" id="toggleBtn" onclick="toggleDisponibilidad()">
@@ -322,6 +325,35 @@
 
         // Nota: La disponibilidad se mantiene activa incluso al cerrar la página
         // El trabajador debe desactivarla manualmente cuando no quiera trabajar
+
+        function forzarActualizacion() {
+            const btn = event.target.closest('button');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Obteniendo GPS...';
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    currentPosition = position;
+                    mostrarUbicacion(lat, lng);
+                    await actualizarUbicacionServidor(lat, lng);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-circle"></i> ¡Ubicación actualizada!';
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Actualizar ubicación ahora';
+                    }, 2000);
+                },
+                (error) => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error GPS — intenta afuera';
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Actualizar ubicación ahora';
+                    }, 3000);
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        }
     </script>
 </body>
 </html>
