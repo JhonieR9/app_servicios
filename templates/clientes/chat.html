@@ -216,9 +216,13 @@
 
     function formatFecha(f) {
         if (!f) return '';
-        const [y,m,d] = f.split('-');
+        const partes = f.split('-');
+        if (partes.length !== 3) return f;
+        const d = parseInt(partes[2]);
+        const m = parseInt(partes[1]);
+        const y = partes[0];
         const meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        return `${d} ${meses[parseInt(m)]} ${y}`;
+        return `${d} ${meses[m] || ''} ${y}`;
     }
 
     function escHtml(s) {
