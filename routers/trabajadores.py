@@ -905,20 +905,25 @@ def calificar_cliente(
     conexion = conectar_bd()
     cursor   = conexion.cursor(dictionary=True)
     try:
-        # Verificar que el servicio existe, está completado y fue atendido por este trabajador
+        # Buscar la solicitud completada — validar solo por id_solicitud
+        # y verificar que id_trabajador o id_cliente coincidan con lo enviado
         cursor.execute("""
-            SELECT id_solicitud FROM solicitudes_servicio
+            SELECT id_solicitud, id_trabajador, id_cliente FROM solicitudes_servicio
             WHERE id_solicitud = %s
-              AND id_trabajador = %s
-              AND id_cliente    = %s
-              AND estado        = 'completada'
+              AND estado = 'completada'
             LIMIT 1
-        """, (id_solicitud, id_trabajador, id_cliente))
-        if not cursor.fetchone():
+        """, (id_solicitud,))
+        sol = cursor.fetchone()
+
+        if not sol:
             return JSONResponse(
                 {"error": "Solo puedes calificar un servicio que hayas completado con este cliente"},
                 status_code=403
             )
+
+        # Usar los IDs reales de la BD (no confiar en el frontend)
+        real_trabajador = sol['id_trabajador']
+        real_cliente    = sol['id_cliente']
 
         # Evitar duplicado
         cursor.execute("""
@@ -926,7 +931,7 @@ def calificar_cliente(
             WHERE id_solicitud    = %s
               AND id_trabajador   = %s
               AND tipo_calificacion = 'trabajador_a_cliente'
-        """, (id_solicitud, id_trabajador))
+        """, (id_solicitud, real_trabajador))
         if cursor.fetchone():
             return JSONResponse({"mensaje": "Ya calificaste a este cliente"})
 
@@ -934,7 +939,7 @@ def calificar_cliente(
             INSERT INTO calificaciones
                 (id_solicitud, id_cliente, id_trabajador, tipo_calificacion, puntuacion, comentario, tags)
             VALUES (%s, %s, %s, 'trabajador_a_cliente', %s, %s, %s)
-        """, (id_solicitud, id_cliente, id_trabajador, puntuacion, comentario, tags))
+        """, (id_solicitud, real_cliente, real_trabajador, puntuacion, comentario, tags))
         conexion.commit()
         return JSONResponse({"mensaje": "¡Gracias! Calificación enviada."})
     except Exception as e:
