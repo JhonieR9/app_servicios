@@ -267,20 +267,85 @@
         } catch(e) {}
     }
 
-    // ── Banner nueva solicitud ──
+    // ── Popup nueva solicitud (modal) ──
     function mostrarBanner(cantidad) {
-        let b = document.getElementById('panelBanner');
-        if (!b) {
-            b = document.createElement('div');
-            b.id = 'panelBanner';
-            b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:0.95rem;box-shadow:0 4px 20px rgba(102,126,234,.5);animation:slideDown .4s ease;';
-            b.innerHTML = '<style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style><span id="bannerTxt">🔔 Nueva solicitud</span><a id="bannerLink" href="#" style="background:rgba(255,255,255,.25);color:white;border-radius:8px;padding:6px 14px;font-weight:700;text-decoration:none;font-size:0.85rem">Ver →</a>';
-            document.body.prepend(b);
-            setTimeout(() => { if(b) b.remove(); }, 10000);
+        // Quitar banner anterior si existe
+        const viejo = document.getElementById('panelPopup');
+        if (viejo) viejo.remove();
+
+        const popup = document.createElement('div');
+        popup.id = 'panelPopup';
+        popup.style.cssText = `
+            position:fixed;inset:0;z-index:99999;
+            background:rgba(0,0,0,0.6);
+            display:flex;align-items:center;justify-content:center;
+            padding:20px;
+            animation:fadeInPopup .3s ease;
+        `;
+        popup.innerHTML = `
+            <style>
+                @keyframes fadeInPopup { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+                @keyframes bounceIn { 0%{transform:scale(0.5)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
+                .popup-sheet {
+                    background:white;border-radius:24px;
+                    width:100%;max-width:380px;
+                    padding:32px 24px;text-align:center;
+                    box-shadow:0 24px 64px rgba(0,0,0,0.3);
+                    animation:bounceIn .4s ease;
+                }
+                .popup-icon { font-size:3.5rem;margin-bottom:12px;display:block; animation:bounceIn .5s ease; }
+                .popup-title { font-size:1.3rem;font-weight:800;color:#0f172a;margin-bottom:6px; }
+                .popup-sub { font-size:0.88rem;color:#64748b;margin-bottom:24px;line-height:1.5; }
+                .popup-btn {
+                    width:100%;padding:15px;border:none;border-radius:14px;
+                    font-size:0.95rem;font-weight:700;cursor:pointer;
+                    transition:transform .2s;margin-bottom:10px;
+                    display:flex;align-items:center;justify-content:center;gap:8px;
+                }
+                .popup-btn:hover { transform:translateY(-2px); }
+                .popup-btn-primary {
+                    background:linear-gradient(135deg,#667eea,#764ba2);
+                    color:white;box-shadow:0 4px 16px rgba(102,126,234,.4);
+                }
+                .popup-btn-secondary {
+                    background:#f1f5f9;color:#64748b;
+                }
+            </style>
+            <div class="popup-sheet">
+                <span class="popup-icon">🔔</span>
+                <div class="popup-title">${cantidad > 1 ? cantidad + ' nuevas solicitudes' : '¡Nueva solicitud!'}</div>
+                <div class="popup-sub">
+                    ${cantidad > 1
+                        ? 'Tienes solicitudes de servicio esperando tu respuesta'
+                        : 'Un cliente necesita tus servicios. ¡Revisa y acepta rápido!'}
+                </div>
+                <button class="popup-btn popup-btn-primary" onclick="irASolicitudes()">
+                    <i class="bi bi-briefcase-fill"></i> Ver solicitudes
+                </button>
+                <button class="popup-btn popup-btn-secondary" onclick="cerrarPopup()">
+                    Ahora no
+                </button>
+            </div>`;
+        document.body.appendChild(popup);
+
+        // Vibrar si el dispositivo lo permite
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    }
+
+    function irASolicitudes() {
+        cerrarPopup();
+        const link = document.getElementById('link-solicitudes');
+        if (link) window.location.href = link.href;
+        else window.location.href = '/trabajador/solicitudes_pendientes_panel?id=' + idTrabajador;
+    }
+
+    function cerrarPopup() {
+        const p = document.getElementById('panelPopup');
+        if (p) {
+            p.style.opacity = '0';
+            p.style.transition = 'opacity .2s';
+            setTimeout(() => p.remove(), 200);
         }
-        document.getElementById('bannerTxt').textContent = cantidad > 1 ? `🔔 ${cantidad} nuevas solicitudes` : '🔔 ¡Nueva solicitud!';
-        const ls = document.getElementById('link-solicitudes');
-        if (ls) document.getElementById('bannerLink').href = ls.href;
     }
 
     // ── Cargar perfil ──
