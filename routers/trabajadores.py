@@ -272,6 +272,52 @@ def obtener_perfil_completo(id: int = None):
 def mostrar_mi_perfil(request: Request):
     return templates.TemplateResponse("trabajadores/mi_perfil.html", {"request": request})
 
+@router.post("/perfil/editar")
+def editar_perfil_trabajador(
+    id_persona:    int = Form(...),
+    ciudad:        str = Form(None),
+    departamento:  str = Form(None),
+    nacionalidad:  str = Form(None),
+    telefono:      str = Form(None),
+    correo:        str = Form(None)
+):
+    """Permite al trabajador actualizar sus datos básicos"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+
+        # Actualizar persona
+        cursor.execute("""
+            UPDATE personas
+            SET ciudad = %s, departamento = %s, nacionalidad = %s
+            WHERE id_persona = %s
+        """, (ciudad or '', departamento or '', nacionalidad or '', id_persona))
+
+        # Actualizar teléfono
+        if telefono:
+            cursor.execute("SELECT id_telefono FROM telefono_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
+            if cursor.fetchone():
+                cursor.execute("UPDATE telefono_persona SET telefono = %s WHERE id_persona = %s", (telefono, id_persona))
+            else:
+                cursor.execute("INSERT INTO telefono_persona (id_persona, telefono) VALUES (%s, %s)", (id_persona, telefono))
+
+        # Actualizar correo
+        if correo:
+            cursor.execute("SELECT id_correo FROM correo_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
+            if cursor.fetchone():
+                cursor.execute("UPDATE correo_persona SET correo = %s WHERE id_persona = %s", (correo, id_persona))
+            else:
+                cursor.execute("INSERT INTO correo_persona (id_persona, correo) VALUES (%s, %s)", (id_persona, correo))
+
+        conexion.commit()
+        return JSONResponse({"mensaje": "Perfil actualizado correctamente"})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 @router.get("/perfil/{id_persona}", response_class=HTMLResponse)
 def perfil_publico(request: Request, id_persona: int):
     """Perfil público del trabajador — SSR con todos los datos"""

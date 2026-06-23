@@ -65,6 +65,14 @@
             margin:3px;
         }
         .loading { text-align:center;padding:40px;color:#94a3b8; }
+        .info-input {
+            border:1px solid #e2e8f0;border-radius:8px;
+            padding:8px 12px;font-size:0.88rem;color:#0f172a;
+            text-align:right;width:55%;outline:none;
+            font-family:'Segoe UI',sans-serif;
+            transition:border-color .2s;
+        }
+        .info-input:focus { border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.1); }
     </style>
 </head>
 <body>
@@ -110,18 +118,18 @@
                 <h3>Información Personal</h3>
                 <div class="info-row">
                     <span class="info-label">Ciudad</span>
-                    <span class="info-value">${d.ciudad || '-'}</span>
+                    <input class="info-input" id="edit_ciudad" value="${d.ciudad || ''}">
                 </div>
                 <div class="info-row">
                     <span class="info-label">Departamento</span>
-                    <span class="info-value">${d.departamento || '-'}</span>
+                    <input class="info-input" id="edit_departamento" value="${d.departamento || ''}">
                 </div>
                 <div class="info-row">
                     <span class="info-label">Nacionalidad</span>
-                    <span class="info-value">${d.nacionalidad || '-'}</span>
+                    <input class="info-input" id="edit_nacionalidad" value="${d.nacionalidad || ''}">
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Fecha de Nacimiento</span>
+                    <span class="info-label">Fecha Nac.</span>
                     <span class="info-value">${d.fecha_nacimiento || '-'}</span>
                 </div>
             </div>
@@ -130,11 +138,11 @@
                 <h3>Contacto</h3>
                 <div class="info-row">
                     <span class="info-label">Teléfono</span>
-                    <span class="info-value">${d.telefono || '-'}</span>
+                    <input class="info-input" id="edit_telefono" value="${d.telefono || ''}" type="tel">
                 </div>
                 <div class="info-row">
                     <span class="info-label">Correo</span>
-                    <span class="info-value">${d.correo || '-'}</span>
+                    <input class="info-input" id="edit_correo" value="${d.correo || ''}" type="email">
                 </div>
             </div>
 
@@ -143,7 +151,53 @@
                 <h3>Servicios</h3>
                 <div style="padding:4px 0">${serviciosHtml}</div>
             </div>` : ''}
+
+            <button onclick="guardarPerfil()" id="btnGuardar"
+                style="width:100%;padding:15px;background:linear-gradient(135deg,#1e3a8a,#2563eb);
+                       color:white;border:none;border-radius:14px;font-weight:700;font-size:0.95rem;
+                       cursor:pointer;margin-top:8px;transition:all .2s;
+                       box-shadow:0 4px 16px rgba(30,58,138,0.3)">
+                <i class="bi bi-check-circle"></i> Guardar cambios
+            </button>
+            <div id="msgGuardar" style="display:none;text-align:center;margin-top:10px;
+                 padding:10px;border-radius:10px;font-size:0.85rem;font-weight:600"></div>
         `;
+    }
+
+    async function guardarPerfil() {
+        const btn = document.getElementById('btnGuardar');
+        const msg = document.getElementById('msgGuardar');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+
+        const fd = new FormData();
+        fd.append('id_persona', idTrabajador);
+        fd.append('ciudad', document.getElementById('edit_ciudad').value);
+        fd.append('departamento', document.getElementById('edit_departamento').value);
+        fd.append('nacionalidad', document.getElementById('edit_nacionalidad').value);
+        fd.append('telefono', document.getElementById('edit_telefono').value);
+        fd.append('correo', document.getElementById('edit_correo').value);
+
+        try {
+            const res = await fetch('/trabajador/perfil/editar', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok) {
+                msg.style.background = '#dcfce7'; msg.style.color = '#16a34a';
+                msg.textContent = '✅ ' + (data.mensaje || 'Perfil actualizado');
+            } else {
+                msg.style.background = '#fee2e2'; msg.style.color = '#dc2626';
+                msg.textContent = '❌ ' + (data.error || 'Error al guardar');
+            }
+            msg.style.display = 'block';
+        } catch(e) {
+            msg.style.background = '#fee2e2'; msg.style.color = '#dc2626';
+            msg.textContent = '❌ Error de conexión';
+            msg.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar cambios';
+            setTimeout(() => { msg.style.display = 'none'; }, 4000);
+        }
     }
 
     cargarPerfil();
