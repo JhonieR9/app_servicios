@@ -287,7 +287,7 @@ def test_email():
             "GMAIL_USER": gmail_user or "(vacío)"
         }
 
-    from_email = "onboarding@resend.dev"
+    from_email = "noreply@talenthubcol.com"
     to_email = gmail_user if gmail_user else "delivered@resend.dev"
 
     try:

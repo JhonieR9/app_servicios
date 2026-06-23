@@ -503,8 +503,8 @@ def _enviar_gmail(destinatario: str, asunto: str, html: str) -> bool:
         print(f"{'='*60}\n")
         return True
 
-    # Remitente: Resend requiere dominio verificado. Usa onboarding@resend.dev para sandbox.
-    from_email = "onboarding@resend.dev"
+    # Remitente: dominio verificado en Resend
+    from_email = "noreply@talenthubcol.com"
 
     try:
         resp = _req.post(
