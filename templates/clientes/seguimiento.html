@@ -318,7 +318,7 @@
 
     <div class="refresh-bar">
         <div class="refresh-dot"></div>
-        Actualizando cada 10 segundos
+        Actualizando cada 5 segundos
     </div>
 </div>
 
@@ -662,8 +662,7 @@
     function seguirEsperando() {
         const banner = document.getElementById('timeoutBanner');
         if (banner) banner.remove();
-        timeoutBannerMostrado = false; // resetear para que vuelva a aparecer en otro ciclo si sigue pendiente
-        // Mostrar confirmación
+        timeoutBannerMostrado = false;
         const t = document.createElement('div');
         t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
             'background:#059669;color:white;padding:12px 20px;border-radius:12px;' +
@@ -672,6 +671,8 @@
         document.body.appendChild(t);
         setTimeout(() => t.remove(), 3000);
     }
+
+    function abrirChatSeguimiento() {
         const idSolicitud = new URLSearchParams(window.location.search).get('id');
         const idCliente   = localStorage.getItem('id_cliente') || 0;
         if (idSolicitud) {
@@ -742,9 +743,8 @@
     cargarSeguimiento();
     window._seguimientoInterval = setInterval(() => {
         cargarSeguimiento();
-        // Si el trabajador está asignado, actualizar preview de chat también
         if (trabId) cargarChatPreview();
-    }, 10000);
+    }, 5000);
 </script>
 </body>
 </html>
