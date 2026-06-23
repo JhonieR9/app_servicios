@@ -125,6 +125,7 @@
             animation:toastIn 0.3s ease;
         }
         @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+        @keyframes msgIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     </style>
 </head>
 <body>
@@ -250,7 +251,7 @@
         const wrap  = document.getElementById('messagesWrap');
         const empty = document.getElementById('emptyChat');
         empty.style.display = 'none';
-        const atBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 60;
+        const atBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 80;
 
         nuevos.forEach(m => {
             const esMio = (m.tipo_remitente === tipoUsuario && m.id_remitente === idUsuario);
@@ -267,10 +268,49 @@
                     <div class="msg-bubble">${escHtml(m.mensaje)}</div>
                     <div class="msg-meta">${hora}</div>`;
             }
+
+            // Animación de entrada para mensajes nuevos
+            div.style.cssText = 'animation:msgIn 0.3s ease;';
             wrap.appendChild(div);
+
+            // Si es mensaje del otro, vibrar y resaltar
+            if (!esMio && m.tipo_remitente !== 'sistema') {
+                div.querySelector('.msg-bubble').style.boxShadow = '0 0 0 3px rgba(102,126,234,0.3)';
+                setTimeout(() => {
+                    const bubble = div.querySelector('.msg-bubble');
+                    if (bubble) bubble.style.boxShadow = '';
+                }, 2000);
+                if (navigator.vibrate) navigator.vibrate(100);
+            }
         });
 
-        if (atBottom) wrap.scrollTop = wrap.scrollHeight;
+        // Scroll al final si estaba abajo
+        if (atBottom) {
+            wrap.scrollTo({ top: wrap.scrollHeight, behavior: 'smooth' });
+        } else if (nuevos.some(m => m.tipo_remitente !== tipoUsuario)) {
+            // Mostrar botón "nuevo mensaje" si no está al fondo
+            mostrarBotonNuevoMsg();
+        }
+    }
+
+    function mostrarBotonNuevoMsg() {
+        if (document.getElementById('nuevoMsgBtn')) return;
+        const btn = document.createElement('div');
+        btn.id = 'nuevoMsgBtn';
+        btn.style.cssText = `
+            position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+            background:#667eea;color:white;padding:8px 18px;
+            border-radius:99px;font-size:0.82rem;font-weight:700;
+            cursor:pointer;z-index:100;box-shadow:0 4px 12px rgba(102,126,234,0.4);
+            animation:toastIn 0.3s ease;
+        `;
+        btn.textContent = '↓ Nuevo mensaje';
+        btn.onclick = () => {
+            document.getElementById('messagesWrap').scrollTo({ top: 99999, behavior: 'smooth' });
+            btn.remove();
+        };
+        document.body.appendChild(btn);
+        setTimeout(() => { if (btn.parentNode) btn.remove(); }, 5000);
     }
 
     // ── Enviar mensaje ───────────────────────────────────────────
@@ -294,7 +334,10 @@
             const res  = await fetch('/chat/enviar', { method:'POST', body:fd });
             const data = await res.json();
             if (!res.ok) { mostrarToast('❌ ' + (data.error || 'Error al enviar')); }
-            else { await cargarMensajes(true); }
+            else {
+                // Esperar un momento para que la BD procese y luego recargar
+                setTimeout(() => cargarMensajes(true), 300);
+            }
         } catch(e) {
             mostrarToast('❌ Error de conexión');
         } finally {
@@ -345,7 +388,7 @@
             badge.textContent = '👁 Modo Admin';
             document.querySelector('.header').appendChild(badge);
         }
-        // Polling cada 4 segundos
+        // Polling cada 3 segundos
         pollingTimer = setInterval(() => {
             cargarMensajes(true);
             if (tipoUsuario !== 'sistema') {
@@ -354,7 +397,7 @@
                 fd.append('tipo_receptor', tipoUsuario);
                 fetch('/chat/leer', { method:'POST', body:fd }).catch(()=>{});
             }
-        }, 4000);
+        }, 3000);
     }
 
     // Limpiar polling al salir
