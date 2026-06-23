@@ -91,7 +91,7 @@ def crear_tablas():
                 INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, descripcion, estado)
                 VALUES (31, 'Mascotas', 'Paseo, cuidado, guardería y grooming de mascotas', 'activo')
             """)
-            conexion.commit()
+            conn.commit()
         except Exception:
             pass
 
@@ -330,7 +330,7 @@ def test_email():
 @app.get("/.well-known/assetlinks.json")
 def asset_links():
     """Requerido por Google para verificar el dominio en TWA (Play Store)"""
-    import json
+    import os, json
     from fastapi.responses import Response as _Resp
     ruta = os.path.join("static", ".well-known", "assetlinks.json")
     try:

@@ -856,14 +856,14 @@ def editar_perfil_cliente(
             cursor.execute("UPDATE clientes SET nombre_completo = %s WHERE id_cliente = %s", (nombre, id_cliente))
 
         if telefono:
-            cursor.execute("SELECT id_telefono FROM telefono_cliente WHERE id_cliente = %s AND principal = 1 LIMIT 1", (id_cliente,))
+            cursor.execute("SELECT 1 FROM telefono_cliente WHERE id_cliente = %s AND principal = 1 LIMIT 1", (id_cliente,))
             if cursor.fetchone():
                 cursor.execute("UPDATE telefono_cliente SET telefono = %s WHERE id_cliente = %s AND principal = 1", (telefono, id_cliente))
             else:
                 cursor.execute("INSERT INTO telefono_cliente (id_cliente, telefono, tipo_telefono, principal) VALUES (%s, %s, 'celular', 1)", (id_cliente, telefono))
 
         if correo:
-            cursor.execute("SELECT id_correo FROM correo_cliente WHERE id_cliente = %s AND principal = 1 LIMIT 1", (id_cliente,))
+            cursor.execute("SELECT 1 FROM correo_cliente WHERE id_cliente = %s AND principal = 1 LIMIT 1", (id_cliente,))
             if cursor.fetchone():
                 cursor.execute("UPDATE correo_cliente SET correo = %s WHERE id_cliente = %s AND principal = 1", (correo, id_cliente))
             else:

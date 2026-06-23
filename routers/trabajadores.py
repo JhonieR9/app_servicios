@@ -295,7 +295,7 @@ def editar_perfil_trabajador(
 
         # Actualizar teléfono
         if telefono:
-            cursor.execute("SELECT id_telefono FROM telefono_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
+            cursor.execute("SELECT 1 FROM telefono_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
             if cursor.fetchone():
                 cursor.execute("UPDATE telefono_persona SET telefono = %s WHERE id_persona = %s", (telefono, id_persona))
             else:
@@ -303,7 +303,7 @@ def editar_perfil_trabajador(
 
         # Actualizar correo
         if correo:
-            cursor.execute("SELECT id_correo FROM correo_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
+            cursor.execute("SELECT 1 FROM correo_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
             if cursor.fetchone():
                 cursor.execute("UPDATE correo_persona SET correo = %s WHERE id_persona = %s", (correo, id_persona))
             else:
