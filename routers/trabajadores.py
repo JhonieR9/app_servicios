@@ -1493,9 +1493,12 @@ def obtener_estadisticas():
 
         return JSONResponse({
             "total_activos":       total_activos,
+            "total_profesionales": total_activos,
             "total_eliminados":    total_eliminados,
             "total_clientes":      total_clientes,
             "total_todos":         total_todos,
+            "total_categorias":    len(por_categoria),
+            "total_ciudades":      len(por_ciudad),
             "registros_hoy":       registros_hoy,
             "registros_semana":    registros_semana,
             "tarifa_promedio":     tarifa_promedio,
