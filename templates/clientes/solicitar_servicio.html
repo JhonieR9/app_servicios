@@ -1393,17 +1393,15 @@ async function confirmarSolicitud() {
         if (response.ok && data.id_solicitud) {
             alertEl.className = 'alert success'; alertEl.style.display = 'block';
             alertEl.textContent = data.mensaje || '¡Solicitud enviada! Buscando profesional...';
-            const idCliente = document.getElementById('id_cliente').value;
             setTimeout(function() {
-                window.location.href = '/cliente/seguimiento?id=' + data.id_solicitud + '&id_cliente=' + idCliente;
-            }, 1200);
+                window.location.href = '/cliente/panel';
+            }, 1500);
         } else if (response.ok) {
-            // Creó pero sin id — ir a mis solicitudes
             alertEl.className = 'alert success'; alertEl.style.display = 'block';
             alertEl.textContent = data.mensaje || '¡Solicitud enviada!';
             setTimeout(function() {
-                window.location.href = '/cliente/mis_solicitudes?id_cliente=' + document.getElementById('id_cliente').value;
-            }, 1200);
+                window.location.href = '/cliente/panel';
+            }, 1500);
         } else {
             alertEl.className = 'alert error'; alertEl.style.display = 'block';
             alertEl.textContent = data.error || 'No se pudo enviar la solicitud';
