@@ -168,9 +168,7 @@
 
     function volverDelChat() {
         if (tipoUsuario === 'sistema') {
-            // Admin — cerrar pestaña o ir al monitor
-            if (window.opener) { window.close(); }
-            else { window.location.href = '/chat/admin'; }
+            window.location.href = '/chat/admin';
         } else if (tipoUsuario === 'trabajador') {
             window.location.href = '/trabajador/solicitudes_pendientes_panel?id=' + idUsuario;
         } else {
