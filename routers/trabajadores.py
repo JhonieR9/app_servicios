@@ -1724,6 +1724,148 @@ def exportar_excel():
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+@router.get("/exportar-metricas")
+def exportar_metricas():
+    """Exportar métricas del dashboard a Excel"""
+    from io import BytesIO
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from fastapi.responses import StreamingResponse
+    from datetime import datetime as dt, timedelta
+
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"error": "Error de conexión"}, status_code=500)
+
+    try:
+        cursor = conexion.cursor(dictionary=True)
+
+        # ── Métricas generales ──
+        cursor.execute("SELECT COUNT(*) as t FROM personas WHERE estado = 'activo' OR estado IS NULL")
+        total_profesionales = cursor.fetchone()['t']
+        cursor.execute("SELECT COUNT(*) as t FROM clientes WHERE estado = 'activo' OR estado IS NULL")
+        total_clientes = cursor.fetchone()['t']
+        cursor.execute("SELECT COUNT(*) as t FROM solicitudes_servicio")
+        total_solicitudes = cursor.fetchone()['t']
+        cursor.execute("SELECT COUNT(*) as t FROM solicitudes_servicio WHERE estado = 'completada'")
+        completadas = cursor.fetchone()['t']
+        cursor.execute("SELECT COUNT(*) as t FROM solicitudes_servicio WHERE estado = 'cancelada'")
+        canceladas = cursor.fetchone()['t']
+        cursor.execute("SELECT COUNT(*) as t FROM solicitudes_servicio WHERE estado = 'pendiente'")
+        pendientes = cursor.fetchone()['t']
+        cursor.execute("SELECT AVG(valor_hora) as p FROM servicios_persona WHERE valor_hora > 0")
+        row = cursor.fetchone()
+        tarifa_prom = round(float(row['p']), 0) if row and row['p'] else 0
+
+        # ── Top categorías ──
+        cursor.execute("""
+            SELECT COALESCE(cat.nombre_categoria, 'Otro') as categoria, COUNT(*) as total
+            FROM solicitudes_servicio s
+            LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+            GROUP BY categoria ORDER BY total DESC LIMIT 15
+        """)
+        top_categorias = cursor.fetchall()
+
+        # ── Top trabajadores ──
+        cursor.execute("""
+            SELECT p.nombre_completo, COUNT(*) as trabajos,
+                   ROUND(AVG(cal.puntuacion), 1) as calificacion
+            FROM solicitudes_servicio s
+            INNER JOIN personas p ON s.id_trabajador = p.id_persona
+            LEFT JOIN calificaciones cal ON s.id_solicitud = cal.id_solicitud
+            WHERE s.estado = 'completada'
+            GROUP BY s.id_trabajador, p.nombre_completo
+            ORDER BY trabajos DESC LIMIT 10
+        """)
+        top_trabajadores = cursor.fetchall()
+
+        # ── Solicitudes por ciudad ──
+        cursor.execute("""
+            SELECT ciudad, COUNT(*) as total FROM solicitudes_servicio
+            WHERE ciudad IS NOT NULL AND ciudad != ''
+            GROUP BY ciudad ORDER BY total DESC LIMIT 10
+        """)
+        por_ciudad = cursor.fetchall()
+
+        cursor.close()
+        conexion.close()
+
+        # ── Crear Excel ──
+        wb = openpyxl.Workbook()
+        header_fill = PatternFill(start_color="2563EB", end_color="2563EB", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True, size=11)
+        thin = Side(style="thin", color="CCCCCC")
+        border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+        # Hoja 1: Resumen
+        ws = wb.active
+        ws.title = "Resumen"
+        resumen = [
+            ["Métrica", "Valor"],
+            ["Total Profesionales", total_profesionales],
+            ["Total Clientes", total_clientes],
+            ["Total Solicitudes", total_solicitudes],
+            ["Completadas", completadas],
+            ["Canceladas", canceladas],
+            ["Pendientes", pendientes],
+            ["Tasa Conversión", f"{round(completadas/(completadas+canceladas)*100, 1) if (completadas+canceladas) > 0 else 0}%"],
+            ["Tarifa Promedio (COP)", f"${int(tarifa_prom):,}"],
+            ["Fecha Reporte", dt.now().strftime('%d/%m/%Y %H:%M')],
+        ]
+        for row in resumen:
+            ws.append(row)
+        for col in range(1, 3):
+            ws.cell(row=1, column=col).fill = header_fill
+            ws.cell(row=1, column=col).font = header_font
+        ws.column_dimensions['A'].width = 25
+        ws.column_dimensions['B'].width = 20
+
+        # Hoja 2: Top Categorías
+        ws2 = wb.create_sheet("Top Categorías")
+        ws2.append(["Categoría", "Solicitudes"])
+        ws2.cell(row=1, column=1).fill = header_fill; ws2.cell(row=1, column=1).font = header_font
+        ws2.cell(row=1, column=2).fill = header_fill; ws2.cell(row=1, column=2).font = header_font
+        for cat in top_categorias:
+            ws2.append([cat['categoria'], cat['total']])
+        ws2.column_dimensions['A'].width = 25
+        ws2.column_dimensions['B'].width = 12
+
+        # Hoja 3: Top Trabajadores
+        ws3 = wb.create_sheet("Top Trabajadores")
+        ws3.append(["Nombre", "Trabajos Completados", "Calificación"])
+        for col in range(1, 4):
+            ws3.cell(row=1, column=col).fill = header_fill; ws3.cell(row=1, column=col).font = header_font
+        for t in top_trabajadores:
+            ws3.append([t['nombre_completo'], t['trabajos'], float(t['calificacion'] or 0)])
+        ws3.column_dimensions['A'].width = 30
+        ws3.column_dimensions['B'].width = 20
+        ws3.column_dimensions['C'].width = 14
+
+        # Hoja 4: Por Ciudad
+        ws4 = wb.create_sheet("Por Ciudad")
+        ws4.append(["Ciudad", "Solicitudes"])
+        ws4.cell(row=1, column=1).fill = header_fill; ws4.cell(row=1, column=1).font = header_font
+        ws4.cell(row=1, column=2).fill = header_fill; ws4.cell(row=1, column=2).font = header_font
+        for c in por_ciudad:
+            ws4.append([c['ciudad'], c['total']])
+        ws4.column_dimensions['A'].width = 20
+        ws4.column_dimensions['B'].width = 12
+
+        # Guardar
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        nombre = f"metricas_talenthub_{dt.now().strftime('%Y%m%d')}.xlsx"
+
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={nombre}"}
+        )
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 @router.get("/clientes", response_class=HTMLResponse)
 def ver_clientes(request: Request):
     """Página para ver todos los clientes registrados"""
