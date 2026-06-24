@@ -133,7 +133,7 @@
 <body>
 
 <div class="header">
-    <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+    <a href="javascript:void(0)" class="back-btn" onclick="volverDelChat()"><i class="bi bi-arrow-left"></i></a>
     <div class="header-avatar" id="headerAvatar">👤</div>
     <div class="header-info">
         <div class="header-name" id="headerName">Cargando...</div>
@@ -165,6 +165,18 @@
 
     let ultimoId = 0;
     let pollingTimer = null;
+
+    function volverDelChat() {
+        if (tipoUsuario === 'sistema') {
+            // Admin — cerrar pestaña o ir al monitor
+            if (window.opener) { window.close(); }
+            else { window.location.href = '/chat/admin'; }
+        } else if (tipoUsuario === 'trabajador') {
+            window.location.href = '/trabajador/solicitudes_pendientes_panel?id=' + idUsuario;
+        } else {
+            window.location.href = '/cliente/mis_solicitudes';
+        }
+    }
 
     // ── Cargar info de la solicitud ──────────────────────────────
     async function cargarInfo() {
