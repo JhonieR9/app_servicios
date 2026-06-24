@@ -57,8 +57,7 @@ def listar_mensajes(id_solicitud: int, desde_id: int = 0):
         cursor = conexion.cursor(dictionary=True)
         cursor.execute("""
             SELECT m.id_mensaje, m.tipo_remitente, m.id_remitente,
-                   m.mensaje, m.leido,
-                   DATE_FORMAT(m.fecha_envio, '%%Y-%%m-%%d %%H:%%i') AS fecha_envio,
+                   m.mensaje, m.leido, m.fecha_envio,
                    COALESCE(c.nombre_completo, p.nombre_completo, 'Sistema') AS nombre_remitente
             FROM mensajes_chat m
             LEFT JOIN clientes c  ON m.tipo_remitente = 'cliente'   AND m.id_remitente = c.id_cliente
@@ -68,6 +67,17 @@ def listar_mensajes(id_solicitud: int, desde_id: int = 0):
             LIMIT 100
         """, (id_solicitud, desde_id))
         mensajes = cursor.fetchall()
+        # Formatear fechas en Python (evitar problemas con DATE_FORMAT)
+        from datetime import timedelta
+        for m in mensajes:
+            if m.get('fecha_envio') and hasattr(m['fecha_envio'], 'strftime'):
+                # Ajustar a hora Colombia (UTC-5)
+                hora_col = m['fecha_envio'] - timedelta(hours=5)
+                m['fecha_envio'] = hora_col.strftime('%Y-%m-%d %H:%M')
+            elif m.get('fecha_envio'):
+                m['fecha_envio'] = str(m['fecha_envio'])
+            else:
+                m['fecha_envio'] = ''
         return JSONResponse({"mensajes": mensajes})
     except Exception as e:
         return JSONResponse({"error": str(e), "mensajes": []}, status_code=500)

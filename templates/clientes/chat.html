@@ -64,6 +64,8 @@
         .msg.mine .msg-meta { color:#a5b4fc; }
 
         .msg-sender { font-size:0.7rem; font-weight:700; color:#667eea; margin-bottom:2px; }
+        .msg-sender.trabajador { color:#7c3aed; }
+        .msg-sender.cliente    { color:#0891b2; }
 
         /* Fecha separador */
         .date-sep {
@@ -202,8 +204,9 @@
             if (m.tipo_remitente === 'sistema') {
                 html += `<div class="msg-sistema">🔔 ${m.mensaje}</div>`;
             } else {
+                const senderClass = m.tipo_remitente === 'trabajador' ? 'trabajador' : 'cliente';
                 html += `<div class="msg ${esMio ? 'mine' : 'theirs'}">
-                    ${!esMio ? `<div class="msg-sender">${m.nombre_remitente || ''}</div>` : ''}
+                    ${!esMio ? `<div class="msg-sender ${senderClass}">${m.tipo_remitente === 'trabajador' ? '👷 ' : '👤 '}${m.nombre_remitente || ''}</div>` : ''}
                     <div class="msg-bubble">${escHtml(m.mensaje)}</div>
                     <div class="msg-meta">${hora} ${esMio ? (m.leido ? '✓✓' : '✓') : ''}</div>
                 </div>`;
@@ -284,8 +287,9 @@
                 div.textContent = '🔔 ' + m.mensaje;
             } else {
                 div.className = `msg ${esMio ? 'mine' : 'theirs'}`;
+                const senderClass = m.tipo_remitente === 'trabajador' ? 'trabajador' : 'cliente';
                 div.innerHTML = `
-                    ${!esMio ? `<div class="msg-sender">${m.nombre_remitente || ''}</div>` : ''}
+                    ${!esMio ? `<div class="msg-sender ${senderClass}">${m.tipo_remitente === 'trabajador' ? '👷 ' : '👤 '}${m.nombre_remitente || ''}</div>` : ''}
                     <div class="msg-bubble">${escHtml(m.mensaje)}</div>
                     <div class="msg-meta">${hora}</div>`;
             }
