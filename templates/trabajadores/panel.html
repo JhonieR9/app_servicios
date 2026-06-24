@@ -697,6 +697,61 @@
     }
     setTimeout(() => intentarSuscribirPush(0), 2000);
 
+    // ── GPS AUTOMÁTICO — actualizar ubicación cada 30s si está disponible ──
+    let gpsAutoInterval = null;
+
+    function iniciarGPSAutomatico() {
+        if (gpsAutoInterval) return; // ya corriendo
+        if (!navigator.geolocation) return;
+
+        // Actualizar inmediatamente
+        actualizarGPSSilencioso();
+
+        // Luego cada 30 segundos
+        gpsAutoInterval = setInterval(actualizarGPSSilencioso, 30000);
+    }
+
+    function actualizarGPSSilencioso() {
+        const id = idTrabajador || localStorage.getItem('id_trabajador');
+        if (!id) return;
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const fd = new FormData();
+                fd.append('id_trabajador', id);
+                fd.append('latitud', pos.coords.latitude);
+                fd.append('longitud', pos.coords.longitude);
+                fd.append('disponible', true);
+                try {
+                    await fetch('/trabajador/disponibilidad/actualizar', { method:'POST', body:fd });
+                } catch(e) {}
+            },
+            () => {}, // silenciar errores de GPS
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
+        );
+    }
+
+    // Iniciar GPS auto si el toggle de disponibilidad está activo
+    // Se activa después de cargar stats (que verifica si está disponible)
+    setTimeout(() => {
+        const toggle = document.getElementById('toggleDisp');
+        if (toggle && toggle.checked) {
+            iniciarGPSAutomatico();
+        }
+    }, 3000);
+
+    // También iniciar cuando el usuario activa el toggle
+    const _originalCambiarDisp = cambiarDisponibilidad;
+    cambiarDisponibilidad = async function() {
+        await _originalCambiarDisp();
+        const toggle = document.getElementById('toggleDisp');
+        if (toggle && toggle.checked) {
+            iniciarGPSAutomatico();
+        } else {
+            if (gpsAutoInterval) { clearInterval(gpsAutoInterval); gpsAutoInterval = null; }
+        }
+    };
+
 </script>
 </body>
 </html>
