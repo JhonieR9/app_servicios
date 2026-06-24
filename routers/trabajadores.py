@@ -286,12 +286,15 @@ def editar_perfil_trabajador(
     try:
         cursor = conexion.cursor()
 
-        # Actualizar persona
-        cursor.execute("""
-            UPDATE personas
-            SET ciudad = %s, departamento = %s, nacionalidad = %s
-            WHERE id_persona = %s
-        """, (ciudad or '', departamento or '', nacionalidad or '', id_persona))
+        # Actualizar persona (solo si vienen con valor)
+        if ciudad or departamento or nacionalidad:
+            cursor.execute("""
+                UPDATE personas
+                SET ciudad = COALESCE(NULLIF(%s,''), ciudad),
+                    departamento = COALESCE(NULLIF(%s,''), departamento),
+                    nacionalidad = COALESCE(NULLIF(%s,''), nacionalidad)
+                WHERE id_persona = %s
+            """, (ciudad or '', departamento or '', nacionalidad or '', id_persona))
 
         # Actualizar teléfono
         if telefono:
@@ -311,6 +314,24 @@ def editar_perfil_trabajador(
 
         conexion.commit()
         return JSONResponse({"mensaje": "Perfil actualizado correctamente"})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+@router.post("/baja")
+def dar_de_baja_trabajador(id_persona: int = Form(...)):
+    """Desactiva la cuenta del trabajador (soft delete)"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("UPDATE personas SET estado = 'inactivo' WHERE id_persona = %s", (id_persona,))
+        # Desactivar disponibilidad
+        cursor.execute("UPDATE disponibilidad SET disponible = 0 WHERE id_persona = %s", (id_persona,))
+        conexion.commit()
+        return JSONResponse({"mensaje": "Cuenta desactivada"})
     except Exception as e:
         conexion.rollback()
         return JSONResponse({"error": str(e)}, status_code=500)

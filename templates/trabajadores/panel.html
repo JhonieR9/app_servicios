@@ -246,6 +246,40 @@
         </a>
     </div>
 
+    <!-- Mi Cuenta -->
+    <div class="th-section-title"><i class="bi bi-gear-fill"></i> Mi cuenta</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px">
+        <div style="font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:14px">Editar mis datos</div>
+        <div style="display:grid;gap:10px">
+            <div style="display:flex;gap:10px">
+                <input type="text" id="editNombreTrab" placeholder="Nombre completo"
+                    style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:10px;
+                           background:var(--bg);color:var(--text);font-size:0.88rem;outline:none">
+                <input type="tel" id="editTelefonoTrab" placeholder="Teléfono"
+                    style="width:40%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;
+                           background:var(--bg);color:var(--text);font-size:0.88rem;outline:none">
+            </div>
+            <input type="email" id="editCorreoTrab" placeholder="Correo electrónico"
+                style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;
+                       background:var(--bg);color:var(--text);font-size:0.88rem;outline:none">
+            <button onclick="guardarDatosTrabajador()" id="btnGuardarTrab"
+                style="padding:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                       color:white;border:none;border-radius:10px;font-weight:700;
+                       font-size:0.88rem;cursor:pointer;transition:all .2s">
+                <i class="bi bi-check-circle"></i> Guardar cambios
+            </button>
+            <div id="msgGuardarTrab" style="display:none;text-align:center;padding:8px;
+                 border-radius:8px;font-size:0.82rem;font-weight:600"></div>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:18px 0 14px">
+        <button onclick="darDeBajaTrabajador()"
+            style="width:100%;padding:11px;background:rgba(239,68,68,.08);
+                   color:#ef4444;border:1px solid rgba(239,68,68,.2);border-radius:10px;
+                   font-weight:700;font-size:0.82rem;cursor:pointer">
+            <i class="bi bi-person-x"></i> Darme de baja
+        </button>
+    </div>
+
 </div>
 
 <script>
@@ -696,6 +730,71 @@
         }
     }
     setTimeout(() => intentarSuscribirPush(0), 2000);
+
+    // ── Llenar campos edición trabajador ──
+    setTimeout(async () => {
+        try {
+            const res = await fetch('/trabajador/mi-perfil', { credentials:'include' });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.error) return;
+            document.getElementById('editNombreTrab').value   = data.nombre_completo || '';
+            document.getElementById('editTelefonoTrab').value = String(data.telefono || '');
+            document.getElementById('editCorreoTrab').value   = data.correo || '';
+        } catch(e) {}
+    }, 1000);
+
+    // ── Guardar datos trabajador ──
+    async function guardarDatosTrabajador() {
+        const btn = document.getElementById('btnGuardarTrab');
+        const msg = document.getElementById('msgGuardarTrab');
+        btn.disabled = true; btn.textContent = 'Guardando...';
+
+        const fd = new FormData();
+        fd.append('id_persona', idTrabajador || localStorage.getItem('id_trabajador'));
+        fd.append('ciudad', ''); // no editable desde aquí
+        fd.append('departamento', '');
+        fd.append('nacionalidad', '');
+        fd.append('telefono', document.getElementById('editTelefonoTrab').value);
+        fd.append('correo', document.getElementById('editCorreoTrab').value);
+
+        try {
+            const res = await fetch('/trabajador/perfil/editar', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok) {
+                msg.style.background = 'rgba(99,102,241,.15)'; msg.style.color = '#a5b4fc';
+                msg.textContent = '✅ ' + (data.mensaje || 'Datos actualizados');
+            } else {
+                msg.style.background = 'rgba(239,68,68,.15)'; msg.style.color = '#ef4444';
+                msg.textContent = '❌ ' + (data.error || 'Error');
+            }
+            msg.style.display = 'block';
+        } catch(e) {
+            msg.style.background = 'rgba(239,68,68,.15)'; msg.style.color = '#ef4444';
+            msg.textContent = '❌ Error de conexión'; msg.style.display = 'block';
+        } finally {
+            btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar cambios';
+            setTimeout(() => { msg.style.display = 'none'; }, 4000);
+        }
+    }
+
+    // ── Darse de baja trabajador ──
+    async function darDeBajaTrabajador() {
+        if (!confirm('¿Estás seguro de que quieres darte de baja? Tu perfil será desactivado y no recibirás más solicitudes.')) return;
+        if (!confirm('Esta acción desactivará tu cuenta. ¿Confirmas?')) return;
+        try {
+            const fd = new FormData();
+            fd.append('id_persona', idTrabajador || localStorage.getItem('id_trabajador'));
+            const res = await fetch('/trabajador/baja', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Tu cuenta ha sido desactivada. Lamentamos verte partir.');
+                window.location.href = '/';
+            } else {
+                alert(data.error || 'Error al procesar la baja');
+            }
+        } catch(e) { alert('Error de conexión'); }
+    }
 
     // ── GPS AUTOMÁTICO — actualizar ubicación cada 30s si está disponible ──
     let gpsAutoInterval = null;
