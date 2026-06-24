@@ -230,25 +230,42 @@
     }
 
     // ── Polling de mensajes ──────────────────────────────────────
+    let todosLosMensajes = [];
+
     async function cargarMensajes(silencioso = false) {
         if (!idSolicitud) return;
         try {
-            const res  = await fetch(`/chat/mensajes?id_solicitud=${idSolicitud}&desde_id=${ultimoId}`);
+            // Siempre traer TODOS los mensajes (garantiza que nada se pierda)
+            const res  = await fetch(`/chat/mensajes?id_solicitud=${idSolicitud}&desde_id=0`);
             const data = await res.json();
-            if (data.mensajes && data.mensajes.length > 0) {
-                const nuevosId = data.mensajes[data.mensajes.length - 1].id_mensaje;
-                if (ultimoId === 0) {
-                    // Primera carga: renderizar todos
-                    renderMensajes(data.mensajes);
-                } else {
-                    // Polling: solo agregar los nuevos al final
-                    agregarNuevosMensajes(data.mensajes);
-                }
-                ultimoId = nuevosId;
-            } else if (!silencioso && ultimoId === 0) {
+            const mensajes = data.mensajes || [];
+
+            if (mensajes.length === 0 && !silencioso) {
                 renderMensajes([]);
+                return;
             }
-        } catch(e) {}
+
+            if (mensajes.length === 0) return;
+
+            const nuevoUltimoId = mensajes[mensajes.length - 1].id_mensaje;
+
+            if (ultimoId === 0) {
+                // Primera carga: renderizar todos
+                todosLosMensajes = mensajes;
+                renderMensajes(mensajes);
+                ultimoId = nuevoUltimoId;
+            } else if (nuevoUltimoId > ultimoId) {
+                // Hay mensajes nuevos — agregar solo los que faltan
+                const nuevos = mensajes.filter(m => m.id_mensaje > ultimoId);
+                if (nuevos.length > 0) {
+                    todosLosMensajes = mensajes;
+                    agregarNuevosMensajes(nuevos);
+                    ultimoId = nuevoUltimoId;
+                }
+            }
+        } catch(e) {
+            console.warn('Error cargando mensajes:', e);
+        }
     }
 
     function agregarNuevosMensajes(nuevos) {
@@ -392,7 +409,7 @@
             badge.textContent = '👁 Modo Admin';
             document.querySelector('.header').appendChild(badge);
         }
-        // Polling cada 3 segundos
+        // Polling cada 2 segundos
         pollingTimer = setInterval(() => {
             cargarMensajes(true);
             if (tipoUsuario !== 'sistema') {
@@ -401,7 +418,7 @@
                 fd.append('tipo_receptor', tipoUsuario);
                 fetch('/chat/leer', { method:'POST', body:fd }).catch(()=>{});
             }
-        }, 3000);
+        }, 2000);
     }
 
     // Limpiar polling al salir
