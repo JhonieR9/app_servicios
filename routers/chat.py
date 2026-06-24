@@ -99,7 +99,7 @@ def enviar_mensaje(
 
     conexion = conectar_bd()
     try:
-        cursor = conexion.cursor()
+        cursor = conexion.cursor(dictionary=True)
         cursor.execute("""
             INSERT INTO mensajes_chat
                 (id_solicitud, tipo_remitente, id_remitente, mensaje, fecha_envio, leido)
@@ -107,6 +107,92 @@ def enviar_mensaje(
         """, (id_solicitud, tipo_remitente, id_remitente, mensaje.strip(), datetime.now()))
         conexion.commit()
         id_msg = cursor.lastrowid
+
+        # ── Enviar push notification al destinatario (en background) ──
+        import threading
+        def _notificar_push():
+            try:
+                import json, os
+                conn2 = conectar_bd()
+                cur2  = conn2.cursor(dictionary=True)
+
+                # Determinar destinatario
+                cur2.execute("""
+                    SELECT id_cliente, id_trabajador FROM solicitudes_servicio
+                    WHERE id_solicitud = %s LIMIT 1
+                """, (id_solicitud,))
+                sol = cur2.fetchone()
+                if not sol:
+                    cur2.close(); conn2.close(); return
+
+                # Obtener nombre del remitente
+                if tipo_remitente == 'cliente':
+                    cur2.execute("SELECT nombre_completo FROM clientes WHERE id_cliente = %s", (id_remitente,))
+                    row = cur2.fetchone()
+                    nombre_remitente = row['nombre_completo'] if row else 'Cliente'
+                    # Notificar al trabajador
+                    tipo_dest = 'trabajador'
+                    id_dest   = sol['id_trabajador']
+                else:
+                    cur2.execute("SELECT nombre_completo FROM personas WHERE id_persona = %s", (id_remitente,))
+                    row = cur2.fetchone()
+                    nombre_remitente = row['nombre_completo'] if row else 'Trabajador'
+                    # Notificar al cliente
+                    tipo_dest = 'cliente'
+                    id_dest   = sol['id_cliente']
+
+                if not id_dest:
+                    cur2.close(); conn2.close(); return
+
+                # Buscar suscripciones push del destinatario
+                cur2.execute("""
+                    SELECT endpoint, p256dh, auth FROM push_subscriptions
+                    WHERE tipo_usuario = %s AND id_usuario = %s
+                """, (tipo_dest, id_dest))
+                subs = cur2.fetchall()
+                cur2.close(); conn2.close()
+
+                if not subs:
+                    return
+
+                try:
+                    from pywebpush import webpush, WebPushException
+                except ImportError:
+                    return
+
+                from main import VAPID_PRIVATE, VAPID_CLAIMS
+                texto_corto = mensaje.strip()[:80]
+                payload = json.dumps({
+                    "title": f"💬 {nombre_remitente}",
+                    "body":  texto_corto,
+                    "url":   f"/chat/?id_solicitud={id_solicitud}&tipo={tipo_dest}&id_usuario={id_dest}",
+                    "icon":  "/static/icons/icon-192.png"
+                })
+
+                for sub in subs:
+                    try:
+                        webpush(
+                            subscription_info={
+                                "endpoint": sub["endpoint"],
+                                "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}
+                            },
+                            data=payload,
+                            vapid_private_key=VAPID_PRIVATE,
+                            vapid_claims=VAPID_CLAIMS
+                        )
+                    except WebPushException as ex:
+                        if ex.response and ex.response.status_code in (404, 410):
+                            try:
+                                c3 = conectar_bd(); cur3 = c3.cursor()
+                                cur3.execute("DELETE FROM push_subscriptions WHERE endpoint = %s", (sub["endpoint"],))
+                                c3.commit(); cur3.close(); c3.close()
+                            except: pass
+                    except: pass
+            except Exception as ex:
+                print(f"[CHAT PUSH] Error: {ex}")
+
+        threading.Thread(target=_notificar_push, daemon=True).start()
+
         return JSONResponse({"ok": True, "id_mensaje": id_msg})
     except Exception as e:
         conexion.rollback()
