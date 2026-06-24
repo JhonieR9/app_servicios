@@ -1748,6 +1748,7 @@ def listar_clientes():
             FROM clientes c
             LEFT JOIN correo_cliente e ON c.id_cliente = e.id_cliente AND e.principal = 1
             LEFT JOIN telefono_cliente t ON c.id_cliente = t.id_cliente AND t.principal = 1
+            WHERE c.estado != 'eliminado' OR c.estado IS NULL
             ORDER BY c.id_cliente DESC
         """)
         clientes = cursor.fetchall()
@@ -1758,10 +1759,12 @@ def listar_clientes():
                     cl[k] = (v - timedelta(hours=5)).strftime('%Y-%m-%d %H:%M')
                 elif v is None:
                     cl[k] = ''
-        cursor.execute("SELECT COUNT(*) as total FROM clientes")
-        total = cursor.fetchone()['total']
+                elif hasattr(v, '__float__'):
+                    cl[k] = float(v)
+        total = len(clientes)
         return JSONResponse({"clientes": clientes, "total": total})
     except Exception as e:
+        import traceback; traceback.print_exc()
         return JSONResponse({"error": str(e), "clientes": []}, status_code=500)
     finally:
         if conexion and conexion.is_connected():
