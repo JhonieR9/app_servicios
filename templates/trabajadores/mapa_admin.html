@@ -3,45 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Trabajadores - Admin</title>
+    <title>Rastreo GPS - Admin TalentHub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css' rel='stylesheet' />
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Segoe UI',sans-serif;background:#0f172a;color:#f1f5f9;height:100vh;display:flex;flex-direction:column}
-        .topbar{background:#1e293b;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #334155;flex-shrink:0}
-        .topbar a{width:36px;height:36px;border-radius:50%;background:#334155;display:flex;align-items:center;justify-content:center;color:#94a3b8;text-decoration:none;font-size:0.9rem}
-        .topbar a:hover{background:#475569;color:white}
-        .topbar h1{font-size:1rem;font-weight:700;flex:1}
-        .topbar .badge{background:rgba(16,185,129,.2);color:#10b981;padding:4px 12px;border-radius:99px;font-size:0.75rem;font-weight:700}
-        #mapa{flex:1;width:100%}
-        .info-panel{position:absolute;bottom:20px;left:20px;right:20px;background:rgba(30,41,59,0.95);backdrop-filter:blur(12px);border:1px solid #334155;border-radius:16px;padding:16px;z-index:10;display:none;max-width:400px}
-        .info-panel h3{font-size:0.95rem;font-weight:700;margin-bottom:6px}
-        .info-panel p{font-size:0.82rem;color:#94a3b8;margin-bottom:4px}
-        .info-panel .close-btn{position:absolute;top:10px;right:14px;background:none;border:none;color:#64748b;font-size:1.2rem;cursor:pointer}
-        .stats-bar{display:flex;gap:16px;align-items:center}
-        .stat-item{font-size:0.75rem;color:#94a3b8}
-        .stat-item strong{color:#f1f5f9;font-size:0.88rem}
-        .mapboxgl-popup-content{background:#1e293b!important;color:#f1f5f9!important;border-radius:12px!important;padding:12px 16px!important;box-shadow:0 8px 24px rgba(0,0,0,.4)!important;border:1px solid #334155!important}
-        .mapboxgl-popup-tip{border-top-color:#1e293b!important}
-        .mapboxgl-popup-close-button{color:#94a3b8!important;font-size:1.2rem!important}
+        body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#f1f5f9;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+        /* Header */
+        .header{
+            background:linear-gradient(135deg,#0f172a,#1e293b);
+            padding:12px 20px;display:flex;align-items:center;gap:14px;
+            border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;z-index:20;
+        }
+        .header-back{
+            width:38px;height:38px;border-radius:12px;
+            background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+            display:flex;align-items:center;justify-content:center;
+            color:#94a3b8;text-decoration:none;transition:all .2s;
+        }
+        .header-back:hover{background:rgba(255,255,255,.1);color:white}
+        .header-title{flex:1}
+        .header-title h1{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+        .header-title h1 .dot{width:8px;height:8px;border-radius:50%;background:#10b981;animation:blink 1.5s infinite}
+        .header-title p{font-size:0.72rem;color:#64748b;margin-top:2px}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+        /* Stats pills */
+        .stats{display:flex;gap:8px}
+        .stat-pill{
+            background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+            border-radius:10px;padding:6px 14px;font-size:0.75rem;font-weight:600;
+            display:flex;align-items:center;gap:6px;
+        }
+        .stat-pill .num{color:#10b981;font-weight:800;font-size:0.9rem}
+
+        /* Main layout */
+        .main{flex:1;display:flex;position:relative;overflow:hidden}
+
+        /* Map */
+        #mapa{flex:1;height:100%}
+
+        /* Side panel */
+        .side-panel{
+            width:320px;background:#111118;border-left:1px solid rgba(255,255,255,.06);
+            display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
+        }
+        .side-header{padding:16px;border-bottom:1px solid rgba(255,255,255,.06)}
+        .side-header h3{font-size:0.82rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px}
+        .side-list{flex:1;overflow-y:auto;padding:8px}
+        .side-list::-webkit-scrollbar{width:4px}
+        .side-list::-webkit-scrollbar-thumb{background:#334155;border-radius:99px}
+
+        .worker-card{
+            background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+            border-radius:12px;padding:12px 14px;margin-bottom:8px;
+            cursor:pointer;transition:all .2s;
+        }
+        .worker-card:hover{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.3)}
+        .worker-card.active{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.3)}
+        .wc-name{font-size:0.88rem;font-weight:700;color:#f1f5f9;margin-bottom:4px}
+        .wc-meta{font-size:0.72rem;color:#64748b;display:flex;align-items:center;gap:6px}
+        .wc-dot{width:6px;height:6px;border-radius:50%;background:#10b981;flex-shrink:0}
+        .wc-cat{color:#a5b4fc;font-weight:600}
+
+        /* Info popup (bottom) */
+        .info-popup{
+            position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+            background:rgba(17,17,24,.95);backdrop-filter:blur(16px);
+            border:1px solid rgba(255,255,255,.1);border-radius:16px;
+            padding:18px 22px;z-index:15;display:none;min-width:300px;max-width:420px;
+            box-shadow:0 16px 48px rgba(0,0,0,.5);
+        }
+        .info-popup h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+        .info-popup .info-row{font-size:0.82rem;color:#94a3b8;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+        .info-popup .info-row i{color:#6366f1;width:16px}
+        .info-popup .close-btn{
+            position:absolute;top:12px;right:14px;background:none;border:none;
+            color:#475569;font-size:1.1rem;cursor:pointer;
+        }
+        .info-popup .close-btn:hover{color:white}
+
+        /* Responsive */
+        @media(max-width:768px){
+            .side-panel{display:none}
+            .stats{display:none}
+        }
+
+        /* Custom Mapbox popup */
+        .mapboxgl-popup-content{
+            background:rgba(17,17,24,.95)!important;color:#f1f5f9!important;
+            border-radius:12px!important;padding:10px 14px!important;
+            box-shadow:0 8px 32px rgba(0,0,0,.5)!important;
+            border:1px solid rgba(255,255,255,.1)!important;
+            font-size:0.82rem!important;
+        }
+        .mapboxgl-popup-tip{border-top-color:rgba(17,17,24,.95)!important}
+        .mapboxgl-popup-close-button{color:#64748b!important;font-size:1.1rem!important}
+
+        /* Marker pulse */
+        .marker-pulse{
+            position:absolute;inset:-6px;border-radius:50%;
+            background:rgba(16,185,129,.3);
+            animation:pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring{0%{transform:scale(1);opacity:1}100%{transform:scale(2.2);opacity:0}}
     </style>
 </head>
 <body>
-<div class="topbar">
-    <a href="/trabajador/registros"><i class="bi bi-arrow-left"></i></a>
-    <h1><i class="bi bi-geo-alt-fill" style="color:#10b981"></i> Mapa de Trabajadores</h1>
-    <span class="badge" id="contadorOnline">0 conectados</span>
+
+<div class="header">
+    <a href="/trabajador/registros" class="header-back"><i class="bi bi-arrow-left"></i></a>
+    <div class="header-title">
+        <h1><span class="dot"></span> Rastreo en Tiempo Real</h1>
+        <p>Ubicación GPS de trabajadores activos</p>
+    </div>
+    <div class="stats">
+        <div class="stat-pill"><span class="num" id="statOnline">0</span> En línea</div>
+        <div class="stat-pill"><i class="bi bi-geo-alt" style="color:#6366f1"></i> <span id="statCiudades">0</span> ciudades</div>
+    </div>
 </div>
 
-<div id="mapa"></div>
+<div class="main">
+    <div id="mapa"></div>
 
-<div class="info-panel" id="infoPanel">
-    <button class="close-btn" onclick="document.getElementById('infoPanel').style.display='none'">&times;</button>
-    <h3 id="infoNombre">—</h3>
-    <p id="infoCategoria"></p>
-    <p id="infoUbicacion"></p>
-    <p id="infoActualizado"></p>
+    <div class="side-panel">
+        <div class="side-header">
+            <h3><i class="bi bi-people-fill"></i> Trabajadores activos</h3>
+        </div>
+        <div class="side-list" id="sideList">
+            <div style="padding:20px;text-align:center;color:#475569;font-size:0.82rem">
+                <i class="bi bi-hourglass-split"></i> Cargando...
+            </div>
+        </div>
+    </div>
+
+    <div class="info-popup" id="infoPopup">
+        <button class="close-btn" onclick="document.getElementById('infoPopup').style.display='none'">&times;</button>
+        <h3 id="infoNombre">—</h3>
+        <div class="info-row"><i class="bi bi-briefcase-fill"></i> <span id="infoCat"></span></div>
+        <div class="info-row"><i class="bi bi-geo-alt-fill"></i> <span id="infoDir">Obteniendo...</span></div>
+        <div class="info-row"><i class="bi bi-clock"></i> <span id="infoTime"></span></div>
+    </div>
 </div>
 
 <script src='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js'></script>
@@ -50,12 +153,15 @@
 
     const map = new mapboxgl.Map({
         container: 'mapa',
-        style: 'mapbox://styles/mapbox/dark-v11',
-        center: [-74.07, 4.65], // Bogotá
-        zoom: 11
+        style: 'mapbox://styles/mapbox/navigation-night-v1',
+        center: [-74.07, 4.65],
+        zoom: 11,
+        pitch: 45,
+        bearing: -10
     });
 
-    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right');
+    map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
     let markers = [];
 
@@ -65,78 +171,107 @@
             const data = await res.json();
             const trabajadores = data.trabajadores || [];
 
-            // Limpiar marcadores anteriores
             markers.forEach(m => m.remove());
             markers = [];
 
-            document.getElementById('contadorOnline').textContent = trabajadores.length + ' conectados';
+            // Stats
+            document.getElementById('statOnline').textContent = trabajadores.length;
+            const ciudades = new Set(trabajadores.map(t => t.ciudad).filter(Boolean));
+            document.getElementById('statCiudades').textContent = ciudades.size;
 
-            trabajadores.forEach(t => {
+            // Side panel
+            const sideList = document.getElementById('sideList');
+            if (trabajadores.length === 0) {
+                sideList.innerHTML = `<div style="padding:30px;text-align:center;color:#475569">
+                    <div style="font-size:2rem;margin-bottom:8px">📡</div>
+                    <div>Sin trabajadores activos</div>
+                </div>`;
+            } else {
+                sideList.innerHTML = trabajadores.map((t, i) => `
+                    <div class="worker-card" onclick="focusWorker(${i})">
+                        <div class="wc-name">${t.nombre || 'Sin nombre'}</div>
+                        <div class="wc-meta">
+                            <span class="wc-dot"></span>
+                            <span class="wc-cat">${t.categorias || 'General'}</span>
+                            <span>· ${t.ultima_actualizacion || ''}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Markers
+            trabajadores.forEach((t, i) => {
                 if (!t.latitud || !t.longitud) return;
 
-                // Crear marcador personalizado
                 const el = document.createElement('div');
-                el.style.cssText = `
-                    width:32px;height:32px;border-radius:50%;
-                    background:linear-gradient(135deg,#10b981,#059669);
-                    border:3px solid #064e3b;
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:0.7rem;font-weight:800;color:white;
-                    cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,.4);
-                `;
-                const iniciales = (t.nombre || '').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
-                el.textContent = iniciales || '?';
+                el.style.cssText = 'position:relative;width:40px;height:40px;cursor:pointer;';
+                el.innerHTML = `
+                    <div class="marker-pulse"></div>
+                    <div style="position:absolute;inset:6px;border-radius:50%;
+                                background:linear-gradient(135deg,#10b981,#059669);
+                                border:3px solid #064e3b;
+                                display:flex;align-items:center;justify-content:center;
+                                font-size:0.65rem;font-weight:800;color:white;
+                                box-shadow:0 4px 16px rgba(16,185,129,.5);">
+                        ${(t.nombre || '').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase() || '?'}
+                    </div>`;
 
                 const marker = new mapboxgl.Marker(el)
                     .setLngLat([parseFloat(t.longitud), parseFloat(t.latitud)])
                     .addTo(map);
 
-                el.addEventListener('click', () => {
-                    const panel = document.getElementById('infoPanel');
-                    document.getElementById('infoNombre').textContent = t.nombre || 'Sin nombre';
-                    document.getElementById('infoCategoria').innerHTML = `<i class="bi bi-briefcase"></i> ${t.categorias || 'Sin categoría'}`;
-                    document.getElementById('infoUbicacion').innerHTML = `<i class="bi bi-geo-alt"></i> Obteniendo dirección...`;
-                    document.getElementById('infoActualizado').innerHTML = `<i class="bi bi-clock"></i> Última actualización: ${t.ultima_actualizacion || 'Desconocida'}`;
-                    panel.style.display = 'block';
-
-                    map.flyTo({ center: [parseFloat(t.longitud), parseFloat(t.latitud)], zoom: 14 });
-
-                    // Geocodificación inversa — obtener dirección real desde GPS
-                    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${t.longitud},${t.latitud}.json?access_token=${mapboxgl.accessToken}&language=es&types=address,neighborhood,locality`)
-                        .then(r => r.json())
-                        .then(geo => {
-                            const lugar = geo.features && geo.features[0]
-                                ? geo.features[0].place_name.replace(', Colombia', '')
-                                : `${t.latitud.toFixed(4)}, ${t.longitud.toFixed(4)}`;
-                            document.getElementById('infoUbicacion').innerHTML = `<i class="bi bi-geo-alt"></i> ${lugar}`;
-                        })
-                        .catch(() => {
-                            document.getElementById('infoUbicacion').innerHTML = `<i class="bi bi-geo-alt"></i> ${t.latitud.toFixed(4)}, ${t.longitud.toFixed(4)}`;
-                        });
-                });
-
+                el.addEventListener('click', () => showInfo(t));
                 markers.push(marker);
             });
 
-            // Ajustar vista si hay trabajadores
+            // Fit bounds
             if (trabajadores.length > 0) {
                 const bounds = new mapboxgl.LngLatBounds();
                 trabajadores.forEach(t => {
-                    if (t.latitud && t.longitud) {
-                        bounds.extend([parseFloat(t.longitud), parseFloat(t.latitud)]);
-                    }
+                    if (t.latitud && t.longitud) bounds.extend([parseFloat(t.longitud), parseFloat(t.latitud)]);
                 });
-                map.fitBounds(bounds, { padding: 60, maxZoom: 13 });
+                map.fitBounds(bounds, { padding: 80, maxZoom: 13 });
             }
 
-        } catch(e) {
-            console.error('Error cargando mapa:', e);
-        }
+            // Store for focusWorker
+            window._trabajadores = trabajadores;
+
+        } catch(e) { console.error('Error:', e); }
+    }
+
+    function focusWorker(idx) {
+        const t = window._trabajadores[idx];
+        if (!t) return;
+        map.flyTo({ center: [parseFloat(t.longitud), parseFloat(t.latitud)], zoom: 15, pitch: 50 });
+        showInfo(t);
+        // Highlight card
+        document.querySelectorAll('.worker-card').forEach((c,i) => c.classList.toggle('active', i === idx));
+    }
+
+    function showInfo(t) {
+        const popup = document.getElementById('infoPopup');
+        document.getElementById('infoNombre').textContent = t.nombre || '—';
+        document.getElementById('infoCat').textContent = t.categorias || 'Sin categoría';
+        document.getElementById('infoDir').textContent = 'Obteniendo dirección...';
+        document.getElementById('infoTime').textContent = 'Actualizado: ' + (t.ultima_actualizacion || '—');
+        popup.style.display = 'block';
+
+        // Reverse geocode
+        fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${t.longitud},${t.latitud}.json?access_token=${mapboxgl.accessToken}&language=es&types=address,neighborhood,locality`)
+            .then(r => r.json())
+            .then(geo => {
+                const lugar = geo.features && geo.features[0]
+                    ? geo.features[0].place_name.replace(', Colombia', '')
+                    : `${parseFloat(t.latitud).toFixed(4)}, ${parseFloat(t.longitud).toFixed(4)}`;
+                document.getElementById('infoDir').textContent = lugar;
+            })
+            .catch(() => {
+                document.getElementById('infoDir').textContent = `${parseFloat(t.latitud).toFixed(4)}, ${parseFloat(t.longitud).toFixed(4)}`;
+            });
     }
 
     map.on('load', () => {
         cargarTrabajadores();
-        // Refrescar cada 30s
         setInterval(cargarTrabajadores, 30000);
     });
 </script>
