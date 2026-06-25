@@ -691,7 +691,7 @@ def mostrar_mapa(request: Request):
 def obtener_trabajadores_cercanos(
     lat: float,
     lng: float,
-    radio: float = 10.0,
+    radio: float = 30.0,
     categoria: str = ""
 ):
     """
