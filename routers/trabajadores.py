@@ -1587,7 +1587,8 @@ def mapa_admin_data():
               AND d.latitud IS NOT NULL
               AND d.longitud IS NOT NULL
               AND (p.estado = 'activo' OR p.estado IS NULL)
-            GROUP BY p.id_persona
+            GROUP BY p.id_persona, p.nombre_completo, p.ciudad,
+                     d.latitud, d.longitud, d.disponible, d.ultima_actualizacion
         """)
         trabajadores = cursor.fetchall()
         from datetime import timedelta
