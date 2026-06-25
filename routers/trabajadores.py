@@ -1286,7 +1286,7 @@ def listar_registros(request: Request):
 
                 cursor.execute("""
                     SELECT foto_identificacion, antecedentes_pdf, recomendaciones, recomendaciones_archivo,
-                           arl, eps,
+                           arl, eps, medio_pago, medio_pago_principal, banco, numero_cuenta,
                            (foto_identificacion_data IS NOT NULL AND LENGTH(foto_identificacion_data) > 0) as tiene_foto,
                            (antecedentes_data IS NOT NULL AND LENGTH(antecedentes_data) > 0) as tiene_ant,
                            (recomendaciones_data IS NOT NULL AND LENGTH(recomendaciones_data) > 0) as tiene_rec
@@ -1298,6 +1298,8 @@ def listar_registros(request: Request):
                     reg['antecedentes_pdf'] = str(detalles.get('antecedentes_pdf') or '')
                     reg['recomendaciones'] = str(detalles.get('recomendaciones') or '')
                     reg['recomendaciones_archivo'] = str(detalles.get('recomendaciones_archivo') or '')
+                    reg['medio_pago'] = str(detalles.get('medio_pago') or '')
+                    reg['medio_pago_principal'] = str(detalles.get('medio_pago_principal') or '')
                     reg['arl'] = str(detalles.get('arl') or '')
                     reg['eps'] = str(detalles.get('eps') or '')
                     # URLs para servir desde BD
