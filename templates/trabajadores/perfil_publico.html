@@ -328,6 +328,11 @@
                 <div class="stat-label">📅 Años exp.</div>
             </div>
         </div>
+        {% if miembro_desde %}
+        <div style="text-align:center;font-size:0.75rem;color:#94a3b8;margin-top:10px;">
+            <i class="bi bi-calendar-check"></i> Miembro desde {{ miembro_desde }}
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -466,6 +471,27 @@
     </div>
 
 </div>
+
+<!-- HISTORIAL DE TRABAJOS -->
+{% if historial_trabajos %}
+<div class="section" style="margin-top:4px">
+    <div class="section-title"><i class="bi bi-clock-history"></i> Últimos trabajos</div>
+    {% for h in historial_trabajos %}
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9">
+        <div style="width:36px;height:36px;border-radius:10px;background:#f3f0ff;
+                    display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0">✅</div>
+        <div style="flex:1;min-width:0">
+            <div style="font-size:0.85rem;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                {{ h.nombre_categoria or h.titulo or 'Servicio' }}
+            </div>
+            <div style="font-size:0.72rem;color:#94a3b8">
+                {{ h.ciudad or '' }} · {{ h.fecha_finalizacion or '' }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
 <!-- CTA FIJO -->
 <div class="cta-bar">

@@ -477,6 +477,32 @@ def perfil_publico(request: Request, id_persona: int):
         partes = str(perfil.get('nombre_completo', '')).split()
         iniciales = ''.join(p[0].upper() for p in partes[:2]) if partes else '?'
 
+        # Miembro desde
+        cursor.execute("SELECT fecha_registro FROM personas WHERE id_persona = %s", (id_persona,))
+        row_fecha = cursor.fetchone()
+        if row_fecha and row_fecha.get('fecha_registro'):
+            fecha_reg = row_fecha['fecha_registro']
+            meses_es = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+            miembro_desde = f"{meses_es[fecha_reg.month]} {fecha_reg.year}"
+        else:
+            miembro_desde = ""
+
+        # Últimos trabajos completados (historial público)
+        cursor.execute("""
+            SELECT s.titulo, cat.nombre_categoria, s.fecha_finalizacion, s.ciudad
+            FROM solicitudes_servicio s
+            LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+            WHERE s.id_trabajador = %s AND s.estado = 'completada'
+            ORDER BY s.fecha_finalizacion DESC
+            LIMIT 5
+        """, (id_persona,))
+        historial_trabajos = cursor.fetchall()
+        for h in historial_trabajos:
+            if h.get('fecha_finalizacion') and hasattr(h['fecha_finalizacion'], 'strftime'):
+                h['fecha_finalizacion'] = (h['fecha_finalizacion'] - timedelta(hours=5)).strftime('%d/%m/%Y')
+            else:
+                h['fecha_finalizacion'] = ''
+
         ctx = {
             "request":            request,
             "perfil":             perfil,
@@ -494,6 +520,8 @@ def perfil_publico(request: Request, id_persona: int):
             "tiene_ayudante":     tiene_ayudante,
             "costo_ayudante":     costo_ayudante,
             "resenas":            resenas,
+            "miembro_desde":      miembro_desde,
+            "historial_trabajos": historial_trabajos,
         }
         return templates.TemplateResponse("trabajadores/perfil_publico.html", ctx)
 
