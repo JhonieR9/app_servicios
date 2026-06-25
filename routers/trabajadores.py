@@ -1830,6 +1830,21 @@ def exportar_metricas():
         ws2.column_dimensions['A'].width = 25
         ws2.column_dimensions['B'].width = 12
 
+        # Gráfica de barras — Top Categorías
+        from openpyxl.chart import BarChart, PieChart, Reference
+        if len(top_categorias) > 0:
+            chart_cat = BarChart()
+            chart_cat.type = "col"
+            chart_cat.title = "Solicitudes por Categoría"
+            chart_cat.y_axis.title = "Solicitudes"
+            data_ref = Reference(ws2, min_col=2, min_row=1, max_row=len(top_categorias)+1)
+            cats_ref = Reference(ws2, min_col=1, min_row=2, max_row=len(top_categorias)+1)
+            chart_cat.add_data(data_ref, titles_from_data=True)
+            chart_cat.set_categories(cats_ref)
+            chart_cat.width = 18
+            chart_cat.height = 10
+            ws2.add_chart(chart_cat, "D2")
+
         # Hoja 3: Top Trabajadores
         ws3 = wb.create_sheet("Top Trabajadores")
         ws3.append(["Nombre", "Trabajos Completados", "Calificación"])
@@ -1850,6 +1865,43 @@ def exportar_metricas():
             ws4.append([c['ciudad'], c['total']])
         ws4.column_dimensions['A'].width = 20
         ws4.column_dimensions['B'].width = 12
+
+        # Gráfica de pastel — Por Ciudad
+        if len(por_ciudad) > 0:
+            chart_city = PieChart()
+            chart_city.title = "Solicitudes por Ciudad"
+            data_ref = Reference(ws4, min_col=2, min_row=1, max_row=len(por_ciudad)+1)
+            cats_ref = Reference(ws4, min_col=1, min_row=2, max_row=len(por_ciudad)+1)
+            chart_city.add_data(data_ref, titles_from_data=True)
+            chart_city.set_categories(cats_ref)
+            chart_city.width = 14
+            chart_city.height = 10
+            ws4.add_chart(chart_city, "D2")
+
+        # Hoja 5: Resumen Visual (gráfica de estados)
+        ws5 = wb.create_sheet("Estados")
+        ws5.append(["Estado", "Cantidad"])
+        ws5.cell(row=1, column=1).fill = header_fill; ws5.cell(row=1, column=1).font = header_font
+        ws5.cell(row=1, column=2).fill = header_fill; ws5.cell(row=1, column=2).font = header_font
+        estados_data = [
+            ["Completadas", completadas],
+            ["Canceladas", canceladas],
+            ["Pendientes", pendientes],
+        ]
+        for row in estados_data:
+            ws5.append(row)
+        ws5.column_dimensions['A'].width = 16
+        ws5.column_dimensions['B'].width = 12
+
+        chart_estado = PieChart()
+        chart_estado.title = "Distribución por Estado"
+        data_ref = Reference(ws5, min_col=2, min_row=1, max_row=4)
+        cats_ref = Reference(ws5, min_col=1, min_row=2, max_row=4)
+        chart_estado.add_data(data_ref, titles_from_data=True)
+        chart_estado.set_categories(cats_ref)
+        chart_estado.width = 14
+        chart_estado.height = 10
+        ws5.add_chart(chart_estado, "D2")
 
         # Guardar
         buffer = BytesIO()
