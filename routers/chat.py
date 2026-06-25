@@ -304,12 +304,13 @@ def listar_todos_chats(buscar: str = "", estado: str = ""):
 @router.post("/foto/subir")
 async def subir_foto_chat(
     id_solicitud:  int = Form(...),
-    id_trabajador: int = Form(...),
+    id_usuario:    int = Form(...),
+    tipo_usuario:  str = Form("trabajador"),
     tipo_foto:     str = Form("progreso"),   # 'antes', 'despues', 'progreso'
     descripcion:   str = Form(None),
     foto: UploadFile = File(...)
 ):
-    """El trabajador sube una foto del servicio"""
+    """Subir una foto del servicio (trabajador o cliente)"""
     if tipo_foto not in ('antes', 'despues', 'progreso'):
         tipo_foto = 'progreso'
 
@@ -326,21 +327,22 @@ async def subir_foto_chat(
         cursor.execute("""
             INSERT INTO fotos_servicio (id_solicitud, id_trabajador, tipo_foto, foto_data, foto_tipo, descripcion)
             VALUES (%s, %s, %s, %s, %s, %s)
-        """, (id_solicitud, id_trabajador, tipo_foto, foto_bytes, foto_tipo, descripcion))
+        """, (id_solicitud, id_usuario, tipo_foto, foto_bytes, foto_tipo, descripcion))
         conexion.commit()
         id_foto = cursor.lastrowid
 
-        # También enviar como mensaje en el chat (con referencia a la foto)
-        etiqueta = {'antes': '📷 Foto ANTES', 'despues': '📷 Foto DESPUÉS', 'progreso': '📷 Foto del progreso'}
+        # También enviar como mensaje en el chat
+        etiqueta = {'antes': '📷 Foto ANTES', 'despues': '📷 Foto DESPUÉS', 'progreso': '📷 Foto'}
         msg_texto = etiqueta.get(tipo_foto, '📷 Foto')
         if descripcion:
             msg_texto += f': {descripcion}'
         msg_texto += f' [foto:{id_foto}]'
 
+        tipo_rem = tipo_usuario if tipo_usuario in ('cliente', 'trabajador') else 'trabajador'
         cursor.execute("""
             INSERT INTO mensajes_chat (id_solicitud, tipo_remitente, id_remitente, mensaje, fecha_envio, leido)
-            VALUES (%s, 'trabajador', %s, %s, %s, 0)
-        """, (id_solicitud, id_trabajador, msg_texto, datetime.now()))
+            VALUES (%s, %s, %s, %s, %s, 0)
+        """, (id_solicitud, tipo_rem, id_usuario, msg_texto, datetime.now()))
         conexion.commit()
 
         return JSONResponse({"ok": True, "id_foto": id_foto})

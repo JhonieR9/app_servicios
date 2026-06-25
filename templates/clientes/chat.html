@@ -422,7 +422,8 @@
         mostrarToast('📷 Subiendo foto...');
         const fd = new FormData();
         fd.append('id_solicitud', idSolicitud);
-        fd.append('id_trabajador', idUsuario);
+        fd.append('id_usuario', idUsuario);
+        fd.append('tipo_usuario', tipoUsuario);
         fd.append('tipo_foto', 'progreso');
         fd.append('foto', file);
 
