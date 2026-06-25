@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, Form, Request, UploadFile, File
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
 from config import DB_CONFIG
 import mysql.connector
@@ -298,3 +298,92 @@ def listar_todos_chats(buscar: str = "", estado: str = ""):
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
+
+
+# ── Subir foto (antes/después/progreso) ───────────────────────────
+@router.post("/foto/subir")
+async def subir_foto_chat(
+    id_solicitud:  int = Form(...),
+    id_trabajador: int = Form(...),
+    tipo_foto:     str = Form("progreso"),   # 'antes', 'despues', 'progreso'
+    descripcion:   str = Form(None),
+    foto: UploadFile = File(...)
+):
+    """El trabajador sube una foto del servicio"""
+    if tipo_foto not in ('antes', 'despues', 'progreso'):
+        tipo_foto = 'progreso'
+
+    foto_bytes = await foto.read()
+    foto_tipo = foto.content_type or 'image/jpeg'
+
+    # Limitar tamaño (5MB)
+    if len(foto_bytes) > 5 * 1024 * 1024:
+        return JSONResponse({"error": "La foto no puede pesar más de 5MB"}, status_code=400)
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            INSERT INTO fotos_servicio (id_solicitud, id_trabajador, tipo_foto, foto_data, foto_tipo, descripcion)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (id_solicitud, id_trabajador, tipo_foto, foto_bytes, foto_tipo, descripcion))
+        conexion.commit()
+        id_foto = cursor.lastrowid
+
+        # También enviar como mensaje en el chat (con referencia a la foto)
+        etiqueta = {'antes': '📷 Foto ANTES', 'despues': '📷 Foto DESPUÉS', 'progreso': '📷 Foto del progreso'}
+        msg_texto = etiqueta.get(tipo_foto, '📷 Foto')
+        if descripcion:
+            msg_texto += f': {descripcion}'
+        msg_texto += f' [foto:{id_foto}]'
+
+        cursor.execute("""
+            INSERT INTO mensajes_chat (id_solicitud, tipo_remitente, id_remitente, mensaje, fecha_envio, leido)
+            VALUES (%s, 'trabajador', %s, %s, %s, 0)
+        """, (id_solicitud, id_trabajador, msg_texto, datetime.now()))
+        conexion.commit()
+
+        return JSONResponse({"ok": True, "id_foto": id_foto})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        conexion.close()
+
+# ── Ver foto por ID ───────────────────────────────────────────────
+@router.get("/foto/{id_foto}")
+def ver_foto(id_foto: int):
+    """Sirve una foto del servicio por su ID"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("SELECT foto_data, foto_tipo FROM fotos_servicio WHERE id_foto = %s", (id_foto,))
+        foto = cursor.fetchone()
+        if not foto or not foto['foto_data']:
+            return JSONResponse({"error": "Foto no encontrada"}, status_code=404)
+        return Response(content=bytes(foto['foto_data']), media_type=foto['foto_tipo'] or 'image/jpeg')
+    finally:
+        conexion.close()
+
+# ── Listar fotos de una solicitud ─────────────────────────────────
+@router.get("/fotos/{id_solicitud}")
+def listar_fotos(id_solicitud: int):
+    """Lista todas las fotos de un servicio"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT id_foto, tipo_foto, descripcion, fecha_subida
+            FROM fotos_servicio
+            WHERE id_solicitud = %s
+            ORDER BY fecha_subida ASC
+        """, (id_solicitud,))
+        fotos = cursor.fetchall()
+        from datetime import timedelta
+        for f in fotos:
+            if f.get('fecha_subida') and hasattr(f['fecha_subida'], 'strftime'):
+                f['fecha_subida'] = (f['fecha_subida'] - timedelta(hours=5)).strftime('%d/%m %H:%M')
+            f['url'] = f'/chat/foto/{f["id_foto"]}'
+        return JSONResponse({"fotos": fotos})
+    finally:
+        conexion.close()

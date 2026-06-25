@@ -150,6 +150,13 @@
 </div>
 
 <div class="input-area">
+    <label for="fotoInput" style="width:44px;height:44px;border-radius:50%;background:#f1f5f9;
+           display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+           color:#667eea;font-size:1.1rem;transition:all .2s;border:none;">
+        <i class="bi bi-camera-fill"></i>
+    </label>
+    <input type="file" id="fotoInput" accept="image/*" capture="environment"
+           style="display:none" onchange="enviarFoto(this)">
     <textarea class="input-box" id="inputMsg" placeholder="Escribe un mensaje..." rows="1"
               oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
     <button class="btn-send" id="btnSend" onclick="enviarMensaje()">
@@ -239,7 +246,11 @@
     }
 
     function escHtml(s) {
-        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+        const text = String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+        // Detectar referencias a fotos [foto:ID]
+        return text.replace(/\[foto:(\d+)\]/g, (match, id) => {
+            return `<img src="/chat/foto/${id}" style="max-width:100%;border-radius:12px;margin-top:6px;cursor:pointer" onclick="window.open('/chat/foto/${id}','_blank')" loading="lazy">`;
+        });
     }
 
     // ── Polling de mensajes ──────────────────────────────────────
@@ -401,6 +412,32 @@
 
     function handleKey(e) {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensaje(); }
+    }
+
+    async function enviarFoto(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { mostrarToast('❌ La foto no puede pesar más de 5MB'); return; }
+
+        mostrarToast('📷 Subiendo foto...');
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('id_trabajador', idUsuario);
+        fd.append('tipo_foto', 'progreso');
+        fd.append('foto', file);
+
+        try {
+            const res = await fetch('/chat/foto/subir', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (res.ok) {
+                setTimeout(() => cargarMensajes(true), 500);
+            } else {
+                mostrarToast('❌ ' + (data.error || 'Error al subir'));
+            }
+        } catch(e) {
+            mostrarToast('❌ Error de conexión');
+        }
+        input.value = ''; // reset input
     }
 
     function autoResize(el) {

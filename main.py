@@ -240,6 +240,22 @@ def crear_tablas():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """)
 
+        # Tabla fotos de servicio (antes/después)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `fotos_servicio` (
+              `id_foto`       int NOT NULL AUTO_INCREMENT,
+              `id_solicitud`  int NOT NULL,
+              `id_trabajador` int NOT NULL,
+              `tipo_foto`     enum('antes','despues','progreso') DEFAULT 'progreso',
+              `foto_data`     longblob NOT NULL,
+              `foto_tipo`     varchar(50) DEFAULT 'image/jpeg',
+              `descripcion`   varchar(200) DEFAULT NULL,
+              `fecha_subida`  datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id_foto`),
+              KEY `idx_foto_solicitud` (`id_solicitud`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
         conn.commit()
         cursor.close()
         conn.close()
