@@ -259,6 +259,10 @@ def home(request: Request):
 def instalar(request: Request):
     return templates.TemplateResponse("instalar.html", {"request": request})
 
+@app.get("/privacidad", response_class=HTMLResponse)
+def privacidad(request: Request):
+    return templates.TemplateResponse("privacidad.html", {"request": request})
+
 @app.get("/inicio", response_class=HTMLResponse)
 def mostrar_solo_formulario(request: Request):
     return templates.TemplateResponse("solo_formulario.html", {"request": request})
