@@ -3,9 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "app.talenthub.servicios",
+      "package_name": "app.railway.up.web_production_191f4.twa",
       "sha256_cert_fingerprints": [
-        "PLACEHOLDER_SHA256_FINGERPRINT"
+        "45:91:85:18:3D:5B:AB:53:51:63:62:15:BE:96:70:00:AA:62:61:3C:97:36:61:55:A8:81:CB:92:EA:F7:45:94"
       ]
     }
   }
