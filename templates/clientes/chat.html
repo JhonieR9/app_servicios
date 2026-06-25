@@ -248,7 +248,6 @@
     async function cargarMensajes(silencioso = false) {
         if (!idSolicitud) return;
         try {
-            // Siempre traer TODOS los mensajes (garantiza que nada se pierda)
             const res  = await fetch(`/chat/mensajes?id_solicitud=${idSolicitud}&desde_id=0`);
             const data = await res.json();
             const mensajes = data.mensajes || [];
@@ -262,23 +261,24 @@
 
             const nuevoUltimoId = mensajes[mensajes.length - 1].id_mensaje;
 
-            if (ultimoId === 0) {
-                // Primera carga: renderizar todos
+            // Siempre re-renderizar si hay cambios
+            if (nuevoUltimoId !== ultimoId || ultimoId === 0) {
+                const wasAtBottom = isAtBottom();
                 todosLosMensajes = mensajes;
                 renderMensajes(mensajes);
                 ultimoId = nuevoUltimoId;
-            } else if (nuevoUltimoId > ultimoId) {
-                // Hay mensajes nuevos — agregar solo los que faltan
-                const nuevos = mensajes.filter(m => m.id_mensaje > ultimoId);
-                if (nuevos.length > 0) {
-                    todosLosMensajes = mensajes;
-                    agregarNuevosMensajes(nuevos);
-                    ultimoId = nuevoUltimoId;
+                if (wasAtBottom) {
+                    document.getElementById('messagesWrap').scrollTop = document.getElementById('messagesWrap').scrollHeight;
                 }
             }
         } catch(e) {
             console.warn('Error cargando mensajes:', e);
         }
+    }
+
+    function isAtBottom() {
+        const wrap = document.getElementById('messagesWrap');
+        return wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 80;
     }
 
     function agregarNuevosMensajes(nuevos) {
@@ -359,6 +359,21 @@
         input.value  = '';
         input.style.height = '';
 
+        // Mostrar mensaje inmediatamente en el UI (optimistic update)
+        const wrap  = document.getElementById('messagesWrap');
+        const empty = document.getElementById('emptyChat');
+        empty.style.display = 'none';
+        const tempDiv = document.createElement('div');
+        tempDiv.className = 'msg mine';
+        tempDiv.style.cssText = 'animation:msgIn 0.3s ease;';
+        const ahora = new Date();
+        const horaStr = String(ahora.getHours()).padStart(2,'0') + ':' + String(ahora.getMinutes()).padStart(2,'0');
+        tempDiv.innerHTML = `
+            <div class="msg-bubble">${escHtml(texto)}</div>
+            <div class="msg-meta">${horaStr} ✓</div>`;
+        wrap.appendChild(tempDiv);
+        wrap.scrollTo({ top: wrap.scrollHeight, behavior: 'smooth' });
+
         const fd = new FormData();
         fd.append('id_solicitud',  idSolicitud);
         fd.append('tipo_remitente', tipoUsuario);
@@ -368,13 +383,16 @@
         try {
             const res  = await fetch('/chat/enviar', { method:'POST', body:fd });
             const data = await res.json();
-            if (!res.ok) { mostrarToast('❌ ' + (data.error || 'Error al enviar')); }
-            else {
-                // Esperar un momento para que la BD procese y luego recargar
-                setTimeout(() => cargarMensajes(true), 300);
+            if (!res.ok) {
+                mostrarToast('❌ ' + (data.error || 'Error al enviar'));
+                tempDiv.remove(); // quitar el mensaje optimista si falló
+            } else {
+                // Recargar para sincronizar IDs reales
+                setTimeout(() => cargarMensajes(true), 500);
             }
         } catch(e) {
             mostrarToast('❌ Error de conexión');
+            tempDiv.remove();
         } finally {
             btn.disabled = false;
             input.focus();
