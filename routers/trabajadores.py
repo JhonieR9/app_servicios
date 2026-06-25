@@ -1561,6 +1561,53 @@ async def eliminar_registro(id_persona: int = Form(...)):
         if conexion and conexion.is_connected():
             conexion.close()
 
+# ── MAPA ADMIN — ver todos los trabajadores ──────────────────────
+
+@router.get("/admin/mapa", response_class=HTMLResponse)
+def mapa_admin(request: Request):
+    """Mapa con todos los trabajadores disponibles (admin)"""
+    return templates.TemplateResponse("trabajadores/mapa_admin.html", {"request": request})
+
+@router.get("/admin/mapa-data")
+def mapa_admin_data():
+    """API: todos los trabajadores con ubicación activa"""
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"trabajadores": []})
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT p.id_persona, p.nombre_completo, p.ciudad,
+                   d.latitud, d.longitud, d.disponible, d.ultima_actualizacion,
+                   GROUP_CONCAT(DISTINCT sp.categoria SEPARATOR ', ') as categorias
+            FROM personas p
+            INNER JOIN disponibilidad d ON p.id_persona = d.id_persona
+            LEFT JOIN servicios_persona sp ON p.id_persona = sp.id_persona
+            WHERE d.disponible = 1
+              AND d.latitud IS NOT NULL
+              AND d.longitud IS NOT NULL
+              AND (p.estado = 'activo' OR p.estado IS NULL)
+            GROUP BY p.id_persona
+        """)
+        trabajadores = cursor.fetchall()
+        from datetime import timedelta
+        for t in trabajadores:
+            t['nombre'] = t.pop('nombre_completo', '')
+            if t.get('ultima_actualizacion') and hasattr(t['ultima_actualizacion'], 'strftime'):
+                t['ultima_actualizacion'] = (t['ultima_actualizacion'] - timedelta(hours=5)).strftime('%d/%m %H:%M')
+            elif t.get('ultima_actualizacion'):
+                t['ultima_actualizacion'] = str(t['ultima_actualizacion'])
+            else:
+                t['ultima_actualizacion'] = ''
+            if t.get('latitud'): t['latitud'] = float(t['latitud'])
+            if t.get('longitud'): t['longitud'] = float(t['longitud'])
+        return JSONResponse({"trabajadores": trabajadores})
+    except Exception as e:
+        return JSONResponse({"trabajadores": [], "error": str(e)})
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 @router.get("/exportar-excel")
 def exportar_excel():
     """Exportar todos los trabajadores activos a Excel"""
