@@ -953,6 +953,29 @@ function selChip(el, problema) {
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
     selectedProblem = problema;
+
+    // Si eligió "Otro", mostrar campo de texto
+    let otroInput = document.getElementById('otroInput');
+    if (problema === 'Otro') {
+        if (!otroInput) {
+            otroInput = document.createElement('div');
+            otroInput.id = 'otroInput';
+            otroInput.style.cssText = 'margin-top:14px;animation:fadeSlide 0.3s ease;';
+            otroInput.innerHTML = `
+                <input type="text" id="otroTexto" placeholder="Describe qué necesitas..."
+                    style="width:100%;padding:13px 14px;border:2px solid #667eea;border-radius:12px;
+                           font-size:0.9rem;font-family:'Lato',sans-serif;color:#0f172a;
+                           background:white;outline:none;"
+                    oninput="actualizarOtro()">`;
+            document.getElementById('chipsContainer').appendChild(otroInput);
+            document.getElementById('otroTexto').focus();
+        }
+        document.getElementById('btnStep2').disabled = true; // esperar a que escriba
+        return;
+    } else {
+        if (otroInput) otroInput.remove();
+    }
+
     document.getElementById('btnStep2').disabled = false;
     const titulo = selectedCatName + ' - ' + problema;
     const desc   = 'Solicitud de servicio de ' + selectedCatName.toLowerCase() + ': ' + problema + '. Por favor contactarme para coordinar los detalles.';
@@ -960,6 +983,22 @@ function selChip(el, problema) {
     document.getElementById('descripcion').value = desc;
     document.getElementById('step3Title').textContent = titulo;
     document.getElementById('step3Summary').style.display = 'inline-flex';
+}
+
+function actualizarOtro() {
+    const texto = document.getElementById('otroTexto').value.trim();
+    if (texto.length >= 3) {
+        selectedProblem = texto;
+        document.getElementById('btnStep2').disabled = false;
+        const titulo = selectedCatName + ' - ' + texto;
+        const desc   = 'Solicitud de servicio de ' + selectedCatName.toLowerCase() + ': ' + texto + '. Por favor contactarme para coordinar los detalles.';
+        document.getElementById('titulo').value      = titulo;
+        document.getElementById('descripcion').value = desc;
+        document.getElementById('step3Title').textContent = titulo;
+        document.getElementById('step3Summary').style.display = 'inline-flex';
+    } else {
+        document.getElementById('btnStep2').disabled = true;
+    }
 }
 
 // URGENCIA
