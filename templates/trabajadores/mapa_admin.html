@@ -95,11 +95,24 @@
                     const panel = document.getElementById('infoPanel');
                     document.getElementById('infoNombre').textContent = t.nombre || 'Sin nombre';
                     document.getElementById('infoCategoria').innerHTML = `<i class="bi bi-briefcase"></i> ${t.categorias || 'Sin categoría'}`;
-                    document.getElementById('infoUbicacion').innerHTML = `<i class="bi bi-geo-alt"></i> ${t.ciudad || 'Sin ciudad'}`;
+                    document.getElementById('infoUbicacion').innerHTML = `<i class="bi bi-geo-alt"></i> Obteniendo dirección...`;
                     document.getElementById('infoActualizado').innerHTML = `<i class="bi bi-clock"></i> Última actualización: ${t.ultima_actualizacion || 'Desconocida'}`;
                     panel.style.display = 'block';
 
                     map.flyTo({ center: [parseFloat(t.longitud), parseFloat(t.latitud)], zoom: 14 });
+
+                    // Geocodificación inversa — obtener dirección real desde GPS
+                    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${t.longitud},${t.latitud}.json?access_token=${mapboxgl.accessToken}&language=es&types=address,neighborhood,locality`)
+                        .then(r => r.json())
+                        .then(geo => {
+                            const lugar = geo.features && geo.features[0]
+                                ? geo.features[0].place_name.replace(', Colombia', '')
+                                : `${t.latitud.toFixed(4)}, ${t.longitud.toFixed(4)}`;
+                            document.getElementById('infoUbicacion').innerHTML = `<i class="bi bi-geo-alt"></i> ${lugar}`;
+                        })
+                        .catch(() => {
+                            document.getElementById('infoUbicacion').innerHTML = `<i class="bi bi-geo-alt"></i> ${t.latitud.toFixed(4)}, ${t.longitud.toFixed(4)}`;
+                        });
                 });
 
                 markers.push(marker);
