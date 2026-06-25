@@ -165,6 +165,8 @@
 
     let markers = [];
 
+    let firstLoad = true;
+
     async function cargarTrabajadores() {
         try {
             const res = await fetch('/trabajador/admin/mapa-data');
@@ -224,13 +226,14 @@
                 markers.push(marker);
             });
 
-            // Fit bounds
-            if (trabajadores.length > 0) {
+            // Solo ajustar vista en la primera carga
+            if (firstLoad && trabajadores.length > 0) {
                 const bounds = new mapboxgl.LngLatBounds();
                 trabajadores.forEach(t => {
                     if (t.latitud && t.longitud) bounds.extend([parseFloat(t.longitud), parseFloat(t.latitud)]);
                 });
                 map.fitBounds(bounds, { padding: 80, maxZoom: 13 });
+                firstLoad = false;
             }
 
             // Store for focusWorker
