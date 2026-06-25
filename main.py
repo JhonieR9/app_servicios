@@ -248,6 +248,121 @@ def crear_tablas():
         print(f"⚠️ Error al crear tablas: {e}")
 
 # ============================================
+# SCHEDULER — RECORDATORIOS AUTOMÁTICOS
+# ============================================
+
+def iniciar_scheduler():
+    """Scheduler en background que envía recordatorios a trabajadores según su horario"""
+    import threading
+    import time
+    from datetime import datetime, timedelta
+
+    HORARIOS_NOTIF = {
+        # id_horario: (hora_envio_hour, hora_envio_minute, mensaje)
+        7:  (7, 50, "¡Buenos días! Tu horario 8am-12pm está por empezar. Activa tu disponibilidad 🟢"),
+        8:  (13, 50, "¡Buenas tardes! Tu horario 2pm-6pm está por empezar. Activa tu disponibilidad 🟢"),
+        9:  (17, 50, "¡Buenas noches! Tu horario 6pm-10pm está por empezar. Activa tu disponibilidad 🟢"),
+        11: (7, 50, "¡Buenos días! Tu jornada 8am-6pm está por empezar. Activa tu disponibilidad 🟢"),
+        12: (7, 50, "¡Buenos días! Estás en horario 8am-10pm. Activa tu disponibilidad 🟢"),
+        10: (7, 50, "¡Buenos días! Estás disponible 24h. Activa tu disponibilidad si no lo has hecho 🟢"),
+    }
+
+    notificados_hoy = set()  # evitar duplicados en el mismo día
+
+    def _loop():
+        nonlocal notificados_hoy
+        while True:
+            try:
+                # Hora Colombia (UTC-5)
+                ahora = datetime.utcnow() - timedelta(hours=5)
+                hora_actual = ahora.hour
+                minuto_actual = ahora.minute
+                dia_actual = ahora.strftime('%Y-%m-%d')
+
+                # Resetear set de notificados cada día
+                if not any(dia_actual in s for s in notificados_hoy):
+                    notificados_hoy = set()
+
+                for id_horario, (h, m, mensaje) in HORARIOS_NOTIF.items():
+                    if hora_actual == h and minuto_actual == m:
+                        clave = f"{dia_actual}_{id_horario}"
+                        if clave in notificados_hoy:
+                            continue
+                        notificados_hoy.add(clave)
+
+                        # Enviar push a trabajadores con este horario que NO están activos
+                        _enviar_recordatorio(id_horario, mensaje)
+
+            except Exception as ex:
+                print(f"[SCHEDULER] Error: {ex}")
+
+            time.sleep(60)  # revisar cada minuto
+
+    def _enviar_recordatorio(id_horario, mensaje):
+        try:
+            import mysql.connector, json
+            from config import DB_CONFIG
+
+            conn = mysql.connector.connect(**DB_CONFIG)
+            cursor = conn.cursor(dictionary=True)
+
+            # Buscar trabajadores con ese horario que NO tienen disponible=1
+            cursor.execute("""
+                SELECT DISTINCT ps.id_usuario, ps.endpoint, ps.p256dh, ps.auth
+                FROM push_subscriptions ps
+                INNER JOIN disponibilidad d ON ps.id_usuario = d.id_persona
+                WHERE ps.tipo_usuario = 'trabajador'
+                  AND d.id_horario = %s
+                  AND (d.disponible = 0 OR d.disponible IS NULL)
+            """, (id_horario,))
+            subs = cursor.fetchall()
+            cursor.close()
+            conn.close()
+
+            if not subs:
+                return
+
+            try:
+                from pywebpush import webpush, WebPushException
+            except ImportError:
+                print("[SCHEDULER] pywebpush no instalado")
+                return
+
+            payload = json.dumps({
+                "title": "🔔 TalentHub — Hora de conectarse",
+                "body": mensaje,
+                "url": "/trabajador/panel",
+                "icon": "/static/icons/icon-192.png"
+            })
+
+            for sub in subs:
+                try:
+                    webpush(
+                        subscription_info={
+                            "endpoint": sub["endpoint"],
+                            "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}
+                        },
+                        data=payload,
+                        vapid_private_key=VAPID_PRIVATE,
+                        vapid_claims=VAPID_CLAIMS
+                    )
+                except Exception:
+                    pass
+
+            print(f"[SCHEDULER] ✅ Recordatorio enviado a {len(subs)} trabajadores (horario {id_horario})")
+        except Exception as ex:
+            print(f"[SCHEDULER] Error enviando: {ex}")
+
+    thread = threading.Thread(target=_loop, daemon=True)
+    thread.start()
+    print("✅ Scheduler de recordatorios iniciado")
+
+# Iniciar scheduler al arrancar
+@app.on_event("startup")
+def iniciar_recordatorios():
+    iniciar_scheduler()
+
+# ============================================
 # PÁGINA PRINCIPAL - SOLO FORMULARIO
 # ============================================
 
