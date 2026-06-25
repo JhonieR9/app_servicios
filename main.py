@@ -276,10 +276,16 @@ def health_check():
     return {"status": "ok", "message": "TalentHub API is running"}
 
 @app.get("/health/email-test")
-def test_email():
-    """Diagnóstico de email — verificar si Resend funciona"""
+def test_email(request: Request):
+    """Diagnóstico de email — solo admin"""
     import os
     import requests as _req
+
+    # Verificar admin
+    token = request.cookies.get("admin_session")
+    admin_secret = os.getenv("ADMIN_TOKEN", "talenthub_admin_2026_secret")
+    if token != admin_secret:
+        return {"error": "No autorizado"}
 
     resend_key = os.getenv("RESEND_API_KEY", "")
     gmail_user = os.getenv("GMAIL_USER", "")

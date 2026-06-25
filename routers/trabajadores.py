@@ -1086,21 +1086,40 @@ def trabajadores_disponibles(id_categoria: int):
 # Contraseña de administrador - se lee desde variable de entorno en Railway
 import os
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+ADMIN_TOKEN_SECRET = os.getenv("ADMIN_TOKEN", "talenthub_admin_2026_secret")
+
+def verificar_admin(request: Request) -> bool:
+    """Verifica si la request tiene sesión admin válida"""
+    token = request.cookies.get("admin_session")
+    return token == ADMIN_TOKEN_SECRET
+
+def requiere_admin(request: Request):
+    """Redirige a login si no es admin"""
+    if not verificar_admin(request):
+        return RedirectResponse(url="/trabajador/admin/login", status_code=302)
+    return None
 
 @router.get("/admin/login", response_class=HTMLResponse)
 def mostrar_admin_login(request: Request):
     return templates.TemplateResponse("trabajadores/admin_login.html", {"request": request})
 
 @router.post("/admin/login")
-async def admin_login(password: str = Form(...)):
-    """Login de administrador"""
+async def admin_login(response: Response, password: str = Form(...)):
+    """Login de administrador — establece cookie de sesión"""
     try:
-        # Verificar contraseña directamente (para desarrollo)
         if password == ADMIN_PASSWORD:
-            return JSONResponse({
+            resp = JSONResponse({
                 "success": True,
                 "mensaje": "Inicio de sesión exitoso"
             })
+            resp.set_cookie(
+                key="admin_session",
+                value=ADMIN_TOKEN_SECRET,
+                httponly=True,
+                max_age=86400 * 7,  # 7 días
+                samesite="lax"
+            )
+            return resp
         else:
             return JSONResponse({
                 "success": False,
@@ -1109,18 +1128,21 @@ async def admin_login(password: str = Form(...)):
     except Exception as e:
         return JSONResponse({
             "success": False,
-            "error": f"Error al verificar contraseña: {str(e)}"
+            "error": f"Error: {str(e)}"
         }, status_code=500)
 
 @router.get("/admin/logout")
 def admin_logout():
     """Cerrar sesión de administrador"""
-    return RedirectResponse(url="/", status_code=302)
+    resp = RedirectResponse(url="/", status_code=302)
+    resp.delete_cookie("admin_session")
+    return resp
 
 @router.get("/registros", response_class=HTMLResponse)
 def ver_registros(request: Request):
-    """Página para ver todos los registros (requiere autenticación en producción)"""
-    # TODO: Agregar middleware de autenticación
+    """Página para ver todos los registros (solo admin)"""
+    redir = requiere_admin(request)
+    if redir: return redir
     return templates.TemplateResponse("trabajadores/registros.html", {"request": request})
 
 @router.get("/registros/test")
@@ -1157,8 +1179,10 @@ def test_registros():
             conexion.close()
 
 @router.get("/registros/listar")
-def listar_registros():
+def listar_registros(request: Request):
     """API para obtener todos los registros de trabajadores"""
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado", "registros": []}, status_code=401)
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión", "registros": []}, status_code=500)
@@ -1305,11 +1329,15 @@ def listar_registros():
 @router.get("/dashboard", response_class=HTMLResponse)
 def mostrar_dashboard(request: Request):
     """Dashboard principal del administrador"""
+    redir = requiere_admin(request)
+    if redir: return redir
     return templates.TemplateResponse("trabajadores/dashboard.html", {"request": request})
 
 @router.get("/estadisticas")
-def obtener_estadisticas():
-    """API para obtener estadísticas completas del dashboard"""
+def obtener_estadisticas(request: Request):
+    """API para obtener estadísticas completas del dashboard (solo admin)"""
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión"}, status_code=500)
@@ -1569,8 +1597,10 @@ def mapa_admin(request: Request):
     return templates.TemplateResponse("trabajadores/mapa_admin.html", {"request": request})
 
 @router.get("/admin/mapa-data")
-def mapa_admin_data():
-    """API: todos los trabajadores con ubicación activa"""
+def mapa_admin_data(request: Request):
+    """API: todos los trabajadores con ubicación activa (solo admin)"""
+    if not verificar_admin(request):
+        return JSONResponse({"trabajadores": [], "error": "No autorizado"}, status_code=401)
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"trabajadores": []})
@@ -1610,8 +1640,10 @@ def mapa_admin_data():
             conexion.close()
 
 @router.get("/exportar-excel")
-def exportar_excel():
-    """Exportar todos los trabajadores activos a Excel"""
+def exportar_excel(request: Request):
+    """Exportar todos los trabajadores activos a Excel (solo admin)"""
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
     from io import BytesIO
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -1775,8 +1807,10 @@ def exportar_excel():
 
 
 @router.get("/exportar-metricas")
-def exportar_metricas():
-    """Exportar métricas del dashboard a Excel"""
+def exportar_metricas(request: Request):
+    """Exportar métricas del dashboard a Excel (solo admin)"""
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
     from io import BytesIO
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -1974,8 +2008,10 @@ def ver_clientes(request: Request):
     return templates.TemplateResponse("trabajadores/clientes.html", {"request": request})
 
 @router.get("/clientes/listar")
-def listar_clientes():
-    """API para obtener todos los clientes registrados con su calificación promedio como cliente"""
+def listar_clientes(request: Request):
+    """API para obtener todos los clientes registrados (solo admin)"""
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado", "clientes": []}, status_code=401)
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión", "clientes": []}, status_code=500)
@@ -2200,7 +2236,9 @@ async def actualizar_disponibilidad(
 
 @router.get("/eliminados", response_class=HTMLResponse)
 def ver_eliminados(request: Request):
-    """Página de papelera de registros eliminados"""
+    """Página de papelera de registros eliminados (solo admin)"""
+    redir = requiere_admin(request)
+    if redir: return redir
     return templates.TemplateResponse("trabajadores/eliminados.html", {"request": request})
 
 @router.get("/eliminados/listar")
