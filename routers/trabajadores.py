@@ -84,6 +84,7 @@ def listar_mis_solicitudes(id_trabajador: int = None):
                 cursor.execute(f"""
                     SELECT s.id_solicitud, s.id_cliente, s.titulo, s.descripcion, s.estado,
                            s.ciudad, s.departamento, s.direccion_servicio, s.fecha_solicitud,
+                           s.metodo_pago,
                            COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
                            c.nombre_completo as nombre_cliente,
                            tc.telefono as telefono_cliente
@@ -100,6 +101,7 @@ def listar_mis_solicitudes(id_trabajador: int = None):
                 cursor.execute("""
                     SELECT s.id_solicitud, s.id_cliente, s.titulo, s.descripcion, s.estado,
                            s.ciudad, s.departamento, s.direccion_servicio, s.fecha_solicitud,
+                           s.metodo_pago,
                            COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
                            c.nombre_completo as nombre_cliente,
                            tc.telefono as telefono_cliente

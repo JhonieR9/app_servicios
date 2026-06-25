@@ -366,7 +366,8 @@ def crear_solicitud(
     ciudad: str = Form(...),
     departamento: str = Form(...),
     fecha_programada: str = Form(None),
-    id_trabajador: str = Form(None)   # string para manejar '' sin error
+    id_trabajador: str = Form(None),   # string para manejar '' sin error
+    metodo_pago: str = Form("efectivo")
 ):
     # Convertir id_trabajador a int si viene con valor
     id_trab = None
@@ -420,23 +421,25 @@ def crear_solicitud(
             sql = """
             INSERT INTO solicitudes_servicio 
             (id_cliente, id_categoria, id_trabajador, titulo, descripcion, direccion_servicio, 
-             ciudad, departamento, fecha_programada, estado)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'pendiente')
+             ciudad, departamento, fecha_programada, metodo_pago, estado)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pendiente')
             """
             cursor.execute(sql, (
                 id_cliente, id_categoria, id_trab, titulo, descripcion, direccion_servicio,
-                ciudad, departamento, fecha_programada if fecha_programada else None
+                ciudad, departamento, fecha_programada if fecha_programada else None,
+                metodo_pago or 'efectivo'
             ))
         else:
             sql = """
             INSERT INTO solicitudes_servicio 
             (id_cliente, id_categoria, titulo, descripcion, direccion_servicio, 
-             ciudad, departamento, fecha_programada, estado)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pendiente')
+             ciudad, departamento, fecha_programada, metodo_pago, estado)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'pendiente')
             """
             cursor.execute(sql, (
                 id_cliente, id_categoria, titulo, descripcion, direccion_servicio,
-                ciudad, departamento, fecha_programada if fecha_programada else None
+                ciudad, departamento, fecha_programada if fecha_programada else None,
+                metodo_pago or 'efectivo'
             ))
         conexion.commit()
         id_solicitud = cursor.lastrowid

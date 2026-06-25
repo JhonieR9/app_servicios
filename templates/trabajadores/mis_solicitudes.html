@@ -413,6 +413,10 @@
                     📍 <strong>Dirección:</strong> ${s.direccion_servicio || 'No especificada'}, ${s.ciudad || ''}
                 </div>
 
+                <div class="info-row">
+                    💳 <strong>Pago:</strong> ${({'efectivo':'💵 Efectivo','nequi':'📱 Nequi','daviplata':'📲 Daviplata','transferencia':'🏦 Transferencia','tarjeta':'💳 Tarjeta'})[s.metodo_pago] || '💵 Efectivo'}
+                </div>
+
                 ${s.nombre_cliente ? `
                 <div class="cliente-info">
                     <div class="info-row" style="margin:0">
