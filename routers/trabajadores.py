@@ -1280,11 +1280,11 @@ def listar_registros(request: Request):
                 tel = cursor.fetchone()
                 if tel: reg['telefono'] = str(tel['telefono'])
 
-                cursor.execute("SELECT correo, verificado FROM correo_persona WHERE id_persona = %s LIMIT 1", (reg['id_persona'],))
+                cursor.execute("SELECT correo FROM correo_persona WHERE id_persona = %s LIMIT 1", (reg['id_persona'],))
                 email = cursor.fetchone()
                 if email:
                     reg['correo'] = str(email['correo'])
-                    reg['email_verificado'] = bool(email.get('verificado'))
+                    reg['email_verificado'] = bool(email.get('verificado', 0))
 
                 cursor.execute("""
                     SELECT foto_identificacion, antecedentes_pdf, recomendaciones, recomendaciones_archivo,

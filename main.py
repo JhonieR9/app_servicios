@@ -154,6 +154,12 @@ def crear_tablas():
         except Exception:
             pass
 
+        # Columna verificado en correo_persona (si no existe)
+        try:
+            cursor.execute("ALTER TABLE correo_persona ADD COLUMN verificado tinyint(1) DEFAULT 0")
+        except Exception:
+            pass
+
         # Columnas medio_pago y banco en detalles_persona
         for col, definition in [
             ('medio_pago',          "varchar(200) DEFAULT NULL"),
