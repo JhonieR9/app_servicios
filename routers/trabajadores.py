@@ -786,7 +786,7 @@ async def crear_trabajador(
             INSERT INTO personas 
             (id_tipo_documento, numero_documento, id_genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, registrado_por, departamento)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (tipo_documento, numero_documento, genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, nombre_completo, departamento))        
+        """, (tipo_documento, numero_documento, genero, nombre_completo, ciudad.title() if ciudad else '', codigo_dane, fecha_nacimiento, nacionalidad, nombre_completo, departamento.title() if departamento else ''))        
         id_persona = cursor.lastrowid
         
         # 2. Insertar teléfono
@@ -1625,6 +1625,29 @@ async def eliminar_registro(id_persona: int = Form(...)):
 def mapa_admin(request: Request):
     """Mapa con todos los trabajadores disponibles (admin)"""
     return templates.TemplateResponse("trabajadores/mapa_admin.html", {"request": request})
+
+@router.get("/admin/corregir-ciudades")
+def corregir_ciudades(request: Request):
+    """Normaliza ciudades y departamentos a Title Case (solo admin)"""
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            UPDATE personas
+            SET ciudad = CONCAT(UPPER(SUBSTRING(LOWER(ciudad),1,1)), SUBSTRING(LOWER(ciudad),2)),
+                departamento = CONCAT(UPPER(SUBSTRING(LOWER(departamento),1,1)), SUBSTRING(LOWER(departamento),2))
+            WHERE ciudad IS NOT NULL AND ciudad != ''
+        """)
+        afectados = cursor.rowcount
+        conexion.commit()
+        return JSONResponse({"mensaje": f"Corregidos {afectados} registros", "ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
 
 @router.get("/admin/mapa-data")
 def mapa_admin_data(request: Request):
