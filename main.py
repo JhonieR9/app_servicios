@@ -394,6 +394,10 @@ def instalar(request: Request):
 def privacidad(request: Request):
     return templates.TemplateResponse("privacidad.html", {"request": request})
 
+@app.get("/terminos", response_class=HTMLResponse)
+def terminos(request: Request):
+    return templates.TemplateResponse("terminos.html", {"request": request})
+
 @app.get("/inicio", response_class=HTMLResponse)
 def mostrar_solo_formulario(request: Request):
     return templates.TemplateResponse("solo_formulario.html", {"request": request})
