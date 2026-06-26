@@ -260,6 +260,87 @@
     // Rastrear estados anteriores para detectar cambios
     let estadosAnteriores = {};
 
+    // ── ONBOARDING (solo primera vez) ────────────────────────────
+    (function() {
+        if (localStorage.getItem('onboarding_done')) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'onboarding';
+        overlay.style.cssText = `
+            position:fixed;inset:0;z-index:99999;background:#0a0a0f;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            padding:40px 24px;
+        `;
+        overlay.innerHTML = `
+            <style>
+                .ob-slides{position:relative;width:100%;max-width:360px;height:380px;overflow:hidden}
+                .ob-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+                           justify-content:center;text-align:center;padding:20px;
+                           transition:transform .4s ease,opacity .4s ease;opacity:0;transform:translateX(100%)}
+                .ob-slide.active{opacity:1;transform:translateX(0)}
+                .ob-slide.left{opacity:0;transform:translateX(-100%)}
+                .ob-emoji{font-size:4rem;margin-bottom:20px;display:block}
+                .ob-title{font-size:1.5rem;font-weight:800;color:white;margin-bottom:10px}
+                .ob-desc{font-size:0.95rem;color:#94a3b8;line-height:1.6}
+                .ob-dots{display:flex;gap:8px;margin:24px 0}
+                .ob-dot{width:8px;height:8px;border-radius:50%;background:#334155;transition:all .3s}
+                .ob-dot.active{background:#667eea;width:24px;border-radius:4px}
+                .ob-btn{padding:16px 48px;background:linear-gradient(135deg,#667eea,#764ba2);
+                        color:white;border:none;border-radius:14px;font-size:1rem;font-weight:700;
+                        cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(102,126,234,.4)}
+                .ob-btn:hover{transform:translateY(-2px)}
+                .ob-skip{background:none;border:none;color:#64748b;font-size:0.82rem;
+                         cursor:pointer;margin-top:16px;padding:8px}
+            </style>
+            <div class="ob-slides" id="obSlides">
+                <div class="ob-slide active">
+                    <span class="ob-emoji">🔍</span>
+                    <div class="ob-title">Encuentra profesionales</div>
+                    <div class="ob-desc">Busca entre cientos de profesionales cerca de ti para cualquier servicio a domicilio</div>
+                </div>
+                <div class="ob-slide">
+                    <span class="ob-emoji">⚡</span>
+                    <div class="ob-title">Solicita en minutos</div>
+                    <div class="ob-desc">Elige categoría, describe qué necesitas y te conectamos con el profesional ideal</div>
+                </div>
+                <div class="ob-slide">
+                    <span class="ob-emoji">🎉</span>
+                    <div class="ob-title">¡Listo!</div>
+                    <div class="ob-desc">Chatea, coordina y califica. Paga de forma segura con Nequi, Daviplata o transferencia</div>
+                </div>
+            </div>
+            <div class="ob-dots" id="obDots">
+                <div class="ob-dot active"></div>
+                <div class="ob-dot"></div>
+                <div class="ob-dot"></div>
+            </div>
+            <button class="ob-btn" id="obBtn" onclick="obNext()">Siguiente</button>
+            <button class="ob-skip" onclick="obClose()">Saltar</button>
+        `;
+        document.body.appendChild(overlay);
+
+        let obStep = 0;
+        window.obNext = function() {
+            obStep++;
+            if (obStep >= 3) { obClose(); return; }
+            const slides = document.querySelectorAll('.ob-slide');
+            const dots   = document.querySelectorAll('.ob-dot');
+            slides.forEach((s, i) => {
+                s.classList.remove('active','left');
+                if (i < obStep) s.classList.add('left');
+                else if (i === obStep) s.classList.add('active');
+            });
+            dots.forEach((d, i) => d.classList.toggle('active', i === obStep));
+            if (obStep === 2) document.getElementById('obBtn').textContent = '¡Empezar!';
+        };
+        window.obClose = function() {
+            localStorage.setItem('onboarding_done', '1');
+            const el = document.getElementById('onboarding');
+            el.style.opacity = '0'; el.style.transition = 'opacity .3s';
+            setTimeout(() => el.remove(), 300);
+        };
+    })();
+
     const CATEGORIAS_POPULARES = [
         {emoji:'🔧', nombre:'Plomería'},
         {emoji:'⚡', nombre:'Electricidad'},
