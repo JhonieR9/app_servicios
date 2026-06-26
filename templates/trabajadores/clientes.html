@@ -217,7 +217,7 @@
                 <tr>
                     <td><span style="background:#f1f5f9;color:#475569;padding:3px 8px;border-radius:6px;font-size:0.78rem;font-weight:600">#${c.id_cliente}</span></td>
                     <td><strong>${c.nombre_completo || '—'}</strong></td>
-                    <td style="color:#475569">${c.correo || '<span style="color:#cbd5e1">Sin correo</span>'}</td>
+                    <td style="color:#475569">${c.correo ? c.correo + (c.email_verificado ? ' <span style="color:#10b981;font-size:0.7rem">✓</span>' : ' <span style="color:#f59e0b;font-size:0.7rem">⚠</span>') : '<span style="color:#cbd5e1">Sin correo</span>'}</td>
                     <td style="color:#475569">${c.telefono || '<span style="color:#cbd5e1">Sin teléfono</span>'}</td>
                     <td>${solsLabel}</td>
                     <td>${calLabel}</td>

@@ -1280,9 +1280,11 @@ def listar_registros(request: Request):
                 tel = cursor.fetchone()
                 if tel: reg['telefono'] = str(tel['telefono'])
 
-                cursor.execute("SELECT correo FROM correo_persona WHERE id_persona = %s LIMIT 1", (reg['id_persona'],))
+                cursor.execute("SELECT correo, verificado FROM correo_persona WHERE id_persona = %s LIMIT 1", (reg['id_persona'],))
                 email = cursor.fetchone()
-                if email: reg['correo'] = str(email['correo'])
+                if email:
+                    reg['correo'] = str(email['correo'])
+                    reg['email_verificado'] = bool(email.get('verificado'))
 
                 cursor.execute("""
                     SELECT foto_identificacion, antecedentes_pdf, recomendaciones, recomendaciones_archivo,
@@ -2115,7 +2117,7 @@ def listar_clientes(request: Request):
         cursor = conexion.cursor(dictionary=True)
         cursor.execute("""
             SELECT c.id_cliente, c.nombre_completo, c.estado, c.fecha_registro,
-                   e.correo, t.telefono,
+                   e.correo, e.verificado AS email_verificado, t.telefono,
                    (SELECT COUNT(*) FROM solicitudes_servicio s WHERE s.id_cliente = c.id_cliente) AS total_solicitudes,
                    (SELECT ROUND(AVG(cal.puntuacion),1)
                     FROM calificaciones cal
