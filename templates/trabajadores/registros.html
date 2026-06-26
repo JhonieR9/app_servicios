@@ -685,6 +685,9 @@
                                 <button class="btn btn-sm btn-outline-info" onclick="verDetalles(${reg.id_persona})">
                                     <i class="bi bi-eye"></i> Ver Detalles
                                 </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="editarRegistro(${reg.id_persona})">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </button>
                                 <button class="btn btn-sm btn-danger" onclick="eliminarRegistro(${reg.id_persona})">
                                     <i class="bi bi-trash"></i> Eliminar
                                 </button>
@@ -785,6 +788,90 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             `;
+        }
+
+        function editarRegistro(idPersona) {
+            const reg = todosLosRegistros.find(r => r.id_persona === idPersona);
+            if (!reg) return;
+
+            let modal = document.getElementById('modalEditar');
+            if (modal) modal.remove();
+
+            modal = document.createElement('div');
+            modal.id = 'modalEditar';
+            modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;';
+            modal.innerHTML = `
+                <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto">
+                    <h4 style="margin-bottom:20px;font-weight:700">✏️ Editar — ${reg.nombre_completo}</h4>
+                    <div style="display:grid;gap:12px">
+                        <div>
+                            <label style="font-size:0.75rem;font-weight:700;color:#374151">Nombre Completo</label>
+                            <input type="text" id="ed_nombre" value="${reg.nombre_completo || ''}" class="form-control">
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                            <div>
+                                <label style="font-size:0.75rem;font-weight:700;color:#374151">Ciudad</label>
+                                <input type="text" id="ed_ciudad" value="${reg.ciudad || ''}" class="form-control">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75rem;font-weight:700;color:#374151">Departamento</label>
+                                <input type="text" id="ed_depto" value="${reg.departamento || ''}" class="form-control">
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                            <div>
+                                <label style="font-size:0.75rem;font-weight:700;color:#374151">Teléfono</label>
+                                <input type="tel" id="ed_tel" value="${reg.telefono || ''}" class="form-control">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75rem;font-weight:700;color:#374151">Correo</label>
+                                <input type="email" id="ed_correo" value="${reg.correo || ''}" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:20px">
+                        <button onclick="document.getElementById('modalEditar').remove()"
+                            style="flex:1;padding:12px;border:2px solid #e2e8f0;background:white;color:#64748b;
+                                   border-radius:10px;font-weight:700;cursor:pointer">
+                            Cancelar
+                        </button>
+                        <button onclick="guardarEdicion(${idPersona})"
+                            style="flex:2;padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);
+                                   color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer" id="btnGuardarEd">
+                            💾 Guardar
+                        </button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+        }
+
+        async function guardarEdicion(idPersona) {
+            const btn = document.getElementById('btnGuardarEd');
+            btn.disabled = true; btn.textContent = 'Guardando...';
+
+            const fd = new FormData();
+            fd.append('id_persona', idPersona);
+            fd.append('nombre', document.getElementById('ed_nombre').value);
+            fd.append('ciudad', document.getElementById('ed_ciudad').value);
+            fd.append('departamento', document.getElementById('ed_depto').value);
+            fd.append('telefono', document.getElementById('ed_tel').value);
+            fd.append('correo', document.getElementById('ed_correo').value);
+
+            try {
+                const res = await fetch('/trabajador/admin/editar-registro', { method:'POST', body:fd });
+                const data = await res.json();
+                if (res.ok) {
+                    mostrarAlerta('success', '✅ ' + data.mensaje);
+                    document.getElementById('modalEditar').remove();
+                    cargarRegistros();
+                } else {
+                    mostrarAlerta('danger', '❌ ' + (data.error || 'Error'));
+                }
+            } catch(e) {
+                mostrarAlerta('danger', '❌ Error de conexión');
+            }
+            btn.disabled = false; btn.textContent = '💾 Guardar';
         }
     </script>
 </div></div>

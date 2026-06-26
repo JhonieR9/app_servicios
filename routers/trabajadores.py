@@ -1649,6 +1649,49 @@ def corregir_ciudades(request: Request):
         if conexion and conexion.is_connected():
             conexion.close()
 
+@router.post("/admin/editar-registro")
+def admin_editar_registro(
+    request: Request,
+    id_persona:   int = Form(...),
+    nombre:       str = Form(None),
+    ciudad:       str = Form(None),
+    departamento: str = Form(None),
+    telefono:     str = Form(None),
+    correo:       str = Form(None)
+):
+    """Admin edita datos de un trabajador"""
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        if nombre:
+            cursor.execute("UPDATE personas SET nombre_completo = %s WHERE id_persona = %s", (nombre, id_persona))
+        if ciudad:
+            cursor.execute("UPDATE personas SET ciudad = %s WHERE id_persona = %s", (ciudad, id_persona))
+        if departamento:
+            cursor.execute("UPDATE personas SET departamento = %s WHERE id_persona = %s", (departamento, id_persona))
+        if telefono:
+            cursor.execute("SELECT 1 FROM telefono_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
+            if cursor.fetchone():
+                cursor.execute("UPDATE telefono_persona SET telefono = %s WHERE id_persona = %s", (telefono, id_persona))
+            else:
+                cursor.execute("INSERT INTO telefono_persona (id_persona, telefono) VALUES (%s, %s)", (id_persona, telefono))
+        if correo:
+            cursor.execute("SELECT 1 FROM correo_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
+            if cursor.fetchone():
+                cursor.execute("UPDATE correo_persona SET correo = %s WHERE id_persona = %s", (correo, id_persona))
+            else:
+                cursor.execute("INSERT INTO correo_persona (id_persona, correo) VALUES (%s, %s)", (id_persona, correo))
+        conexion.commit()
+        return JSONResponse({"mensaje": "Registro actualizado correctamente"})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 @router.get("/admin/mapa-data")
 def mapa_admin_data(request: Request):
     """API: todos los trabajadores con ubicación activa (solo admin)"""
