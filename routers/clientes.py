@@ -139,6 +139,13 @@ async def registrar_cliente(
             samesite="lax"
         )
 
+        # Enviar email de verificación/bienvenida en background
+        import threading
+        base_url = str(request.base_url).rstrip('/') if hasattr(request, 'base_url') else "https://web-production-191f4.up.railway.app"
+        def _enviar_bienvenida():
+            auth.enviar_email_bienvenida(correo, nombre_completo, 'cliente', id_cliente, base_url)
+        threading.Thread(target=_enviar_bienvenida, daemon=True).start()
+
         nombre_corto = nombre_completo.split()[0]
         return JSONResponse({
             "mensaje": f"¡Bienvenido {nombre_corto}! Tu cuenta ha sido creada exitosamente.",
