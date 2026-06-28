@@ -385,6 +385,10 @@
                     💬 Chat con cliente
                     <span id="badge-chat-${s.id_solicitud}" style="background:rgba(255,255,255,0.35);border-radius:99px;padding:1px 7px;font-size:0.7rem;display:none"></span>
                 </a>
+                <button class="btn btn-completar" onclick="abrirCompletarCodigo(${s.id_solicitud})"
+                    style="background:linear-gradient(135deg,#10b981,#059669);color:white;">
+                    ✅ Completar servicio
+                </button>
             `,
             'completada': `
                 <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=trabajador&id_usuario=${idTrabajador}"
@@ -493,6 +497,75 @@
     function contactarCliente(telefono, nombre) {
         const msg = encodeURIComponent(`Hola ${nombre}, soy el trabajador de TalentHub. Acabo de aceptar tu solicitud de servicio. ¿Cuándo podemos coordinar?`);
         window.open(`https://wa.me/57${telefono}?text=${msg}`, '_blank');
+    }
+
+    // ── COMPLETAR CON CÓDIGO ─────────────────────────────────────
+    function abrirCompletarCodigo(idSolicitud) {
+        const viejo = document.getElementById('modalCodigo');
+        if (viejo) viejo.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'modalCodigo';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;';
+        modal.innerHTML = `
+            <div style="background:white;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center">
+                <div style="font-size:2.5rem;margin-bottom:12px">🔐</div>
+                <div style="font-size:1.1rem;font-weight:800;color:#1e293b;margin-bottom:6px">Código del cliente</div>
+                <div style="font-size:0.82rem;color:#64748b;margin-bottom:20px">Pídele al cliente el código de 4 dígitos</div>
+                <input type="text" id="codigoInput" maxlength="4" inputmode="numeric"
+                    style="width:100%;padding:16px;text-align:center;font-size:2rem;font-weight:900;
+                           letter-spacing:12px;border:2px solid #e2e8f0;border-radius:14px;outline:none;
+                           color:#059669;font-family:'Segoe UI',sans-serif"
+                    placeholder="····"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                <div id="codigoError" style="display:none;margin-top:10px;padding:8px;background:#fee2e2;color:#dc2626;border-radius:8px;font-size:0.82rem;font-weight:600"></div>
+                <div style="display:flex;gap:10px;margin-top:18px">
+                    <button onclick="document.getElementById('modalCodigo').remove()"
+                        style="flex:1;padding:13px;border:2px solid #e2e8f0;background:white;color:#64748b;
+                               border-radius:12px;font-weight:700;cursor:pointer;font-size:0.88rem">
+                        Cancelar
+                    </button>
+                    <button onclick="enviarCodigo(${idSolicitud})" id="btnEnviarCodigo"
+                        style="flex:2;padding:13px;background:linear-gradient(135deg,#10b981,#059669);
+                               color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-size:0.88rem">
+                        ✅ Confirmar
+                    </button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+        document.getElementById('codigoInput').focus();
+    }
+
+    async function enviarCodigo(idSolicitud) {
+        const codigo = document.getElementById('codigoInput').value.trim();
+        if (codigo.length < 4) { document.getElementById('codigoError').textContent = 'Ingresa 4 dígitos'; document.getElementById('codigoError').style.display = 'block'; return; }
+        const btn = document.getElementById('btnEnviarCodigo');
+        btn.disabled = true; btn.textContent = 'Verificando...';
+
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('codigo', codigo);
+
+        try {
+            const res = await fetch('/trabajador/servicio/completar', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok) {
+                document.getElementById('modalCodigo').remove();
+                mostrarToast('🎉 ' + data.mensaje);
+                cargarSolicitudes();
+            } else {
+                document.getElementById('codigoError').textContent = data.error || 'Código incorrecto';
+                document.getElementById('codigoError').style.display = 'block';
+                document.getElementById('codigoInput').value = '';
+                document.getElementById('codigoInput').focus();
+                btn.disabled = false; btn.textContent = '✅ Confirmar';
+            }
+        } catch(e) {
+            document.getElementById('codigoError').textContent = 'Error de conexión';
+            document.getElementById('codigoError').style.display = 'block';
+            btn.disabled = false; btn.textContent = '✅ Confirmar';
+        }
     }
 
     // ── CALIFICAR CLIENTE — Tags rápidos ─────────────────────────

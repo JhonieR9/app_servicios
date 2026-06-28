@@ -489,6 +489,28 @@
                 cargarChatPreview();
             }
 
+            // Mostrar código de confirmación al cliente (si ya tiene trabajador asignado)
+            if (data.codigo_confirmacion && estado !== 'completada' && estado !== 'cancelada') {
+                let codigoDiv = document.getElementById('codigoConfDiv');
+                if (!codigoDiv) {
+                    codigoDiv = document.createElement('div');
+                    codigoDiv.id = 'codigoConfDiv';
+                    codigoDiv.style.cssText = 'background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #86efac;border-radius:18px;padding:20px;margin-bottom:16px;text-align:center;';
+                    const infoCard = document.querySelector('.info-card');
+                    if (infoCard) infoCard.parentNode.insertBefore(codigoDiv, infoCard);
+                }
+                codigoDiv.innerHTML = `
+                    <div style="font-size:0.72rem;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
+                        🔐 Código de confirmación
+                    </div>
+                    <div style="font-size:2.2rem;font-weight:900;letter-spacing:10px;color:#059669;margin-bottom:8px">
+                        ${data.codigo_confirmacion}
+                    </div>
+                    <div style="font-size:0.78rem;color:#166534;line-height:1.5">
+                        Dale este código al profesional cuando termine el trabajo
+                    </div>`;
+            }
+
         } catch(e) { console.log('Error seguimiento:', e); }
     }
 
