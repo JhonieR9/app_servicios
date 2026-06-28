@@ -2646,6 +2646,28 @@ async def configurar_password_trabajador(
         
         auth.configurar_password_trabajador(id_persona, password)
         
+        # Enviar email de verificación/bienvenida en background
+        import threading
+        def _enviar_verificacion():
+            try:
+                conexion = conectar_bd()
+                cursor = conexion.cursor(dictionary=True)
+                cursor.execute("""
+                    SELECT p.nombre_completo, cp.correo
+                    FROM personas p
+                    LEFT JOIN correo_persona cp ON p.id_persona = cp.id_persona
+                    WHERE p.id_persona = %s
+                """, (id_persona,))
+                row = cursor.fetchone()
+                cursor.close(); conexion.close()
+                if row and row.get('correo'):
+                    import os
+                    base_url = os.getenv("APP_URL", "https://web-production-191f4.up.railway.app")
+                    auth.enviar_email_bienvenida(row['correo'], row['nombre_completo'], 'trabajador', id_persona, base_url)
+            except Exception as ex:
+                print(f"[VERIFICACION] Error: {ex}")
+        threading.Thread(target=_enviar_verificacion, daemon=True).start()
+        
         return JSONResponse({
             "mensaje": "Contraseña configurada correctamente",
             "redirect": "/trabajador/login"
