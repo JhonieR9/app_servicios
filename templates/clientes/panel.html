@@ -269,28 +269,30 @@
         overlay.style.cssText = `
             position:fixed;inset:0;z-index:99999;background:#0a0a0f;
             display:flex;flex-direction:column;align-items:center;justify-content:center;
-            padding:40px 24px;
+            padding:40px 24px;overflow:hidden;
         `;
         overlay.innerHTML = `
             <style>
-                .ob-slides{position:relative;width:100%;max-width:360px;height:380px;overflow:hidden}
+                #onboarding *{box-sizing:border-box}
+                .ob-slides{position:relative;width:100%;max-width:360px;height:320px;overflow:hidden}
                 .ob-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
                            justify-content:center;text-align:center;padding:20px;
                            transition:transform .4s ease,opacity .4s ease;opacity:0;transform:translateX(100%)}
                 .ob-slide.active{opacity:1;transform:translateX(0)}
                 .ob-slide.left{opacity:0;transform:translateX(-100%)}
-                .ob-emoji{font-size:4rem;margin-bottom:20px;display:block}
-                .ob-title{font-size:1.5rem;font-weight:800;color:white;margin-bottom:10px}
-                .ob-desc{font-size:0.95rem;color:#94a3b8;line-height:1.6}
-                .ob-dots{display:flex;gap:8px;margin:24px 0}
+                .ob-emoji{font-size:4rem;margin-bottom:20px;display:block;line-height:1}
+                .ob-title{font-size:1.4rem;font-weight:800;color:#ffffff;margin-bottom:10px}
+                .ob-desc{font-size:0.9rem;color:#94a3b8;line-height:1.6}
+                .ob-dots{display:flex;gap:8px;margin:20px 0}
                 .ob-dot{width:8px;height:8px;border-radius:50%;background:#334155;transition:all .3s}
                 .ob-dot.active{background:#667eea;width:24px;border-radius:4px}
                 .ob-btn{padding:16px 48px;background:linear-gradient(135deg,#667eea,#764ba2);
-                        color:white;border:none;border-radius:14px;font-size:1rem;font-weight:700;
-                        cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(102,126,234,.4)}
+                        color:#ffffff;border:none;border-radius:14px;font-size:1rem;font-weight:700;
+                        cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(102,126,234,.4);
+                        font-family:inherit}
                 .ob-btn:hover{transform:translateY(-2px)}
                 .ob-skip{background:none;border:none;color:#64748b;font-size:0.82rem;
-                         cursor:pointer;margin-top:16px;padding:8px}
+                         cursor:pointer;margin-top:16px;padding:8px;font-family:inherit}
             </style>
             <div class="ob-slides" id="obSlides">
                 <div class="ob-slide active">
@@ -314,8 +316,8 @@
                 <div class="ob-dot"></div>
                 <div class="ob-dot"></div>
             </div>
-            <button class="ob-btn" id="obBtn" onclick="obNext()">Siguiente</button>
-            <button class="ob-skip" onclick="obClose()">Saltar</button>
+            <button class="ob-btn" id="obBtn" onclick="obNext()">Siguiente →</button>
+            <button class="ob-skip" onclick="obClose()">Saltar intro</button>
         `;
         document.body.appendChild(overlay);
 
