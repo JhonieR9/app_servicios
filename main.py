@@ -130,6 +130,7 @@ def crear_tablas():
             ('fecha_finalizacion', 'datetime DEFAULT NULL'),
             ('precio_final',       'decimal(10,2) DEFAULT NULL'),
             ('metodo_pago',        "varchar(50) DEFAULT 'efectivo'"),
+            ('codigo_confirmacion',"varchar(10) DEFAULT NULL"),
         ]:
             try:
                 cursor.execute(f"ALTER TABLE solicitudes_servicio ADD COLUMN {col} {definition}")

@@ -161,12 +161,16 @@ def actualizar_estado_solicitud(
         cursor = conexion.cursor()
 
         if estado == 'aceptada' and id_trabajador:
+            # Generar código de confirmación de 4 dígitos
+            import random
+            codigo_conf = ''.join([str(random.randint(0, 9)) for _ in range(4)])
+
             # Race condition fix: solo actualizar si todavía está pendiente
             cursor.execute("""
                 UPDATE solicitudes_servicio
-                SET estado = %s, id_trabajador = %s, fecha_aceptacion = NOW()
+                SET estado = %s, id_trabajador = %s, fecha_aceptacion = NOW(), codigo_confirmacion = %s
                 WHERE id_solicitud = %s AND estado = 'pendiente'
-            """, (estado, id_trabajador, id_solicitud))
+            """, (estado, id_trabajador, codigo_conf, id_solicitud))
             if cursor.rowcount == 0:
                 conexion.rollback()
                 return JSONResponse(
@@ -978,13 +982,37 @@ def iniciar_servicio(id_solicitud: int = Form(...)):
 @router.post("/servicio/completar")
 def completar_servicio(
     id_solicitud: int = Form(...),
+    codigo: str = Form(...),
     precio_final: float = Form(0)
 ):
-    """DESHABILITADO: Solo el cliente puede marcar como completado desde su panel"""
-    return JSONResponse(
-        {"error": "El servicio solo puede ser marcado como completado por el cliente"},
-        status_code=403
-    )
+    """El trabajador completa el servicio ingresando el código del cliente"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT id_solicitud, estado, codigo_confirmacion
+            FROM solicitudes_servicio
+            WHERE id_solicitud = %s AND estado IN ('aceptada','en_proceso')
+        """, (id_solicitud,))
+        sol = cursor.fetchone()
+        if not sol:
+            return JSONResponse({"error": "Solicitud no encontrada o no está en proceso"}, status_code=404)
+
+        if sol['codigo_confirmacion'] != codigo.strip():
+            return JSONResponse({"error": "Código incorrecto. Pídele el código al cliente."}, status_code=400)
+
+        cursor.execute("""
+            UPDATE solicitudes_servicio
+            SET estado = 'completada', fecha_finalizacion = NOW(), precio_final = %s
+            WHERE id_solicitud = %s
+        """, (precio_final if precio_final > 0 else None, id_solicitud))
+        conexion.commit()
+        return JSONResponse({"mensaje": "🎉 ¡Servicio completado exitosamente!"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
 
 @router.post("/calificar-cliente")
 def calificar_cliente(
