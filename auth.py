@@ -33,8 +33,8 @@ def verificar_password(password: str, password_hash: str) -> bool:
 # ============================================
 
 def generar_codigo_sms() -> str:
-    """Genera código de 6 dígitos para SMS"""
-    return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+    """Genera código de 4 dígitos para verificación"""
+    return ''.join([str(random.randint(0, 9)) for _ in range(4)])
 
 def crear_codigo_verificacion(tipo_usuario: str, id_usuario: int, telefono: str, tipo_verificacion: str = 'login') -> str:
     """
@@ -481,6 +481,50 @@ def consumir_token_recuperacion(token: str, nueva_password: str) -> bool:
 # ============================================
 # FUNCIÓN CENTRAL DE ENVÍO DE EMAIL (RESEND API)
 # ============================================
+
+def enviar_codigo_verificacion_email(correo: str, codigo: str) -> bool:
+    """Envía un código de 4 dígitos por email para verificar la cuenta"""
+    html = f"""<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="420" cellpadding="0" cellspacing="0"
+             style="background:white;border-radius:16px;overflow:hidden;
+                    box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#059669,#0891b2);
+                     padding:28px;text-align:center;">
+            <div style="font-size:2.5rem;margin-bottom:8px;">🔐</div>
+            <h1 style="margin:0;color:white;font-size:1.3rem;font-weight:800;">
+              Código de verificación
+            </h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 28px;text-align:center;">
+            <p style="color:#374151;font-size:0.95rem;margin:0 0 24px;">
+              Tu código de verificación es:
+            </p>
+            <div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:16px;
+                        padding:20px;display:inline-block;margin-bottom:24px;">
+              <span style="font-size:2.5rem;font-weight:900;letter-spacing:12px;color:#059669;">
+                {codigo}
+              </span>
+            </div>
+            <p style="color:#64748b;font-size:0.82rem;margin:0;">
+              Este código expira en 10 minutos.<br>
+              Si no solicitaste esto, ignora este correo.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+    return _enviar_gmail(correo, f"Tu código TalentHub: {codigo}", html)
+
 
 def _enviar_gmail(destinatario: str, asunto: str, html: str) -> bool:
     """

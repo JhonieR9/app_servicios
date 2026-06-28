@@ -139,19 +139,33 @@ async def registrar_cliente(
             samesite="lax"
         )
 
-        # Enviar email de verificación/bienvenida en background
+        # Enviar código de verificación por email en background
         import threading
-        base_url = str(request.base_url).rstrip('/') if hasattr(request, 'base_url') else "https://web-production-191f4.up.railway.app"
-        def _enviar_bienvenida():
-            auth.enviar_email_bienvenida(correo, nombre_completo, 'cliente', id_cliente, base_url)
-        threading.Thread(target=_enviar_bienvenida, daemon=True).start()
+        codigo = auth.generar_codigo_sms()
+        auth.crear_codigo_verificacion('cliente', id_cliente, telefono, 'registro')
+        # Guardar código real (sobreescribir con el que vamos a enviar por email)
+        conexion2 = conectar_bd()
+        cursor2 = conexion2.cursor()
+        from datetime import timedelta as td
+        expiracion = datetime.now() + td(minutes=10)
+        cursor2.execute("""
+            INSERT INTO codigos_verificacion 
+            (tipo_usuario, id_usuario, telefono, codigo, tipo_verificacion, fecha_expiracion)
+            VALUES ('cliente', %s, %s, %s, 'registro', %s)
+        """, (id_cliente, correo, codigo, expiracion))
+        conexion2.commit(); cursor2.close(); conexion2.close()
+
+        def _enviar_codigo():
+            auth.enviar_codigo_verificacion_email(correo, codigo)
+        threading.Thread(target=_enviar_codigo, daemon=True).start()
 
         nombre_corto = nombre_completo.split()[0]
         return JSONResponse({
-            "mensaje": f"¡Bienvenido {nombre_corto}! Tu cuenta ha sido creada exitosamente.",
+            "mensaje": f"¡Bienvenido {nombre_corto}! Te enviamos un código de verificación a tu correo.",
             "id_cliente": id_cliente,
             "nombre": nombre_completo,
-            "redirect": f"/cliente/panel?nombre={nombre_completo}&id={id_cliente}"
+            "requiere_codigo": True,
+            "redirect": f"/cliente/verificar-codigo?id={id_cliente}&correo={correo}"
         })
     except Exception as e:
         conexion.rollback()
@@ -159,6 +173,27 @@ async def registrar_cliente(
     finally:
         cursor.close()
         conexion.close()
+
+@router.get("/verificar-codigo", response_class=HTMLResponse)
+def mostrar_verificar_codigo(request: Request):
+    """Página para ingresar código de verificación"""
+    return templates.TemplateResponse("clientes/verificar_codigo.html", {"request": request})
+
+@router.post("/verificar-codigo")
+def verificar_codigo_cliente(
+    id_cliente: int = Form(...),
+    codigo: str = Form(...)
+):
+    """Verifica el código de 4 dígitos enviado por email"""
+    valido, mensaje = auth.verificar_codigo_sms('cliente', id_cliente, codigo)
+    if valido:
+        # Marcar correo como verificado
+        conexion = conectar_bd()
+        cursor = conexion.cursor()
+        cursor.execute("UPDATE correo_cliente SET verificado = 1 WHERE id_cliente = %s AND principal = 1", (id_cliente,))
+        conexion.commit(); cursor.close(); conexion.close()
+        return JSONResponse({"ok": True, "mensaje": "¡Correo verificado! Bienvenido a TalentHub.", "redirect": "/cliente/panel"})
+    return JSONResponse({"ok": False, "error": "Código incorrecto o expirado"}, status_code=400)
 
 @router.get("/solicitar_servicio", response_class=HTMLResponse)
 def mostrar_solicitar_servicio(request: Request):

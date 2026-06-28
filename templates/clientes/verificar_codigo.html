@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar código - TalentHub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;min-height:100vh;
+             display:flex;align-items:center;justify-content:center;padding:20px}
+        .card{background:#111118;border:1px solid rgba(255,255,255,.08);border-radius:24px;
+              padding:40px 28px;width:100%;max-width:400px;text-align:center;
+              box-shadow:0 32px 64px rgba(0,0,0,.5)}
+        .icon{font-size:3rem;margin-bottom:16px;display:block}
+        h1{font-size:1.3rem;font-weight:800;color:#f1f5f9;margin-bottom:8px}
+        p{color:#64748b;font-size:0.88rem;margin-bottom:24px;line-height:1.5}
+        .code-inputs{display:flex;gap:12px;justify-content:center;margin-bottom:24px}
+        .code-input{width:56px;height:64px;border-radius:14px;border:2px solid rgba(255,255,255,.1);
+                    background:rgba(255,255,255,.04);color:#f1f5f9;font-size:1.8rem;font-weight:800;
+                    text-align:center;outline:none;transition:all .2s;font-family:'Segoe UI',sans-serif}
+        .code-input:focus{border-color:#059669;background:rgba(5,150,105,.08);
+                          box-shadow:0 0 0 3px rgba(5,150,105,.15)}
+        .btn{width:100%;padding:15px;background:linear-gradient(135deg,#059669,#0891b2);
+             color:white;border:none;border-radius:14px;font-size:1rem;font-weight:700;
+             cursor:pointer;transition:all .2s;margin-bottom:12px}
+        .btn:hover{transform:translateY(-2px)}
+        .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+        .msg{padding:10px;border-radius:10px;font-size:0.85rem;font-weight:600;margin-bottom:14px;display:none}
+        .msg.error{background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.2);display:block}
+        .msg.success{background:rgba(16,185,129,.1);color:#6ee7b7;border:1px solid rgba(16,185,129,.2);display:block}
+        .resend{background:none;border:none;color:#64748b;font-size:0.82rem;cursor:pointer}
+        .resend:hover{color:#f1f5f9}
+    </style>
+</head>
+<body>
+<div class="card">
+    <span class="icon">🔐</span>
+    <h1>Ingresa tu código</h1>
+    <p>Te enviamos un código de 4 dígitos a tu correo electrónico</p>
+
+    <div id="msgBox" class="msg"></div>
+
+    <div class="code-inputs">
+        <input type="text" maxlength="1" class="code-input" id="c1" inputmode="numeric" autofocus
+               oninput="avanzar(1)" onkeydown="retroceder(event,1)">
+        <input type="text" maxlength="1" class="code-input" id="c2" inputmode="numeric"
+               oninput="avanzar(2)" onkeydown="retroceder(event,2)">
+        <input type="text" maxlength="1" class="code-input" id="c3" inputmode="numeric"
+               oninput="avanzar(3)" onkeydown="retroceder(event,3)">
+        <input type="text" maxlength="1" class="code-input" id="c4" inputmode="numeric"
+               oninput="avanzar(4)" onkeydown="retroceder(event,4)">
+    </div>
+
+    <button class="btn" id="btnVerificar" onclick="verificar()" disabled>Verificar</button>
+    <button class="resend" onclick="reenviar()">¿No te llegó? Reenviar código</button>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const idCliente = params.get('id');
+    const correo = params.get('correo');
+
+    function avanzar(pos) {
+        const input = document.getElementById('c' + pos);
+        if (input.value.length === 1 && pos < 4) {
+            document.getElementById('c' + (pos + 1)).focus();
+        }
+        checkCompleto();
+    }
+
+    function retroceder(e, pos) {
+        if (e.key === 'Backspace' && !document.getElementById('c' + pos).value && pos > 1) {
+            document.getElementById('c' + (pos - 1)).focus();
+        }
+    }
+
+    function checkCompleto() {
+        const code = getCodigo();
+        document.getElementById('btnVerificar').disabled = code.length < 4;
+    }
+
+    function getCodigo() {
+        return [1,2,3,4].map(i => document.getElementById('c'+i).value).join('');
+    }
+
+    async function verificar() {
+        const codigo = getCodigo();
+        if (codigo.length < 4) return;
+        const btn = document.getElementById('btnVerificar');
+        const msg = document.getElementById('msgBox');
+        btn.disabled = true; btn.textContent = 'Verificando...';
+
+        const fd = new FormData();
+        fd.append('id_cliente', idCliente);
+        fd.append('codigo', codigo);
+
+        try {
+            const res = await fetch('/cliente/verificar-codigo', { method:'POST', body:fd });
+            const data = await res.json();
+            if (data.ok) {
+                msg.className = 'msg success'; msg.textContent = '✅ ' + data.mensaje; msg.style.display = 'block';
+                setTimeout(() => window.location.href = data.redirect || '/cliente/panel', 1500);
+            } else {
+                msg.className = 'msg error'; msg.textContent = '❌ ' + (data.error || 'Código incorrecto'); msg.style.display = 'block';
+                btn.disabled = false; btn.textContent = 'Verificar';
+                [1,2,3,4].forEach(i => { document.getElementById('c'+i).value = ''; });
+                document.getElementById('c1').focus();
+            }
+        } catch(e) {
+            msg.className = 'msg error'; msg.textContent = '❌ Error de conexión'; msg.style.display = 'block';
+            btn.disabled = false; btn.textContent = 'Verificar';
+        }
+    }
+
+    async function reenviar() {
+        // TODO: implementar reenvío
+        document.getElementById('msgBox').className = 'msg success';
+        document.getElementById('msgBox').textContent = '📧 Código reenviado a tu correo';
+        document.getElementById('msgBox').style.display = 'block';
+        setTimeout(() => { document.getElementById('msgBox').style.display = 'none'; }, 3000);
+    }
+
+    // Pegar código completo (si copia de email)
+    document.addEventListener('paste', (e) => {
+        const text = (e.clipboardData || window.clipboardData).getData('text').trim();
+        if (/^\d{4}$/.test(text)) {
+            [1,2,3,4].forEach((i, idx) => { document.getElementById('c'+i).value = text[idx]; });
+            checkCompleto();
+            document.getElementById('c4').focus();
+        }
+    });
+</script>
+</body>
+</html>
