@@ -738,28 +738,63 @@
 
         function verDetalles(idPersona) {
             const reg = todosLosRegistros.find(r => r.id_persona === idPersona);
-            if (reg) {
-                let detalles = `ID: ${reg.id_persona}\n`;
-                detalles += `Nombre: ${reg.nombre_completo}\n`;
-                detalles += `Documento: ${reg.tipo_documento} ${reg.numero_documento}\n`;
-                detalles += `Ciudad: ${reg.ciudad} (DANE: ${reg.codigo_dane})\n`;
-                detalles += `Teléfono: ${reg.telefono}\n`;
-                if (reg.correo) detalles += `Correo: ${reg.correo}\n`;
-                detalles += `Experiencia: ${reg.anios_experiencia} años\n`;
-                if (reg.arl) detalles += `ARL: ${reg.arl}\n`;
-                if (reg.eps) detalles += `EPS: ${reg.eps}\n`;
-                detalles += `\nServicios:\n`;
-                if (reg.servicios) {
-                    reg.servicios.forEach((s, i) => {
-                        detalles += `${i+1}. ${s.categoria}: ${s.descripcion}\n`;
-                        detalles += `   Tarifa: $${s.valor_hora.toLocaleString('es-CO')} COP/h\n`;
-                        if (s.tiene_ayudante == 1) {
-                            detalles += `   Con ayudante: $${s.costo_ayudante.toLocaleString('es-CO')} COP/h\n`;
-                        }
-                    });
-                }
-                alert(detalles);
-            }
+            if (!reg) return;
+
+            const serviciosHtml = (reg.servicios || []).map((s, i) =>
+                `<div style="background:#f8fafc;border-radius:10px;padding:10px 14px;margin-bottom:6px">
+                    <div style="font-weight:700;color:#1e293b;font-size:0.88rem">${i+1}. ${s.categoria}</div>
+                    <div style="font-size:0.78rem;color:#475569;margin-top:2px">${s.descripcion || ''}</div>
+                    <div style="font-size:0.75rem;color:#667eea;margin-top:4px;display:flex;gap:12px">
+                        <span>💰 $${(s.valor_hora || 0).toLocaleString('es-CO')}/h</span>
+                        <span>📅 ${s.anios_experiencia || 0} años exp.</span>
+                        ${s.tiene_ayudante == 1 ? `<span>👥 Ayudante: $${(s.costo_ayudante || 0).toLocaleString('es-CO')}/h</span>` : ''}
+                    </div>
+                </div>`
+            ).join('');
+
+            let modal = document.getElementById('modalDetalles');
+            if (modal) modal.remove();
+            modal = document.createElement('div');
+            modal.id = 'modalDetalles';
+            modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
+            modal.innerHTML = `
+                <div style="background:white;border-radius:20px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.2)">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+                        <h3 style="font-size:1.1rem;font-weight:800;color:#1e293b">👤 ${reg.nombre_completo}</h3>
+                        <button onclick="document.getElementById('modalDetalles').remove()" style="background:none;border:none;font-size:1.3rem;color:#94a3b8;cursor:pointer">&times;</button>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+                        <div style="background:#f0f9ff;border-radius:10px;padding:12px">
+                            <div style="font-size:0.68rem;color:#0369a1;font-weight:700;text-transform:uppercase">Documento</div>
+                            <div style="font-size:0.9rem;font-weight:700;color:#1e293b;margin-top:2px">${reg.tipo_documento} ${reg.numero_documento}</div>
+                        </div>
+                        <div style="background:#f0fdf4;border-radius:10px;padding:12px">
+                            <div style="font-size:0.68rem;color:#166534;font-weight:700;text-transform:uppercase">Ciudad</div>
+                            <div style="font-size:0.9rem;font-weight:700;color:#1e293b;margin-top:2px">${reg.ciudad} (${reg.codigo_dane})</div>
+                        </div>
+                        <div style="background:#fef3c7;border-radius:10px;padding:12px">
+                            <div style="font-size:0.68rem;color:#92400e;font-weight:700;text-transform:uppercase">Teléfono</div>
+                            <div style="font-size:0.9rem;font-weight:700;color:#1e293b;margin-top:2px">${reg.telefono}</div>
+                        </div>
+                        <div style="background:#ede9fe;border-radius:10px;padding:12px">
+                            <div style="font-size:0.68rem;color:#5b21b6;font-weight:700;text-transform:uppercase">Experiencia</div>
+                            <div style="font-size:0.9rem;font-weight:700;color:#1e293b;margin-top:2px">${reg.anios_experiencia} años</div>
+                        </div>
+                    </div>
+                    ${reg.correo ? `<div style="font-size:0.82rem;color:#475569;margin-bottom:12px">📧 ${reg.correo}</div>` : ''}
+                    ${reg.arl || reg.eps ? `<div style="font-size:0.82rem;color:#475569;margin-bottom:12px">🛡️ ARL: ${reg.arl || 'N/A'} · EPS: ${reg.eps || 'N/A'}</div>` : ''}
+                    ${reg.medio_pago ? `<div style="font-size:0.82rem;color:#475569;margin-bottom:12px">💳 ${reg.medio_pago_principal || ''} ${reg.medio_pago}</div>` : ''}
+                    <div style="margin-bottom:12px">
+                        <div style="font-size:0.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:8px">Servicios</div>
+                        ${serviciosHtml || '<div style="color:#94a3b8;font-size:0.82rem">Sin servicios registrados</div>'}
+                    </div>
+                    <div style="font-size:0.72rem;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:12px">
+                        📅 Disponibilidad: ${reg.horario} (${reg.dias_disponibles})<br>
+                        🕐 Registrado: ${reg.fecha_registro || 'N/A'}
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
         }
 
         async function cargarEstadisticas() {
