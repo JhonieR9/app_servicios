@@ -341,31 +341,12 @@ def configurar_password_cliente(id_cliente: int, password: str) -> bool:
     return True
 
 # ============================================
-# FUNCIÓN DE ENVÍO DE SMS (SIMULADO)
+# FUNCIÓN DE ENVÍO DE SMS (SIMULADO — no implementado)
 # ============================================
 
 def enviar_sms(telefono: str, codigo: str) -> bool:
-    """
-    Envía SMS con código de verificación
-    
-    NOTA: Esta es una versión simulada.
-    En producción, integrar con Twilio, AWS SNS, etc.
-    """
-    print(f"\n{'='*50}")
-    print(f"📱 SMS ENVIADO A: {telefono}")
-    print(f"🔐 CÓDIGO: {codigo}")
-    print(f"{'='*50}\n")
-    
-    # TODO: Integrar con servicio real de SMS
-    # Ejemplo con Twilio:
-    # from twilio.rest import Client
-    # client = Client(account_sid, auth_token)
-    # message = client.messages.create(
-    #     body=f"Tu código de verificación es: {codigo}",
-    #     from_='+1234567890',
-    #     to=telefono
-    # )
-    
+    """Envío SMS simulado — en producción integrar con Twilio si se necesita"""
+    print(f"[SMS] Código {codigo} → {telefono}")
     return True
 
 # ============================================
