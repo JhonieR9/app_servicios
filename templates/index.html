@@ -385,19 +385,20 @@
             <div class="card-arrow">→</div>
         </a>
 
-        <a href="/cliente/login" class="role-card client">
+        <!-- Cliente inhabilitado temporalmente — se activa cuando haya trabajadores suficientes -->
+        <div class="role-card client" style="opacity:0.4;pointer-events:none;cursor:not-allowed">
             <div class="card-icon">🔍</div>
             <div class="card-text">
                 <div class="card-title">Necesito un Servicio</div>
-                <div class="card-desc">Encuentra profesionales cerca de ti</div>
+                <div class="card-desc">Próximamente — estamos preparando la mejor experiencia</div>
             </div>
-            <div class="card-arrow">→</div>
-        </a>
+            <div class="card-arrow" style="color:#64748b">🔒</div>
+        </div>
     </div>
 
-    <!-- Servicios populares -->
+    <!-- Servicios populares — oculto hasta que se active clientes -->
     <div class="divider"></div>
-    <div class="services-section">
+    <div class="services-section" style="display:none">
         <div class="services-title">Servicios populares</div>
         <div class="services-grid">
             <a href="/cliente/solicitar_servicio" class="service-chip">
