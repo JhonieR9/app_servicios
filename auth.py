@@ -7,7 +7,6 @@ import bcrypt
 import secrets
 import random
 from datetime import datetime, timedelta
-import mysql.connector
 from typing import Optional, Dict, Tuple
 from config import DB_CONFIG, conectar_bd
 

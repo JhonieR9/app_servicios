@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Form, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-import mysql.connector
 from datetime import datetime
 import math
 import auth  # Módulo de autenticación
