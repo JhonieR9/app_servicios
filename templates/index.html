@@ -10,7 +10,10 @@
     <meta name="apple-mobile-web-app-title" content="TalentHub">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Fuente no bloqueante: carga después del render -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"></noscript>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -113,7 +116,7 @@
             text-transform: uppercase; color: var(--muted);
             margin-bottom: 44px;
             opacity: 0;
-            animation: fadeIn 0.5s ease 1.2s forwards;
+            animation: fadeIn 0.4s ease 0.8s forwards;
         }
         @keyframes fadeIn { to { opacity: 1; } }
 
@@ -457,8 +460,8 @@
         setTimeout(() => {
             document.getElementById('splash').style.display = 'none';
             document.getElementById('main').classList.add('show');
-        }, 700);
-    }, 2600);
+        }, 400);
+    }, 1400);
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/static/sw.js').catch(() => {});
@@ -466,15 +469,6 @@
 </script>
 
 <script>
-// Registrar Service Worker para PWA
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/sw.js')
-            .then(reg => console.log('✅ TalentHub PWA activo'))
-            .catch(err => console.log('SW error:', err));
-    });
-}
-
 // Mostrar banner de instalación en Android
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
