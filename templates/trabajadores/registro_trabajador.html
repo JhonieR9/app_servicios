@@ -254,10 +254,6 @@
                             <div class="col-md-4">
                                 <label class="form-label required-label">Tipo de Documento</label>
                                 <select class="form-select" name="tipo_documento" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="1">Cédula de Ciudadanía</option>
-                                    <option value="2">Cédula de Extranjería</option>
-                                    <option value="3">Pasaporte</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -274,10 +270,6 @@
                             <div class="col-md-4">
                                 <label class="form-label required-label">Género</label>
                                 <select class="form-select" name="genero" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="4">Masculino</option>
-                                    <option value="5">Femenino</option>
-                                    <option value="6">Otro</option>
                                 </select>
                             </div>
                             <div class="col-md-12">
@@ -293,374 +285,29 @@
                                 <label class="form-label required-label">Nacionalidad</label>
                                 <select class="form-select" name="nacionalidad" required>
                                     <option value="">Seleccionar...</option>
-                                    <option value="Colombiana" selected>Colombiana</option>
+                                    <option value="Colombiana">Colombiana</option>
                                     <option value="Venezolana">Venezolana</option>
-                                    <option value="Ecuatoriana">Ecuatoriana</option>
-                                    <option value="Peruana">Peruana</option>
-                                    <option value="Boliviana">Boliviana</option>
-                                    <option value="Chilena">Chilena</option>
                                     <option value="Argentina">Argentina</option>
                                     <option value="Brasileña">Brasileña</option>
                                     <option value="Mexicana">Mexicana</option>
                                     <option value="Otra">Otra</option>
                                 </select>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-12" style="position:relative;">
                                 <label class="form-label required-label">Ciudad</label>
-                                <select class="form-select" id="ciudad_select" name="ciudad" required onchange="fillDaneDepto(this)">
-                                    <option value="">Seleccionar municipio...</option>
-                                    <option value="ABEJORRAL" data-dane="05002" data-depto="ANTIOQUIA">ABEJORRAL - ANTIOQUIA</option>
-                                    <option value="ABREGO" data-dane="54003" data-depto="NORTE DE SANTANDER">ABREGO - NORTE DE SANTANDER</option>
-                                    <option value="ABRIAQUI" data-dane="05004" data-depto="ANTIOQUIA">ABRIAQUI - ANTIOQUIA</option>
-                                    <option value="ACANDI" data-dane="27006" data-depto="CHOCO">ACANDI - CHOCO</option>
-                                    <option value="ACEVEDO" data-dane="41006" data-depto="HUILA">ACEVEDO - HUILA</option>
-                                    <option value="ACHI" data-dane="13006" data-depto="BOLIVAR">ACHI - BOLIVAR</option>
-                                    <option value="AGRADO" data-dane="41013" data-depto="HUILA">AGRADO - HUILA</option>
-                                    <option value="AGUA DE DIOS" data-dane="25001" data-depto="CUNDINAMARCA">AGUA DE DIOS - CUNDINAMARCA</option>
-                                    <option value="AGUACHICA" data-dane="20011" data-depto="CESAR">AGUACHICA - CESAR</option>
-                                    <option value="AGUADA" data-dane="68013" data-depto="SANTANDER">AGUADA - SANTANDER</option>
-                                    <option value="AGUADAS" data-dane="17013" data-depto="CALDAS">AGUADAS - CALDAS</option>
-                                    <option value="AGUAZUL" data-dane="85010" data-depto="CASANARE">AGUAZUL - CASANARE</option>
-                                    <option value="AIPE" data-dane="41016" data-depto="HUILA">AIPE - HUILA</option>
-                                    <option value="ALBAN" data-dane="25019" data-depto="CUNDINAMARCA">ALBAN - CUNDINAMARCA</option>
-                                    <option value="ALBAN" data-dane="52019" data-depto="NARINO">ALBAN - NARINO</option>
-                                    <option value="ALBANIA" data-dane="18029" data-depto="CAQUETA">ALBANIA - CAQUETA</option>
-                                    <option value="ALBANIA" data-dane="44035" data-depto="LA GUAJIRA">ALBANIA - LA GUAJIRA</option>
-                                    <option value="ALBANIA" data-dane="68020" data-depto="SANTANDER">ALBANIA - SANTANDER</option>
-                                    <option value="ALDANA" data-dane="52022" data-depto="NARINO">ALDANA - NARINO</option>
-                                    <option value="ALEJANDRIA" data-dane="05021" data-depto="ANTIOQUIA">ALEJANDRIA - ANTIOQUIA</option>
-                                    <option value="ALGARROBO" data-dane="47030" data-depto="MAGDALENA">ALGARROBO - MAGDALENA</option>
-                                    <option value="ALGECIRAS" data-dane="41020" data-depto="HUILA">ALGECIRAS - HUILA</option>
-                                    <option value="ALMAGUER" data-dane="19022" data-depto="CAUCA">ALMAGUER - CAUCA</option>
-                                    <option value="ALMEIDA" data-dane="15022" data-depto="BOYACA">ALMEIDA - BOYACA</option>
-                                    <option value="ALPUJARRA" data-dane="73024" data-depto="TOLIMA">ALPUJARRA - TOLIMA</option>
-                                    <option value="ALTAMIRA" data-dane="41026" data-depto="HUILA">ALTAMIRA - HUILA</option>
-                                    <option value="ALTO BAUDO" data-dane="27025" data-depto="CHOCO">ALTO BAUDO - CHOCO</option>
-                                    <option value="ALTOS DEL ROSARIO" data-dane="13030" data-depto="BOLIVAR">ALTOS DEL ROSARIO - BOLIVAR</option>
-                                    <option value="ALVARADO" data-dane="73026" data-depto="TOLIMA">ALVARADO - TOLIMA</option>
-                                    <option value="AMAGA" data-dane="05030" data-depto="ANTIOQUIA">AMAGA - ANTIOQUIA</option>
-                                    <option value="AMALFI" data-dane="05031" data-depto="ANTIOQUIA">AMALFI - ANTIOQUIA</option>
-                                    <option value="AMBALEMA" data-dane="73030" data-depto="TOLIMA">AMBALEMA - TOLIMA</option>
-                                    <option value="ANAPOIMA" data-dane="25035" data-depto="CUNDINAMARCA">ANAPOIMA - CUNDINAMARCA</option>
-                                    <option value="ANCUYA" data-dane="52036" data-depto="NARINO">ANCUYA - NARINO</option>
-                                    <option value="ANDES" data-dane="05034" data-depto="ANTIOQUIA">ANDES - ANTIOQUIA</option>
-                                    <option value="ANGELOPOLIS" data-dane="05036" data-depto="ANTIOQUIA">ANGELOPOLIS - ANTIOQUIA</option>
-                                    <option value="ANGOSTURA" data-dane="05038" data-depto="ANTIOQUIA">ANGOSTURA - ANTIOQUIA</option>
-                                    <option value="ANOLAIMA" data-dane="25040" data-depto="CUNDINAMARCA">ANOLAIMA - CUNDINAMARCA</option>
-                                    <option value="ANORI" data-dane="05040" data-depto="ANTIOQUIA">ANORI - ANTIOQUIA</option>
-                                    <option value="ANSERMA" data-dane="17042" data-depto="CALDAS">ANSERMA - CALDAS</option>
-                                    <option value="ANSERMANUEVO" data-dane="76041" data-depto="VALLE DEL CAUCA">ANSERMANUEVO - VALLE DEL CAUCA</option>
-                                    <option value="ANZA" data-dane="05044" data-depto="ANTIOQUIA">ANZA - ANTIOQUIA</option>
-                                    <option value="ANZOATEGUI" data-dane="73043" data-depto="TOLIMA">ANZOATEGUI - TOLIMA</option>
-                                    <option value="APIA" data-dane="66045" data-depto="RISARALDA">APIA - RISARALDA</option>
-                                    <option value="APULO" data-dane="25599" data-depto="CUNDINAMARCA">APULO - CUNDINAMARCA</option>
-                                    <option value="AQUITANIA" data-dane="15047" data-depto="BOYACA">AQUITANIA - BOYACA</option>
-                                    <option value="ARACATACA" data-dane="47053" data-depto="MAGDALENA">ARACATACA - MAGDALENA</option>
-                                    <option value="ARANZAZU" data-dane="17050" data-depto="CALDAS">ARANZAZU - CALDAS</option>
-                                    <option value="ARAUCA" data-dane="81001" data-depto="ARAUCA">ARAUCA - ARAUCA</option>
-                                    <option value="ARAUCA" data-dane="17524" data-depto="CALDAS">ARAUCA - CALDAS</option>
-                                    <option value="ARAUQUITA" data-dane="81065" data-depto="ARAUCA">ARAUQUITA - ARAUCA</option>
-                                    <option value="ARBELAEZ" data-dane="25053" data-depto="CUNDINAMARCA">ARBELAEZ - CUNDINAMARCA</option>
-                                    <option value="ARBOLEDA" data-dane="52051" data-depto="NARINO">ARBOLEDA - NARINO</option>
-                                    <option value="ARBOLEDAS" data-dane="54051" data-depto="NORTE DE SANTANDER">ARBOLEDAS - NORTE DE SANTANDER</option>
-                                    <option value="ARBOLETES" data-dane="05051" data-depto="ANTIOQUIA">ARBOLETES - ANTIOQUIA</option>
-                                    <option value="ARCABUCO" data-dane="15051" data-depto="BOYACA">ARCABUCO - BOYACA</option>
-                                    <option value="ARGELIA" data-dane="05055" data-depto="ANTIOQUIA">ARGELIA - ANTIOQUIA</option>
-                                    <option value="ARGELIA" data-dane="19050" data-depto="CAUCA">ARGELIA - CAUCA</option>
-                                    <option value="ARGELIA" data-dane="76054" data-depto="VALLE DEL CAUCA">ARGELIA - VALLE DEL CAUCA</option>
-                                    <option value="ARIGUANI" data-dane="47058" data-depto="MAGDALENA">ARIGUANI - MAGDALENA</option>
-                                    <option value="ARJONA" data-dane="13052" data-depto="BOLIVAR">ARJONA - BOLIVAR</option>
-                                    <option value="ARMENIA" data-dane="05059" data-depto="ANTIOQUIA">ARMENIA - ANTIOQUIA</option>
-                                    <option value="ARMENIA" data-dane="63001" data-depto="QUINDIO">ARMENIA - QUINDIO</option>
-                                    <option value="ARMERO" data-dane="73055" data-depto="TOLIMA">ARMERO - TOLIMA</option>
-                                    <option value="ASTREA" data-dane="20032" data-depto="CESAR">ASTREA - CESAR</option>
-                                    <option value="ATACO" data-dane="73067" data-depto="TOLIMA">ATACO - TOLIMA</option>
-                                    <option value="ATRATO" data-dane="27050" data-depto="CHOCO">ATRATO - CHOCO</option>
-                                    <option value="AYAPEL" data-dane="23068" data-depto="CORDOBA">AYAPEL - CORDOBA</option>
-                                    <option value="BAGADO" data-dane="27073" data-depto="CHOCO">BAGADO - CHOCO</option>
-                                    <option value="BAHIA SOLANO" data-dane="27075" data-depto="CHOCO">BAHIA SOLANO - CHOCO</option>
-                                    <option value="BAJO BAUDO" data-dane="27077" data-depto="CHOCO">BAJO BAUDO - CHOCO</option>
-                                    <option value="BALBOA" data-dane="19075" data-depto="CAUCA">BALBOA - CAUCA</option>
-                                    <option value="BALBOA" data-dane="66075" data-depto="RISARALDA">BALBOA - RISARALDA</option>
-                                    <option value="BARANOA" data-dane="08078" data-depto="ATLANTICO">BARANOA - ATLANTICO</option>
-                                    <option value="BARAYA" data-dane="41078" data-depto="HUILA">BARAYA - HUILA</option>
-                                    <option value="BARBACOAS" data-dane="52079" data-depto="NARINO">BARBACOAS - NARINO</option>
-                                    <option value="BARBOSA" data-dane="05079" data-depto="ANTIOQUIA">BARBOSA - ANTIOQUIA</option>
-                                    <option value="BARBOSA" data-dane="68077" data-depto="SANTANDER">BARBOSA - SANTANDER</option>
-                                    <option value="BARICHARA" data-dane="68079" data-depto="SANTANDER">BARICHARA - SANTANDER</option>
-                                    <option value="BARRANCA DE UPIA" data-dane="50110" data-depto="META">BARRANCA DE UPIA - META</option>
-                                    <option value="BARRANCABERMEJA" data-dane="68081" data-depto="SANTANDER">BARRANCABERMEJA - SANTANDER</option>
-                                    <option value="BARRANCAS" data-dane="44078" data-depto="LA GUAJIRA">BARRANCAS - LA GUAJIRA</option>
-                                    <option value="BARRANCO DE LOBA" data-dane="13074" data-depto="BOLIVAR">BARRANCO DE LOBA - BOLIVAR</option>
-                                    <option value="BARRANQUILLA" data-dane="08001" data-depto="ATLANTICO">BARRANQUILLA - ATLANTICO</option>
-                                    <option value="BECERRIL" data-dane="20045" data-depto="CESAR">BECERRIL - CESAR</option>
-                                    <option value="BELALCAZAR" data-dane="17088" data-depto="CALDAS">BELALCAZAR - CALDAS</option>
-                                    <option value="BELEN" data-dane="15087" data-depto="BOYACA">BELEN - BOYACA</option>
-                                    <option value="BELEN" data-dane="52083" data-depto="NARINO">BELEN - NARINO</option>
-                                    <option value="BELEN DE LOS ANDAQUIES" data-dane="18094" data-depto="CAQUETA">BELEN DE LOS ANDAQUIES - CAQUETA</option>
-                                    <option value="BELEN DE UMBRIA" data-dane="66088" data-depto="RISARALDA">BELEN DE UMBRIA - RISARALDA</option>
-                                    <option value="BELLO" data-dane="05088" data-depto="ANTIOQUIA">BELLO - ANTIOQUIA</option>
-                                    <option value="BELMIRA" data-dane="05086" data-depto="ANTIOQUIA">BELMIRA - ANTIOQUIA</option>
-                                    <option value="BELTRAN" data-dane="25086" data-depto="CUNDINAMARCA">BELTRAN - CUNDINAMARCA</option>
-                                    <option value="BERBEO" data-dane="15090" data-depto="BOYACA">BERBEO - BOYACA</option>
-                                    <option value="BETANIA" data-dane="05091" data-depto="ANTIOQUIA">BETANIA - ANTIOQUIA</option>
-                                    <option value="BETEITIVA" data-dane="15092" data-depto="BOYACA">BETEITIVA - BOYACA</option>
-                                    <option value="BETULIA" data-dane="05093" data-depto="ANTIOQUIA">BETULIA - ANTIOQUIA</option>
-                                    <option value="BETULIA" data-dane="68092" data-depto="SANTANDER">BETULIA - SANTANDER</option>
-                                    <option value="BITUIMA" data-dane="25095" data-depto="CUNDINAMARCA">BITUIMA - CUNDINAMARCA</option>
-                                    <option value="BOAVITA" data-dane="15097" data-depto="BOYACA">BOAVITA - BOYACA</option>
-                                    <option value="BOCHALEMA" data-dane="54099" data-depto="NORTE DE SANTANDER">BOCHALEMA - NORTE DE SANTANDER</option>
-                                    <option value="BOGOTA" data-dane="11001" data-depto="BOGOTA D.C.">BOGOTA - BOGOTA D.C.</option>
-                                    <option value="BOJACA" data-dane="25099" data-depto="CUNDINAMARCA">BOJACA - CUNDINAMARCA</option>
-                                    <option value="BOJAYA" data-dane="27099" data-depto="CHOCO">BOJAYA - CHOCO</option>
-                                    <option value="BOLIVAR" data-dane="19100" data-depto="CAUCA">BOLIVAR - CAUCA</option>
-                                    <option value="BOLIVAR" data-dane="68101" data-depto="SANTANDER">BOLIVAR - SANTANDER</option>
-                                    <option value="BOLIVAR" data-dane="76100" data-depto="VALLE DEL CAUCA">BOLIVAR - VALLE DEL CAUCA</option>
-                                    <option value="BOSCONIA" data-dane="20060" data-depto="CESAR">BOSCONIA - CESAR</option>
-                                    <option value="BOYACA" data-dane="15104" data-depto="BOYACA">BOYACA - BOYACA</option>
-                                    <option value="BRICEÑO" data-dane="05107" data-depto="ANTIOQUIA">BRICEÑO - ANTIOQUIA</option>
-                                    <option value="BRICEÑO" data-dane="15106" data-depto="BOYACA">BRICEÑO - BOYACA</option>
-                                    <option value="BUCARAMANGA" data-dane="68001" data-depto="SANTANDER">BUCARAMANGA - SANTANDER</option>
-                                    <option value="BUENAVENTURA" data-dane="76109" data-depto="VALLE DEL CAUCA">BUENAVENTURA - VALLE DEL CAUCA</option>
-                                    <option value="BUENAVISTA" data-dane="15109" data-depto="BOYACA">BUENAVISTA - BOYACA</option>
-                                    <option value="BUENAVISTA" data-dane="23079" data-depto="CORDOBA">BUENAVISTA - CORDOBA</option>
-                                    <option value="BUENAVISTA" data-dane="44098" data-depto="LA GUAJIRA">BUENAVISTA - LA GUAJIRA</option>
-                                    <option value="BUENAVISTA" data-dane="63111" data-depto="QUINDIO">BUENAVISTA - QUINDIO</option>
-                                    <option value="BUENAVISTA" data-dane="70110" data-depto="SUCRE">BUENAVISTA - SUCRE</option>
-                                    <option value="BUENOS AIRES" data-dane="19110" data-depto="CAUCA">BUENOS AIRES - CAUCA</option>
-                                    <option value="BUGA" data-dane="76111" data-depto="VALLE DEL CAUCA">BUGA - VALLE DEL CAUCA</option>
-                                    <option value="BUGALAGRANDE" data-dane="76113" data-depto="VALLE DEL CAUCA">BUGALAGRANDE - VALLE DEL CAUCA</option>
-                                    <option value="BURITICA" data-dane="05113" data-depto="ANTIOQUIA">BURITICA - ANTIOQUIA</option>
-                                    <option value="BUSBANZA" data-dane="15114" data-depto="BOYACA">BUSBANZA - BOYACA</option>
-                                    <option value="CABRERA" data-dane="25120" data-depto="CUNDINAMARCA">CABRERA - CUNDINAMARCA</option>
-                                    <option value="CABRERA" data-dane="68121" data-depto="SANTANDER">CABRERA - SANTANDER</option>
-                                    <option value="CABUYARO" data-dane="50124" data-depto="META">CABUYARO - META</option>
-                                    <option value="CACERES" data-dane="05120" data-depto="ANTIOQUIA">CACERES - ANTIOQUIA</option>
-                                    <option value="CACHIPAY" data-dane="25123" data-depto="CUNDINAMARCA">CACHIPAY - CUNDINAMARCA</option>
-                                    <option value="CACHIRA" data-dane="54128" data-depto="NORTE DE SANTANDER">CACHIRA - NORTE DE SANTANDER</option>
-                                    <option value="CACOTA" data-dane="54125" data-depto="NORTE DE SANTANDER">CACOTA - NORTE DE SANTANDER</option>
-                                    <option value="CAICEDO" data-dane="05125" data-depto="ANTIOQUIA">CAICEDO - ANTIOQUIA</option>
-                                    <option value="CAICEDONIA" data-dane="76122" data-depto="VALLE DEL CAUCA">CAICEDONIA - VALLE DEL CAUCA</option>
-                                    <option value="CAJAMARCA" data-dane="73124" data-depto="TOLIMA">CAJAMARCA - TOLIMA</option>
-                                    <option value="CAJIBIO" data-dane="19130" data-depto="CAUCA">CAJIBIO - CAUCA</option>
-                                    <option value="CAJICA" data-dane="25126" data-depto="CUNDINAMARCA">CAJICA - CUNDINAMARCA</option>
-                                    <option value="CALAMAR" data-dane="13140" data-depto="BOLIVAR">CALAMAR - BOLIVAR</option>
-                                    <option value="CALAMAR" data-dane="95015" data-depto="GUAVIARE">CALAMAR - GUAVIARE</option>
-                                    <option value="CALARCA" data-dane="63130" data-depto="QUINDIO">CALARCA - QUINDIO</option>
-                                    <option value="CALDAS" data-dane="05129" data-depto="ANTIOQUIA">CALDAS - ANTIOQUIA</option>
-                                    <option value="CALDAS" data-dane="15131" data-depto="BOYACA">CALDAS - BOYACA</option>
-                                    <option value="CALDONO" data-dane="19137" data-depto="CAUCA">CALDONO - CAUCA</option>
-                                    <option value="CALI" data-dane="76001" data-depto="VALLE DEL CAUCA">CALI - VALLE DEL CAUCA</option>
-                                    <option value="CALIMA" data-dane="76126" data-depto="VALLE DEL CAUCA">CALIMA - VALLE DEL CAUCA</option>
-                                    <option value="CALOTO" data-dane="19142" data-depto="CAUCA">CALOTO - CAUCA</option>
-                                    <option value="CAMPAMENTO" data-dane="05134" data-depto="ANTIOQUIA">CAMPAMENTO - ANTIOQUIA</option>
-                                    <option value="CAMPOALEGRE" data-dane="41132" data-depto="HUILA">CAMPOALEGRE - HUILA</option>
-                                    <option value="CAMPOHERMOSO" data-dane="15135" data-depto="BOYACA">CAMPOHERMOSO - BOYACA</option>
-                                    <option value="CANALETE" data-dane="23090" data-depto="CORDOBA">CANALETE - CORDOBA</option>
-                                    <option value="CANDELARIA" data-dane="08141" data-depto="ATLANTICO">CANDELARIA - ATLANTICO</option>
-                                    <option value="CANDELARIA" data-dane="76130" data-depto="VALLE DEL CAUCA">CANDELARIA - VALLE DEL CAUCA</option>
-                                    <option value="CANTAGALLO" data-dane="13160" data-depto="BOLIVAR">CANTAGALLO - BOLIVAR</option>
-                                    <option value="CAPARRAPI" data-dane="25148" data-depto="CUNDINAMARCA">CAPARRAPI - CUNDINAMARCA</option>
-                                    <option value="CAPITANEJO" data-dane="68147" data-depto="SANTANDER">CAPITANEJO - SANTANDER</option>
-                                    <option value="CARACOLI" data-dane="05142" data-depto="ANTIOQUIA">CARACOLI - ANTIOQUIA</option>
-                                    <option value="CARAMANTA" data-dane="05145" data-depto="ANTIOQUIA">CARAMANTA - ANTIOQUIA</option>
-                                    <option value="CAREPA" data-dane="05147" data-depto="ANTIOQUIA">CAREPA - ANTIOQUIA</option>
-                                    <option value="CARMEN DE APICALA" data-dane="73148" data-depto="TOLIMA">CARMEN DE APICALA - TOLIMA</option>
-                                    <option value="CARMEN DE CARUPA" data-dane="25154" data-depto="CUNDINAMARCA">CARMEN DE CARUPA - CUNDINAMARCA</option>
-                                    <option value="CARTAGENA" data-dane="13001" data-depto="BOLIVAR">CARTAGENA - BOLIVAR</option>
-                                    <option value="CARTAGENA DEL CHAIRA" data-dane="18150" data-depto="CAQUETA">CARTAGENA DEL CHAIRA - CAQUETA</option>
-                                    <option value="CARTAGO" data-dane="76147" data-depto="VALLE DEL CAUCA">CARTAGO - VALLE DEL CAUCA</option>
-                                    <option value="CAUCASIA" data-dane="05154" data-depto="ANTIOQUIA">CAUCASIA - ANTIOQUIA</option>
-                                    <option value="CERETE" data-dane="23162" data-depto="CORDOBA">CERETE - CORDOBA</option>
-                                    <option value="CERRITO" data-dane="68162" data-depto="SANTANDER">CERRITO - SANTANDER</option>
-                                    <option value="CHIA" data-dane="25175" data-depto="CUNDINAMARCA">CHIA - CUNDINAMARCA</option>
-                                    <option value="CHIGORODO" data-dane="05172" data-depto="ANTIOQUIA">CHIGORODO - ANTIOQUIA</option>
-                                    <option value="CHIMA" data-dane="23168" data-depto="CORDOBA">CHIMA - CORDOBA</option>
-                                    <option value="CHIMA" data-dane="68176" data-depto="SANTANDER">CHIMA - SANTANDER</option>
-                                    <option value="CHINCHINA" data-dane="17174" data-depto="CALDAS">CHINCHINA - CALDAS</option>
-                                    <option value="CHINU" data-dane="23182" data-depto="CORDOBA">CHINU - CORDOBA</option>
-                                    <option value="CHIQUINQUIRA" data-dane="15176" data-depto="BOYACA">CHIQUINQUIRA - BOYACA</option>
-                                    <option value="CHOCONTA" data-dane="25183" data-depto="CUNDINAMARCA">CHOCONTA - CUNDINAMARCA</option>
-                                    <option value="CIRCASIA" data-dane="63190" data-depto="QUINDIO">CIRCASIA - QUINDIO</option>
-                                    <option value="CISNEROS" data-dane="05190" data-depto="ANTIOQUIA">CISNEROS - ANTIOQUIA</option>
-                                    <option value="CIUDAD BOLIVAR" data-dane="05101" data-depto="ANTIOQUIA">CIUDAD BOLIVAR - ANTIOQUIA</option>
-                                    <option value="CLEMENCIA" data-dane="13222" data-depto="BOLIVAR">CLEMENCIA - BOLIVAR</option>
-                                    <option value="COCORNA" data-dane="05197" data-depto="ANTIOQUIA">COCORNA - ANTIOQUIA</option>
-                                    <option value="CODAZZI" data-dane="20013" data-depto="CESAR">CODAZZI - CESAR</option>
-                                    <option value="COELLO" data-dane="73200" data-depto="TOLIMA">COELLO - TOLIMA</option>
-                                    <option value="COGUA" data-dane="25200" data-depto="CUNDINAMARCA">COGUA - CUNDINAMARCA</option>
-                                    <option value="CONDOTO" data-dane="27205" data-depto="CHOCO">CONDOTO - CHOCO</option>
-                                    <option value="CONFINES" data-dane="68209" data-depto="SANTANDER">CONFINES - SANTANDER</option>
-                                    <option value="COPACABANA" data-dane="05212" data-depto="ANTIOQUIA">COPACABANA - ANTIOQUIA</option>
-                                    <option value="COROZAL" data-dane="70215" data-depto="SUCRE">COROZAL - SUCRE</option>
-                                    <option value="COTA" data-dane="25214" data-depto="CUNDINAMARCA">COTA - CUNDINAMARCA</option>
-                                    <option value="CUCUTA" data-dane="54001" data-depto="NORTE DE SANTANDER">CUCUTA - NORTE DE SANTANDER</option>
-                                    <option value="CUMARAL" data-dane="50226" data-depto="META">CUMARAL - META</option>
-                                    <option value="DABEIBA" data-dane="05234" data-depto="ANTIOQUIA">DABEIBA - ANTIOQUIA</option>
-                                    <option value="DAGUA" data-dane="76233" data-depto="VALLE DEL CAUCA">DAGUA - VALLE DEL CAUCA</option>
-                                    <option value="DIBULLA" data-dane="44090" data-depto="LA GUAJIRA">DIBULLA - LA GUAJIRA</option>
-                                    <option value="DON MATIAS" data-dane="05237" data-depto="ANTIOQUIA">DON MATIAS - ANTIOQUIA</option>
-                                    <option value="DOSQUEBRADAS" data-dane="66170" data-depto="RISARALDA">DOSQUEBRADAS - RISARALDA</option>
-                                    <option value="DUITAMA" data-dane="15238" data-depto="BOYACA">DUITAMA - BOYACA</option>
-                                    <option value="EL BAGRE" data-dane="05250" data-depto="ANTIOQUIA">EL BAGRE - ANTIOQUIA</option>
-                                    <option value="EL BANCO" data-dane="47245" data-depto="MAGDALENA">EL BANCO - MAGDALENA</option>
-                                    <option value="EL CARMEN DE BOLIVAR" data-dane="13244" data-depto="BOLIVAR">EL CARMEN DE BOLIVAR - BOLIVAR</option>
-                                    <option value="EL CARMEN DE VIBORAL" data-dane="05148" data-depto="ANTIOQUIA">EL CARMEN DE VIBORAL - ANTIOQUIA</option>
-                                    <option value="EL COLEGIO" data-dane="25245" data-depto="CUNDINAMARCA">EL COLEGIO - CUNDINAMARCA</option>
-                                    <option value="EL COPEY" data-dane="20238" data-depto="CESAR">EL COPEY - CESAR</option>
-                                    <option value="EL DONCELLO" data-dane="18247" data-depto="CAQUETA">EL DONCELLO - CAQUETA</option>
-                                    <option value="EL PASO" data-dane="20250" data-depto="CESAR">EL PASO - CESAR</option>
-                                    <option value="EL RETORNO" data-dane="95025" data-depto="GUAVIARE">EL RETORNO - GUAVIARE</option>
-                                    <option value="EL ROSAL" data-dane="25260" data-depto="CUNDINAMARCA">EL ROSAL - CUNDINAMARCA</option>
-                                    <option value="EL SANTUARIO" data-dane="05697" data-depto="ANTIOQUIA">EL SANTUARIO - ANTIOQUIA</option>
-                                    <option value="EL ZULIA" data-dane="54261" data-depto="NORTE DE SANTANDER">EL ZULIA - NORTE DE SANTANDER</option>
-                                    <option value="ENTRERRIOS" data-dane="05264" data-depto="ANTIOQUIA">ENTRERRIOS - ANTIOQUIA</option>
-                                    <option value="ENVIGADO" data-dane="05266" data-depto="ANTIOQUIA">ENVIGADO - ANTIOQUIA</option>
-                                    <option value="ESPINAL" data-dane="73268" data-depto="TOLIMA">ESPINAL - TOLIMA</option>
-                                    <option value="FACATATIVA" data-dane="25269" data-depto="CUNDINAMARCA">FACATATIVA - CUNDINAMARCA</option>
-                                    <option value="FALAN" data-dane="73270" data-depto="TOLIMA">FALAN - TOLIMA</option>
-                                    <option value="FLANDES" data-dane="73275" data-depto="TOLIMA">FLANDES - TOLIMA</option>
-                                    <option value="FLORENCIA" data-dane="18001" data-depto="CAQUETA">FLORENCIA - CAQUETA</option>
-                                    <option value="FLORENCIA" data-dane="19290" data-depto="CAUCA">FLORENCIA - CAUCA</option>
-                                    <option value="FLORIDABLANCA" data-dane="68276" data-depto="SANTANDER">FLORIDABLANCA - SANTANDER</option>
-                                    <option value="FOMEQUE" data-dane="25279" data-depto="CUNDINAMARCA">FOMEQUE - CUNDINAMARCA</option>
-                                    <option value="FONSECA" data-dane="44279" data-depto="LA GUAJIRA">FONSECA - LA GUAJIRA</option>
-                                    <option value="FREDONIA" data-dane="05282" data-depto="ANTIOQUIA">FREDONIA - ANTIOQUIA</option>
-                                    <option value="FRESNO" data-dane="73283" data-depto="TOLIMA">FRESNO - TOLIMA</option>
-                                    <option value="FRONTINO" data-dane="05284" data-depto="ANTIOQUIA">FRONTINO - ANTIOQUIA</option>
-                                    <option value="FUNZA" data-dane="25286" data-depto="CUNDINAMARCA">FUNZA - CUNDINAMARCA</option>
-                                    <option value="FUSAGASUGA" data-dane="25290" data-depto="CUNDINAMARCA">FUSAGASUGA - CUNDINAMARCA</option>
-                                    <option value="GACHANCIPA" data-dane="25295" data-depto="CUNDINAMARCA">GACHANCIPA - CUNDINAMARCA</option>
-                                    <option value="GALAPA" data-dane="08296" data-depto="ATLANTICO">GALAPA - ATLANTICO</option>
-                                    <option value="GARZON" data-dane="41298" data-depto="HUILA">GARZON - HUILA</option>
-                                    <option value="GIGANTE" data-dane="41306" data-depto="HUILA">GIGANTE - HUILA</option>
-                                    <option value="GINEBRA" data-dane="76306" data-depto="VALLE DEL CAUCA">GINEBRA - VALLE DEL CAUCA</option>
-                                    <option value="GIRARDOT" data-dane="25307" data-depto="CUNDINAMARCA">GIRARDOT - CUNDINAMARCA</option>
-                                    <option value="GIRARDOTA" data-dane="05308" data-depto="ANTIOQUIA">GIRARDOTA - ANTIOQUIA</option>
-                                    <option value="GIRON" data-dane="68307" data-depto="SANTANDER">GIRON - SANTANDER</option>
-                                    <option value="GOMEZ PLATA" data-dane="05310" data-depto="ANTIOQUIA">GOMEZ PLATA - ANTIOQUIA</option>
-                                    <option value="GRANADA" data-dane="05313" data-depto="ANTIOQUIA">GRANADA - ANTIOQUIA</option>
-                                    <option value="GRANADA" data-dane="25312" data-depto="CUNDINAMARCA">GRANADA - CUNDINAMARCA</option>
-                                    <option value="GRANADA" data-dane="50313" data-depto="META">GRANADA - META</option>
-                                    <option value="GUADUAS" data-dane="25320" data-depto="CUNDINAMARCA">GUADUAS - CUNDINAMARCA</option>
-                                    <option value="GUAPI" data-dane="19318" data-depto="CAUCA">GUAPI - CAUCA</option>
-                                    <option value="GUARNE" data-dane="05318" data-depto="ANTIOQUIA">GUARNE - ANTIOQUIA</option>
-                                    <option value="GUATAPE" data-dane="05321" data-depto="ANTIOQUIA">GUATAPE - ANTIOQUIA</option>
-                                    <option value="HONDA" data-dane="73349" data-depto="TOLIMA">HONDA - TOLIMA</option>
-                                    <option value="IBAGUE" data-dane="73001" data-depto="TOLIMA">IBAGUE - TOLIMA</option>
-                                    <option value="INIRIDA" data-dane="94001" data-depto="GUAINIA">INIRIDA - GUAINIA</option>
-                                    <option value="IPIALES" data-dane="52356" data-depto="NARINO">IPIALES - NARINO</option>
-                                    <option value="ITAGUI" data-dane="05360" data-depto="ANTIOQUIA">ITAGUI - ANTIOQUIA</option>
-                                    <option value="ITUANGO" data-dane="05361" data-depto="ANTIOQUIA">ITUANGO - ANTIOQUIA</option>
-                                    <option value="JAMUNDI" data-dane="76364" data-depto="VALLE DEL CAUCA">JAMUNDI - VALLE DEL CAUCA</option>
-                                    <option value="JARDIN" data-dane="05364" data-depto="ANTIOQUIA">JARDIN - ANTIOQUIA</option>
-                                    <option value="LA CALERA" data-dane="25377" data-depto="CUNDINAMARCA">LA CALERA - CUNDINAMARCA</option>
-                                    <option value="LA CEJA" data-dane="05376" data-depto="ANTIOQUIA">LA CEJA - ANTIOQUIA</option>
-                                    <option value="LA DORADA" data-dane="17380" data-depto="CALDAS">LA DORADA - CALDAS</option>
-                                    <option value="LA ESTRELLA" data-dane="05380" data-depto="ANTIOQUIA">LA ESTRELLA - ANTIOQUIA</option>
-                                    <option value="LA MESA" data-dane="25386" data-depto="CUNDINAMARCA">LA MESA - CUNDINAMARCA</option>
-                                    <option value="LA PLATA" data-dane="41396" data-depto="HUILA">LA PLATA - HUILA</option>
-                                    <option value="LA TEBAIDA" data-dane="63401" data-depto="QUINDIO">LA TEBAIDA - QUINDIO</option>
-                                    <option value="LA UNION" data-dane="76400" data-depto="VALLE DEL CAUCA">LA UNION - VALLE DEL CAUCA</option>
-                                    <option value="LA VEGA" data-dane="25402" data-depto="CUNDINAMARCA">LA VEGA - CUNDINAMARCA</option>
-                                    <option value="LA VIRGINIA" data-dane="66400" data-depto="RISARALDA">LA VIRGINIA - RISARALDA</option>
-                                    <option value="LEBRIJA" data-dane="68406" data-depto="SANTANDER">LEBRIJA - SANTANDER</option>
-                                    <option value="LETICIA" data-dane="91001" data-depto="AMAZONAS">LETICIA - AMAZONAS</option>
-                                    <option value="LIBANO" data-dane="73411" data-depto="TOLIMA">LIBANO - TOLIMA</option>
-                                    <option value="LORICA" data-dane="23417" data-depto="CORDOBA">LORICA - CORDOBA</option>
-                                    <option value="LOS PATIOS" data-dane="54405" data-depto="NORTE DE SANTANDER">LOS PATIOS - NORTE DE SANTANDER</option>
-                                    <option value="LURUACO" data-dane="08421" data-depto="ATLANTICO">LURUACO - ATLANTICO</option>
-                                    <option value="MADRID" data-dane="25430" data-depto="CUNDINAMARCA">MADRID - CUNDINAMARCA</option>
-                                    <option value="MAGANGUE" data-dane="13430" data-depto="BOLIVAR">MAGANGUE - BOLIVAR</option>
-                                    <option value="MAICAO" data-dane="44430" data-depto="LA GUAJIRA">MAICAO - LA GUAJIRA</option>
-                                    <option value="MALAGA" data-dane="68432" data-depto="SANTANDER">MALAGA - SANTANDER</option>
-                                    <option value="MALAMBO" data-dane="08433" data-depto="ATLANTICO">MALAMBO - ATLANTICO</option>
-                                    <option value="MANIZALES" data-dane="17001" data-depto="CALDAS">MANIZALES - CALDAS</option>
-                                    <option value="MARINILLA" data-dane="05440" data-depto="ANTIOQUIA">MARINILLA - ANTIOQUIA</option>
-                                    <option value="MARIQUITA" data-dane="73443" data-depto="TOLIMA">MARIQUITA - TOLIMA</option>
-                                    <option value="MEDELLIN" data-dane="05001" data-depto="ANTIOQUIA">MEDELLIN - ANTIOQUIA</option>
-                                    <option value="MELGAR" data-dane="73449" data-depto="TOLIMA">MELGAR - TOLIMA</option>
-                                    <option value="MITU" data-dane="97001" data-depto="VAUPES">MITU - VAUPES</option>
-                                    <option value="MOCOA" data-dane="86001" data-depto="PUTUMAYO">MOCOA - PUTUMAYO</option>
-                                    <option value="MOMPOS" data-dane="13468" data-depto="BOLIVAR">MOMPOS - BOLIVAR</option>
-                                    <option value="MONTELIBANO" data-dane="23466" data-depto="CORDOBA">MONTELIBANO - CORDOBA</option>
-                                    <option value="MONTERIA" data-dane="23001" data-depto="CORDOBA">MONTERIA - CORDOBA</option>
-                                    <option value="MOSQUERA" data-dane="25473" data-depto="CUNDINAMARCA">MOSQUERA - CUNDINAMARCA</option>
-                                    <option value="NEIVA" data-dane="41001" data-depto="HUILA">NEIVA - HUILA</option>
-                                    <option value="NEMOCON" data-dane="25486" data-depto="CUNDINAMARCA">NEMOCON - CUNDINAMARCA</option>
-                                    <option value="OCAÑA" data-dane="54498" data-depto="NORTE DE SANTANDER">OCAÑA - NORTE DE SANTANDER</option>
-                                    <option value="PACHO" data-dane="25513" data-depto="CUNDINAMARCA">PACHO - CUNDINAMARCA</option>
-                                    <option value="PAIPA" data-dane="15516" data-depto="BOYACA">PAIPA - BOYACA</option>
-                                    <option value="PALMIRA" data-dane="76520" data-depto="VALLE DEL CAUCA">PALMIRA - VALLE DEL CAUCA</option>
-                                    <option value="PAMPLONA" data-dane="54518" data-depto="NORTE DE SANTANDER">PAMPLONA - NORTE DE SANTANDER</option>
-                                    <option value="PASTO" data-dane="52001" data-depto="NARINO">PASTO - NARINO</option>
-                                    <option value="PEREIRA" data-dane="66001" data-depto="RISARALDA">PEREIRA - RISARALDA</option>
-                                    <option value="PIEDECUESTA" data-dane="68547" data-depto="SANTANDER">PIEDECUESTA - SANTANDER</option>
-                                    <option value="PITALITO" data-dane="41551" data-depto="HUILA">PITALITO - HUILA</option>
-                                    <option value="PLANETA RICA" data-dane="23555" data-depto="CORDOBA">PLANETA RICA - CORDOBA</option>
-                                    <option value="PLATO" data-dane="47555" data-depto="MAGDALENA">PLATO - MAGDALENA</option>
-                                    <option value="POPAYAN" data-dane="19001" data-depto="CAUCA">POPAYAN - CAUCA</option>
-                                    <option value="PUERTO BERRIO" data-dane="05579" data-depto="ANTIOQUIA">PUERTO BERRIO - ANTIOQUIA</option>
-                                    <option value="PUERTO BOYACA" data-dane="15572" data-depto="BOYACA">PUERTO BOYACA - BOYACA</option>
-                                    <option value="PUERTO COLOMBIA" data-dane="08573" data-depto="ATLANTICO">PUERTO COLOMBIA - ATLANTICO</option>
-                                    <option value="PUERTO GAITAN" data-dane="50568" data-depto="META">PUERTO GAITAN - META</option>
-                                    <option value="PUERTO LOPEZ" data-dane="50573" data-depto="META">PUERTO LOPEZ - META</option>
-                                    <option value="PUERTO RICO" data-dane="50590" data-depto="META">PUERTO RICO - META</option>
-                                    <option value="PUERTO SALGAR" data-dane="25572" data-depto="CUNDINAMARCA">PUERTO SALGAR - CUNDINAMARCA</option>
-                                    <option value="PUERTO TEJADA" data-dane="19573" data-depto="CAUCA">PUERTO TEJADA - CAUCA</option>
-                                    <option value="QUIBDO" data-dane="27001" data-depto="CHOCO">QUIBDO - CHOCO</option>
-                                    <option value="QUIMBAYA" data-dane="63594" data-depto="QUINDIO">QUIMBAYA - QUINDIO</option>
-                                    <option value="RESTREPO" data-dane="50606" data-depto="META">RESTREPO - META</option>
-                                    <option value="RETIRO" data-dane="05607" data-depto="ANTIOQUIA">RETIRO - ANTIOQUIA</option>
-                                    <option value="RIOHACHA" data-dane="44001" data-depto="LA GUAJIRA">RIOHACHA - LA GUAJIRA</option>
-                                    <option value="RIONEGRO" data-dane="05615" data-depto="ANTIOQUIA">RIONEGRO - ANTIOQUIA</option>
-                                    <option value="RIOSUCIO" data-dane="17614" data-depto="CALDAS">RIOSUCIO - CALDAS</option>
-                                    <option value="SABANETA" data-dane="05631" data-depto="ANTIOQUIA">SABANETA - ANTIOQUIA</option>
-                                    <option value="SAHAGUN" data-dane="23660" data-depto="CORDOBA">SAHAGUN - CORDOBA</option>
-                                    <option value="SAN ANDRES" data-dane="88001" data-depto="ARCHIPIELAGO DE SAN ANDRES">SAN ANDRES - ARCHIPIELAGO DE SAN ANDRES</option>
-                                    <option value="SAN ANTONIO DE PRADO" data-dane="05001" data-depto="ANTIOQUIA">SAN ANTONIO DE PRADO - ANTIOQUIA</option>
-                                    <option value="SAN GIL" data-dane="68679" data-depto="SANTANDER">SAN GIL - SANTANDER</option>
-                                    <option value="SAN JOSE DEL GUAVIARE" data-dane="95001" data-depto="GUAVIARE">SAN JOSE DEL GUAVIARE - GUAVIARE</option>
-                                    <option value="SAN JUAN DEL CESAR" data-dane="44650" data-depto="LA GUAJIRA">SAN JUAN DEL CESAR - LA GUAJIRA</option>
-                                    <option value="SAN MARCOS" data-dane="70708" data-depto="SUCRE">SAN MARCOS - SUCRE</option>
-                                    <option value="SAN MARTIN" data-dane="50689" data-depto="META">SAN MARTIN - META</option>
-                                    <option value="SAN ONOFRE" data-dane="70713" data-depto="SUCRE">SAN ONOFRE - SUCRE</option>
-                                    <option value="SANTA MARTA" data-dane="47001" data-depto="MAGDALENA">SANTA MARTA - MAGDALENA</option>
-                                    <option value="SANTA ROSA DE CABAL" data-dane="66682" data-depto="RISARALDA">SANTA ROSA DE CABAL - RISARALDA</option>
-                                    <option value="SANTANDER DE QUILICHAO" data-dane="19698" data-depto="CAUCA">SANTANDER DE QUILICHAO - CAUCA</option>
-                                    <option value="SEGOVIA" data-dane="05736" data-depto="ANTIOQUIA">SEGOVIA - ANTIOQUIA</option>
-                                    <option value="SIBATE" data-dane="25740" data-depto="CUNDINAMARCA">SIBATE - CUNDINAMARCA</option>
-                                    <option value="SINCELEJO" data-dane="70001" data-depto="SUCRE">SINCELEJO - SUCRE</option>
-                                    <option value="SOACHA" data-dane="25754" data-depto="CUNDINAMARCA">SOACHA - CUNDINAMARCA</option>
-                                    <option value="SOCORRO" data-dane="68755" data-depto="SANTANDER">SOCORRO - SANTANDER</option>
-                                    <option value="SOGAMOSO" data-dane="15759" data-depto="BOYACA">SOGAMOSO - BOYACA</option>
-                                    <option value="SOLEDAD" data-dane="08758" data-depto="ATLANTICO">SOLEDAD - ATLANTICO</option>
-                                    <option value="SOPO" data-dane="25758" data-depto="CUNDINAMARCA">SOPO - CUNDINAMARCA</option>
-                                    <option value="SUBACHOQUE" data-dane="25769" data-depto="CUNDINAMARCA">SUBACHOQUE - CUNDINAMARCA</option>
-                                    <option value="TABIO" data-dane="25785" data-depto="CUNDINAMARCA">TABIO - CUNDINAMARCA</option>
-                                    <option value="TENJO" data-dane="25799" data-depto="CUNDINAMARCA">TENJO - CUNDINAMARCA</option>
-                                    <option value="TOCAIMA" data-dane="25815" data-depto="CUNDINAMARCA">TOCAIMA - CUNDINAMARCA</option>
-                                    <option value="TOCANCIPA" data-dane="25817" data-depto="CUNDINAMARCA">TOCANCIPA - CUNDINAMARCA</option>
-                                    <option value="TOLU" data-dane="70820" data-depto="SUCRE">TOLU - SUCRE</option>
-                                    <option value="TUNJA" data-dane="15001" data-depto="BOYACA">TUNJA - BOYACA</option>
-                                    <option value="TURBACO" data-dane="13836" data-depto="BOLIVAR">TURBACO - BOLIVAR</option>
-                                    <option value="TURBO" data-dane="05837" data-depto="ANTIOQUIA">TURBO - ANTIOQUIA</option>
-                                    <option value="UBATE" data-dane="25843" data-depto="CUNDINAMARCA">UBATE - CUNDINAMARCA</option>
-                                    <option value="URIBIA" data-dane="44847" data-depto="LA GUAJIRA">URIBIA - LA GUAJIRA</option>
-                                    <option value="VALLEDUPAR" data-dane="20001" data-depto="CESAR">VALLEDUPAR - CESAR</option>
-                                    <option value="VILLA DEL ROSARIO" data-dane="54874" data-depto="NORTE DE SANTANDER">VILLA DEL ROSARIO - NORTE DE SANTANDER</option>
-                                    <option value="VILLAMARIA" data-dane="17873" data-depto="CALDAS">VILLAMARIA - CALDAS</option>
-                                    <option value="VILLAPINZON" data-dane="25873" data-depto="CUNDINAMARCA">VILLAPINZON - CUNDINAMARCA</option>
-                                    <option value="VILLAVICENCIO" data-dane="50001" data-depto="META">VILLAVICENCIO - META</option>
-                                    <option value="VILLETA" data-dane="25875" data-depto="CUNDINAMARCA">VILLETA - CUNDINAMARCA</option>
-                                    <option value="YARUMAL" data-dane="05887" data-depto="ANTIOQUIA">YARUMAL - ANTIOQUIA</option>
-                                    <option value="YOPAL" data-dane="85001" data-depto="CASANARE">YOPAL - CASANARE</option>
-                                    <option value="YUMBO" data-dane="76892" data-depto="VALLE DEL CAUCA">YUMBO - VALLE DEL CAUCA</option>
-                                    <option value="ZIPACON" data-dane="25898" data-depto="CUNDINAMARCA">ZIPACON - CUNDINAMARCA</option>
-                                    <option value="ZIPAQUIRA" data-dane="25899" data-depto="CUNDINAMARCA">ZIPAQUIRA - CUNDINAMARCA</option>
-                                    <option value="ZONA BANANERA" data-dane="47980" data-depto="MAGDALENA">ZONA BANANERA - MAGDALENA</option>
-                                </select>
-                                <small class="text-muted">Seleccione su ciudad o elija "Otra" para ingresar manualmente</small>
+                                <input type="text" class="form-control" id="ciudad_input" 
+                                       placeholder="Escriba su ciudad..." 
+                                       autocomplete="off" required
+                                       oninput="filtrarCiudades(this.value)"
+                                       onblur="setTimeout(ocultarDropdown, 200)">
+                                <input type="hidden" id="ciudad_select" name="ciudad" required>
+                                <div id="ciudad_dropdown" style="
+                                    display:none; position:absolute; z-index:1000; width:100%;
+                                    background:white; border:1px solid #dee2e6; border-radius:8px;
+                                    max-height:220px; overflow-y:auto;
+                                    box-shadow:0 4px 16px rgba(0,0,0,0.12); top:100%; left:0;
+                                "></div>
+                                <small class="text-muted">Escriba para buscar su municipio</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label required-label">Departamento</label>
@@ -724,9 +371,6 @@
                             <div class="col-md-6">
                                 <label class="form-label required-label">Tipo de Servicios</label>
                                 <select class="form-select" name="habilidades_tipo" id="tipoHabilidades" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="13">Un servicio principal</option>
-                                    <option value="14">Varios servicios</option>
                                 </select>
                             </div>
                         </div>
@@ -739,24 +383,6 @@
                                     <div class="col-md-4">
                                         <label class="form-label required-label">Categoría del Servicio</label>
                                         <select class="form-control" name="servicio_categoria[]" required>
-                                            <option value="">Seleccionar categoría...</option>
-                                            <option value="Construcción">Construcción</option>
-                                            <option value="Electricidad">Electricidad</option>
-                                            <option value="Plomería">Plomería</option>
-                                            <option value="Carpintería">Carpintería</option>
-                                            <option value="Pintura">Pintura</option>
-                                            <option value="Jardinería">Jardinería</option>
-                                            <option value="Limpieza">Limpieza</option>
-                                            <option value="Mecánica">Mecánica</option>
-                                            <option value="Tecnología">Tecnología</option>
-                                            <option value="Educación">Educación</option>
-                                            <option value="Salud">Salud</option>
-                                            <option value="Belleza">Belleza</option>
-                                            <option value="Gastronomía">Gastronomía</option>
-                                            <option value="Transporte">Transporte</option>
-                                            <option value="Veterinaria">Veterinaria</option>
-                                            <option value="Mascotas">Mascotas (Paseo / Cuidado / Grooming)</option>
-                                            <option value="Otro">Otro</option>
                                         </select>
                                     </div>
                                     <div class="col-md-8">
@@ -797,8 +423,6 @@
                                     <div class="col-md-6">
                                         <label class="form-label">¿Trabaja con ayudante?</label>
                                         <select class="form-control ayudante-select" name="tiene_ayudante[]" onchange="toggleCostoAyudante(this)">
-                                            <option value="0">No</option>
-                                            <option value="1">Sí</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6 costo-ayudante-container" style="display: none;">
@@ -848,24 +472,11 @@
                             <div class="col-md-6">
                                 <label class="form-label required-label">Horario</label>
                                 <select class="form-select" name="disponibilidad" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="7">8am - 12pm</option>
-                                    <option value="8">2pm - 6pm</option>
-                                    <option value="11">8am - 6pm</option>
-                                    <option value="12">8am - 10pm</option>
-                                    <option value="9">6pm - 10pm</option>
-                                    <option value="10">24 horas</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label required-label">Días</label>
                                 <select class="form-select" name="disponibilidad_dias" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="11">Entre Semana (Lunes - Viernes)</option>
-                                    <option value="13">Solo Sábados</option>
-                                    <option value="14">Solo Domingos</option>
-                                    <option value="15">Fines de Semana (Sábado y Domingo)</option>
-                                    <option value="12">Toda la Semana</option>
                                 </select>
                             </div>
                         </div>
@@ -1004,7 +615,6 @@
                             <div id="bloque-principal" class="col-md-12" style="display:none">
                                 <label class="form-label required-label">¿Cuál es tu método principal de cobro?</label>
                                 <select class="form-select" name="medio_pago_principal" id="select-principal" onchange="togglePago(this.value)">
-                                    <option value="">Seleccionar...</option>
                                 </select>
                                 <small class="text-muted">Se pedirán los datos de este método para que los clientes puedan pagarte.</small>
                             </div>
@@ -1037,28 +647,11 @@
                                         <div class="col-md-6">
                                             <label class="form-label required-label">Banco</label>
                                             <select class="form-select" name="banco" id="banco_select">
-                                                <option value="">Seleccionar banco...</option>
-                                                <option value="Bancolombia">Bancolombia</option>
-                                                <option value="Davivienda">Davivienda</option>
-                                                <option value="Banco de Bogota">Banco de Bogotá</option>
-                                                <option value="BBVA">BBVA</option>
-                                                <option value="Banco Popular">Banco Popular</option>
-                                                <option value="Banco Agrario">Banco Agrario</option>
-                                                <option value="Banco de Occidente">Banco de Occidente</option>
-                                                <option value="Banco Caja Social">Banco Caja Social</option>
-                                                <option value="Banco Falabella">Banco Falabella</option>
-                                                <option value="Banco Pichincha">Banco Pichincha</option>
-                                                <option value="Banco Itau">Banco Itaú</option>
-                                                <option value="Scotiabank Colpatria">Scotiabank Colpatria</option>
-                                                <option value="Otro">Otro</option>
                                             </select>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label required-label">Tipo de cuenta</label>
                                             <select class="form-select" name="tipo_cuenta" id="tipo_cuenta">
-                                                <option value="">Seleccionar...</option>
-                                                <option value="ahorros">Cuenta de Ahorros</option>
-                                                <option value="corriente">Cuenta Corriente</option>
                                             </select>
                                         </div>
                                         <div class="col-md-6">
@@ -1172,14 +765,46 @@
     // ============================================
     // LLENAR DEPARTAMENTO Y DANE
     // ============================================
-    function fillDaneDepto(sel) {
-        var opt = sel.options[sel.selectedIndex];
-        var dane  = opt.getAttribute('data-dane')  || '';
-        var depto = opt.getAttribute('data-depto') || '';
-        var ciudad = opt.value || '';
+
+    // Datos de municipios Colombia (cargados desde JSON inline)
+    var MUNICIPIOS = [];
+    fetch('/static/municipios.json').then(r=>r.json()).then(d=>{ MUNICIPIOS = d; });
+
+    function filtrarCiudades(q) {
+        var dd = document.getElementById('ciudad_dropdown');
+        if (!q || q.length < 2) { dd.style.display='none'; return; }
+        var upper = q.toUpperCase();
+        var found = MUNICIPIOS.filter(function(m){ return m.c.indexOf(upper) !== -1; }).slice(0,12);
+        if (!found.length) { dd.style.display='none'; return; }
+        dd.innerHTML = found.map(function(m){
+            return '<div onclick="seleccionarCiudad(\''+m.c+'\',\''+m.d+'\',\''+m.p+'\')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:0.88rem;" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'white\'">'
+                   + '<strong>' + m.c + '</strong> <span style="color:#6b7280;font-size:0.8rem;">— ' + m.p + '</span></div>';
+        }).join('');
+        dd.style.display = 'block';
+    }
+
+    function seleccionarCiudad(ciudad, dane, depto) {
+        document.getElementById('ciudad_input').value = ciudad + ' — ' + depto;
+        document.getElementById('ciudad_select').value = ciudad;
         document.getElementById('codigo_dane').value = dane;
         document.getElementById('departamento_field').value = depto;
-        opt.text = ciudad;
+        ocultarDropdown();
+    }
+
+    function ocultarDropdown() {
+        var dd = document.getElementById('ciudad_dropdown');
+        if (dd) dd.style.display = 'none';
+        // Validar que se haya seleccionado algo del dropdown
+        var hidden = document.getElementById('ciudad_select');
+        var visible = document.getElementById('ciudad_input');
+        if (visible.value && !hidden.value) {
+            // Si escribió pero no seleccionó del dropdown, usar texto directo
+            hidden.value = visible.value.split(' — ')[0].toUpperCase();
+        }
+    }
+
+    function fillDaneDepto(sel) {
+        // Compatibilidad - no hace nada (el autocomplete maneja esto)
     }
 
     // ============================================
