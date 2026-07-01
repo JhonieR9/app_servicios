@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from routers import clientes, trabajadores, chat
+from config import DB_CONFIG, conectar_bd
 
 app = FastAPI(title="TalentHub API", version="2.0.0")
 
@@ -24,9 +25,7 @@ app.include_router(chat.router)
 @app.on_event("startup")
 def crear_tablas():
     try:
-        import mysql.connector
-        from config import DB_CONFIG
-        conn = mysql.connector.connect(**DB_CONFIG)
+        conn = conectar_bd()
         cursor = conn.cursor()
 
         cursor.execute("""
@@ -323,10 +322,9 @@ def iniciar_scheduler():
 
     def _enviar_recordatorio(id_horario, mensaje):
         try:
-            import mysql.connector, json
-            from config import DB_CONFIG
+            import json
 
-            conn = mysql.connector.connect(**DB_CONFIG)
+            conn = conectar_bd()
             cursor = conn.cursor(dictionary=True)
 
             # Buscar trabajadores con ese horario que NO tienen disponible=1
@@ -497,9 +495,7 @@ def asset_links():
 async def servir_upload(filename: str):
     """Sirve archivos desde BD cuando no existen en disco"""
     import os
-    import mysql.connector
     from fastapi.responses import Response, FileResponse
-    from config import DB_CONFIG
 
     # Intentar servir desde disco primero
     ruta_disco = os.path.join("static", "uploads", filename)
@@ -508,7 +504,7 @@ async def servir_upload(filename: str):
 
     # Si no existe en disco, buscar en BD por nombre de archivo
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
+        conn = conectar_bd()
         cursor = conn.cursor(dictionary=True)
 
         # Buscar en detalles_persona por nombre de archivo
@@ -563,8 +559,7 @@ def get_vapid_public():
 async def push_subscribe(request: Request):
     """Guarda o actualiza la suscripción push de un usuario."""
     from fastapi.responses import JSONResponse as _JSON
-    import mysql.connector, json
-    from config import DB_CONFIG
+    import json
     try:
         body = await request.json()
         tipo_usuario = body.get("tipo_usuario", "trabajador")
@@ -576,7 +571,7 @@ async def push_subscribe(request: Request):
         if not endpoint or not p256dh or not auth or not id_usuario:
             return _JSON({"error": "Datos incompletos"}, status_code=400)
 
-        conn   = mysql.connector.connect(**DB_CONFIG)
+        conn   = conectar_bd()
         cursor = conn.cursor()
         # Borrar suscripciones anteriores del mismo usuario en este dispositivo
         cursor.execute("""
@@ -597,14 +592,12 @@ async def push_subscribe(request: Request):
 async def push_unsubscribe(request: Request):
     """Elimina la suscripción push de un usuario."""
     from fastapi.responses import JSONResponse as _JSON
-    import mysql.connector
-    from config import DB_CONFIG
     try:
         body     = await request.json()
         endpoint = body.get("endpoint", "")
         if not endpoint:
             return _JSON({"error": "endpoint requerido"}, status_code=400)
-        conn   = mysql.connector.connect(**DB_CONFIG)
+        conn   = conectar_bd()
         cursor = conn.cursor()
         cursor.execute("DELETE FROM push_subscriptions WHERE endpoint = %s", (endpoint,))
         conn.commit()
@@ -624,15 +617,14 @@ def enviar_push_trabajadores(id_categoria: int, nombre_categoria: str, titulo_no
     import threading
     def _enviar():
         try:
-            import mysql.connector, json
-            from config import DB_CONFIG
+            import json
             try:
                 from pywebpush import webpush, WebPushException
             except ImportError:
                 print("[PUSH] pywebpush no instalado — omitiendo push")
                 return
 
-            conn   = mysql.connector.connect(**DB_CONFIG)
+            conn   = conectar_bd()
             cursor = conn.cursor(dictionary=True)
 
             # servicios_persona.categoria es texto, no id
@@ -674,7 +666,7 @@ def enviar_push_trabajadores(id_categoria: int, nombre_categoria: str, titulo_no
                     # Suscripción expirada o inválida — limpiar
                     if ex.response and ex.response.status_code in (404, 410):
                         try:
-                            conn2   = mysql.connector.connect(**DB_CONFIG)
+                            conn2   = conectar_bd()
                             cur2    = conn2.cursor()
                             cur2.execute("DELETE FROM push_subscriptions WHERE endpoint = %s", (sub["endpoint"],))
                             conn2.commit(); cur2.close(); conn2.close()

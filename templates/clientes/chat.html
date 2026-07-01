@@ -479,7 +479,7 @@
             badge.textContent = '👁 Modo Admin';
             document.querySelector('.header').appendChild(badge);
         }
-        // Polling cada 2 segundos
+        // Polling cada 4 segundos (balance entre fluidez y carga al server)
         pollingTimer = setInterval(() => {
             cargarMensajes(true);
             if (tipoUsuario !== 'sistema') {
@@ -488,7 +488,7 @@
                 fd.append('tipo_receptor', tipoUsuario);
                 fetch('/chat/leer', { method:'POST', body:fd }).catch(()=>{});
             }
-        }, 2000);
+        }, 4000);
     }
 
     // Limpiar polling al salir

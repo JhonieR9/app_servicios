@@ -9,11 +9,7 @@ import random
 from datetime import datetime, timedelta
 import mysql.connector
 from typing import Optional, Dict, Tuple
-from config import DB_CONFIG
-
-def conectar_bd():
-    """Establece conexión con la base de datos"""
-    return mysql.connector.connect(**DB_CONFIG)
+from config import DB_CONFIG, conectar_bd
 
 # ============================================
 # FUNCIONES DE HASH Y VERIFICACIÓN

@@ -5,14 +5,10 @@ import mysql.connector
 from datetime import datetime, timedelta
 import bcrypt
 import auth  # Módulo de autenticación
-from config import DB_CONFIG
+from config import DB_CONFIG, conectar_bd
 
 router = APIRouter(prefix="/trabajador", tags=["trabajadores"])
 templates = Jinja2Templates(directory="templates")
-
-# Conexión a BD
-def conectar_bd():
-    return mysql.connector.connect(**DB_CONFIG)
 
 # ============================================
 # TEMPLATES - Aquí conectarás tu formulario de hoja de vida

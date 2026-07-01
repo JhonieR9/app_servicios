@@ -1,15 +1,12 @@
 from fastapi import APIRouter, Form, Request, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
-from config import DB_CONFIG
+from config import DB_CONFIG, conectar_bd
 import mysql.connector
 from datetime import datetime
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 templates = Jinja2Templates(directory="templates")
-
-def conectar_bd():
-    return mysql.connector.connect(**DB_CONFIG)
 
 # ── Página de chat ────────────────────────────────────────────────
 @router.get("/", response_class=HTMLResponse)

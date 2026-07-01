@@ -5,20 +5,10 @@ import mysql.connector
 from datetime import datetime
 import math
 import auth  # Módulo de autenticación
-from config import DB_CONFIG
+from config import DB_CONFIG, conectar_bd
 
 router = APIRouter(prefix="/cliente", tags=["clientes"])
 templates = Jinja2Templates(directory="templates")
-
-# Conexión a BD
-def conectar_bd():
-    """
-    Establece conexión con la base de datos MySQL.
-    
-    Returns:
-        Connection: Objeto de conexión a MySQL
-    """
-    return mysql.connector.connect(**DB_CONFIG)
 
 def calcular_distancia(lat1, lon1, lat2, lon2):
     """
@@ -507,9 +497,9 @@ def crear_solicitud(
             import threading
             def _notificar(nombre_cli=nombre_cliente_notif):
                 try:
-                    from config import DB_CONFIG
-                    import mysql.connector, os
-                    conn2 = mysql.connector.connect(**DB_CONFIG)
+                    import os
+                    from config import conectar_bd as _conectar
+                    conn2 = _conectar()
                     cur2  = conn2.cursor(dictionary=True)
                     # Buscar trabajadores activos con esa categoría y correo registrado
                     cur2.execute("""
