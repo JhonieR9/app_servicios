@@ -380,21 +380,8 @@
                         </h4>
                         
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label required-label">Tipo de Servicios</label>
-                                <select class="form-select" name="habilidades_tipo" id="tipoHabilidades" required>
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Servicios del Hogar">🏠 Servicios del Hogar</option>
-                                    <option value="Servicios Técnicos">🔧 Servicios Técnicos</option>
-                                    <option value="Servicios Profesionales">💼 Servicios Profesionales</option>
-                                    <option value="Servicios de Salud">🏥 Servicios de Salud</option>
-                                    <option value="Servicios Educativos">📚 Servicios Educativos</option>
-                                    <option value="Servicios de Belleza">💇 Servicios de Belleza</option>
-                                    <option value="Transporte y Logística">🚚 Transporte y Logística</option>
-                                    <option value="Gastronomía y Eventos">🍳 Gastronomía y Eventos</option>
-                                    <option value="Tecnología">💻 Tecnología</option>
-                                    <option value="Otro">Otro</option>
-                                </select>
+                            <div class="col-md-12">
+                                <small class="text-muted">Puedes registrar hasta 10 servicios diferentes. Usa el botón "Agregar Otro Servicio" para añadir más.</small>
                             </div>
                         </div>
 
@@ -501,7 +488,7 @@
                             </div>
                         </div>
 
-                        <div id="btnAgregarContainer" style="display: none;">
+                        <div id="btnAgregarContainer" style="margin-top:12px;">
                             <button type="button" class="btn btn-outline-primary" onclick="agregarHabilidad()">
                                 <i class="bi bi-plus-circle"></i> Agregar Otro Servicio
                             </button>
@@ -984,13 +971,7 @@
     // TIPO DE HABILIDADES
     // ============================================
     document.addEventListener('DOMContentLoaded', function() {
-        var tipoHab = document.getElementById('tipoHabilidades');
-        if (tipoHab) {
-            tipoHab.addEventListener('change', function() {
-                var btnContainer = document.getElementById('btnAgregarContainer');
-                if (btnContainer) btnContainer.style.display = this.value == '14' ? 'block' : 'none';
-            });
-        }
+        // El botón agregar servicio siempre está visible — no requiere lógica adicional
     });
 
     // ============================================
@@ -1006,7 +987,6 @@
             {name:'genero',             label:'Género'},
             {name:'nombre_completo',    label:'Nombre Completo'},
             {name:'celular',            label:'Celular'},
-            {name:'habilidades_tipo',   label:'Tipo de Servicios'},
             {name:'disponibilidad',     label:'Horario'},
             {name:'disponibilidad_dias',label:'Días Disponibles'},
         ];
