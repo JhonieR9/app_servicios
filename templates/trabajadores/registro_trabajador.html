@@ -948,7 +948,7 @@
     // ============================================
     function toggleCostoAyudante(sel) {
         var container = sel.closest('.row').querySelector('.costo-ayudante-container');
-        if (container) container.style.display = sel.value == '1' ? 'block' : 'none';
+        if (container) container.style.display = (sel.value === 'si') ? 'block' : 'none';
     }
 
     // ============================================

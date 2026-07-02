@@ -691,9 +691,9 @@ def mostrar_registro_trabajador(request: Request):
 @router.post("/crear")
 async def crear_trabajador(
     request: Request,
-    tipo_documento: int = Form(...),
+    tipo_documento: str = Form(...),
     numero_documento: str = Form(...),
-    genero: int = Form(...),
+    genero: str = Form(...),
     nombre_completo: str = Form(...),
     fecha_nacimiento: str = Form(None),
     nacionalidad: str = Form(None),
@@ -702,9 +702,9 @@ async def crear_trabajador(
     codigo_dane: str = Form(...),
     celular: str = Form(...),
     correo: str = Form(None),
-    habilidades_tipo: int = Form(...),
-    disponibilidad: int = Form(...),
-    disponibilidad_dias: int = Form(...),
+    habilidades_tipo: str = Form(None),   # opcional ahora
+    disponibilidad: str = Form(...),
+    disponibilidad_dias: str = Form(...),
     foto_identificacion: UploadFile = File(...),
     foto_antecedentes: UploadFile = File(...),
     recomendaciones_archivo: UploadFile = File(...),
@@ -725,6 +725,37 @@ async def crear_trabajador(
     import os
     from datetime import datetime
     from werkzeug.utils import secure_filename
+
+    # ── Mapear valores de texto a IDs numéricos ──────────────────
+    TIPO_DOC_MAP = {
+        'CC': 1, 'CE': 2, 'PA': 3, 'TI': 4, 'NIT': 5, 'PPT': 6
+    }
+    GENERO_MAP = {
+        'Masculino': 1, 'Femenino': 2, 'No binario': 3, 'Prefiero no decir': 4
+    }
+    HORARIO_MAP = {
+        '7': 7, '8': 8, '9': 9, '10': 10, '11': 11, '12': 12,
+        'Mañanas (8am - 12pm)': 7,
+        'Tardes (2pm - 6pm)': 8,
+        'Noches (6pm - 10pm)': 9,
+        'Disponible 24 horas': 10,
+        'Jornada completa (8am - 6pm)': 11,
+        'Horario extendido (8am - 10pm)': 12,
+    }
+    DIAS_MAP = {
+        'Lunes a Viernes': 1,
+        'Lunes a Sábado': 2,
+        'Lunes a Domingo': 3,
+        'Fines de semana': 4,
+        'Días específicos': 5,
+        '1': 1, '2': 2, '3': 3, '4': 4, '5': 5,
+    }
+
+    tipo_doc_id    = TIPO_DOC_MAP.get(str(tipo_documento), None) or (int(tipo_documento) if str(tipo_documento).isdigit() else 1)
+    genero_id      = GENERO_MAP.get(str(genero), None) or (int(genero) if str(genero).isdigit() else 1)
+    horario_id     = HORARIO_MAP.get(str(disponibilidad), None) or (int(disponibilidad) if str(disponibilidad).isdigit() else 7)
+    dias_id        = DIAS_MAP.get(str(disponibilidad_dias), None) or (int(disponibilidad_dias) if str(disponibilidad_dias).isdigit() else 1)
+    hab_tipo_id    = int(habilidades_tipo) if habilidades_tipo and str(habilidades_tipo).isdigit() else 1
     
     UPLOAD_FOLDER = "static/uploads"
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -785,7 +816,7 @@ async def crear_trabajador(
             INSERT INTO personas 
             (id_tipo_documento, numero_documento, id_genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, registrado_por, departamento)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (tipo_documento, numero_documento, genero, nombre_completo, ciudad.title() if ciudad else '', codigo_dane, fecha_nacimiento, nacionalidad, nombre_completo, departamento.title() if departamento else ''))        
+        """, (tipo_doc_id, numero_documento, genero_id, nombre_completo, ciudad.title() if ciudad else '', codigo_dane, fecha_nacimiento, nacionalidad, nombre_completo, departamento.title() if departamento else ''))        
         id_persona = cursor.lastrowid
         
         # 2. Insertar teléfono
@@ -818,7 +849,9 @@ async def crear_trabajador(
                 categoria = servicios_categoria[i] if i < len(servicios_categoria) else 'Otro'
                 exp_valor = float(servicios_exp[i]) if servicios_exp[i] else 0
                 valor_hora = float(servicios_valor[i]) if servicios_valor[i] else 0
-                tiene_ayudante = int(tiene_ayudante_list[i]) if i < len(tiene_ayudante_list) else 0
+                # ayudante: acepta "si"/"no" o "1"/"0"
+                raw_ayudante = tiene_ayudante_list[i] if i < len(tiene_ayudante_list) else 'no'
+                tiene_ayudante = 1 if str(raw_ayudante).lower() in ('si', 'sí', '1', 'yes') else 0
                 costo_ayudante = float(costo_ayudante_list[i]) if i < len(costo_ayudante_list) and costo_ayudante_list[i] and tiene_ayudante == 1 else None
                 
                 cursor.execute("""
@@ -843,7 +876,7 @@ async def crear_trabajador(
         cursor.execute("""
             INSERT INTO disponibilidad (id_persona, id_horario, id_dias)
             VALUES (%s, %s, %s)
-        """, (id_persona, disponibilidad, disponibilidad_dias))
+        """, (id_persona, horario_id, dias_id))
         
         # 7. Insertar detalles
         acepta_terminos_val = 1 if acepta_terminos == 'on' else 0
@@ -859,7 +892,7 @@ async def crear_trabajador(
              medio_pago, banco, tipo_cuenta, numero_cuenta, titular_cuenta, medio_pago_principal,
              arl, eps)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (id_persona, habilidades_tipo, resumen_servicios, antecedentes_filename, 
+        """, (id_persona, hab_tipo_id, resumen_servicios, antecedentes_filename, 
               foto_filename, acepta_terminos_val, permisos_ubicacion_val, 
               recomendaciones or '', recomend_filename,
               foto_bytes, foto_tipo,
