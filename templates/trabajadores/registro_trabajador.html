@@ -254,6 +254,13 @@
                             <div class="col-md-4">
                                 <label class="form-label required-label">Tipo de Documento</label>
                                 <select class="form-select" name="tipo_documento" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="CC">Cédula de Ciudadanía</option>
+                                    <option value="CE">Cédula de Extranjería</option>
+                                    <option value="PA">Pasaporte</option>
+                                    <option value="TI">Tarjeta de Identidad</option>
+                                    <option value="NIT">NIT</option>
+                                    <option value="PPT">Permiso de Protección Temporal</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -270,6 +277,11 @@
                             <div class="col-md-4">
                                 <label class="form-label required-label">Género</label>
                                 <select class="form-select" name="genero" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Femenino">Femenino</option>
+                                    <option value="No binario">No binario</option>
+                                    <option value="Prefiero no decir">Prefiero no decir</option>
                                 </select>
                             </div>
                             <div class="col-md-12">
@@ -371,6 +383,17 @@
                             <div class="col-md-6">
                                 <label class="form-label required-label">Tipo de Servicios</label>
                                 <select class="form-select" name="habilidades_tipo" id="tipoHabilidades" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Servicios del Hogar">🏠 Servicios del Hogar</option>
+                                    <option value="Servicios Técnicos">🔧 Servicios Técnicos</option>
+                                    <option value="Servicios Profesionales">💼 Servicios Profesionales</option>
+                                    <option value="Servicios de Salud">🏥 Servicios de Salud</option>
+                                    <option value="Servicios Educativos">📚 Servicios Educativos</option>
+                                    <option value="Servicios de Belleza">💇 Servicios de Belleza</option>
+                                    <option value="Transporte y Logística">🚚 Transporte y Logística</option>
+                                    <option value="Gastronomía y Eventos">🍳 Gastronomía y Eventos</option>
+                                    <option value="Tecnología">💻 Tecnología</option>
+                                    <option value="Otro">Otro</option>
                                 </select>
                             </div>
                         </div>
@@ -383,6 +406,38 @@
                                     <div class="col-md-4">
                                         <label class="form-label required-label">Categoría del Servicio</label>
                                         <select class="form-control" name="servicio_categoria[]" required>
+                                            <option value="">Seleccionar categoría...</option>
+                                            <option value="Plomería">🔧 Plomería</option>
+                                            <option value="Electricidad">⚡ Electricidad</option>
+                                            <option value="Limpieza">🧹 Limpieza</option>
+                                            <option value="Carpintería">🪚 Carpintería</option>
+                                            <option value="Pintura">🎨 Pintura</option>
+                                            <option value="Jardinería">🌱 Jardinería</option>
+                                            <option value="Cerrajería">🔑 Cerrajería</option>
+                                            <option value="Mudanza">📦 Mudanza</option>
+                                            <option value="Construcción">🏗️ Construcción</option>
+                                            <option value="Vidriería">🪟 Vidriería</option>
+                                            <option value="Impermeabilización">💧 Impermeabilización</option>
+                                            <option value="Lavandería">👕 Lavandería</option>
+                                            <option value="Control de plagas">🐛 Control de plagas</option>
+                                            <option value="Tecnología">💻 Tecnología</option>
+                                            <option value="Electrodomésticos">🔌 Electrodomésticos</option>
+                                            <option value="CCTV y Alarmas">📷 CCTV y Alarmas</option>
+                                            <option value="Transporte">🚚 Transporte</option>
+                                            <option value="Mecánica">🚗 Mecánica</option>
+                                            <option value="Salud">🏥 Salud</option>
+                                            <option value="Belleza">💇 Belleza</option>
+                                            <option value="Masajes">💆 Masajes</option>
+                                            <option value="Veterinaria">🐾 Veterinaria</option>
+                                            <option value="Mascotas">🐶 Mascotas</option>
+                                            <option value="Educación">📚 Educación</option>
+                                            <option value="Idiomas">🌍 Idiomas</option>
+                                            <option value="Gastronomía">🍳 Gastronomía</option>
+                                            <option value="Eventos">🎉 Eventos</option>
+                                            <option value="Fotografía">📸 Fotografía</option>
+                                            <option value="Contabilidad">📊 Contabilidad</option>
+                                            <option value="Diseño">🎨 Diseño</option>
+                                            <option value="Mensajería">📬 Mensajería</option>
                                         </select>
                                     </div>
                                     <div class="col-md-8">
@@ -423,6 +478,8 @@
                                     <div class="col-md-6">
                                         <label class="form-label">¿Trabaja con ayudante?</label>
                                         <select class="form-control ayudante-select" name="tiene_ayudante[]" onchange="toggleCostoAyudante(this)">
+                                            <option value="no">No trabajo con ayudante</option>
+                                            <option value="si">Sí, trabajo con ayudante</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6 costo-ayudante-container" style="display: none;">
@@ -472,11 +529,24 @@
                             <div class="col-md-6">
                                 <label class="form-label required-label">Horario</label>
                                 <select class="form-select" name="disponibilidad" required>
+                                    <option value="">Seleccionar horario...</option>
+                                    <option value="7">Mañanas (8am - 12pm)</option>
+                                    <option value="8">Tardes (2pm - 6pm)</option>
+                                    <option value="9">Noches (6pm - 10pm)</option>
+                                    <option value="11">Jornada completa (8am - 6pm)</option>
+                                    <option value="12">Horario extendido (8am - 10pm)</option>
+                                    <option value="10">Disponible 24 horas</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label required-label">Días</label>
                                 <select class="form-select" name="disponibilidad_dias" required>
+                                    <option value="">Seleccionar días...</option>
+                                    <option value="Lunes a Viernes">Lunes a Viernes</option>
+                                    <option value="Lunes a Sábado">Lunes a Sábado</option>
+                                    <option value="Lunes a Domingo">Lunes a Domingo</option>
+                                    <option value="Fines de semana">Fines de semana (Sáb y Dom)</option>
+                                    <option value="Días específicos">Días específicos</option>
                                 </select>
                             </div>
                         </div>
