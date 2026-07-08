@@ -1578,7 +1578,7 @@ def listar_favoritos(request: Request, id_cliente: int = None):
         for fav in favoritos:
             for k, v in fav.items():
                 if v is None:
-                    fav[k] = ''
+                    fav[k] = '' if k not in ('calificacion', 'total_resenas') else 0
                 elif hasattr(v, 'isoformat'):
                     fav[k] = (v - timedelta(hours=5)).strftime('%d/%m/%Y')
                 elif hasattr(v, '__float__'):
