@@ -262,6 +262,19 @@ def crear_tablas():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """)
 
+        # Tabla favoritos del cliente
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `favoritos_cliente` (
+              `id`            int NOT NULL AUTO_INCREMENT,
+              `id_cliente`    int NOT NULL,
+              `id_trabajador` int NOT NULL,
+              `fecha_guardado` datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uk_fav` (`id_cliente`, `id_trabajador`),
+              KEY `idx_fav_cliente` (`id_cliente`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
         conn.commit()
         cursor.close()
         conn.close()

@@ -1481,3 +1481,130 @@ def debug_solicitudes_recientes():
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
+
+# ============================================
+# FAVORITOS — guardar/quitar/listar trabajadores favoritos
+# ============================================
+
+@router.post("/favorito/toggle")
+async def toggle_favorito(
+    request: Request,
+    id_trabajador: int = Form(...),
+    id_cliente: int = Form(None)
+):
+    """Agrega o quita un trabajador de favoritos del cliente"""
+    # Obtener id_cliente desde sesión si no viene en el form
+    if not id_cliente:
+        token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+        if token:
+            sesion = auth.verificar_sesion(token)
+            if sesion and sesion['tipo_usuario'] == 'cliente':
+                id_cliente = sesion['id_usuario']
+    if not id_cliente:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        # Verificar si ya es favorito
+        cursor.execute("""
+            SELECT id FROM favoritos_cliente
+            WHERE id_cliente = %s AND id_trabajador = %s
+        """, (id_cliente, id_trabajador))
+        existente = cursor.fetchone()
+
+        if existente:
+            # Quitar de favoritos
+            cursor.execute("""
+                DELETE FROM favoritos_cliente
+                WHERE id_cliente = %s AND id_trabajador = %s
+            """, (id_cliente, id_trabajador))
+            conexion.commit()
+            return JSONResponse({"ok": True, "favorito": False, "mensaje": "Eliminado de favoritos"})
+        else:
+            # Agregar a favoritos
+            cursor.execute("""
+                INSERT INTO favoritos_cliente (id_cliente, id_trabajador)
+                VALUES (%s, %s)
+            """, (id_cliente, id_trabajador))
+            conexion.commit()
+            return JSONResponse({"ok": True, "favorito": True, "mensaje": "Guardado en favoritos ❤️"})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.get("/favoritos")
+def listar_favoritos(request: Request, id_cliente: int = None):
+    """Lista los trabajadores favoritos del cliente con datos completos"""
+    if not id_cliente:
+        token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+        if token:
+            sesion = auth.verificar_sesion(token)
+            if sesion and sesion['tipo_usuario'] == 'cliente':
+                id_cliente = sesion['id_usuario']
+    if not id_cliente:
+        return JSONResponse({"favoritos": []})
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT
+                p.id_persona,
+                p.nombre_completo,
+                p.ciudad,
+                tp.telefono,
+                f.fecha_guardado,
+                ROUND(AVG(cal.puntuacion), 1) AS calificacion,
+                COUNT(cal.id_calificacion)    AS total_resenas,
+                GROUP_CONCAT(DISTINCT sp.categoria ORDER BY sp.categoria SEPARATOR ', ') AS categorias
+            FROM favoritos_cliente f
+            INNER JOIN personas p    ON f.id_trabajador = p.id_persona
+            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+            LEFT JOIN calificaciones cal  ON p.id_persona = cal.id_trabajador
+            LEFT JOIN servicios_persona sp ON p.id_persona = sp.id_persona
+            WHERE f.id_cliente = %s
+              AND (p.estado = 'activo' OR p.estado IS NULL)
+            GROUP BY p.id_persona, p.nombre_completo, p.ciudad, tp.telefono, f.fecha_guardado
+            ORDER BY f.fecha_guardado DESC
+        """, (id_cliente,))
+        favoritos = cursor.fetchall()
+
+        from datetime import timedelta
+        for fav in favoritos:
+            for k, v in fav.items():
+                if v is None:
+                    fav[k] = ''
+                elif hasattr(v, 'isoformat'):
+                    fav[k] = (v - timedelta(hours=5)).strftime('%d/%m/%Y')
+                elif hasattr(v, '__float__'):
+                    fav[k] = float(v)
+
+        return JSONResponse({"favoritos": favoritos})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "favoritos": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.get("/favorito/check")
+def check_favorito(id_cliente: int, id_trabajador: int):
+    """Verifica si un trabajador es favorito de un cliente"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT id FROM favoritos_cliente
+            WHERE id_cliente = %s AND id_trabajador = %s
+        """, (id_cliente, id_trabajador))
+        return JSONResponse({"favorito": cursor.fetchone() is not None})
+    except Exception as e:
+        return JSONResponse({"favorito": False})
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
