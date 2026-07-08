@@ -279,6 +279,7 @@ def listar_mis_solicitudes_cliente(request: Request, id_cliente: int = None):
                    s.ciudad, s.departamento, s.direccion_servicio,
                    s.fecha_solicitud, s.fecha_aceptacion, s.fecha_finalizacion,
                    s.id_trabajador,
+                   s.cotizacion_horas, s.cotizacion_precio, s.cotizacion_nota,
                    cat.nombre_categoria,
                    p.nombre_completo  AS nombre_trabajador,
                    tp.telefono        AS telefono_trabajador,
@@ -1454,6 +1455,73 @@ def buscar_cliente(nombre: str = "", correo: str = ""):
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
+
+@router.post("/cotizacion/responder")
+def responder_cotizacion(
+    id_solicitud: int = Form(...),
+    respuesta:    str = Form(...)   # 'aceptar' o 'rechazar'
+):
+    """El cliente acepta o rechaza una cotización enviada por el trabajador."""
+    if respuesta not in ('aceptar', 'rechazar'):
+        return JSONResponse({"error": "Respuesta inválida"}, status_code=400)
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT id_solicitud, id_trabajador, cotizacion_precio, estado
+            FROM solicitudes_servicio
+            WHERE id_solicitud = %s AND estado = 'cotizacion_enviada'
+        """, (id_solicitud,))
+        sol = cursor.fetchone()
+
+        if not sol:
+            return JSONResponse({"error": "No hay cotización pendiente para esta solicitud"}, status_code=400)
+
+        if respuesta == 'aceptar':
+            import random
+            codigo_conf = ''.join([str(random.randint(0, 9)) for _ in range(4)])
+            cursor.execute("""
+                UPDATE solicitudes_servicio
+                SET estado = 'aceptada',
+                    precio_final = cotizacion_precio,
+                    fecha_aceptacion = NOW(),
+                    codigo_confirmacion = %s
+                WHERE id_solicitud = %s
+            """, (codigo_conf, id_solicitud))
+            conexion.commit()
+            return JSONResponse({
+                "ok": True,
+                "mensaje": "✅ ¡Cotización aceptada! El profesional fue notificado.",
+                "nuevo_estado": "aceptada"
+            })
+        else:
+            # Rechazar: liberar la solicitud para que otros trabajadores puedan tomarla
+            cursor.execute("""
+                UPDATE solicitudes_servicio
+                SET estado = 'pendiente',
+                    id_trabajador = NULL,
+                    cotizacion_horas = NULL,
+                    cotizacion_precio = NULL,
+                    cotizacion_nota = NULL,
+                    cotizacion_fecha = NULL
+                WHERE id_solicitud = %s
+            """, (id_solicitud,))
+            conexion.commit()
+            return JSONResponse({
+                "ok": True,
+                "mensaje": "Cotización rechazada. Tu solicitud sigue activa para otros profesionales.",
+                "nuevo_estado": "pendiente"
+            })
+
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 
 @router.get("/debug/solicitudes-recientes")
 def debug_solicitudes_recientes():

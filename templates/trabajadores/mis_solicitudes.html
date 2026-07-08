@@ -111,6 +111,7 @@
 
         .badge-pendiente { background: #fef3c7; color: #92400e; }
         .badge-aceptada { background: #d1fae5; color: #065f46; }
+        .badge-cotizacion_enviada { background: #fef3c7; color: #92400e; }
         .badge-en_proceso { background: #dbeafe; color: #1e40af; }
         .badge-completada { background: #ede9fe; color: #5b21b6; }
         .badge-cancelada { background: #fee2e2; color: #991b1b; }
@@ -327,10 +328,10 @@
 
     function renderizarSolicitudes(estado) {
         const container = document.getElementById('solicitudesContainer');
-        // "aceptada" muestra también en_proceso
+        // "aceptada" muestra también en_proceso y cotizacion_enviada
         const filtradas = todasLasSolicitudes.filter(s =>
             estado === 'aceptada'
-                ? (s.estado === 'aceptada' || s.estado === 'en_proceso')
+                ? (s.estado === 'aceptada' || s.estado === 'en_proceso' || s.estado === 'cotizacion_enviada')
                 : s.estado === estado
         );
 
@@ -364,8 +365,26 @@
                 <button class="btn btn-aceptar" onclick="cambiarEstado(${s.id_solicitud}, 'aceptada')">
                     ✅ Aceptar
                 </button>
+                <button class="btn" onclick="abrirModalCotizacion(${s.id_solicitud})"
+                    style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;flex:1;padding:10px 20px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;">
+                    💰 Cotizar
+                </button>
                 <button class="btn btn-rechazar" onclick="cambiarEstado(${s.id_solicitud}, 'cancelada')">
                     ❌ Rechazar
+                </button>
+            `,
+            'cotizacion_enviada': `
+                <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:0.85rem;">
+                    ⏳ <strong>Cotización enviada.</strong> Esperando respuesta del cliente.<br>
+                    <span style="color:#92400e;">
+                        ${s.cotizacion_horas || '?'}h × tarifa = 
+                        <strong>$${s.cotizacion_precio ? Number(s.cotizacion_precio).toLocaleString('es-CO') : '?'}</strong>
+                    </span>
+                    ${s.cotizacion_nota ? `<br><em style="color:#6b7280">"${s.cotizacion_nota}"</em>` : ''}
+                </div>
+                <button class="btn btn-rechazar" onclick="cambiarEstado(${s.id_solicitud}, 'cancelada')"
+                    style="flex:none;min-width:auto;padding:8px 14px;">
+                    ✕ Cancelar cotización
                 </button>
             `,
             'aceptada': `
@@ -497,6 +516,101 @@
     function contactarCliente(telefono, nombre) {
         const msg = encodeURIComponent(`Hola ${nombre}, soy el trabajador de TalentHub. Acabo de aceptar tu solicitud de servicio. ¿Cuándo podemos coordinar?`);
         window.open(`https://wa.me/57${telefono}?text=${msg}`, '_blank');
+    }
+
+    // ── MODAL COTIZACIÓN ─────────────────────────────────────────
+    function abrirModalCotizacion(idSolicitud) {
+        const viejo = document.getElementById('modalCotizacion');
+        if (viejo) viejo.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'modalCotizacion';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;';
+        modal.innerHTML = `
+            <div style="background:white;border-radius:20px;padding:28px 24px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <h3 style="margin:0 0 6px;font-size:1.1rem;color:#0f172a;">💰 Enviar cotización</h3>
+                <p style="font-size:0.82rem;color:#64748b;margin:0 0 20px;">Indica cuántas horas estimas. El precio se calcula con tu tarifa registrada.</p>
+
+                <label style="font-size:0.78rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">⏱ Horas estimadas de trabajo</label>
+                <input id="cotHoras" type="number" min="0.5" max="24" step="0.5" value="2"
+                    style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:1rem;font-weight:700;outline:none;margin-bottom:4px;"
+                    oninput="calcularPrecio()"
+                    onfocus="this.style.borderColor='#f59e0b'"
+                    onblur="this.style.borderColor='#e2e8f0'">
+
+                <div id="cotPrecioPreview" style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin:10px 0 14px;font-size:0.9rem;color:#92400e;font-weight:700;text-align:center;">
+                    Calculando...
+                </div>
+
+                <label style="font-size:0.78rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">📝 Nota para el cliente (opcional)</label>
+                <textarea id="cotNota" rows="2" placeholder="Ej: Los materiales corren por cuenta del cliente..."
+                    style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.85rem;outline:none;resize:none;margin-bottom:16px;font-family:inherit;"
+                    onfocus="this.style.borderColor='#f59e0b'"
+                    onblur="this.style.borderColor='#e2e8f0'"></textarea>
+
+                <div style="display:flex;gap:10px;">
+                    <button onclick="enviarCotizacion(${idSolicitud})"
+                        style="flex:1;padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95rem;cursor:pointer;">
+                        💰 Enviar cotización
+                    </button>
+                    <button onclick="document.getElementById('modalCotizacion').remove()"
+                        style="padding:13px 18px;background:#f1f5f9;border:none;border-radius:12px;font-weight:600;color:#64748b;cursor:pointer;">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+        // Cargar tarifa del trabajador para preview
+        fetch('/trabajador/perfil_completo?id=' + idTrabajador)
+            .then(r => r.json())
+            .then(data => {
+                const tarifa = data.servicios && data.servicios[0] ? data.servicios[0].valor_hora : 50000;
+                modal._tarifa = parseFloat(tarifa) || 50000;
+                calcularPrecio();
+            }).catch(() => { modal._tarifa = 50000; calcularPrecio(); });
+    }
+
+    function calcularPrecio() {
+        const modal = document.getElementById('modalCotizacion');
+        if (!modal) return;
+        const horas = parseFloat(document.getElementById('cotHoras').value) || 0;
+        const tarifa = modal._tarifa || 50000;
+        const total = horas * tarifa;
+        document.getElementById('cotPrecioPreview').innerHTML =
+            `${horas}h × $${tarifa.toLocaleString('es-CO')}/h = <span style="font-size:1.1rem">$${total.toLocaleString('es-CO')}</span> (solo mano de obra)`;
+    }
+
+    async function enviarCotizacion(idSolicitud) {
+        const horas = parseFloat(document.getElementById('cotHoras').value);
+        const nota  = document.getElementById('cotNota').value.trim();
+
+        if (!horas || horas <= 0) {
+            mostrarToast('❌ Ingresa las horas estimadas', true);
+            return;
+        }
+
+        const fd = new FormData();
+        fd.append('id_solicitud',   idSolicitud);
+        fd.append('id_trabajador',  idTrabajador);
+        fd.append('horas_estimadas', horas);
+        if (nota) fd.append('nota', nota);
+
+        try {
+            const res  = await fetch('/trabajador/solicitud/cotizar', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                document.getElementById('modalCotizacion').remove();
+                mostrarToast('💰 ' + data.mensaje);
+                cargarSolicitudes();
+            } else {
+                mostrarToast('❌ ' + (data.error || 'Error al enviar'), true);
+            }
+        } catch(e) {
+            mostrarToast('❌ Error de conexión', true);
+        }
     }
 
     // ── COMPLETAR CON CÓDIGO ─────────────────────────────────────

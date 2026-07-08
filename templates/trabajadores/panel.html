@@ -506,7 +506,7 @@
             const res  = await fetch('/trabajador/mis_solicitudes_api?id_trabajador=' + idTrabajador);
             const data = await res.json();
             const sols = (data.solicitudes || []).filter(s =>
-                ['pendiente','aceptada','en_proceso'].includes(s.estado)
+                ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado)
             ).slice(0, 5);
 
             // Detectar nuevas
@@ -539,7 +539,7 @@
 
             container.innerHTML = sols.map(s => {
                 const badgeClass = 'badge-' + s.estado;
-                const estadoLabel = {pendiente:'Nueva solicitud', aceptada:'Aceptada', en_proceso:'En proceso'}[s.estado] || s.estado;
+                const estadoLabel = {pendiente:'Nueva solicitud', aceptada:'Aceptada', en_proceso:'En proceso', cotizacion_enviada:'Cotización enviada'}[s.estado] || s.estado;
                 const esNueva = s.estado === 'pendiente';
 
                 let acciones = '';

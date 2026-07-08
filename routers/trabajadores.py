@@ -80,6 +80,7 @@ def listar_mis_solicitudes(id_trabajador: int = None):
                     SELECT s.id_solicitud, s.id_cliente, s.titulo, s.descripcion, s.estado,
                            s.ciudad, s.departamento, s.direccion_servicio, s.fecha_solicitud,
                            s.metodo_pago,
+                           s.cotizacion_horas, s.cotizacion_precio, s.cotizacion_nota,
                            COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
                            c.nombre_completo as nombre_cliente,
                            tc.telefono as telefono_cliente
@@ -97,6 +98,7 @@ def listar_mis_solicitudes(id_trabajador: int = None):
                     SELECT s.id_solicitud, s.id_cliente, s.titulo, s.descripcion, s.estado,
                            s.ciudad, s.departamento, s.direccion_servicio, s.fecha_solicitud,
                            s.metodo_pago,
+                           s.cotizacion_horas, s.cotizacion_precio, s.cotizacion_nota,
                            COALESCE(cat.nombre_categoria, s.titulo) as nombre_categoria,
                            c.nombre_completo as nombre_cliente,
                            tc.telefono as telefono_cliente
@@ -133,6 +135,116 @@ def listar_mis_solicitudes(id_trabajador: int = None):
         return JSONResponse({"solicitudes": solicitudes})
     except Exception as e:
         return JSONResponse({"error": str(e), "solicitudes": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/solicitud/cotizar")
+def enviar_cotizacion(
+    id_solicitud:  int   = Form(...),
+    id_trabajador: int   = Form(...),
+    horas_estimadas: float = Form(...),
+    nota:          str   = Form(None)
+):
+    """El trabajador envía una cotización con horas estimadas. El precio se calcula automáticamente."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+
+        # Verificar que la solicitud sigue pendiente
+        cursor.execute("""
+            SELECT ss.id_solicitud, ss.estado, ss.id_cliente,
+                   sp.valor_hora
+            FROM solicitudes_servicio ss
+            LEFT JOIN servicios_persona sp ON sp.id_persona = %s
+            WHERE ss.id_solicitud = %s AND ss.estado = 'pendiente'
+            LIMIT 1
+        """, (id_trabajador, id_solicitud))
+        sol = cursor.fetchone()
+
+        if not sol:
+            return JSONResponse({"error": "La solicitud ya no está disponible"}, status_code=400)
+
+        valor_hora = float(sol['valor_hora'] or 0)
+        if valor_hora <= 0:
+            # Si no tiene tarifa registrada, usar un valor por defecto
+            cursor.execute("""
+                SELECT valor_hora FROM servicios_persona
+                WHERE id_persona = %s ORDER BY valor_hora DESC LIMIT 1
+            """, (id_trabajador,))
+            row = cursor.fetchone()
+            valor_hora = float(row['valor_hora']) if row and row['valor_hora'] else 50000
+
+        precio_cotizado = round(horas_estimadas * valor_hora, 2)
+
+        # Guardar cotización y asignar trabajador (estado: cotizacion_enviada)
+        cursor.execute("""
+            UPDATE solicitudes_servicio
+            SET estado = 'cotizacion_enviada',
+                id_trabajador = %s,
+                cotizacion_horas = %s,
+                cotizacion_precio = %s,
+                cotizacion_nota = %s,
+                cotizacion_fecha = NOW()
+            WHERE id_solicitud = %s AND estado = 'pendiente'
+        """, (id_trabajador, horas_estimadas, precio_cotizado, nota or '', id_solicitud))
+
+        if cursor.rowcount == 0:
+            conexion.rollback()
+            return JSONResponse({"error": "La solicitud ya fue tomada por otro trabajador"}, status_code=409)
+
+        conexion.commit()
+
+        # Notificar al cliente por push
+        try:
+            cursor.execute("SELECT id_cliente FROM solicitudes_servicio WHERE id_solicitud = %s", (id_solicitud,))
+            row_cl = cursor.fetchone()
+            if row_cl and row_cl['id_cliente']:
+                import threading, json
+                id_cliente = row_cl['id_cliente']
+                def _push():
+                    try:
+                        from config import conectar_bd as _c
+                        from pywebpush import webpush, WebPushException
+                        import main as _m
+                        conn2 = _c()
+                        cur2  = conn2.cursor(dictionary=True)
+                        cur2.execute("""
+                            SELECT endpoint, p256dh, auth FROM push_subscriptions
+                            WHERE tipo_usuario = 'cliente' AND id_usuario = %s
+                        """, (id_cliente,))
+                        subs = cur2.fetchall()
+                        cur2.close(); conn2.close()
+                        payload = json.dumps({
+                            "title": "💰 Tienes una cotización",
+                            "body": f"Un profesional cotizó tu servicio: ${precio_cotizado:,.0f}",
+                            "url": f"/cliente/mis_solicitudes",
+                            "icon": "/static/icons/icon-192.png"
+                        })
+                        for sub in subs:
+                            try:
+                                webpush(
+                                    subscription_info={"endpoint": sub["endpoint"], "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}},
+                                    data=payload,
+                                    vapid_private_key=_m.VAPID_PRIVATE,
+                                    vapid_claims=_m.VAPID_CLAIMS
+                                )
+                            except: pass
+                    except: pass
+                threading.Thread(target=_push, daemon=True).start()
+        except: pass
+
+        return JSONResponse({
+            "ok": True,
+            "mensaje": f"Cotización enviada: {horas_estimadas}h × ${valor_hora:,.0f}/h = ${precio_cotizado:,.0f}",
+            "precio": precio_cotizado,
+            "horas": horas_estimadas
+        })
+
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
