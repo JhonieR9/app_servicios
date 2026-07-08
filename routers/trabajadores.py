@@ -132,6 +132,8 @@ def listar_mis_solicitudes(id_trabajador: int = None):
                     s[k] = v.strftime('%Y-%m-%d %H:%M')
                 elif v is None:
                     s[k] = ''
+                elif hasattr(v, '__float__'):
+                    s[k] = float(v)
         return JSONResponse({"solicitudes": solicitudes})
     except Exception as e:
         return JSONResponse({"error": str(e), "solicitudes": []}, status_code=500)
@@ -257,7 +259,7 @@ def actualizar_estado_solicitud(
     id_trabajador: int = Form(None)
 ):
     """Permite al trabajador aceptar, rechazar, iniciar o completar una solicitud"""
-    estados_validos = ['aceptada', 'cancelada', 'completada', 'en_proceso']
+    estados_validos = ['aceptada', 'cancelada', 'completada', 'en_proceso', 'cotizacion_enviada']
     if estado not in estados_validos:
         return JSONResponse({"error": "Estado no válido"}, status_code=400)
 
