@@ -152,13 +152,13 @@ def enviar_cotizacion(
     try:
         cursor = conexion.cursor(dictionary=True)
 
-        # Verificar que la solicitud sigue pendiente
+        # Verificar que la solicitud sigue pendiente o tiene cotización activa
         cursor.execute("""
             SELECT ss.id_solicitud, ss.estado, ss.id_cliente,
                    sp.valor_hora
             FROM solicitudes_servicio ss
             LEFT JOIN servicios_persona sp ON sp.id_persona = %s
-            WHERE ss.id_solicitud = %s AND ss.estado = 'pendiente'
+            WHERE ss.id_solicitud = %s AND ss.estado IN ('pendiente', 'cotizacion_enviada')
             LIMIT 1
         """, (id_trabajador, id_solicitud))
         sol = cursor.fetchone()
@@ -187,7 +187,7 @@ def enviar_cotizacion(
                 cotizacion_precio = %s,
                 cotizacion_nota = %s,
                 cotizacion_fecha = NOW()
-            WHERE id_solicitud = %s AND estado = 'pendiente'
+            WHERE id_solicitud = %s AND estado IN ('pendiente', 'cotizacion_enviada')
         """, (id_trabajador, horas_estimadas, precio_cotizado, nota or '', id_solicitud))
 
         if cursor.rowcount == 0:

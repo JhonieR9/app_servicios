@@ -382,10 +382,20 @@
                     </span>
                     ${s.cotizacion_nota ? `<br><em style="color:#6b7280">"${s.cotizacion_nota}"</em>` : ''}
                 </div>
-                <button class="btn btn-rechazar" onclick="cambiarEstado(${s.id_solicitud}, 'cancelada')"
-                    style="flex:none;min-width:auto;padding:8px 14px;">
-                    ✕ Cancelar cotización
-                </button>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=trabajador&id_usuario=${idTrabajador}"
+                       class="btn btn-llamar" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;flex:1">
+                        💬 Chat / Negociar
+                    </a>
+                    <button class="btn" onclick="abrirModalCotizacion(${s.id_solicitud})"
+                        style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;flex:1">
+                        ✏️ Nueva cotización
+                    </button>
+                    <button class="btn btn-rechazar" onclick="cambiarEstado(${s.id_solicitud}, 'cancelada')"
+                        style="flex:none;min-width:auto;padding:8px 14px;">
+                        ✕
+                    </button>
+                </div>
             `,
             'aceptada': `
                 <button class="btn btn-aceptar" onclick="cambiarEstado(${s.id_solicitud}, 'en_proceso')"

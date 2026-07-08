@@ -425,10 +425,11 @@
                         style="padding:13px;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
                         ✅ Aceptar precio
                     </button>
-                    <button onclick="responderCotizacion(${s.id_solicitud},'rechazar')"
-                        style="padding:13px;background:white;border:2px solid #ef4444;color:#ef4444;border-radius:12px;font-weight:700;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-                        ❌ Rechazar
-                    </button>
+                    <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=cliente&id_usuario=${idCliente}"
+                        onclick="abrirChatNegociacion(event, ${s.id_solicitud})"
+                        style="padding:13px;background:linear-gradient(135deg,#6366f1,#7c3aed);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;">
+                        💬 Negociar
+                    </a>
                 </div>
             </div>`;
         }
@@ -603,6 +604,21 @@
         } catch(e) {
             mostrarToast('❌ Error de conexión');
         }
+    }
+
+    async function abrirChatNegociacion(e, idSolicitud) {
+        e.preventDefault();
+        // Enviar mensaje automático de negociación al chat antes de abrir
+        try {
+            const fd = new FormData();
+            fd.append('id_solicitud',   idSolicitud);
+            fd.append('tipo_remitente', 'cliente');
+            fd.append('id_remitente',   idCliente);
+            fd.append('mensaje',        '💬 Quisiera negociar el precio de la cotización. ¿Podemos llegar a un acuerdo?');
+            await fetch('/chat/enviar', { method:'POST', body:fd });
+        } catch(e) {}
+        // Abrir chat
+        window.location.href = `/chat/?id_solicitud=${idSolicitud}&tipo=cliente&id_usuario=${idCliente}`;
     }
 
     async function completarServicio(idSolicitud) {
