@@ -511,6 +511,52 @@
                     </div>`;
             }
 
+            // ── BOTÓN DE PAGO (si hay precio acordado y no está pagado) ──
+            if ((estado === 'aceptada' || estado === 'en_proceso') && data.precio_final > 0) {
+                let pagoDiv = document.getElementById('pagoDiv');
+                if (!pagoDiv) {
+                    pagoDiv = document.createElement('div');
+                    pagoDiv.id = 'pagoDiv';
+                    const mainCard = document.querySelector('.main-card');
+                    if (mainCard) mainCard.appendChild(pagoDiv);
+                }
+                // Verificar estado del pago
+                const pagoRes = await fetch('/pago/estado?id_solicitud=' + idSolicitud).then(r=>r.json()).catch(()=>({}));
+                if (pagoRes.pagado) {
+                    pagoDiv.innerHTML = `
+                        <div style="background:#f0fdf4;border:2px solid #86efac;border-radius:14px;
+                                    padding:14px;margin-top:14px;text-align:center;">
+                            <div style="font-size:1.2rem;font-weight:800;color:#166534">
+                                ✅ Pago confirmado
+                            </div>
+                            <div style="font-size:0.8rem;color:#166534;margin-top:4px">
+                                $${parseFloat(data.precio_final).toLocaleString('es-CO')} — Mano de obra
+                            </div>
+                        </div>`;
+                } else {
+                    pagoDiv.innerHTML = `
+                        <div style="background:#fffbeb;border:2px solid #fde68a;border-radius:14px;
+                                    padding:16px;margin-top:14px;text-align:center;">
+                            <div style="font-size:0.78rem;font-weight:700;color:#92400e;margin-bottom:8px">
+                                💰 Pago pendiente
+                            </div>
+                            <div style="font-size:1.3rem;font-weight:800;color:#92400e;margin-bottom:4px">
+                                $${parseFloat(data.precio_final).toLocaleString('es-CO')}
+                            </div>
+                            <div style="font-size:0.72rem;color:#a16207;margin-bottom:14px">Solo mano de obra · Materiales son adicionales</div>
+                            <button onclick="abrirPagoWompi(${idSolicitud})"
+                                style="width:100%;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);
+                                       color:white;border:none;border-radius:12px;font-weight:700;
+                                       font-size:0.95rem;cursor:pointer;box-shadow:0 4px 16px rgba(102,126,234,.4);">
+                                💳 Pagar ahora con Wompi
+                            </button>
+                            <div style="font-size:0.7rem;color:#94a3b8;margin-top:8px">
+                                Nequi · Daviplata · Tarjeta · PSE
+                            </div>
+                        </div>`;
+                }
+            }
+
         } catch(e) { console.log('Error seguimiento:', e); }
     }
 
@@ -767,6 +813,55 @@
         cargarSeguimiento();
         if (trabId) cargarChatPreview();
     }, 5000);
+
+    // ── WOMPI PAGO ────────────────────────────────────────────────
+    async function abrirPagoWompi(idSol) {
+        try {
+            const fd = new FormData();
+            fd.append('id_solicitud', idSol);
+            const res  = await fetch('/pago/crear', { method:'POST', body:fd, credentials:'include' });
+            const data = await res.json();
+
+            if (!res.ok || data.error) {
+                alert('❌ ' + (data.error || 'No se pudo iniciar el pago'));
+                return;
+            }
+
+            // Cargar el widget de Wompi dinámicamente
+            if (!document.getElementById('wompi-script')) {
+                const script = document.createElement('script');
+                script.id  = 'wompi-script';
+                script.src = 'https://checkout.wompi.co/widget.js';
+                document.head.appendChild(script);
+                await new Promise(r => script.onload = r);
+            }
+
+            const baseUrl = window.location.origin;
+            const checkout = new WidgetCheckout({
+                currency:    'COP',
+                amountInCents: data.monto_cents,
+                reference:   data.referencia,
+                publicKey:   data.public_key,
+                redirectUrl: data.redirect_url,
+                customerData: {
+                    email:     data.correo || undefined,
+                    fullName:  data.nombre || undefined,
+                }
+            });
+
+            checkout.open(result => {
+                const { transaction } = result;
+                if (transaction && transaction.status === 'APPROVED') {
+                    window.location.href = `/pago/resultado?id_solicitud=${idSol}&transaction_status=APPROVED`;
+                } else {
+                    window.location.href = `/pago/resultado?id_solicitud=${idSol}&transaction_status=${transaction ? transaction.status : 'UNKNOWN'}`;
+                }
+            });
+
+        } catch(e) {
+            alert('❌ Error al abrir el pago: ' + e.message);
+        }
+    }
 </script>
 </body>
 </html>

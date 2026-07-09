@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from routers import clientes, trabajadores, chat
+from routers import clientes, trabajadores, chat, pagos
 from config import DB_CONFIG, conectar_bd
 
 app = FastAPI(title="TalentHub API", version="2.0.0")
@@ -17,6 +17,7 @@ templates = Jinja2Templates(directory="templates")
 app.include_router(clientes.router)
 app.include_router(trabajadores.router)
 app.include_router(chat.router)
+app.include_router(pagos.router)
 
 # ============================================
 # CREAR TABLAS AL ARRANCAR (si no existen)
@@ -278,6 +279,30 @@ def crear_tablas():
               KEY `idx_fav_cliente` (`id_cliente`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """)
+
+        # Tabla pagos (Wompi)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `pagos_solicitud` (
+              `id`                      int NOT NULL AUTO_INCREMENT,
+              `id_solicitud`            int NOT NULL,
+              `id_cliente`              int NOT NULL,
+              `referencia_wompi`        varchar(100) NOT NULL,
+              `id_transaccion_wompi`    varchar(100) DEFAULT NULL,
+              `monto`                   decimal(10,2) NOT NULL,
+              `estado_wompi`            varchar(30) DEFAULT 'PENDING',
+              `fecha_creacion`          datetime DEFAULT CURRENT_TIMESTAMP,
+              `fecha_actualizacion`     datetime DEFAULT NULL,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uk_referencia` (`referencia_wompi`),
+              KEY `idx_pago_solicitud` (`id_solicitud`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
+        # Columna pago_estado en solicitudes
+        try:
+            cursor.execute("ALTER TABLE solicitudes_servicio ADD COLUMN pago_estado varchar(20) DEFAULT 'pendiente'")
+        except Exception:
+            pass
 
         conn.commit()
         cursor.close()
