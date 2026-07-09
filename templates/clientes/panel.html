@@ -479,7 +479,8 @@
                     // La sesión SIEMPRE sobreescribe - es la fuente de verdad
                     idCliente = data.id_cliente;
                     localStorage.setItem('id_cliente', idCliente);
-                    if (!nombre && data.nombre_completo) setNombre(data.nombre_completo);
+                    // Nombre siempre desde la sesión (no solo si no viene en URL)
+                    if (data.nombre_completo) setNombre(data.nombre_completo);
                     if (data.correo) document.getElementById('correoCliente').textContent = data.correo;
                 }
             }
@@ -543,7 +544,7 @@
             const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
             const data = await res.json();
             const activas = (data.solicitudes || []).filter(s =>
-                ['pendiente','aceptada','en_proceso'].includes(s.estado)
+                ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado)
             ).slice(0, 4);
 
             // ── Detectar cambios de estado ──
@@ -581,19 +582,29 @@
             }
 
             container.innerHTML = activas.map(s => {
-                const estadoLabel = ESTADO_LABEL[s.estado] || s.estado;
-                const badgeClass  = 'badge-' + s.estado;
-                const trab = s.nombre_trabajador
-                    ? `<span style="color:#6366f1">👷 ${s.nombre_trabajador}</span>`
-                    : `<span>Sin asignar aún</span>`;
+                const estadoLabel = {
+                    pendiente: 'Buscando profesional',
+                    aceptada: 'Asignado',
+                    en_proceso: 'En proceso',
+                    cotizacion_enviada: '💰 Cotización recibida'
+                }[s.estado] || s.estado;
+                const badgeClass  = 'badge-' + (s.estado === 'cotizacion_enviada' ? 'pendiente' : s.estado);
+                const trab = s.estado === 'cotizacion_enviada'
+                    ? `<span style="color:#d97706">💰 ${s.nombre_trabajador || 'Profesional'} envió cotización</span>`
+                    : s.nombre_trabajador
+                        ? `<span style="color:#6366f1">👷 ${s.nombre_trabajador}</span>`
+                        : `<span>Sin asignar aún</span>`;
+                const destino = s.estado === 'cotizacion_enviada'
+                    ? `/cliente/mis_solicitudes?id_cliente=${idCliente}`
+                    : `/cliente/seguimiento?id=${s.id_solicitud}`;
                 return `
-                <div class="activa-card" onclick="window.location.href='/cliente/seguimiento?id=${s.id_solicitud}'">
-                    <span class="activa-dot ${s.estado}"></span>
+                <div class="activa-card" onclick="window.location.href='${destino}'">
+                    <span class="activa-dot ${s.estado === 'cotizacion_enviada' ? 'pendiente' : s.estado}"></span>
                     <div class="activa-info">
                         <div class="activa-titulo">${s.nombre_categoria || s.titulo || 'Servicio'}</div>
                         <div class="activa-meta">${trab} · ${s.fecha_solicitud ? s.fecha_solicitud.slice(5,16) : ''}</div>
                     </div>
-                    <span class="activa-badge ${badgeClass}">${estadoLabel}</span>
+                    <span class="activa-badge ${badgeClass}" style="${s.estado === 'cotizacion_enviada' ? 'background:#fef3c7;color:#d97706' : ''}">${estadoLabel}</span>
                 </div>`;
             }).join('');
         } catch(e) {
@@ -616,7 +627,7 @@
             const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
             const data = await res.json();
             const activas = (data.solicitudes || []).filter(s =>
-                ['pendiente','aceptada','en_proceso'].includes(s.estado)
+                ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado)
             );
             if (activas.length > 0) {
                 // Ir a la más reciente
