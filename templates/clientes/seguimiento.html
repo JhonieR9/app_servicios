@@ -511,8 +511,9 @@
                     </div>`;
             }
 
-            // ── BOTÓN DE PAGO (si hay precio acordado y no está pagado) ──
-            if ((estado === 'aceptada' || estado === 'en_proceso') && data.precio_final > 0) {
+            // ── BOTÓN DE PAGO (mostrar si el servicio está activo) ──
+            const precioPago = parseFloat(data.precio_final) || 0;
+            if (estado === 'aceptada' || estado === 'en_proceso') {
                 let pagoDiv = document.getElementById('pagoDiv');
                 if (!pagoDiv) {
                     pagoDiv = document.createElement('div');
@@ -530,20 +531,30 @@
                                 ✅ Pago confirmado
                             </div>
                             <div style="font-size:0.8rem;color:#166534;margin-top:4px">
-                                $${parseFloat(data.precio_final).toLocaleString('es-CO')} — Mano de obra
+                                $${precioPago.toLocaleString('es-CO')} — Mano de obra
                             </div>
                         </div>`;
                 } else {
+                    const precioTexto = precioPago > 0
+                        ? `<div style="font-size:1.3rem;font-weight:800;color:#92400e;margin-bottom:4px">
+                               $${precioPago.toLocaleString('es-CO')}
+                           </div>
+                           <div style="font-size:0.72rem;color:#a16207;margin-bottom:14px">Solo mano de obra · Materiales son adicionales</div>`
+                        : `<div style="font-size:0.82rem;color:#92400e;margin-bottom:10px">
+                               Ingresa el monto acordado con el profesional:
+                           </div>
+                           <input type="number" id="montoPago" min="1000" step="1000"
+                               placeholder="Ej: 80000"
+                               style="width:100%;padding:10px 14px;border:2px solid #fde68a;border-radius:10px;
+                                      font-size:1rem;font-weight:700;text-align:center;margin-bottom:12px;
+                                      outline:none;color:#92400e;background:#fffbeb;">`;
                     pagoDiv.innerHTML = `
                         <div style="background:#fffbeb;border:2px solid #fde68a;border-radius:14px;
                                     padding:16px;margin-top:14px;text-align:center;">
                             <div style="font-size:0.78rem;font-weight:700;color:#92400e;margin-bottom:8px">
-                                💰 Pago pendiente
+                                💰 Realizar pago
                             </div>
-                            <div style="font-size:1.3rem;font-weight:800;color:#92400e;margin-bottom:4px">
-                                $${parseFloat(data.precio_final).toLocaleString('es-CO')}
-                            </div>
-                            <div style="font-size:0.72rem;color:#a16207;margin-bottom:14px">Solo mano de obra · Materiales son adicionales</div>
+                            ${precioTexto}
                             <button onclick="abrirPagoWompi(${idSolicitud})"
                                 style="width:100%;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);
                                        color:white;border:none;border-radius:12px;font-weight:700;
@@ -551,7 +562,7 @@
                                 💳 Pagar ahora con Wompi
                             </button>
                             <div style="font-size:0.7rem;color:#94a3b8;margin-top:8px">
-                                Nequi · Daviplata · Tarjeta · PSE
+                                Nequi · Daviplata · Tarjeta · PSE · Bre-B
                             </div>
                         </div>`;
                 }
@@ -817,6 +828,23 @@
     // ── WOMPI PAGO ────────────────────────────────────────────────
     async function abrirPagoWompi(idSol) {
         try {
+            // Si hay input de monto manual, guardarlo primero
+            const inputMonto = document.getElementById('montoPago');
+            if (inputMonto) {
+                const montoManual = parseFloat(inputMonto.value);
+                if (!montoManual || montoManual < 1000) {
+                    alert('Ingresa un monto válido (mínimo $1.000)');
+                    inputMonto.focus();
+                    return;
+                }
+                // Actualizar precio_final en BD
+                try {
+                    const fd = new FormData();
+                    fd.append('id_solicitud', idSol);
+                    fd.append('precio_final', montoManual);
+                    await fetch('/pago/establecer-precio', { method:'POST', body:fd, credentials:'include' });
+                } catch(e) {}
+            }
             const fd = new FormData();
             fd.append('id_solicitud', idSol);
             const res  = await fetch('/pago/crear', { method:'POST', body:fd, credentials:'include' });

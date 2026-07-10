@@ -231,6 +231,39 @@ def resultado_pago(request: Request, id_solicitud: int = 0):
     })
 
 
+@router.post("/establecer-precio")
+async def establecer_precio(
+    request: Request,
+    id_solicitud: int  = Form(...),
+    precio_final: float = Form(...)
+):
+    """Permite establecer el precio final cuando no viene de cotización."""
+    import auth as _auth
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    if not token:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    sesion = _auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'cliente':
+        return JSONResponse({"error": "No autorizado"}, status_code=403)
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            UPDATE solicitudes_servicio
+            SET precio_final = %s
+            WHERE id_solicitud = %s AND id_cliente = %s
+              AND precio_final IS NULL OR precio_final = 0
+        """, (precio_final, id_solicitud, sesion['id_usuario']))
+        conexion.commit()
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
 @router.get("/estado")
 def estado_pago(id_solicitud: int):
     """Consulta el estado del pago de una solicitud."""
