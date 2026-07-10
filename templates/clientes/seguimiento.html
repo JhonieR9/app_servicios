@@ -456,7 +456,7 @@
             document.getElementById('infoFecha').textContent     = data.fecha_solicitud || 'Sin fecha';
             document.getElementById('topSub').textContent        = 'Solicitud #' + idSolicitud;
 
-            // Precio si está completada
+            // Precio si está completada o aceptada
             if (data.precio_final && parseFloat(data.precio_final) > 0) {
                 document.getElementById('infoFecha').textContent =
                     (data.fecha_solicitud || '') + ' · 💰 $' + parseFloat(data.precio_final).toLocaleString('es-CO');
@@ -490,7 +490,7 @@
             }
 
             // Mostrar código de confirmación al cliente (si ya tiene trabajador asignado)
-            if (data.codigo_confirmacion && estado !== 'completada' && estado !== 'cancelada') {
+            if (data.codigo_confirmacion && String(data.codigo_confirmacion).trim() !== '' && estado !== 'completada' && estado !== 'cancelada') {
                 let codigoDiv = document.getElementById('codigoConfDiv');
                 if (!codigoDiv) {
                     codigoDiv = document.createElement('div');

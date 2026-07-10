@@ -201,7 +201,7 @@ def api_seguimiento(id: int):
         cursor.execute("""
             SELECT s.id_solicitud, s.titulo, s.estado, s.ciudad, s.departamento,
                    s.fecha_solicitud, s.fecha_aceptacion, s.fecha_inicio, s.fecha_finalizacion,
-                   s.id_trabajador, s.precio_final, s.id_categoria, s.codigo_confirmacion,
+                   s.id_trabajador, s.precio_final, s.cotizacion_precio, s.id_categoria, s.codigo_confirmacion,
                    COALESCE(cat.nombre_categoria, s.titulo, CONCAT('Categoría ', s.id_categoria), 'Servicio') as nombre_categoria,
                    TIMESTAMPDIFF(MINUTE, s.fecha_solicitud, NOW()) as minutos_pendiente
             FROM solicitudes_servicio s
@@ -223,9 +223,12 @@ def api_seguimiento(id: int):
             elif not sol.get(k):
                 sol[k] = None
 
-        # Serializar precio
-        if sol.get('precio_final') is not None:
-            sol['precio_final'] = float(sol['precio_final'])
+        # Serializar precio — usar precio_final o cotizacion_precio como fallback
+        precio = sol.get('precio_final') or sol.get('cotizacion_precio')
+        sol['precio_final'] = float(precio) if precio is not None else 0
+        # Limpiar cotizacion_precio del response
+        if 'cotizacion_precio' in sol:
+            del sol['cotizacion_precio']
 
         # Garantizar que campos string no sean None
         for k in ['titulo', 'estado', 'ciudad', 'departamento', 'nombre_categoria']:
