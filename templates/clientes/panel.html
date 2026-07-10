@@ -210,12 +210,6 @@
         <div class="empty-activas">Cargando...</div>
     </div>
 
-    <!-- Favoritos -->
-    <div class="th-section-title"><i class="bi bi-heart-fill" style="color:#ef4444"></i> Mis favoritos</div>
-    <div id="favoritosContainer" style="margin-bottom:18px">
-        <div style="text-align:center;color:var(--muted);font-size:0.82rem;padding:16px">Cargando...</div>
-    </div>
-
     <!-- Mis Favoritos -->
     <div class="th-section-title" style="margin-top:4px"><i class="bi bi-heart-fill" style="color:#ef4444"></i> Mis profesionales favoritos</div>
     <div id="favoritosContainer" style="margin-bottom:18px">
@@ -456,7 +450,11 @@
         const id     = params.get('id');
 
         // Mostrar nombre inmediatamente si viene en la URL
-        if (nombre) setNombre(nombre);
+        if (nombre) setNombre(decodeURIComponent(nombre));
+        // Fallback: nombre guardado en localStorage
+        else if (localStorage.getItem('nombre_cliente')) {
+            setNombre(localStorage.getItem('nombre_cliente'));
+        }
 
         // Prioridad 1: id de la URL
         if (id) {
@@ -476,11 +474,12 @@
             } else if (res.ok) {
                 const data = await res.json();
                 if (!data.error && data.id_cliente) {
-                    // La sesión SIEMPRE sobreescribe - es la fuente de verdad
                     idCliente = data.id_cliente;
                     localStorage.setItem('id_cliente', idCliente);
-                    // Nombre siempre desde la sesión (no solo si no viene en URL)
-                    if (data.nombre_completo) setNombre(data.nombre_completo);
+                    if (data.nombre_completo) {
+                        setNombre(data.nombre_completo);
+                        localStorage.setItem('nombre_cliente', data.nombre_completo);
+                    }
                     if (data.correo) document.getElementById('correoCliente').textContent = data.correo;
                 }
             }
@@ -523,7 +522,7 @@
             const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
             const data = await res.json();
             const todas = data.solicitudes || [];
-            const activas    = todas.filter(s => ['pendiente','aceptada','en_proceso'].includes(s.estado));
+            const activas    = todas.filter(s => ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado));
             const completadas = todas.filter(s => s.estado === 'completada');
 
             document.getElementById('statTotal').textContent      = todas.length;
