@@ -452,8 +452,8 @@
         // Mostrar nombre inmediatamente si viene en la URL
         if (nombre) setNombre(decodeURIComponent(nombre));
         // Fallback: nombre guardado en localStorage
-        else if (localStorage.getItem('nombre_cliente')) {
-            setNombre(localStorage.getItem('nombre_cliente'));
+        else if (localStorage.getItem('nombre_cliente') || localStorage.getItem('cliente_nombre')) {
+            setNombre(localStorage.getItem('nombre_cliente') || localStorage.getItem('cliente_nombre'));
         }
 
         // Prioridad 1: id de la URL
@@ -479,6 +479,7 @@
                     if (data.nombre_completo) {
                         setNombre(data.nombre_completo);
                         localStorage.setItem('nombre_cliente', data.nombre_completo);
+                        localStorage.setItem('cliente_nombre', data.nombre_completo);
                     }
                     if (data.correo) document.getElementById('correoCliente').textContent = data.correo;
                 }
