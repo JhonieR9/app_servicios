@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview: Confirmación de Pago - TalentHub</title>
+  <style>
+    body { 
+      margin: 0; 
+      padding: 20px; 
+      background: #1e293b;
+      font-family: system-ui, sans-serif;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    h2 {
+      margin: 20px;
+      color: #334155;
+      font-size: 1.1rem;
+    }
+    iframe {
+      width: 100%;
+      height: 700px;
+      border: none;
+      display: block;
+    }
+    .tabs {
+      display: flex;
+      gap: 0;
+      background: #f1f5f9;
+      padding: 0;
+    }
+    .tab {
+      flex: 1;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      background: #e2e8f0;
+      border: none;
+      font-weight: 600;
+      color: #475569;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: white;
+      color: #059669;
+      border-bottom: 3px solid #059669;
+    }
+    .tab:hover:not(.active) {
+      background: #cbd5e1;
+    }
+    .email-content {
+      display: none;
+      padding: 0;
+    }
+    .email-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📧 Preview: Emails de Confirmación de Pago</h2>
+    <div class="tabs">
+      <button class="tab active" onclick="showEmail('cliente')">
+        👤 Email Cliente
+      </button>
+      <button class="tab" onclick="showEmail('trabajador')">
+        👷 Email Trabajador
+      </button>
+    </div>
+    
+    <!-- Email Cliente -->
+    <div id="email-cliente" class="email-content active">
+      <iframe srcdoc='<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="480" cellpadding="0" cellspacing="0"
+             style="background:white;border-radius:16px;overflow:hidden;
+                    box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#059669,#0891b2);
+                     padding:32px 28px;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:8px;">&#9989;</div>
+            <h1 style="margin:0;color:white;font-size:1.4rem;font-weight:800;">
+              Pago confirmado
+            </h1>
+            <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:0.88rem;">
+              TalentHub — Comprobante de transaccion
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 28px;">
+            <p style="color:#374151;font-size:0.95rem;line-height:1.7;margin:0 0 24px;">
+              Hola <strong>María</strong>,
+              tu pago fue procesado exitosamente. Aqui estan los detalles:
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="background:#f8fafc;border-radius:12px;
+                          overflow:hidden;margin-bottom:24px;">
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Servicio</span><br>
+                  <span style="font-size:0.95rem;font-weight:700;color:#111827;">
+                    Reparación de tubería en la cocina
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Profesional</span><br>
+                  <span style="font-size:0.95rem;color:#111827;">Juan Pérez</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Monto pagado</span><br>
+                  <span style="font-size:1.3rem;font-weight:800;color:#059669;">
+                    $ 150,000 COP
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Referencia Wompi</span><br>
+                  <span style="font-size:0.85rem;color:#374151;
+                               font-family:monospace;">TH-123-456-1736638400</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Fecha y hora</span><br>
+                  <span style="font-size:0.88rem;color:#374151;">11/07/2026 14:30</span>
+                </td>
+              </tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding-bottom:24px;">
+                <a href="#"
+                   style="display:inline-block;
+                          background:linear-gradient(135deg,#059669,#0891b2);
+                          color:white;text-decoration:none;padding:14px 36px;
+                          border-radius:12px;font-weight:700;font-size:1rem;">
+                  Ver seguimiento del servicio
+                </a>
+              </td></tr>
+            </table>
+            <p style="color:#9ca3af;font-size:0.75rem;text-align:center;
+                      margin:0;line-height:1.6;border-top:1px solid #f3f4f6;
+                      padding-top:20px;">
+              El profesional ya fue notificado y se pondra en contacto contigo.<br>
+              Guarda este correo como comprobante de pago.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>'></iframe>
+    </div>
+
+    <!-- Email Trabajador -->
+    <div id="email-trabajador" class="email-content">
+      <iframe srcdoc='<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="480" cellpadding="0" cellspacing="0"
+             style="background:white;border-radius:16px;overflow:hidden;
+                    box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                     padding:32px 28px;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:8px;">&#128176;</div>
+            <h1 style="margin:0;color:white;font-size:1.4rem;font-weight:800;">
+              Pago recibido
+            </h1>
+            <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:0.88rem;">
+              TalentHub — Notificacion de pago
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 28px;">
+            <p style="color:#374151;font-size:0.95rem;line-height:1.7;margin:0 0 24px;">
+              Hola <strong>Juan</strong>,
+              el cliente realizo el pago del servicio. Ya puedes proceder.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="background:#f8fafc;border-radius:12px;overflow:hidden;
+                          margin-bottom:24px;">
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Servicio</span><br>
+                  <span style="font-size:0.95rem;font-weight:700;color:#111827;">
+                    Reparación de tubería en la cocina
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Cliente</span><br>
+                  <span style="font-size:0.95rem;color:#111827;">María Rodríguez</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Monto</span><br>
+                  <span style="font-size:1.3rem;font-weight:800;color:#4f46e5;">
+                    $ 150,000 COP
+                  </span>
+                </td>
+              </tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding-bottom:24px;">
+                <a href="#"
+                   style="display:inline-block;
+                          background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                          color:white;text-decoration:none;padding:14px 36px;
+                          border-radius:12px;font-weight:700;font-size:1rem;">
+                  Ver solicitud en TalentHub
+                </a>
+              </td></tr>
+            </table>
+            <p style="color:#9ca3af;font-size:0.75rem;text-align:center;margin:0;">
+              Contacta al cliente para coordinar el servicio.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>'></iframe>
+    </div>
+  </div>
+
+  <script>
+    function showEmail(tipo) {
+      // Ocultar todos
+      document.querySelectorAll('.email-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      
+      // Mostrar seleccionado
+      document.getElementById('email-' + tipo).classList.add('active');
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

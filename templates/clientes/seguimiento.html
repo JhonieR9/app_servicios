@@ -512,9 +512,9 @@
                     </div>`;
             }
 
-            // ── BOTÓN DE PAGO (mostrar si el servicio está activo) ──
+            // ── BOTÓN DE PAGO (solo después de completar el servicio) ──
             const precioPago = parseFloat(data.precio_final) || 0;
-            if (estado === 'aceptada' || estado === 'en_proceso') {
+            if (estado === 'completada' && precioPago > 0) {
                 let pagoDiv = document.getElementById('pagoDiv');
                 if (!pagoDiv) {
                     pagoDiv = document.createElement('div');
