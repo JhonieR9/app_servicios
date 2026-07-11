@@ -7,6 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Seguimiento - TalentHub</title>
+    <script src="/static/js/confirm.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -808,7 +809,8 @@
     }
 
     async function cancelarSolicitud() {
-        if (!confirm('¿Seguro que deseas cancelar esta solicitud?')) return;
+        const ok = await thConfirm({ titulo:'¿Cancelar solicitud?', mensaje:'¿Seguro que deseas cancelar esta solicitud?', btnOk:'Sí, cancelar', tipo:'danger' });
+        if (!ok) return;
         const fd = new FormData();
         fd.append('id_solicitud', idSolicitud);
         fd.append('motivo', 'Cancelado por el cliente');

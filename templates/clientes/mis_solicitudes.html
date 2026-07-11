@@ -7,6 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Mis Solicitudes - TalentHub</title>
+    <script src="/static/js/confirm.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -575,7 +576,8 @@
     }
 
     async function cancelar(idSolicitud) {
-        if (!confirm('¿Cancelar esta solicitud?')) return;
+        const ok = await thConfirm({ titulo:'¿Cancelar solicitud?', mensaje:'Esta acción no se puede deshacer.', btnOk:'Sí, cancelar', tipo:'danger' });
+        if (!ok) return;
         const fd = new FormData();
         fd.append('id_solicitud', idSolicitud);
         fd.append('motivo', 'Cancelado por el cliente');
@@ -587,7 +589,13 @@
         const msg = respuesta === 'aceptar'
             ? '¿Aceptar esta cotización? El profesional será notificado y el servicio quedará confirmado.'
             : '¿Rechazar la cotización? Tu solicitud quedará disponible para otros profesionales.';
-        if (!confirm(msg)) return;
+        const ok = await thConfirm({
+            titulo:   respuesta === 'aceptar' ? '¿Aceptar cotización?' : '¿Rechazar cotización?',
+            mensaje:  msg,
+            btnOk:    respuesta === 'aceptar' ? '✅ Aceptar precio' : '❌ Rechazar',
+            tipo:     respuesta === 'aceptar' ? 'success' : 'danger'
+        });
+        if (!ok) return;
 
         const fd = new FormData();
         fd.append('id_solicitud', idSolicitud);
@@ -622,7 +630,8 @@
     }
 
     async function completarServicio(idSolicitud) {
-        if (!confirm('¿Confirmas que el servicio fue realizado correctamente?')) return;
+        const ok = await thConfirm({ titulo:'¿Servicio completado?', mensaje:'Confirma que el trabajo fue realizado correctamente.', btnOk:'✅ Confirmar', tipo:'success' });
+        if (!ok) return;
         // Hora local del dispositivo del cliente
         const ahora = new Date();
         const fechaLocal = ahora.getFullYear() + '-' +

@@ -6,6 +6,7 @@
     <title>Mi Panel - TalentHub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/talenthub.css">
+    <script src="/static/js/confirm.js"></script>
     <style>
         /* ── Stats 2x2 ── */
         .stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:18px; }
@@ -586,12 +587,15 @@
 
     // ── Acción sobre solicitud ──
     async function accionSol(idSolicitud, nuevoEstado) {
-        const confirmMsg = {
-            aceptada:   '¿Aceptar esta solicitud?',
-            cancelada:  '¿Rechazar esta solicitud? Quedará disponible para otros profesionales.',
-            en_proceso: '¿Iniciar el servicio ahora?'
-        }[nuevoEstado] || '¿Confirmar?';
-        if (!confirm(confirmMsg)) return;
+        const confirmaciones = {
+            aceptada:   { titulo:'¿Aceptar solicitud?',   mensaje:'El cliente será notificado inmediatamente.',                           btnOk:'✅ Aceptar',   tipo:'success' },
+            cancelada:  { titulo:'¿Rechazar solicitud?',  mensaje:'La solicitud quedará disponible para otros profesionales.',             btnOk:'❌ Rechazar',  tipo:'danger'  },
+            en_proceso: { titulo:'¿Iniciar el servicio?', mensaje:'Marca que ya estás trabajando en esto.',                               btnOk:'🔧 Iniciar',   tipo:'default' },
+            completada: { titulo:'¿Completar servicio?',  mensaje:'El cliente deberá ingresar el código de confirmación para finalizar.', btnOk:'✅ Completar', tipo:'success' },
+        };
+        const conf = confirmaciones[nuevoEstado] || { titulo:'¿Confirmar?', mensaje:'', btnOk:'Confirmar', tipo:'default' };
+        const ok = await thConfirm(conf);
+        if (!ok) return;
 
         const fd = new FormData();
         fd.append('id_solicitud', idSolicitud);
@@ -793,8 +797,10 @@
 
     // ── Darse de baja trabajador ──
     async function darDeBajaTrabajador() {
-        if (!confirm('¿Estás seguro de que quieres darte de baja? Tu perfil será desactivado y no recibirás más solicitudes.')) return;
-        if (!confirm('Esta acción desactivará tu cuenta. ¿Confirmas?')) return;
+        const ok1 = await thConfirm({ titulo:'¿Darte de baja?', mensaje:'Tu perfil será desactivado y no recibirás más solicitudes.', btnOk:'Sí, dar de baja', tipo:'danger' });
+        if (!ok1) return;
+        const ok2 = await thConfirm({ titulo:'Confirma tu decisión', mensaje:'Esta acción desactivará tu cuenta. ¿Confirmas definitivamente?', btnOk:'Confirmar baja', tipo:'danger', icono:'⚠️' });
+        if (!ok2) return;
         try {
             const fd = new FormData();
             fd.append('id_persona', idTrabajador || localStorage.getItem('id_trabajador'));

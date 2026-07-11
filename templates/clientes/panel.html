@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Panel - TalentHub</title>
+    <script src="/static/js/confirm.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/talenthub.css">
     <style>
@@ -761,8 +762,10 @@
 
     // ── Darse de baja ──
     async function darDeBaja() {
-        if (!confirm('¿Estás seguro de que quieres darte de baja? Tu cuenta será desactivada y no podrás solicitar servicios.')) return;
-        if (!confirm('Esta acción desactivará tu cuenta. ¿Confirmas?')) return;
+        const ok1 = await thConfirm({ titulo:'¿Darte de baja?', mensaje:'Tu cuenta será desactivada y no podrás solicitar servicios.', btnOk:'Sí, dar de baja', tipo:'danger' });
+        if (!ok1) return;
+        const ok2 = await thConfirm({ titulo:'Confirma tu decisión', mensaje:'Esta acción desactivará tu cuenta definitivamente. ¿Confirmas?', btnOk:'Confirmar baja', tipo:'danger', icono:'⚠️' });
+        if (!ok2) return;
         try {
             const fd = new FormData();
             fd.append('id_cliente', idCliente);
