@@ -166,7 +166,6 @@
 
     async function guardarPerfil() {
         const btn = document.getElementById('btnGuardar');
-        const msg = document.getElementById('msgGuardar');
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
 
@@ -182,22 +181,47 @@
             const res = await fetch('/trabajador/perfil/editar', { method:'POST', body:fd });
             const data = await res.json();
             if (res.ok) {
-                msg.style.background = '#dcfce7'; msg.style.color = '#16a34a';
-                msg.textContent = '✅ ' + (data.mensaje || 'Perfil actualizado');
+                mostrarToastPerfil('✅ ¡Datos actualizados correctamente!', true);
             } else {
-                msg.style.background = '#fee2e2'; msg.style.color = '#dc2626';
-                msg.textContent = '❌ ' + (data.error || 'Error al guardar');
+                mostrarToastPerfil('❌ ' + (data.error || 'Error al guardar'), false);
             }
-            msg.style.display = 'block';
         } catch(e) {
-            msg.style.background = '#fee2e2'; msg.style.color = '#dc2626';
-            msg.textContent = '❌ Error de conexión';
-            msg.style.display = 'block';
+            mostrarToastPerfil('❌ Error de conexión', false);
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar cambios';
-            setTimeout(() => { msg.style.display = 'none'; }, 4000);
         }
+    }
+
+    function mostrarToastPerfil(msg, ok) {
+        // Eliminar toast anterior si existe
+        const viejo = document.getElementById('toastPerfil');
+        if (viejo) viejo.remove();
+
+        const t = document.createElement('div');
+        t.id = 'toastPerfil';
+        t.style.cssText = `
+            position: fixed;
+            top: 20px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: ${ok ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#ef4444,#dc2626)'};
+            color: white;
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            animation: slideDown 0.4s ease;
+            white-space: nowrap;
+        `;
+        t.innerHTML = `<style>@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}</style>${msg}`;
+        document.body.appendChild(t);
+        setTimeout(() => {
+            t.style.transition = 'opacity 0.4s';
+            t.style.opacity = '0';
+            setTimeout(() => t.remove(), 400);
+        }, 3500);
     }
 
     cargarPerfil();
