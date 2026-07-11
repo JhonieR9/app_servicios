@@ -843,3 +843,221 @@ def verificar_email_token(token: str) -> Optional[Dict]:
     finally:
         cursor.close()
         conexion.close()
+
+
+# ============================================
+# CONFIRMACIÓN DE PAGO POR EMAIL
+# ============================================
+
+def enviar_email_confirmacion_pago(
+    correo_cliente: str,
+    nombre_cliente: str,
+    titulo_servicio: str,
+    monto: float,
+    referencia: str,
+    id_solicitud: int,
+    correo_trabajador: str,
+    nombre_trabajador: str,
+    base_url: str
+) -> bool:
+    """
+    Envía confirmación de pago al cliente y notificación al trabajador.
+    Se llama cuando Wompi confirma el pago (estado APPROVED).
+    """
+    fecha_hoy = datetime.now().strftime('%d/%m/%Y %H:%M')
+    monto_fmt = f"{monto:,.0f}"
+    link_seguimiento = f"{base_url}/cliente/seguimiento?id={id_solicitud}"
+
+    # ── Email al CLIENTE ─────────────────────────────────────
+    html_cliente = f"""<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="480" cellpadding="0" cellspacing="0"
+             style="background:white;border-radius:16px;overflow:hidden;
+                    box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <!-- Cabecera verde -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#059669,#0891b2);
+                     padding:32px 28px;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:8px;">&#9989;</div>
+            <h1 style="margin:0;color:white;font-size:1.4rem;font-weight:800;">
+              Pago confirmado
+            </h1>
+            <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:0.88rem;">
+              TalentHub — Comprobante de transaccion
+            </p>
+          </td>
+        </tr>
+        <!-- Cuerpo -->
+        <tr>
+          <td style="padding:32px 28px;">
+            <p style="color:#374151;font-size:0.95rem;line-height:1.7;margin:0 0 24px;">
+              Hola <strong>{nombre_cliente.split()[0]}</strong>,
+              tu pago fue procesado exitosamente. Aqui estan los detalles:
+            </p>
+            <!-- Tabla de detalle -->
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="background:#f8fafc;border-radius:12px;
+                          overflow:hidden;margin-bottom:24px;">
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Servicio</span><br>
+                  <span style="font-size:0.95rem;font-weight:700;color:#111827;">
+                    {titulo_servicio}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Profesional</span><br>
+                  <span style="font-size:0.95rem;color:#111827;">{nombre_trabajador}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Monto pagado</span><br>
+                  <span style="font-size:1.3rem;font-weight:800;color:#059669;">
+                    $ {monto_fmt} COP
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Referencia Wompi</span><br>
+                  <span style="font-size:0.85rem;color:#374151;
+                               font-family:monospace;">{referencia}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Fecha y hora</span><br>
+                  <span style="font-size:0.88rem;color:#374151;">{fecha_hoy}</span>
+                </td>
+              </tr>
+            </table>
+            <!-- Boton CTA -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding-bottom:24px;">
+                <a href="{link_seguimiento}"
+                   style="display:inline-block;
+                          background:linear-gradient(135deg,#059669,#0891b2);
+                          color:white;text-decoration:none;padding:14px 36px;
+                          border-radius:12px;font-weight:700;font-size:1rem;">
+                  Ver seguimiento del servicio
+                </a>
+              </td></tr>
+            </table>
+            <p style="color:#9ca3af;font-size:0.75rem;text-align:center;
+                      margin:0;line-height:1.6;border-top:1px solid #f3f4f6;
+                      padding-top:20px;">
+              El profesional ya fue notificado y se pondra en contacto contigo.<br>
+              Guarda este correo como comprobante de pago.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+    ok_cliente = _enviar_gmail(
+        correo_cliente,
+        f"✅ Pago confirmado — {titulo_servicio} | ${monto_fmt} COP",
+        html_cliente
+    )
+
+    # ── Email al TRABAJADOR ───────────────────────────────────
+    link_panel = f"{base_url}/trabajador/panel"
+    html_trabajador = f"""<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="480" cellpadding="0" cellspacing="0"
+             style="background:white;border-radius:16px;overflow:hidden;
+                    box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <!-- Cabecera -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                     padding:32px 28px;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:8px;">&#128176;</div>
+            <h1 style="margin:0;color:white;font-size:1.4rem;font-weight:800;">
+              Pago recibido
+            </h1>
+            <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:0.88rem;">
+              TalentHub — Notificacion de pago
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 28px;">
+            <p style="color:#374151;font-size:0.95rem;line-height:1.7;margin:0 0 24px;">
+              Hola <strong>{nombre_trabajador.split()[0]}</strong>,
+              el cliente realizo el pago del servicio. Ya puedes proceder.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="background:#f8fafc;border-radius:12px;overflow:hidden;
+                          margin-bottom:24px;">
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Servicio</span><br>
+                  <span style="font-size:0.95rem;font-weight:700;color:#111827;">
+                    {titulo_servicio}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;border-bottom:1px solid #e2e8f0;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Cliente</span><br>
+                  <span style="font-size:0.95rem;color:#111827;">{nombre_cliente}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:13px 18px;">
+                  <span style="font-size:0.72rem;font-weight:700;color:#6b7280;
+                               text-transform:uppercase;">Monto</span><br>
+                  <span style="font-size:1.3rem;font-weight:800;color:#4f46e5;">
+                    $ {monto_fmt} COP
+                  </span>
+                </td>
+              </tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding-bottom:24px;">
+                <a href="{link_panel}"
+                   style="display:inline-block;
+                          background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                          color:white;text-decoration:none;padding:14px 36px;
+                          border-radius:12px;font-weight:700;font-size:1rem;">
+                  Ver solicitud en TalentHub
+                </a>
+              </td></tr>
+            </table>
+            <p style="color:#9ca3af;font-size:0.75rem;text-align:center;margin:0;">
+              Contacta al cliente para coordinar el servicio.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+    ok_trabajador = _enviar_gmail(
+        correo_trabajador,
+        f"💰 Pago recibido — {titulo_servicio} | ${monto_fmt} COP",
+        html_trabajador
+    )
+
+    return ok_cliente and ok_trabajador

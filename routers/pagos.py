@@ -202,20 +202,58 @@ async def wompi_webhook(request: Request):
                 WHERE id_solicitud = %s
             """, (monto, pago['id_solicitud']))
 
+            # Obtener datos para notificaciones
+            cursor.execute("""
+                SELECT
+                    s.id_trabajador, s.titulo,
+                    c.nombre_completo  AS nombre_cliente,
+                    ec.correo          AS correo_cliente,
+                    p.nombre_completo  AS nombre_trabajador,
+                    ep.correo          AS correo_trabajador
+                FROM solicitudes_servicio s
+                LEFT JOIN clientes c    ON s.id_cliente   = c.id_cliente
+                LEFT JOIN correo_cliente ec ON c.id_cliente = ec.id_cliente AND ec.principal = 1
+                LEFT JOIN personas p    ON s.id_trabajador = p.id_persona
+                LEFT JOIN correo_persona ep ON p.id_persona = ep.id_persona AND ep.principal = 1
+                WHERE s.id_solicitud = %s
+                LIMIT 1
+            """, (pago['id_solicitud'],))
+            datos = cursor.fetchone()
+
             # Notificar al trabajador por push
             try:
-                cursor.execute("""
-                    SELECT id_trabajador FROM solicitudes_servicio
-                    WHERE id_solicitud = %s
-                """, (pago['id_solicitud'],))
-                row = cursor.fetchone()
-                if row and row['id_trabajador']:
+                if datos and datos['id_trabajador']:
                     _notificar_pago_push(
-                        row['id_trabajador'],
+                        datos['id_trabajador'],
                         pago['id_solicitud'],
                         monto
                     )
             except: pass
+
+            # Enviar emails de confirmación (cliente + trabajador)
+            try:
+                import auth as _auth
+                base_url = os.getenv("APP_URL", "https://web-production-191f4.up.railway.app")
+                if datos and datos.get('correo_cliente') and datos.get('correo_trabajador'):
+                    import threading
+                    threading.Thread(
+                        target=_auth.enviar_email_confirmacion_pago,
+                        args=(
+                            datos['correo_cliente'],
+                            datos['nombre_cliente'] or 'Cliente',
+                            datos['titulo'] or f'Servicio #{pago["id_solicitud"]}',
+                            monto,
+                            ref,
+                            pago['id_solicitud'],
+                            datos['correo_trabajador'],
+                            datos['nombre_trabajador'] or 'Profesional',
+                            base_url,
+                        ),
+                        daemon=True
+                    ).start()
+                    print(f"[PAGO] ✅ Emails de confirmación enviados — solicitud #{pago['id_solicitud']}")
+            except Exception as e_mail:
+                print(f"[PAGO] ⚠️ Error enviando emails: {e_mail}")
 
         conexion.commit()
         cursor.close(); conexion.close()
