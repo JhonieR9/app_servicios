@@ -297,18 +297,24 @@ def actualizar_estado_solicitud(
             sol = cursor_check.fetchone()
             cursor_check.close()
 
-            if sol and sol[0] in ('pendiente', 'aceptada') and sol[1]:
+            if sol and sol[0] in ('pendiente', 'aceptada', 'cotizacion_enviada') and sol[1]:
                 # Tenía trabajador asignado → liberar: volver a pendiente sin trabajador
-                # El cliente no tiene que repetir el proceso, otros trabajadores pueden tomar la solicitud
                 cursor.execute("""
                     UPDATE solicitudes_servicio
-                    SET estado = 'pendiente', id_trabajador = NULL, fecha_aceptacion = NULL
+                    SET estado = 'pendiente', id_trabajador = NULL, fecha_aceptacion = NULL,
+                        cotizacion_horas = NULL, cotizacion_precio = NULL,
+                        cotizacion_nota = NULL, cotizacion_fecha = NULL
                     WHERE id_solicitud = %s
                 """, (id_solicitud,))
                 conexion.commit()
                 return JSONResponse({"mensaje": "Solicitud liberada — otros profesionales pueden tomarla"})
+            elif sol and sol[0] == 'pendiente' and not sol[1]:
+                # Solicitud pendiente sin trabajador asignado — el trabajador solo la ignora
+                # No cancelar, solo informar que ya no la verá
+                conexion.commit()
+                return JSONResponse({"mensaje": "Solicitud ignorada — seguirá disponible para otros profesionales"})
             else:
-                # Sin trabajador asignado (cancelación del cliente) o en proceso → cancelar normal
+                # En proceso o completada → cancelar normal
                 cursor.execute("""
                     UPDATE solicitudes_servicio
                     SET estado = 'cancelada'
