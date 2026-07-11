@@ -845,8 +845,11 @@
                     await fetch('/pago/establecer-precio', { method:'POST', body:fd, credentials:'include' });
                 } catch(e) {}
             }
+
+            const idCliente = parseInt(localStorage.getItem('id_cliente') || 0);
             const fd = new FormData();
             fd.append('id_solicitud', idSol);
+            if (idCliente) fd.append('id_cliente', idCliente);
             const res  = await fetch('/pago/crear', { method:'POST', body:fd, credentials:'include' });
             const data = await res.json();
 

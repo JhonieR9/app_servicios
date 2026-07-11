@@ -78,22 +78,22 @@ async def crear_pago(
         if precio <= 0:
             return JSONResponse({"error": "Esta solicitud no tiene un precio acordado"}, status_code=400)
 
-        if sol['estado'] not in ('aceptada', 'en_proceso', 'cotizacion_enviada'):
+        if sol['estado'] not in ('aceptada', 'en_proceso', 'cotizacion_enviada', 'completada'):
             return JSONResponse(
                 {"error": f"Solo se puede pagar una solicitud aceptada (estado actual: {sol['estado']})"},
                 status_code=400
             )
 
-        # Verificar si ya tiene un pago registrado
+        # Verificar si ya tiene un pago APROBADO (no bloquear si solo está pendiente)
         cursor.execute("""
             SELECT id, estado_wompi FROM pagos_solicitud
-            WHERE id_solicitud = %s AND estado_wompi IN ('APPROVED','PENDING')
+            WHERE id_solicitud = %s AND estado_wompi = 'APPROVED'
             LIMIT 1
         """, (id_solicitud,))
         pago_existente = cursor.fetchone()
         if pago_existente:
             return JSONResponse({
-                "error": "Esta solicitud ya tiene un pago en proceso o aprobado"
+                "error": "Esta solicitud ya tiene un pago aprobado"
             }, status_code=400)
 
         pub_key, _, _, _ = get_wompi_keys()
