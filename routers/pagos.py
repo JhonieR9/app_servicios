@@ -18,13 +18,14 @@ def get_wompi_keys():
     pub  = os.getenv("WOMPI_PUBLIC_KEY",  "pub_test_xxxxx")   # reemplazar con clave real
     priv = os.getenv("WOMPI_PRIVATE_KEY", "priv_test_xxxxx")  # reemplazar con clave real
     evt  = os.getenv("WOMPI_EVENT_KEY",   "")                 # para validar webhooks
+    intg = os.getenv("WOMPI_INTEGRITY_KEY", "")               # para firma de integridad
     is_prod = os.getenv("WOMPI_PRODUCTION", "false").lower() == "true"
     base_url = (
         "https://production.wompi.co/v1"
         if is_prod else
         "https://sandbox.wompi.co/v1"
     )
-    return pub, priv, evt, base_url
+    return pub, priv, evt, base_url, intg
 
 
 # ============================================
@@ -96,11 +97,17 @@ async def crear_pago(
                 "error": "Esta solicitud ya tiene un pago aprobado"
             }, status_code=400)
 
-        pub_key, _, _, _ = get_wompi_keys()
+        pub_key, _, _, _, intg_key = get_wompi_keys()
         base_url_app = os.getenv("APP_URL", "https://web-production-191f4.up.railway.app")
 
         # Referencia única para esta transacción
         referencia = f"TH-{id_solicitud}-{id_cliente}-{int(datetime.now().timestamp())}"
+        monto_cents = int(precio * 100)
+
+        # Calcular firma de integridad (SHA256)
+        import hashlib
+        cadena = f"{referencia}{monto_cents}COP{intg_key}"
+        firma_integridad = hashlib.sha256(cadena.encode()).hexdigest() if intg_key else ""
 
         # Registrar intención de pago en BD
         cursor.execute("""
@@ -113,14 +120,15 @@ async def crear_pago(
         # Datos para el widget de Wompi (frontend)
         return JSONResponse({
             "ok": True,
-            "public_key":   pub_key,
-            "monto_cents":  int(precio * 100),   # Wompi usa centavos
-            "referencia":   referencia,
-            "descripcion":  sol['titulo'] or f"Servicio TalentHub #{id_solicitud}",
-            "correo":       sol.get('correo_cliente') or '',
-            "nombre":       sol.get('nombre_cliente') or '',
-            "redirect_url": f"{base_url_app}/pago/resultado?id_solicitud={id_solicitud}",
-            "precio_cop":   precio
+            "public_key":       pub_key,
+            "monto_cents":      monto_cents,
+            "referencia":       referencia,
+            "firma_integridad": firma_integridad,
+            "descripcion":      sol['titulo'] or f"Servicio TalentHub #{id_solicitud}",
+            "correo":           sol.get('correo_cliente') or '',
+            "nombre":           sol.get('nombre_cliente') or '',
+            "redirect_url":     f"{base_url_app}/pago/resultado?id_solicitud={id_solicitud}",
+            "precio_cop":       precio
         })
 
     except Exception as e:
@@ -146,7 +154,7 @@ async def wompi_webhook(request: Request):
         data = json.loads(body)
 
         # Validar firma del evento (si WOMPI_EVENT_KEY está configurada)
-        _, _, evt_key, _ = get_wompi_keys()
+        _, _, evt_key, _, _ = get_wompi_keys()
         if evt_key:
             firma_recibida  = request.headers.get("x-event-checksum", "")
             firma_calculada = hmac.new(evt_key.encode(), body, hashlib.sha256).hexdigest()

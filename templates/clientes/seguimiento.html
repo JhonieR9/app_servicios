@@ -869,14 +869,15 @@
 
             const baseUrl = window.location.origin;
             const checkout = new WidgetCheckout({
-                currency:    'COP',
+                currency:      'COP',
                 amountInCents: data.monto_cents,
-                reference:   data.referencia,
-                publicKey:   data.public_key,
-                redirectUrl: data.redirect_url,
+                reference:     data.referencia,
+                publicKey:     data.public_key,
+                signature:     { integrity: data.firma_integridad },
+                redirectUrl:   data.redirect_url,
                 customerData: {
-                    email:     data.correo || undefined,
-                    fullName:  data.nombre || undefined,
+                    email:    data.correo || undefined,
+                    fullName: data.nombre || undefined,
                 }
             });
 
