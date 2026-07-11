@@ -748,33 +748,46 @@
     async function guardarDatosTrabajador() {
         const btn = document.getElementById('btnGuardarTrab');
         const msg = document.getElementById('msgGuardarTrab');
-        btn.disabled = true; btn.textContent = 'Guardando...';
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
 
         const fd = new FormData();
         fd.append('id_persona', idTrabajador || localStorage.getItem('id_trabajador'));
-        fd.append('ciudad', ''); // no editable desde aquí
+        fd.append('ciudad', '');
         fd.append('departamento', '');
         fd.append('nacionalidad', '');
         fd.append('telefono', document.getElementById('editTelefonoTrab').value);
         fd.append('correo', document.getElementById('editCorreoTrab').value);
 
+        // También actualizar nombre si hay campo
+        const nombreEl = document.getElementById('editNombreTrab');
+        if (nombreEl && nombreEl.value.trim()) {
+            fd.append('nombre_completo', nombreEl.value.trim());
+        }
+
         try {
-            const res = await fetch('/trabajador/perfil/editar', { method:'POST', body:fd });
+            const res  = await fetch('/trabajador/perfil/editar', { method:'POST', body:fd });
             const data = await res.json();
             if (res.ok) {
-                msg.style.background = 'rgba(99,102,241,.15)'; msg.style.color = '#a5b4fc';
-                msg.textContent = '✅ ' + (data.mensaje || 'Datos actualizados');
+                msg.style.cssText = 'display:block;text-align:center;padding:10px;border-radius:10px;' +
+                    'font-size:0.88rem;font-weight:700;background:rgba(16,185,129,.15);color:#10b981;' +
+                    'border:1px solid rgba(16,185,129,.3);margin-top:8px;';
+                msg.innerHTML = '✅ ¡Datos actualizados correctamente!';
             } else {
-                msg.style.background = 'rgba(239,68,68,.15)'; msg.style.color = '#ef4444';
-                msg.textContent = '❌ ' + (data.error || 'Error');
+                msg.style.cssText = 'display:block;text-align:center;padding:10px;border-radius:10px;' +
+                    'font-size:0.88rem;font-weight:700;background:rgba(239,68,68,.12);color:#ef4444;' +
+                    'border:1px solid rgba(239,68,68,.2);margin-top:8px;';
+                msg.innerHTML = '❌ ' + (data.error || 'No se pudo actualizar');
             }
-            msg.style.display = 'block';
         } catch(e) {
-            msg.style.background = 'rgba(239,68,68,.15)'; msg.style.color = '#ef4444';
-            msg.textContent = '❌ Error de conexión'; msg.style.display = 'block';
+            msg.style.cssText = 'display:block;text-align:center;padding:10px;border-radius:10px;' +
+                'font-size:0.88rem;font-weight:700;background:rgba(239,68,68,.12);color:#ef4444;' +
+                'border:1px solid rgba(239,68,68,.2);margin-top:8px;';
+            msg.innerHTML = '❌ Error de conexión';
         } finally {
-            btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar cambios';
-            setTimeout(() => { msg.style.display = 'none'; }, 4000);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar cambios';
+            setTimeout(() => { msg.style.display = 'none'; }, 5000);
         }
     }
 
