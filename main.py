@@ -304,6 +304,16 @@ def crear_tablas():
         except Exception:
             pass
 
+        # Columnas dispersión en pagos
+        for col, definition in [
+            ('dispersado',       "tinyint(1) DEFAULT 0"),
+            ('fecha_dispersion', "datetime DEFAULT NULL"),
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE pagos_solicitud ADD COLUMN {col} {definition}")
+            except Exception:
+                pass
+
         conn.commit()
         cursor.close()
         conn.close()

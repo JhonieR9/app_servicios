@@ -374,3 +374,105 @@ def _notificar_pago_push(id_trabajador: int, id_solicitud: int, monto: float):
                 except: pass
         except: pass
     threading.Thread(target=_push, daemon=True).start()
+
+
+# ============================================
+# ADMIN — PANEL DE DISPERSIONES
+# ============================================
+
+@router.get("/admin/dispersiones", response_class=HTMLResponse)
+def admin_dispersiones(request: Request):
+    """Panel admin para gestionar pagos pendientes de dispersar a trabajadores."""
+    return templates.TemplateResponse("trabajadores/dispersiones.html", {"request": request})
+
+
+@router.get("/admin/dispersiones-api")
+def api_dispersiones(tab: str = "pendientes"):
+    """API: lista pagos aprobados pendientes o ya dispersados."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+
+        # Stats
+        cursor.execute("SELECT COUNT(*) as total FROM pagos_solicitud WHERE estado_wompi='APPROVED' AND (dispersado=0 OR dispersado IS NULL)")
+        total_pend = cursor.fetchone()['total']
+        cursor.execute("SELECT COALESCE(SUM(monto),0) as total FROM pagos_solicitud WHERE estado_wompi='APPROVED' AND (dispersado=0 OR dispersado IS NULL)")
+        monto_pend = float(cursor.fetchone()['total'])
+        cursor.execute("SELECT COUNT(*) as total FROM pagos_solicitud WHERE estado_wompi='APPROVED' AND dispersado=1")
+        total_disp = cursor.fetchone()['total']
+
+        # Lista según tab
+        if tab == 'pagados':
+            filtro = "AND ps.dispersado = 1"
+            orden  = "ps.fecha_dispersion DESC"
+        else:
+            filtro = "AND (ps.dispersado = 0 OR ps.dispersado IS NULL)"
+            orden  = "ps.fecha_creacion DESC"
+
+        cursor.execute(f"""
+            SELECT
+                ps.id AS id_pago,
+                ps.monto,
+                ps.estado_wompi,
+                ps.dispersado,
+                ps.fecha_dispersion,
+                ps.fecha_creacion,
+                s.titulo,
+                s.id_trabajador,
+                p.nombre_completo AS nombre_trabajador,
+                tp.telefono AS telefono_trabajador,
+                dp.medio_pago, dp.medio_pago_principal, dp.banco, dp.numero_cuenta,
+                c.nombre_completo AS nombre_cliente
+            FROM pagos_solicitud ps
+            INNER JOIN solicitudes_servicio s ON ps.id_solicitud = s.id_solicitud
+            LEFT JOIN personas p   ON s.id_trabajador = p.id_persona
+            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+            LEFT JOIN detalles_persona dp ON p.id_persona = dp.id_persona
+            LEFT JOIN clientes c   ON ps.id_cliente = c.id_cliente
+            WHERE ps.estado_wompi = 'APPROVED' {filtro}
+            ORDER BY {orden}
+            LIMIT 50
+        """)
+        dispersiones = cursor.fetchall()
+
+        from datetime import timedelta
+        for d in dispersiones:
+            for k, v in d.items():
+                if v is None:
+                    d[k] = ''
+                elif hasattr(v, 'isoformat'):
+                    d[k] = (v - timedelta(hours=5)).strftime('%d/%m/%Y %H:%M')
+                elif hasattr(v, '__float__'):
+                    d[k] = float(v)
+
+        return JSONResponse({
+            "dispersiones":      dispersiones,
+            "total_pendientes":  total_pend,
+            "monto_pendiente":   monto_pend,
+            "total_dispersados": total_disp
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e), "dispersiones": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/admin/marcar-dispersado")
+def marcar_dispersado(id_pago: int = Form(...)):
+    """Marca un pago como dispersado al trabajador."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            UPDATE pagos_solicitud
+            SET dispersado = 1, fecha_dispersion = NOW()
+            WHERE id = %s AND estado_wompi = 'APPROVED'
+        """, (id_pago,))
+        conexion.commit()
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()

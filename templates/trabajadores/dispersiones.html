@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispersiones - TalentHub Admin</title>
+    <script src="/static/js/confirm.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        body { background:#f8fafc; font-family:'Segoe UI',sans-serif; }
+        .main { max-width:900px; margin:0 auto; padding:24px 16px; }
+        .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+        .header h2 { font-size:1.4rem; font-weight:800; color:#0f172a; margin:0; }
+        .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
+        .stat-card { background:white; border-radius:14px; padding:18px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+        .stat-val { font-size:1.8rem; font-weight:800; color:#4f46e5; }
+        .stat-label { font-size:0.75rem; color:#64748b; margin-top:4px; }
+        .pago-card {
+            background:white; border-radius:16px; padding:18px;
+            margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);
+            border-left:4px solid #f59e0b;
+        }
+        .pago-card.pagado { border-left-color:#10b981; opacity:0.7; }
+        .pago-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+        .pago-monto { font-size:1.3rem; font-weight:800; color:#0f172a; }
+        .pago-badge { padding:4px 10px; border-radius:99px; font-size:0.72rem; font-weight:700; }
+        .badge-pendiente { background:#fef3c7; color:#92400e; }
+        .badge-pagado { background:#dcfce7; color:#065f46; }
+        .pago-info { font-size:0.82rem; color:#64748b; margin-bottom:4px; }
+        .pago-info strong { color:#374151; }
+        .pago-cuenta { background:#f1f5f9; border-radius:10px; padding:10px 14px; margin:10px 0; font-size:0.82rem; }
+        .btn-dispersar {
+            padding:10px 20px; background:linear-gradient(135deg,#10b981,#059669);
+            color:white; border:none; border-radius:10px; font-weight:700;
+            font-size:0.85rem; cursor:pointer; transition:all .2s;
+        }
+        .btn-dispersar:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(16,185,129,.3); }
+        .empty { text-align:center; padding:40px; color:#94a3b8; }
+        .tabs { display:flex; gap:8px; margin-bottom:20px; }
+        .tab { padding:10px 18px; border-radius:10px; border:none; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all .2s; }
+        .tab.active { background:#4f46e5; color:white; }
+        .tab:not(.active) { background:#e2e8f0; color:#64748b; }
+    </style>
+</head>
+<body>
+{% include 'trabajadores/_sidebar.html' %}
+<div class="main">
+    <div class="header">
+        <h2>💰 Dispersiones a Trabajadores</h2>
+        <button onclick="cargarDispersiones()" class="btn btn-sm btn-outline-primary">🔄 Actualizar</button>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-val" id="statPendientes">-</div>
+            <div class="stat-label">Pendientes de pago</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val" id="statMonto">-</div>
+            <div class="stat-label">Monto por dispersar</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val" id="statDispersados">-</div>
+            <div class="stat-label">Ya dispersados</div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" id="tabPendientes" onclick="cambiarTab('pendientes')">⏳ Pendientes</button>
+        <button class="tab" id="tabPagados" onclick="cambiarTab('pagados')">✅ Ya pagados</button>
+    </div>
+
+    <div id="listaDispersiones">
+        <div class="empty">Cargando...</div>
+    </div>
+</div>
+
+<script>
+    let tabActual = 'pendientes';
+
+    async function cargarDispersiones() {
+        try {
+            const res = await fetch('/pago/admin/dispersiones-api?tab=' + tabActual);
+            const data = await res.json();
+            const lista = data.dispersiones || [];
+
+            // Stats
+            document.getElementById('statPendientes').textContent = data.total_pendientes || 0;
+            document.getElementById('statMonto').textContent = '$' + (data.monto_pendiente || 0).toLocaleString('es-CO');
+            document.getElementById('statDispersados').textContent = data.total_dispersados || 0;
+
+            const container = document.getElementById('listaDispersiones');
+            if (lista.length === 0) {
+                container.innerHTML = `<div class="empty">
+                    <div style="font-size:2.5rem;margin-bottom:12px">${tabActual === 'pendientes' ? '✅' : '📭'}</div>
+                    <div>${tabActual === 'pendientes' ? 'No hay pagos pendientes de dispersar' : 'No hay dispersiones realizadas'}</div>
+                </div>`;
+                return;
+            }
+
+            container.innerHTML = lista.map(p => {
+                const esPagado = p.dispersado == 1;
+                const cuenta = p.medio_pago_principal || p.medio_pago || 'No registrado';
+                return `
+                <div class="pago-card ${esPagado ? 'pagado' : ''}">
+                    <div class="pago-header">
+                        <div class="pago-monto">$${Number(p.monto).toLocaleString('es-CO')}</div>
+                        <span class="pago-badge ${esPagado ? 'badge-pagado' : 'badge-pendiente'}">
+                            ${esPagado ? '✅ Dispersado' : '⏳ Pendiente'}
+                        </span>
+                    </div>
+                    <div class="pago-info">👷 <strong>${p.nombre_trabajador || 'Trabajador'}</strong></div>
+                    <div class="pago-info">👤 Cliente: ${p.nombre_cliente || 'N/A'}</div>
+                    <div class="pago-info">🔧 Servicio: ${p.titulo || 'Servicio'} · ${p.fecha || ''}</div>
+                    <div class="pago-cuenta">
+                        💳 <strong>Pagar a:</strong> ${cuenta}
+                        ${p.numero_cuenta ? ` · Cuenta: ${p.numero_cuenta}` : ''}
+                        ${p.banco ? ` · ${p.banco}` : ''}
+                        ${p.telefono_trabajador ? ` · Tel: ${p.telefono_trabajador}` : ''}
+                    </div>
+                    ${!esPagado ? `
+                    <button class="btn-dispersar" onclick="marcarDispersado(${p.id_pago})">
+                        ✅ Marcar como pagado al trabajador
+                    </button>` : `
+                    <div style="font-size:0.75rem;color:#065f46">Dispersado el ${p.fecha_dispersion || ''}</div>`}
+                </div>`;
+            }).join('');
+        } catch(e) {
+            document.getElementById('listaDispersiones').innerHTML = '<div class="empty">❌ Error cargando</div>';
+        }
+    }
+
+    function cambiarTab(tab) {
+        tabActual = tab;
+        document.getElementById('tabPendientes').classList.toggle('active', tab === 'pendientes');
+        document.getElementById('tabPagados').classList.toggle('active', tab === 'pagados');
+        cargarDispersiones();
+    }
+
+    async function marcarDispersado(idPago) {
+        const ok = await thConfirm({
+            titulo: '¿Confirmar dispersión?',
+            mensaje: '¿Ya le transferiste el dinero al trabajador?',
+            btnOk: '✅ Sí, ya le pagué',
+            tipo: 'success'
+        });
+        if (!ok) return;
+
+        try {
+            const fd = new FormData();
+            fd.append('id_pago', idPago);
+            const res = await fetch('/pago/admin/marcar-dispersado', { method:'POST', body:fd });
+            if (res.ok) cargarDispersiones();
+        } catch(e) {}
+    }
+
+    cargarDispersiones();
+</script>
+</body>
+</html>
