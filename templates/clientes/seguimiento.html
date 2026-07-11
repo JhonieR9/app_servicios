@@ -514,7 +514,7 @@
 
             // ── BOTÓN DE PAGO (solo después de completar el servicio) ──
             const precioPago = parseFloat(data.precio_final) || 0;
-            if (estado === 'completada' && precioPago > 0) {
+            if (estado === 'completada') {
                 let pagoDiv = document.getElementById('pagoDiv');
                 if (!pagoDiv) {
                     pagoDiv = document.createElement('div');
