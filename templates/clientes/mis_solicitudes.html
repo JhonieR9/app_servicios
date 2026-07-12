@@ -175,12 +175,15 @@
 
         /* CARD HISTORIAL */
         .card-hist {
-            background:white; border-radius:16px;
-            padding:16px 18px; margin-bottom:10px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.06);
+            background:white; border-radius:18px;
+            padding:18px 20px; margin-bottom:12px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.06);
             display:flex; align-items:center; gap:14px;
             animation:cardIn 0.3s ease;
+            border:1px solid #f1f5f9;
+            transition:transform .15s, box-shadow .15s;
         }
+        .card-hist:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.1); }
         .hist-emoji { font-size:1.6rem;flex-shrink:0; }
         .hist-info { flex:1;min-width:0; }
         .hist-titulo {
@@ -501,32 +504,41 @@
         const emoji = CAT_EMOJI[s.nombre_categoria] || '🔧';
         const estado = s.estado || 'completada';
         const trabajadorInfo = s.nombre_trabajador
-            ? `<div style="font-size:0.72rem;color:#64748b;margin-top:2px">
-                   👷 ${s.nombre_trabajador}
+            ? `<div style="font-size:0.75rem;color:#64748b;margin-top:4px;display:flex;align-items:center;gap:6px">
+                   👷 <strong style="color:#374151">${s.nombre_trabajador}</strong>
                    ${s.id_trabajador
                        ? `<a href="/trabajador/perfil/${s.id_trabajador}"
-                             style="margin-left:6px;color:#667eea;font-weight:700;text-decoration:none;font-size:0.7rem">
+                             style="color:#667eea;font-weight:700;text-decoration:none;font-size:0.72rem">
                               Ver perfil →
                           </a>`
                        : ''}
                </div>`
             : '';
+        const precio = parseFloat(s.precio_final || 0);
+        const precioHtml = precio > 0
+            ? `<div style="font-size:0.82rem;font-weight:800;color:#059669;margin-top:4px">💰 $${precio.toLocaleString('es-CO')}</div>`
+            : '';
         return `
         <div class="card-hist">
-            <div class="hist-emoji">${emoji}</div>
+            <div style="width:48px;height:48px;border-radius:14px;
+                        background:${estado === 'completada' ? 'linear-gradient(135deg,#dcfce7,#bbf7d0)' : 'linear-gradient(135deg,#fee2e2,#fecaca)'};
+                        display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">
+                ${emoji}
+            </div>
             <div class="hist-info">
                 <div class="hist-titulo">${s.titulo || s.nombre_categoria || 'Solicitud'}</div>
-                <div class="hist-meta">${s.ciudad || ''} ${s.departamento || ''} · ${s.fecha_solicitud || ''}</div>
+                <div class="hist-meta">📍 ${s.ciudad || ''} · 📅 ${s.fecha_solicitud || ''}</div>
                 ${trabajadorInfo}
+                ${precioHtml}
             </div>
             <div class="hist-right">
-                <span class="hist-badge ${estado}">${estado}</span>
+                <span class="hist-badge ${estado}">${estado === 'completada' ? '✅ Listo' : '❌ Cancelado'}</span>
                 ${estado === 'completada'
                     ? `<button class="btn-repetir" onclick="repetir('${encodeURIComponent(s.nombre_categoria||'')}')">↺ Repetir</button>`
                     : ''}
                 ${estado === 'completada' && s.id_trabajador
                     ? `<button class="btn-repetir" style="background:linear-gradient(135deg,#f59e0b,#d97706)"
-                               onclick="abrirCalificar(${s.id_solicitud},${s.id_trabajador},'${s.nombre_trabajador.replace(/'/g,"\\'")}')">
+                               onclick="abrirCalificar(${s.id_solicitud},${s.id_trabajador},'${(s.nombre_trabajador||'').replace(/'/g,"\\'")}')">
                            ⭐ Calificar
                        </button>`
                     : ''}
