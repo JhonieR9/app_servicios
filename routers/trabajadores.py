@@ -324,21 +324,7 @@ def actualizar_estado_solicitud(
                 """, (id_solicitud,))
 
         elif estado == 'en_proceso':
-            # Registrar fecha de inicio del servicio — requiere código de inicio
-            # Obtener código del form (si lo envía)
-            form_data = await request.form() if hasattr(request, 'form') else {}
-            # El código se envía como campo adicional en el form
-            cursor_cod = conexion.cursor(dictionary=True)
-            cursor_cod.execute("""
-                SELECT codigo_inicio FROM solicitudes_servicio
-                WHERE id_solicitud = %s AND estado = 'aceptada'
-            """, (id_solicitud,))
-            sol_cod = cursor_cod.fetchone()
-            cursor_cod.close()
-
-            if not sol_cod:
-                return JSONResponse({"error": "La solicitud no está en estado aceptada"}, status_code=400)
-
+            # Registrar fecha de inicio del servicio
             cursor.execute("""
                 UPDATE solicitudes_servicio
                 SET estado = %s, fecha_inicio = NOW()
