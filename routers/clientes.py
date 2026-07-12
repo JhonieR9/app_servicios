@@ -1484,15 +1484,17 @@ def responder_cotizacion(
 
         if respuesta == 'aceptar':
             import random
-            codigo_conf = ''.join([str(random.randint(0, 9)) for _ in range(4)])
+            codigo_conf   = ''.join([str(random.randint(0, 9)) for _ in range(4)])
+            codigo_inicio = ''.join([str(random.randint(0, 9)) for _ in range(4)])
             cursor.execute("""
                 UPDATE solicitudes_servicio
                 SET estado = 'aceptada',
                     precio_final = cotizacion_precio,
                     fecha_aceptacion = NOW(),
-                    codigo_confirmacion = %s
+                    codigo_confirmacion = %s,
+                    codigo_inicio = %s
                 WHERE id_solicitud = %s
-            """, (codigo_conf, id_solicitud))
+            """, (codigo_conf, codigo_inicio, id_solicitud))
             conexion.commit()
             return JSONResponse({
                 "ok": True,
