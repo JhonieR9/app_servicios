@@ -147,6 +147,7 @@ def enviar_cotizacion(
     id_solicitud:  int   = Form(...),
     id_trabajador: int   = Form(...),
     horas_estimadas: float = Form(...),
+    materiales:    float = Form(0),
     nota:          str   = Form(None)
 ):
     """El trabajador envía una cotización con horas estimadas. El precio se calcula automáticamente."""
@@ -178,7 +179,7 @@ def enviar_cotizacion(
             row = cursor.fetchone()
             valor_hora = float(row['valor_hora']) if row and row['valor_hora'] else 50000
 
-        precio_cotizado = round(horas_estimadas * valor_hora, 2)
+        precio_cotizado = round(horas_estimadas * valor_hora + materiales, 2)
 
         # Guardar cotización y asignar trabajador (estado: cotizacion_enviada)
         cursor.execute("""

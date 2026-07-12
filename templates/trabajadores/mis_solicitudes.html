@@ -609,6 +609,14 @@
                     Calculando...
                 </div>
 
+                <label style="font-size:0.78rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">🧱 Costo de materiales (opcional)</label>
+                <input id="cotMateriales" type="number" min="0" step="1000" value="0" placeholder="Ej: 45000"
+                    style="width:100%;padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:1rem;font-weight:700;outline:none;margin-bottom:4px;"
+                    oninput="calcularPrecio()"
+                    onfocus="this.style.borderColor='#f59e0b'"
+                    onblur="this.style.borderColor='#e2e8f0'">
+                <small style="font-size:0.72rem;color:#94a3b8;display:block;margin-bottom:14px">Si no aplica, déjalo en 0</small>
+
                 <label style="font-size:0.78rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">📝 Nota para el cliente (opcional)</label>
                 <textarea id="cotNota" rows="2" placeholder="Ej: Los materiales corren por cuenta del cliente..."
                     style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.85rem;outline:none;resize:none;margin-bottom:16px;font-family:inherit;"
@@ -645,14 +653,21 @@
         if (!modal) return;
         const horas = parseFloat(document.getElementById('cotHoras').value) || 0;
         const tarifa = modal._tarifa || 50000;
-        const total = horas * tarifa;
-        document.getElementById('cotPrecioPreview').innerHTML =
-            `${horas}h × $${tarifa.toLocaleString('es-CO')}/h = <span style="font-size:1.1rem">$${total.toLocaleString('es-CO')}</span> (solo mano de obra)`;
+        const materiales = parseFloat(document.getElementById('cotMateriales').value) || 0;
+        const manoObra = horas * tarifa;
+        const total = manoObra + materiales;
+        let html = `${horas}h × $${tarifa.toLocaleString('es-CO')}/h = <strong>$${manoObra.toLocaleString('es-CO')}</strong> (mano de obra)`;
+        if (materiales > 0) {
+            html += `<br>+ $${materiales.toLocaleString('es-CO')} (materiales)`;
+            html += `<br><span style="font-size:1.1rem">Total: $${total.toLocaleString('es-CO')}</span>`;
+        }
+        document.getElementById('cotPrecioPreview').innerHTML = html;
     }
 
     async function enviarCotizacion(idSolicitud) {
         const horas = parseFloat(document.getElementById('cotHoras').value);
         const nota  = document.getElementById('cotNota').value.trim();
+        const materiales = parseFloat(document.getElementById('cotMateriales').value) || 0;
 
         if (!horas || horas <= 0) {
             mostrarToast('❌ Ingresa las horas estimadas', true);
@@ -663,6 +678,7 @@
         fd.append('id_solicitud',   idSolicitud);
         fd.append('id_trabajador',  idTrabajador);
         fd.append('horas_estimadas', horas);
+        fd.append('materiales', materiales);
         if (nota) fd.append('nota', nota);
 
         try {
