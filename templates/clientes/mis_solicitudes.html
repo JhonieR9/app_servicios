@@ -447,6 +447,37 @@
             </div>
             ${renderProgreso(estado)}
             ${trabajadorHtml}
+
+            ${(estado === 'aceptada' || estado === 'en_proceso') && s.codigo_confirmacion ? `
+            <div style="margin:0 18px 12px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);
+                        border:2px solid #86efac;border-radius:14px;padding:14px;text-align:center">
+                <div style="font-size:0.7rem;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+                    🔐 Tu código de confirmación
+                </div>
+                <div style="font-size:2rem;font-weight:900;letter-spacing:10px;color:#059669">
+                    ${s.codigo_confirmacion}
+                </div>
+                <div style="font-size:0.72rem;color:#166534;margin-top:6px">
+                    Dale este código al profesional cuando termine
+                </div>
+            </div>` : ''}
+
+            ${estado === 'completada' ? `
+            <div style="margin:0 18px 12px;background:#fffbeb;border:2px solid #fde68a;border-radius:14px;padding:14px;text-align:center">
+                <div style="font-size:0.78rem;font-weight:700;color:#92400e;margin-bottom:6px">💰 Pagar servicio</div>
+                ${parseFloat(s.precio_final || 0) > 0
+                    ? `<div style="font-size:1.3rem;font-weight:800;color:#92400e;margin-bottom:8px">$${Number(s.precio_final).toLocaleString('es-CO')}</div>`
+                    : `<input type="number" id="monto-${s.id_solicitud}" min="1000" step="1000" placeholder="Monto acordado"
+                         style="width:80%;padding:8px 12px;border:2px solid #fde68a;border-radius:10px;text-align:center;font-weight:700;margin-bottom:8px">`
+                }
+                <button onclick="pagarDesdeListado(${s.id_solicitud})"
+                    style="width:100%;padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);
+                           color:white;border:none;border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer">
+                    💳 Pagar con Wompi
+                </button>
+                <div style="font-size:0.68rem;color:#94a3b8;margin-top:6px">Nequi · Daviplata · Tarjeta · PSE</div>
+            </div>` : ''}
+
             <div class="card-activa-btns">
                 <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=cliente&id_usuario=${idCliente}"
                    class="btn-seguimiento" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)">
@@ -631,8 +662,7 @@
 
     async function completarServicio(idSolicitud) {
         const ok = await thConfirm({ titulo:'¿Servicio completado?', mensaje:'Confirma que el trabajo fue realizado correctamente.', btnOk:'✅ Confirmar', tipo:'success' });
-        if (!ok) return;
-        // Hora local del dispositivo del cliente
+        if (!ok) return;        // Hora local del dispositivo del cliente
         const ahora = new Date();
         const fechaLocal = ahora.getFullYear() + '-' +
             String(ahora.getMonth()+1).padStart(2,'0') + '-' +
@@ -655,6 +685,62 @@
 
     function repetir(categoria) {
         window.location.href = '/cliente/solicitar_servicio?categoria=' + categoria;
+    }
+
+    // ── PAGAR DESDE LISTADO ──────────────────────────────────
+    async function pagarDesdeListado(idSolicitud) {
+        // Si hay input de monto, guardarlo primero
+        const inputMonto = document.getElementById('monto-' + idSolicitud);
+        if (inputMonto) {
+            const monto = parseFloat(inputMonto.value);
+            if (!monto || monto < 1000) {
+                mostrarToast('❌ Ingresa un monto válido (mínimo $1.000)');
+                inputMonto.focus();
+                return;
+            }
+            try {
+                const fd = new FormData();
+                fd.append('id_solicitud', idSolicitud);
+                fd.append('precio_final', monto);
+                await fetch('/pago/establecer-precio', { method:'POST', body:fd, credentials:'include' });
+            } catch(e) {}
+        }
+
+        // Crear pago
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('id_cliente', idCliente);
+        try {
+            const res  = await fetch('/pago/crear', { method:'POST', body:fd, credentials:'include' });
+            const data = await res.json();
+            if (!res.ok || data.error) {
+                mostrarToast('❌ ' + (data.error || 'Error al iniciar pago'));
+                return;
+            }
+            // Cargar widget Wompi
+            if (!document.getElementById('wompi-script')) {
+                const script = document.createElement('script');
+                script.id = 'wompi-script';
+                script.src = 'https://checkout.wompi.co/widget.js';
+                document.head.appendChild(script);
+                await new Promise(r => script.onload = r);
+            }
+            const checkout = new WidgetCheckout({
+                currency: 'COP',
+                amountInCents: data.monto_cents,
+                reference: data.referencia,
+                publicKey: data.public_key,
+                signature: { integrity: data.firma_integridad },
+                redirectUrl: data.redirect_url,
+                customerData: { email: data.correo || undefined, fullName: data.nombre || undefined }
+            });
+            checkout.open(result => {
+                const { transaction } = result;
+                window.location.href = `/pago/resultado?id_solicitud=${idSolicitud}&transaction_status=${transaction ? transaction.status : 'UNKNOWN'}`;
+            });
+        } catch(e) {
+            mostrarToast('❌ Error: ' + e.message);
+        }
     }
 
     // ── Tags por puntuación ──────────────────────────────────────────

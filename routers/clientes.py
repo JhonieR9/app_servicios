@@ -281,7 +281,7 @@ def listar_mis_solicitudes_cliente(request: Request, id_cliente: int = None):
             SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
                    s.ciudad, s.departamento, s.direccion_servicio,
                    s.fecha_solicitud, s.fecha_aceptacion, s.fecha_finalizacion,
-                   s.id_trabajador,
+                   s.id_trabajador, s.codigo_confirmacion, s.precio_final,
                    s.cotizacion_horas, s.cotizacion_precio, s.cotizacion_nota,
                    cat.nombre_categoria,
                    p.nombre_completo  AS nombre_trabajador,
