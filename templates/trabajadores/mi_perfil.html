@@ -148,9 +148,40 @@
 
             ${serviciosHtml ? `
             <div class="info-card">
-                <h3>Servicios</h3>
+                <h3>🔧 Mis Servicios</h3>
                 <div style="padding:4px 0">${serviciosHtml}</div>
             </div>` : ''}
+
+            <!-- Sección Especialidades -->
+            <div class="info-card" id="seccionEspecialidades">
+                <h3>⭐ Mis Especialidades</h3>
+                <div id="listaEspecialidades" style="margin-bottom:12px">Cargando...</div>
+                <button onclick="abrirModalEspecialidad()"
+                    style="width:100%;padding:12px;background:linear-gradient(135deg,#f59e0b,#d97706);
+                           color:white;border:none;border-radius:12px;font-weight:700;font-size:0.88rem;
+                           cursor:pointer">
+                    + Agregar especialidad
+                </button>
+            </div>
+
+            <!-- Agregar nuevo servicio -->
+            <div class="info-card">
+                <h3>➕ Agregar Servicio</h3>
+                <select id="nuevaCategoria" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;font-size:0.88rem">
+                    <option value="">Seleccionar categoría...</option>
+                </select>
+                <input id="nuevaDescripcion" placeholder="Descripción del servicio" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;font-size:0.88rem">
+                <div style="display:flex;gap:8px;margin-bottom:8px">
+                    <input id="nuevaTarifa" type="number" placeholder="Tarifa/hora" min="5000" step="1000" style="flex:1;padding:10px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.88rem">
+                    <input id="nuevaExp" type="number" placeholder="Años exp." min="0" max="50" step="0.5" style="width:100px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.88rem">
+                </div>
+                <button onclick="agregarServicio()"
+                    style="width:100%;padding:12px;background:linear-gradient(135deg,#10b981,#059669);
+                           color:white;border:none;border-radius:12px;font-weight:700;font-size:0.88rem;
+                           cursor:pointer">
+                    ✅ Agregar servicio
+                </button>
+            </div>
 
             <button onclick="guardarPerfil()" id="btnGuardar"
                 style="width:100%;padding:15px;background:linear-gradient(135deg,#1e3a8a,#2563eb);
@@ -194,7 +225,6 @@
     }
 
     function mostrarToastPerfil(msg, ok) {
-        // Eliminar toast anterior si existe
         const viejo = document.getElementById('toastPerfil');
         if (viejo) viejo.remove();
 
@@ -224,7 +254,168 @@
         }, 3500);
     }
 
+    // ── ESPECIALIDADES ──────────────────────────────────────
+    async function cargarEspecialidades() {
+        try {
+            const res = await fetch('/trabajador/especialidades/mis?id_persona=' + idTrabajador);
+            const data = await res.json();
+            const lista = data.especialidades || [];
+            const el = document.getElementById('listaEspecialidades');
+            if (!el) return;
+            if (lista.length === 0) {
+                el.innerHTML = '<div style="color:#94a3b8;font-size:0.82rem;text-align:center;padding:10px">Aún no has agregado especialidades</div>';
+                return;
+            }
+            el.innerHTML = lista.map(e =>
+                `<div style="display:inline-flex;align-items:center;gap:6px;background:#f0f4ff;border:1px solid #c7d2fe;
+                             border-radius:99px;padding:6px 14px;margin:3px;font-size:0.8rem;font-weight:600;color:#4f46e5">
+                    ${e.especialidad}
+                    <button onclick="eliminarEspecialidad(${e.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.9rem;padding:0 2px">✕</button>
+                </div>`
+            ).join('');
+        } catch(e) {}
+    }
+
+    async function eliminarEspecialidad(id) {
+        const fd = new FormData();
+        fd.append('id', id);
+        await fetch('/trabajador/especialidades/eliminar', { method:'POST', body:fd });
+        cargarEspecialidades();
+    }
+
+    async function abrirModalEspecialidad() {
+        // Obtener categorías del trabajador
+        const resSrv = await fetch('/trabajador/perfil_completo?id=' + idTrabajador);
+        const dataSrv = await resSrv.json();
+        const cats = (dataSrv.servicios || []).map(s => s.categoria);
+
+        if (cats.length === 0) {
+            mostrarToastPerfil('❌ Primero agrega un servicio', false);
+            return;
+        }
+
+        const viejo = document.getElementById('modalEsp');
+        if (viejo) viejo.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'modalEsp';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;';
+        modal.innerHTML = `
+            <div style="background:white;border-radius:20px;padding:24px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto">
+                <h3 style="margin:0 0 16px;font-size:1.1rem">⭐ Agregar Especialidades</h3>
+                <label style="font-size:0.78rem;font-weight:700;color:#374151;display:block;margin-bottom:6px">Categoría:</label>
+                <select id="espCategoria" onchange="cargarChipsEsp()"
+                    style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:14px;font-size:0.88rem">
+                    ${cats.map(c => `<option value="${c}">${c}</option>`).join('')}
+                </select>
+                <div id="chipsEsp" style="margin-bottom:14px">Cargando...</div>
+                <div style="display:flex;gap:10px">
+                    <button onclick="guardarEspecialidades()"
+                        style="flex:1;padding:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer">
+                        ✅ Guardar
+                    </button>
+                    <button onclick="document.getElementById('modalEsp').remove()"
+                        style="padding:12px 18px;background:#f1f5f9;border:none;border-radius:12px;color:#64748b;font-weight:600;cursor:pointer">
+                        Cancelar
+                    </button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+        cargarChipsEsp();
+    }
+
+    async function cargarChipsEsp() {
+        const cat = document.getElementById('espCategoria').value;
+        const res = await fetch('/trabajador/especialidades/catalogo?categoria=' + encodeURIComponent(cat));
+        const data = await res.json();
+        const lista = data.especialidades || [];
+
+        // Obtener ya seleccionadas
+        const resMis = await fetch('/trabajador/especialidades/mis?id_persona=' + idTrabajador);
+        const dataMis = await resMis.json();
+        const yaSeleccionadas = (dataMis.especialidades || []).filter(e => e.categoria === cat).map(e => e.especialidad);
+
+        const el = document.getElementById('chipsEsp');
+        if (lista.length === 0) {
+            el.innerHTML = '<div style="color:#94a3b8;font-size:0.82rem">No hay especialidades predefinidas para esta categoría</div>';
+            return;
+        }
+        el.innerHTML = lista.map(esp => {
+            const sel = yaSeleccionadas.includes(esp);
+            return `<label style="display:inline-flex;align-items:center;gap:6px;background:${sel?'#ede9fe':'#f8fafc'};
+                           border:1px solid ${sel?'#7c3aed':'#e2e8f0'};border-radius:99px;padding:8px 14px;margin:3px;
+                           cursor:pointer;font-size:0.82rem;font-weight:600;color:${sel?'#4f46e5':'#374151'};transition:all .15s">
+                <input type="checkbox" class="espCheck" value="${esp}" ${sel?'checked':''} style="display:none">
+                ${esp}
+            </label>`;
+        }).join('');
+    }
+
+    async function guardarEspecialidades() {
+        const cat = document.getElementById('espCategoria').value;
+        const checks = document.querySelectorAll('.espCheck:checked');
+        const seleccionadas = Array.from(checks).map(c => c.value);
+
+        const fd = new FormData();
+        fd.append('id_persona', idTrabajador);
+        fd.append('categoria', cat);
+        fd.append('especialidades', JSON.stringify(seleccionadas));
+        const res = await fetch('/trabajador/especialidades/guardar', { method:'POST', body:fd });
+        const data = await res.json();
+        if (data.ok) {
+            document.getElementById('modalEsp').remove();
+            mostrarToastPerfil(data.mensaje, true);
+            cargarEspecialidades();
+        } else {
+            mostrarToastPerfil('❌ ' + (data.error || 'Error'), false);
+        }
+    }
+
+    // ── AGREGAR SERVICIO ────────────────────────────────────
+    async function agregarServicio() {
+        const cat  = document.getElementById('nuevaCategoria').value;
+        const desc = document.getElementById('nuevaDescripcion').value.trim();
+        const tar  = parseFloat(document.getElementById('nuevaTarifa').value) || 0;
+        const exp  = parseFloat(document.getElementById('nuevaExp').value) || 0;
+
+        if (!cat) { mostrarToastPerfil('❌ Selecciona una categoría', false); return; }
+        if (!desc) { mostrarToastPerfil('❌ Ingresa una descripción', false); return; }
+
+        const fd = new FormData();
+        fd.append('id_persona', idTrabajador);
+        fd.append('categoria', cat);
+        fd.append('descripcion', desc);
+        fd.append('valor_hora', tar);
+        fd.append('experiencia', exp);
+        const res = await fetch('/trabajador/servicios/agregar', { method:'POST', body:fd });
+        const data = await res.json();
+        if (data.ok) {
+            mostrarToastPerfil(data.mensaje, true);
+            cargarPerfil(); // recargar todo
+        } else {
+            mostrarToastPerfil('❌ ' + (data.error || 'Error'), false);
+        }
+    }
+
+    // Cargar categorías en el select de agregar servicio
+    async function cargarCategorias() {
+        try {
+            const res = await fetch('/cliente/categorias');
+            const data = await res.json();
+            const sel = document.getElementById('nuevaCategoria');
+            if (!sel) return;
+            (data.categorias || []).forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.nombre_categoria;
+                opt.textContent = c.nombre_categoria;
+                sel.appendChild(opt);
+            });
+        } catch(e) {}
+    }
+
     cargarPerfil();
+    setTimeout(() => { cargarEspecialidades(); cargarCategorias(); }, 500);
 </script>
 </body>
 </html>
