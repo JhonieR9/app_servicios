@@ -314,6 +314,20 @@ def crear_tablas():
             except Exception:
                 pass
 
+        # Tabla especialidades del trabajador
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `especialidades_trabajador` (
+              `id`              int NOT NULL AUTO_INCREMENT,
+              `id_persona`      int NOT NULL,
+              `categoria`       varchar(100) NOT NULL,
+              `especialidad`    varchar(200) NOT NULL,
+              `fecha_agregada`  datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              KEY `idx_esp_persona` (`id_persona`),
+              KEY `idx_esp_categoria` (`categoria`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
         conn.commit()
         cursor.close()
         conn.close()

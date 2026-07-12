@@ -442,6 +442,164 @@ def editar_perfil_trabajador(
         if conexion and conexion.is_connected():
             conexion.close()
 
+# ============================================
+# ESPECIALIDADES DEL TRABAJADOR
+# ============================================
+
+# Especialidades predefinidas por categoría
+ESPECIALIDADES_POR_CATEGORIA = {
+    "Plomería": ["Instalación de tubería", "Reparación de filtraciones", "Destape de cañerías", "Instalación de calentadores", "Grifería y llaves", "Tanques y motobombas"],
+    "Electricidad": ["Cableado domiciliario", "Instalación de luminarias", "Reparación de cortocircuitos", "Tableros eléctricos", "Tomas y apagadores", "Instalación de ventiladores"],
+    "Limpieza": ["Aseo general", "Limpieza profunda", "Lavado de muebles", "Limpieza de vidrios", "Desinfección", "Limpieza post-obra"],
+    "Carpintería": ["Muebles a medida", "Reparación de puertas", "Closets y cocinas", "Pisos en madera", "Marcos y molduras", "Restauración de muebles"],
+    "Pintura": ["Pintura interior", "Pintura exterior", "Estuco y textura", "Pintura epóxica", "Impermeabilizante", "Pintura decorativa"],
+    "Jardinería": ["Corte de césped", "Poda de árboles", "Diseño de jardines", "Riego automático", "Fumigación", "Mantenimiento de zonas verdes"],
+    "Cerrajería": ["Apertura de puertas", "Cambio de chapas", "Cerraduras de seguridad", "Duplicado de llaves", "Cajas fuertes", "Cerraduras electrónicas"],
+    "Mudanza": ["Mudanzas locales", "Mudanzas nacionales", "Embalaje profesional", "Desmonte de muebles", "Bodegaje temporal", "Mudanza de oficinas"],
+    "Construcción": ["Remodelaciones", "Obra civil", "Pisos y enchapes", "Drywall", "Techos y cubiertas", "Demoliciones"],
+    "Tecnología": ["Reparación de PC/portátil", "Redes WiFi", "Cámaras de seguridad", "Instalación de software", "Recuperación de datos", "Soporte técnico"],
+    "Mecánica": ["Frenos", "Motor", "Suspensión", "Electricidad automotriz", "Cambio de aceite", "Diagnóstico computarizado"],
+    "Salud": ["Enfermería domiciliaria", "Fisioterapia", "Cuidado de adulto mayor", "Primeros auxilios", "Terapia respiratoria", "Aplicación de inyecciones"],
+    "Belleza": ["Corte de cabello", "Manicure/pedicure", "Maquillaje profesional", "Depilación", "Tratamientos capilares", "Extensiones"],
+    "Mascotas": ["Paseo de perros", "Guardería de mascotas", "Grooming/baño", "Entrenamiento canino", "Cuidado de gatos", "Transporte de mascotas"],
+    "Educación": ["Matemáticas", "Ciencias", "Lenguaje", "Refuerzo escolar", "Preparación ICFES", "Tareas dirigidas"],
+    "Gastronomía": ["Chef a domicilio", "Catering eventos", "Repostería", "Comida saludable", "Asados y BBQ", "Cocina internacional"],
+    "Eventos": ["Decoración de fiestas", "Sonido y DJ", "Animación infantil", "Meseros", "Logística de eventos", "Floristería"],
+    "Fotografía": ["Fotografía de eventos", "Retratos", "Fotografía de producto", "Video corporativo", "Edición de fotos", "Drones"],
+}
+
+@router.get("/especialidades/catalogo")
+def catalogo_especialidades(categoria: str = ""):
+    """Retorna las especialidades predefinidas para una categoría."""
+    if categoria:
+        return JSONResponse({"especialidades": ESPECIALIDADES_POR_CATEGORIA.get(categoria, [])})
+    return JSONResponse({"catalogo": ESPECIALIDADES_POR_CATEGORIA})
+
+
+@router.get("/especialidades/mis")
+def mis_especialidades(id_persona: int):
+    """Lista las especialidades registradas de un trabajador."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT id, categoria, especialidad FROM especialidades_trabajador
+            WHERE id_persona = %s ORDER BY categoria, especialidad
+        """, (id_persona,))
+        return JSONResponse({"especialidades": cursor.fetchall()})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "especialidades": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/especialidades/guardar")
+async def guardar_especialidades(
+    request: Request,
+    id_persona: int = Form(...),
+    categoria:  str = Form(...),
+    especialidades: str = Form(...)   # JSON array: ["Instalación de tubería", "Destape..."]
+):
+    """Guarda las especialidades seleccionadas para una categoría."""
+    import json as _json
+    try:
+        lista = _json.loads(especialidades)
+    except:
+        return JSONResponse({"error": "Formato inválido"}, status_code=400)
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        # Borrar existentes de esa categoría para ese trabajador
+        cursor.execute("""
+            DELETE FROM especialidades_trabajador
+            WHERE id_persona = %s AND categoria = %s
+        """, (id_persona, categoria))
+
+        # Insertar las nuevas
+        for esp in lista:
+            if esp.strip():
+                cursor.execute("""
+                    INSERT INTO especialidades_trabajador (id_persona, categoria, especialidad)
+                    VALUES (%s, %s, %s)
+                """, (id_persona, categoria, esp.strip()))
+
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": f"✅ {len(lista)} especialidades guardadas en {categoria}"})
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/especialidades/eliminar")
+def eliminar_especialidad(id: int = Form(...)):
+    """Elimina una especialidad individual."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("DELETE FROM especialidades_trabajador WHERE id = %s", (id,))
+        conexion.commit()
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/servicios/agregar")
+def agregar_servicio(
+    id_persona: int = Form(...),
+    categoria:  str = Form(...),
+    descripcion: str = Form(...),
+    valor_hora: float = Form(0),
+    experiencia: float = Form(0)
+):
+    """Permite al trabajador agregar un nuevo servicio a su perfil."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            INSERT INTO servicios_persona (id_persona, categoria, descripcion, valor_hora, anios_experiencia)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (id_persona, categoria, descripcion, valor_hora, experiencia))
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": f"✅ Servicio '{categoria}' agregado"})
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/servicios/eliminar")
+def eliminar_servicio(
+    id_persona: int = Form(...),
+    categoria:  str = Form(...)
+):
+    """Elimina un servicio del trabajador."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            DELETE FROM servicios_persona
+            WHERE id_persona = %s AND categoria = %s
+        """, (id_persona, categoria))
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": "Servicio eliminado"})
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
 @router.post("/baja")
 def dar_de_baja_trabajador(id_persona: int = Form(...)):
     """Desactiva la cuenta del trabajador (soft delete)"""
