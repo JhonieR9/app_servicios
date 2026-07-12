@@ -451,14 +451,22 @@
             ${(estado === 'aceptada' || estado === 'en_proceso') && s.codigo_confirmacion ? `
             <div style="margin:0 18px 12px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);
                         border:2px solid #86efac;border-radius:14px;padding:14px;text-align:center">
+                ${estado === 'aceptada' && s.codigo_inicio ? `
+                <div style="font-size:0.7rem;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+                    🔑 Código de INICIO (dáselo cuando llegue)
+                </div>
+                <div style="font-size:2rem;font-weight:900;letter-spacing:10px;color:#0284c7;margin-bottom:10px">
+                    ${s.codigo_inicio}
+                </div>
+                <div style="height:1px;background:#86efac;margin:10px 0"></div>` : ''}
                 <div style="font-size:0.7rem;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
-                    🔐 Tu código de confirmación
+                    🔐 Código de FINALIZACIÓN (dáselo cuando termine)
                 </div>
                 <div style="font-size:2rem;font-weight:900;letter-spacing:10px;color:#059669">
                     ${s.codigo_confirmacion}
                 </div>
                 <div style="font-size:0.72rem;color:#166534;margin-top:6px">
-                    Dale este código al profesional cuando termine
+                    ${estado === 'aceptada' ? 'Primero el de inicio, luego el de finalización' : 'Dale este código al profesional cuando termine'}
                 </div>
             </div>` : ''}
 

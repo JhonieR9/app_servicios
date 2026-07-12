@@ -201,7 +201,7 @@ def api_seguimiento(id: int):
         cursor.execute("""
             SELECT s.id_solicitud, s.titulo, s.estado, s.ciudad, s.departamento,
                    s.fecha_solicitud, s.fecha_aceptacion, s.fecha_inicio, s.fecha_finalizacion,
-                   s.id_trabajador, s.precio_final, s.cotizacion_precio, s.id_categoria, s.codigo_confirmacion,
+                   s.id_trabajador, s.precio_final, s.cotizacion_precio, s.id_categoria, s.codigo_confirmacion, s.codigo_inicio,
                    COALESCE(cat.nombre_categoria, s.titulo, CONCAT('Categoría ', s.id_categoria), 'Servicio') as nombre_categoria,
                    TIMESTAMPDIFF(MINUTE, s.fecha_solicitud, NOW()) as minutos_pendiente
             FROM solicitudes_servicio s
@@ -281,7 +281,7 @@ def listar_mis_solicitudes_cliente(request: Request, id_cliente: int = None):
             SELECT s.id_solicitud, s.titulo, s.descripcion, s.estado,
                    s.ciudad, s.departamento, s.direccion_servicio,
                    s.fecha_solicitud, s.fecha_aceptacion, s.fecha_finalizacion,
-                   s.id_trabajador, s.codigo_confirmacion, s.precio_final,
+                   s.id_trabajador, s.codigo_confirmacion, s.codigo_inicio, s.precio_final,
                    s.cotizacion_horas, s.cotizacion_precio, s.cotizacion_nota,
                    cat.nombre_categoria,
                    p.nombre_completo  AS nombre_trabajador,

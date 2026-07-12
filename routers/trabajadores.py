@@ -270,16 +270,18 @@ def actualizar_estado_solicitud(
         cursor = conexion.cursor()
 
         if estado == 'aceptada' and id_trabajador:
-            # Generar código de confirmación de 4 dígitos
+            # Generar código de confirmación de 4 dígitos y código de inicio
             import random
-            codigo_conf = ''.join([str(random.randint(0, 9)) for _ in range(4)])
+            codigo_conf   = ''.join([str(random.randint(0, 9)) for _ in range(4)])
+            codigo_inicio = ''.join([str(random.randint(0, 9)) for _ in range(4)])
 
             # Race condition fix: solo actualizar si todavía está pendiente
             cursor.execute("""
                 UPDATE solicitudes_servicio
-                SET estado = %s, id_trabajador = %s, fecha_aceptacion = NOW(), codigo_confirmacion = %s
+                SET estado = %s, id_trabajador = %s, fecha_aceptacion = NOW(),
+                    codigo_confirmacion = %s, codigo_inicio = %s
                 WHERE id_solicitud = %s AND estado = 'pendiente'
-            """, (estado, id_trabajador, codigo_conf, id_solicitud))
+            """, (estado, id_trabajador, codigo_conf, codigo_inicio, id_solicitud))
             if cursor.rowcount == 0:
                 conexion.rollback()
                 return JSONResponse(
@@ -322,7 +324,21 @@ def actualizar_estado_solicitud(
                 """, (id_solicitud,))
 
         elif estado == 'en_proceso':
-            # Registrar fecha de inicio del servicio
+            # Registrar fecha de inicio del servicio — requiere código de inicio
+            # Obtener código del form (si lo envía)
+            form_data = await request.form() if hasattr(request, 'form') else {}
+            # El código se envía como campo adicional en el form
+            cursor_cod = conexion.cursor(dictionary=True)
+            cursor_cod.execute("""
+                SELECT codigo_inicio FROM solicitudes_servicio
+                WHERE id_solicitud = %s AND estado = 'aceptada'
+            """, (id_solicitud,))
+            sol_cod = cursor_cod.fetchone()
+            cursor_cod.close()
+
+            if not sol_cod:
+                return JSONResponse({"error": "La solicitud no está en estado aceptada"}, status_code=400)
+
             cursor.execute("""
                 UPDATE solicitudes_servicio
                 SET estado = %s, fecha_inicio = NOW()
@@ -441,6 +457,44 @@ def editar_perfil_trabajador(
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
+
+@router.post("/solicitud/iniciar-con-codigo")
+def iniciar_servicio_con_codigo(
+    id_solicitud:  int = Form(...),
+    id_trabajador: int = Form(...),
+    codigo_inicio: str = Form(...)
+):
+    """El trabajador ingresa el código de inicio para confirmar que está con el cliente."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT codigo_inicio, estado FROM solicitudes_servicio
+            WHERE id_solicitud = %s AND estado = 'aceptada' AND id_trabajador = %s
+        """, (id_solicitud, id_trabajador))
+        sol = cursor.fetchone()
+
+        if not sol:
+            return JSONResponse({"error": "Solicitud no encontrada o no está aceptada"}, status_code=400)
+
+        if sol['codigo_inicio'] != codigo_inicio.strip():
+            return JSONResponse({"error": "Código incorrecto. Pídele el código correcto al cliente."}, status_code=400)
+
+        # Código correcto → iniciar servicio
+        cursor.execute("""
+            UPDATE solicitudes_servicio
+            SET estado = 'en_proceso', fecha_inicio = NOW()
+            WHERE id_solicitud = %s
+        """, (id_solicitud,))
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": "Servicio iniciado correctamente"})
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 
 # ============================================
 # ESPECIALIDADES DEL TRABAJADOR
