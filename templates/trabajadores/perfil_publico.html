@@ -496,7 +496,7 @@
 <!-- CTA FIJO -->
 <div class="cta-bar">
     <div class="cta-inner">
-        <a href="/cliente/solicitar?trabajador_id={{ perfil.id_persona }}&trabajador_nombre={{ perfil.nombre_completo|urlencode }}{% if servicios %}&categoria={{ servicios[0].categoria|urlencode }}{% endif %}"
+        <a href="/cliente/solicitar_servicio?trabajador_id={{ perfil.id_persona }}&trabajador_nombre={{ perfil.nombre_completo|urlencode }}{% if servicios %}&categoria={{ servicios[0].categoria|urlencode }}{% endif %}"
            class="btn-solicitar">
             <i class="bi bi-send-fill"></i> Solicitar servicio
         </a>
