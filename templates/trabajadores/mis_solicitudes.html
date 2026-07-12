@@ -399,7 +399,7 @@
                 </div>
             `,
             'aceptada': `
-                <button class="btn btn-aceptar" onclick="cambiarEstado(${s.id_solicitud}, 'en_proceso')"
+                <button class="btn btn-aceptar" onclick="abrirIniciarCodigo(${s.id_solicitud})"
                         style="background:linear-gradient(135deg,#0ea5e9,#0284c7);color:white;border:none;">
                     🔧 Iniciar servicio
                 </button>
@@ -525,8 +525,63 @@
         setTimeout(() => t.remove(), 3500);
     }
 
-    function contactarCliente(telefono, nombre) {
-        const msg = encodeURIComponent(`Hola ${nombre}, soy el trabajador de TalentHub. Acabo de aceptar tu solicitud de servicio. ¿Cuándo podemos coordinar?`);
+    // ── MODAL INICIAR CON CÓDIGO ──
+    function abrirIniciarCodigo(idSolicitud) {
+        const viejo = document.getElementById('modalInicio');
+        if (viejo) viejo.remove();
+        const modal = document.createElement('div');
+        modal.id = 'modalInicio';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;';
+        modal.innerHTML = `
+            <div style="background:white;border-radius:20px;padding:28px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+                <div style="font-size:2.5rem;margin-bottom:12px">🔑</div>
+                <h3 style="margin:0 0 8px;color:#0f172a;font-size:1.1rem">Código de inicio</h3>
+                <p style="color:#64748b;font-size:0.85rem;margin:0 0 20px">Pídele el código al cliente para confirmar tu llegada</p>
+                <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px">
+                    <input id="ci1" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:1.5rem;font-weight:800;border:2px solid #e2e8f0;border-radius:12px;outline:none" oninput="if(this.value.length>=1)document.getElementById('ci2').focus()">
+                    <input id="ci2" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:1.5rem;font-weight:800;border:2px solid #e2e8f0;border-radius:12px;outline:none" oninput="if(this.value.length>=1)document.getElementById('ci3').focus()">
+                    <input id="ci3" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:1.5rem;font-weight:800;border:2px solid #e2e8f0;border-radius:12px;outline:none" oninput="if(this.value.length>=1)document.getElementById('ci4').focus()">
+                    <input id="ci4" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:1.5rem;font-weight:800;border:2px solid #e2e8f0;border-radius:12px;outline:none" oninput="verificarCodigoInicio(${idSolicitud})">
+                </div>
+                <div id="msgCI" style="display:none;padding:8px;border-radius:8px;font-size:0.82rem;font-weight:600;margin-bottom:12px"></div>
+                <button onclick="document.getElementById('modalInicio').remove()"
+                    style="padding:10px 20px;background:#f1f5f9;border:none;border-radius:10px;color:#64748b;font-weight:600;cursor:pointer">
+                    Cancelar
+                </button>
+            </div>`;
+        document.body.appendChild(modal);
+        document.getElementById('ci1').focus();
+    }
+
+    async function verificarCodigoInicio(idSolicitud) {
+        const codigo = (document.getElementById('ci1').value +
+                        document.getElementById('ci2').value +
+                        document.getElementById('ci3').value +
+                        document.getElementById('ci4').value).trim();
+        if (codigo.length < 4) return;
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('id_trabajador', idTrabajador);
+        fd.append('codigo_inicio', codigo);
+        try {
+            const res = await fetch('/trabajador/solicitud/iniciar-con-codigo', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && !data.error) {
+                document.getElementById('modalInicio').remove();
+                mostrarToast('🔧 ¡Servicio iniciado! Código correcto.');
+                cargarSolicitudes();
+            } else {
+                const msg = document.getElementById('msgCI');
+                msg.style.display = 'block';
+                msg.style.background = '#fee2e2'; msg.style.color = '#dc2626';
+                msg.textContent = '❌ ' + (data.error || 'Código incorrecto');
+                ['ci1','ci2','ci3','ci4'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('ci1').focus();
+            }
+        } catch(e) { mostrarToast('❌ Error de conexión'); }
+    }
+
+    function contactarCliente(telefono, nombre) {        const msg = encodeURIComponent(`Hola ${nombre}, soy el trabajador de TalentHub. Acabo de aceptar tu solicitud de servicio. ¿Cuándo podemos coordinar?`);
         window.open(`https://wa.me/57${telefono}?text=${msg}`, '_blank');
     }
 
