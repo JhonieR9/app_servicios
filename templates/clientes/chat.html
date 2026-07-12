@@ -373,7 +373,7 @@
         // Mostrar mensaje inmediatamente en el UI (optimistic update)
         const wrap  = document.getElementById('messagesWrap');
         const empty = document.getElementById('emptyChat');
-        empty.style.display = 'none';
+        if (empty) empty.style.display = 'none';
         const tempDiv = document.createElement('div');
         tempDiv.className = 'msg mine';
         tempDiv.style.cssText = 'animation:msgIn 0.3s ease;';
