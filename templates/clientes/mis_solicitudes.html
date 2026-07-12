@@ -561,10 +561,18 @@
             const data = await res.json();
             const todas = data.solicitudes || [];
 
+            // Solo mostrar completadas sin pagar de los últimos 3 días
+            function esReciente(fecha) {
+                if (!fecha) return false;
+                const d = new Date(fecha);
+                const ahora = new Date();
+                return (ahora - d) < 3 * 24 * 60 * 60 * 1000; // 3 días
+            }
+
             const activas   = todas.filter(s => ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado)
-                || (s.estado === 'completada' && s.pago_estado !== 'pagado'));
+                || (s.estado === 'completada' && s.pago_estado !== 'pagado' && esReciente(s.fecha_solicitud)));
             const historial = todas.filter(s => s.estado === 'cancelada'
-                || (s.estado === 'completada' && s.pago_estado === 'pagado'));
+                || (s.estado === 'completada' && (s.pago_estado === 'pagado' || !esReciente(s.fecha_solicitud))));
 
             // Badges
             const ba = document.getElementById('badgeActivas');

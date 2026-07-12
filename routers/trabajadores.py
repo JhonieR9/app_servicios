@@ -1337,7 +1337,7 @@ def completar_servicio(
     try:
         cursor = conexion.cursor(dictionary=True)
         cursor.execute("""
-            SELECT id_solicitud, estado, codigo_confirmacion
+            SELECT id_solicitud, estado, codigo_confirmacion, cotizacion_precio, precio_final AS precio_existente
             FROM solicitudes_servicio
             WHERE id_solicitud = %s AND estado IN ('aceptada','en_proceso')
         """, (id_solicitud,))
@@ -1348,11 +1348,15 @@ def completar_servicio(
         if sol['codigo_confirmacion'] != codigo.strip():
             return JSONResponse({"error": "Código incorrecto. Pídele el código al cliente."}, status_code=400)
 
+        # Usar precio_final existente o cotizacion_precio como fallback
+        precio = precio_final if precio_final > 0 else float(sol.get('precio_existente') or sol.get('cotizacion_precio') or 0)
+
         cursor.execute("""
             UPDATE solicitudes_servicio
-            SET estado = 'completada', fecha_finalizacion = NOW(), precio_final = %s
+            SET estado = 'completada', fecha_finalizacion = NOW(),
+                precio_final = COALESCE(NULLIF(%s, 0), cotizacion_precio, precio_final)
             WHERE id_solicitud = %s
-        """, (precio_final if precio_final > 0 else None, id_solicitud))
+        """, (precio, id_solicitud))
         conexion.commit()
         return JSONResponse({"mensaje": "🎉 ¡Servicio completado exitosamente!"})
     except Exception as e:
