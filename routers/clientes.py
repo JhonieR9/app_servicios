@@ -1528,6 +1528,27 @@ def responder_cotizacion(
             conexion.close()
 
 
+@router.get("/debug/limpiar-pruebas")
+def limpiar_solicitudes_prueba():
+    """Marca todas las completadas sin pagar como pagadas (para limpiar pruebas)"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            UPDATE solicitudes_servicio
+            SET pago_estado = 'pagado'
+            WHERE estado = 'completada' AND (pago_estado IS NULL OR pago_estado = 'pendiente')
+        """)
+        afectadas = cursor.rowcount
+        conexion.commit()
+        return {"mensaje": f"✅ {afectadas} solicitudes marcadas como pagadas", "afectadas": afectadas}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
 @router.get("/debug/solicitudes-recientes")
 def debug_solicitudes_recientes():
     """Diagnóstico: últimas 10 solicitudes con id_cliente y nombre"""
