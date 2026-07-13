@@ -547,7 +547,7 @@
                 if (s.estado === 'pendiente') {
                     acciones = `
                         <div class="sol-actions">
-                            <button class="btn-aceptar-sol" onclick="accionSol(${s.id_solicitud},'aceptada')">✅ Aceptar</button>
+                            <button class="btn-aceptar-sol" onclick="abrirModalCotizacionPanel(${s.id_solicitud})" style="background:linear-gradient(135deg,#f59e0b,#d97706)">💰 Cotizar</button>
                             <button class="btn-rechazar-sol" onclick="accionSol(${s.id_solicitud},'cancelada')">✗</button>
                         </div>`;
                 } else if (s.estado === 'aceptada') {
@@ -587,6 +587,12 @@
 
     // ── Acción sobre solicitud ──
     // ── MODAL INICIAR CON CÓDIGO ──────────────────────────────
+
+    function abrirModalCotizacionPanel(idSolicitud) {
+        // Redirigir a mis_solicitudes donde está el modal completo de cotización
+        window.location.href = '/trabajador/solicitudes_pendientes_panel?id=' + idTrabajador + '#cotizar-' + idSolicitud;
+    }
+
     function abrirIniciarCodigo(idSolicitud) {
         const viejo = document.getElementById('modalInicio');
         if (viejo) viejo.remove();
