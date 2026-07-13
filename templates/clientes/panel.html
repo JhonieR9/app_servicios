@@ -128,32 +128,36 @@
 
         /* ── Favoritos ── */
         .fav-scroll {
-            display: flex; gap: 10px; overflow-x: auto;
-            padding-bottom: 6px; scrollbar-width: none;
+            display: flex; gap: 12px; overflow-x: auto;
+            padding-bottom: 8px; scrollbar-width: none;
         }
         .fav-scroll::-webkit-scrollbar { display: none; }
         .fav-card {
             background: var(--card); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 14px;
-            min-width: 160px; flex-shrink: 0;
+            border-radius: 16px; padding: 16px 18px;
+            min-width: 220px; flex-shrink: 0;
             display: flex; flex-direction: column; gap: 6px;
             position: relative;
+            transition: transform .15s, border-color .2s;
         }
-        .fav-name  { font-size: 0.85rem; font-weight: 700; color: var(--text); }
-        .fav-cat   { font-size: 0.72rem; color: #6366f1; font-weight: 600; }
+        .fav-card:hover { transform:translateY(-3px); border-color:rgba(99,102,241,.4); }
+        .fav-name  { font-size: 0.9rem; font-weight: 800; color: var(--text); }
+        .fav-cat   { font-size: 0.75rem; color: #a5b4fc; font-weight: 600; }
         .fav-city  { font-size: 0.72rem; color: var(--muted); }
-        .fav-stars { font-size: 0.75rem; color: #f59e0b; }
-        .fav-btns  { display: flex; gap: 6px; margin-top: 4px; }
+        .fav-stars { font-size: 0.78rem; color: #f59e0b; margin-top:4px; }
+        .fav-btns  { display: flex; gap: 8px; margin-top: 8px; }
         .fav-btn-sol {
-            flex: 1; padding: 7px 6px; border: none; border-radius: 8px;
-            background: linear-gradient(135deg,#059669,#0891b2);
-            color: white; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+            flex: 1; padding: 9px 10px; border: none; border-radius: 10px;
+            background: linear-gradient(135deg,#4f46e5,#7c3aed);
+            color: white; font-size: 0.78rem; font-weight: 700; cursor: pointer;
             text-align: center; text-decoration: none; display: block;
+            transition: transform .15s;
         }
+        .fav-btn-sol:hover { transform:scale(1.03); }
         .fav-btn-del {
-            padding: 7px 8px; border: 1px solid rgba(239,68,68,.3); border-radius: 8px;
+            padding: 9px 12px; border: 1px solid rgba(239,68,68,.3); border-radius: 10px;
             background: rgba(239,68,68,.08); color: #ef4444;
-            font-size: 0.72rem; cursor: pointer;
+            font-size: 0.78rem; cursor: pointer; font-weight:700;
         }
     </style>
 </head>
