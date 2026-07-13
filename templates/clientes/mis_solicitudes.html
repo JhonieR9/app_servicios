@@ -115,6 +115,7 @@
         .estado-pill.pendiente  { background:#fef3c7;color:#d97706; }
         .estado-pill.aceptada   { background:#dbeafe;color:#2563eb; }
         .estado-pill.en_proceso { background:#dcfce7;color:#16a34a; }
+        .estado-pill.completada { background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#065f46;font-weight:800; }
 
         /* Barra de progreso de estado */
         .estado-progress {
@@ -474,19 +475,33 @@
             </div>` : ''}
 
             ${estado === 'completada' ? `
-            <div style="margin:0 18px 12px;background:#fffbeb;border:2px solid #fde68a;border-radius:14px;padding:14px;text-align:center">
-                <div style="font-size:0.78rem;font-weight:700;color:#92400e;margin-bottom:6px">💰 Pagar servicio</div>
+            <div style="margin:0 18px 12px;background:linear-gradient(135deg,#fffbeb,#fef3c7);
+                        border:2px solid #fbbf24;border-radius:16px;padding:18px;text-align:center;
+                        box-shadow:0 4px 16px rgba(251,191,36,0.15)">
+                <div style="font-size:0.72rem;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">
+                    💰 Pagar servicio
+                </div>
                 ${parseFloat(s.precio_final || 0) > 0
-                    ? `<div style="font-size:1.3rem;font-weight:800;color:#92400e;margin-bottom:8px">$${Number(s.precio_final).toLocaleString('es-CO')}</div>`
+                    ? `<div style="font-size:1.8rem;font-weight:900;color:#78350f;margin-bottom:4px;letter-spacing:-1px">$${Number(s.precio_final).toLocaleString('es-CO')}</div>
+                       <div style="font-size:0.72rem;color:#a16207;margin-bottom:14px">Mano de obra + materiales acordados</div>`
                     : `<input type="number" id="monto-${s.id_solicitud}" min="1000" step="1000" placeholder="Monto acordado"
-                         style="width:80%;padding:8px 12px;border:2px solid #fde68a;border-radius:10px;text-align:center;font-weight:700;margin-bottom:8px">`
+                         style="width:80%;padding:10px 14px;border:2px solid #fbbf24;border-radius:12px;text-align:center;
+                                font-weight:800;font-size:1.1rem;margin-bottom:14px;outline:none;color:#78350f;
+                                background:white">`
                 }
                 <button onclick="pagarDesdeListado(${s.id_solicitud})"
-                    style="width:100%;padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);
-                           color:white;border:none;border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer">
+                    style="width:100%;padding:15px;
+                           background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                           color:white;border:none;border-radius:14px;font-weight:800;
+                           font-size:1rem;cursor:pointer;
+                           box-shadow:0 6px 20px rgba(99,102,241,.35);
+                           transition:transform .15s,box-shadow .15s;
+                           display:flex;align-items:center;justify-content:center;gap:8px">
                     💳 Pagar con Wompi
                 </button>
-                <div style="font-size:0.68rem;color:#94a3b8;margin-top:6px">Nequi · Daviplata · Tarjeta · PSE</div>
+                <div style="font-size:0.7rem;color:#94a3b8;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">
+                    <span>Nequi</span>·<span>Daviplata</span>·<span>Tarjeta</span>·<span>PSE</span>·<span>Bre-B</span>
+                </div>
             </div>` : ''}
 
             <div class="card-activa-btns">
