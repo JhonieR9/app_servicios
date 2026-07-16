@@ -152,6 +152,44 @@
                 <div style="padding:4px 0">${serviciosHtml}</div>
             </div>` : ''}
 
+            <!-- Sección Documentos -->
+            <div class="info-card">
+                <h3>📄 Mis Documentos</h3>
+                <div style="display:grid;gap:12px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">
+                        <div>
+                            <div style="font-size:0.82rem;font-weight:700;color:#0f172a">📷 Foto de identificación</div>
+                            <div style="font-size:0.72rem;color:#64748b">Cédula o documento de identidad</div>
+                        </div>
+                        <label style="padding:8px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer">
+                            Actualizar
+                            <input type="file" accept="image/*" style="display:none" onchange="actualizarDocumento('foto_identificacion', this)">
+                        </label>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">
+                        <div>
+                            <div style="font-size:0.82rem;font-weight:700;color:#0f172a">📋 Antecedentes</div>
+                            <div style="font-size:0.72rem;color:#64748b">Documento de antecedentes disciplinarios</div>
+                        </div>
+                        <label style="padding:8px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer">
+                            Actualizar
+                            <input type="file" accept="image/*,.pdf" style="display:none" onchange="actualizarDocumento('foto_antecedentes', this)">
+                        </label>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">
+                        <div>
+                            <div style="font-size:0.82rem;font-weight:700;color:#0f172a">📝 Recomendaciones</div>
+                            <div style="font-size:0.72rem;color:#64748b">Carta de recomendación o certificado</div>
+                        </div>
+                        <label style="padding:8px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer">
+                            Actualizar
+                            <input type="file" accept="image/*,.pdf" style="display:none" onchange="actualizarDocumento('recomendaciones_archivo', this)">
+                        </label>
+                    </div>
+                </div>
+                <div id="msgDocumento" style="display:none;margin-top:10px;padding:10px;border-radius:10px;text-align:center;font-size:0.82rem;font-weight:600"></div>
+            </div>
+
             <!-- Sección Especialidades -->
             <div class="info-card" id="seccionEspecialidades">
                 <h3>⭐ Mis Especialidades</h3>
@@ -252,6 +290,34 @@
             t.style.opacity = '0';
             setTimeout(() => t.remove(), 400);
         }, 3500);
+    }
+
+    // ── ACTUALIZAR DOCUMENTO ─────────────────────────────────
+    async function actualizarDocumento(tipoDoc, inputEl) {
+        const file = inputEl.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            mostrarToastPerfil('❌ El archivo no puede pesar más de 5MB', false);
+            return;
+        }
+
+        const fd = new FormData();
+        fd.append('id_persona', idTrabajador);
+        fd.append('tipo_documento', tipoDoc);
+        fd.append('archivo', file);
+
+        try {
+            const res = await fetch('/trabajador/documentos/actualizar', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                mostrarToastPerfil('✅ Documento actualizado', true);
+            } else {
+                mostrarToastPerfil('❌ ' + (data.error || 'Error al subir'), false);
+            }
+        } catch(e) {
+            mostrarToastPerfil('❌ Error de conexión', false);
+        }
+        inputEl.value = '';
     }
 
     // ── ESPECIALIDADES ──────────────────────────────────────

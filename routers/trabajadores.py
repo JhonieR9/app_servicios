@@ -445,6 +445,57 @@ def editar_perfil_trabajador(
         if conexion and conexion.is_connected():
             conexion.close()
 
+@router.post("/documentos/actualizar")
+async def actualizar_documento(
+    id_persona:     int = Form(...),
+    tipo_documento: str = Form(...),
+    archivo: UploadFile = File(...)
+):
+    """Actualiza un documento del trabajador (foto_identificacion, foto_antecedentes, recomendaciones_archivo)."""
+    campos_validos = ['foto_identificacion', 'foto_antecedentes', 'recomendaciones_archivo']
+    if tipo_documento not in campos_validos:
+        return JSONResponse({"error": "Tipo de documento inválido"}, status_code=400)
+
+    archivo_bytes = await archivo.read()
+    archivo_tipo  = archivo.content_type or 'image/jpeg'
+    archivo_nombre = f"{tipo_documento}_{id_persona}_{archivo.filename}"
+
+    if len(archivo_bytes) > 5 * 1024 * 1024:
+        return JSONResponse({"error": "El archivo no puede pesar más de 5MB"}, status_code=400)
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+
+        if tipo_documento == 'foto_identificacion':
+            cursor.execute("""
+                UPDATE detalles_persona
+                SET foto_identificacion = %s, foto_identificacion_data = %s, foto_identificacion_tipo = %s
+                WHERE id_persona = %s
+            """, (archivo_nombre, archivo_bytes, archivo_tipo, id_persona))
+        elif tipo_documento == 'foto_antecedentes':
+            cursor.execute("""
+                UPDATE detalles_persona
+                SET antecedentes_pdf = %s, antecedentes_data = %s, antecedentes_tipo = %s
+                WHERE id_persona = %s
+            """, (archivo_nombre, archivo_bytes, archivo_tipo, id_persona))
+        elif tipo_documento == 'recomendaciones_archivo':
+            cursor.execute("""
+                UPDATE detalles_persona
+                SET recomendaciones_archivo = %s, recomendaciones_data = %s, recomendaciones_tipo = %s
+                WHERE id_persona = %s
+            """, (archivo_nombre, archivo_bytes, archivo_tipo, id_persona))
+
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": "Documento actualizado"})
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
 @router.post("/solicitud/iniciar-con-codigo")
 def iniciar_servicio_con_codigo(
     id_solicitud:  int = Form(...),
