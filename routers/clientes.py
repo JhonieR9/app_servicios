@@ -126,13 +126,6 @@ async def registrar_cliente(
 
         # Login automático — crear sesión
         token = auth.crear_sesion('cliente', id_cliente)
-        response.set_cookie(
-            key="session_token_cliente",
-            value=token,
-            httponly=False,
-            max_age=86400 * 7,
-            samesite="lax"
-        )
 
         # Enviar código de verificación por email en background
         import threading
@@ -155,13 +148,21 @@ async def registrar_cliente(
         threading.Thread(target=_enviar_codigo, daemon=True).start()
 
         nombre_corto = nombre_completo.split()[0]
-        return JSONResponse({
+        resp = JSONResponse({
             "mensaje": f"¡Bienvenido {nombre_corto}! Te enviamos un código de verificación a tu correo.",
             "id_cliente": id_cliente,
             "nombre": nombre_completo,
             "requiere_codigo": True,
             "redirect": f"/cliente/verificar-codigo?id={id_cliente}&correo={correo}"
         })
+        resp.set_cookie(
+            key="session_token_cliente",
+            value=token,
+            httponly=False,
+            max_age=86400 * 7,
+            samesite="lax"
+        )
+        return resp
     except Exception as e:
         conexion.rollback()
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -1026,16 +1027,8 @@ async def login_cliente(
         else:
             token = auth.crear_sesion('cliente', cliente['id_cliente'])
             
-            response.set_cookie(
-                key="session_token_cliente",
-                value=token,
-                httponly=False,
-                max_age=86400,
-                samesite="lax"
-            )
-            
             nombre = cliente.get('nombre_completo', 'Cliente')
-            return JSONResponse({
+            resp = JSONResponse({
                 "requiere_verificacion_sms": False,
                 "id_cliente": cliente['id_cliente'],
                 "nombre": nombre,
@@ -1044,6 +1037,14 @@ async def login_cliente(
                 "mensaje": "Login exitoso",
                 "redirect": f"/cliente/panel?nombre={nombre}&id={cliente['id_cliente']}"
             })
+            resp.set_cookie(
+                key="session_token_cliente",
+                value=token,
+                httponly=False,
+                max_age=86400,
+                samesite="lax"
+            )
+            return resp
             
     except Exception as e:
         return JSONResponse(
@@ -1069,18 +1070,18 @@ async def verificar_sms_cliente(
         
         token = auth.crear_sesion('cliente', id_cliente)
         
-        response.set_cookie(
+        resp = JSONResponse({
+            "mensaje": "Verificación exitosa",
+            "redirect": "/cliente/panel"
+        })
+        resp.set_cookie(
             key="session_token_cliente",
             value=token,
             httponly=False,
             max_age=86400,
             samesite="lax"
         )
-        
-        return JSONResponse({
-            "mensaje": "Verificación exitosa",
-            "redirect": "/cliente/panel"
-        })
+        return resp
         
     except Exception as e:
         return JSONResponse(

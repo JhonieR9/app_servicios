@@ -3109,18 +3109,19 @@ async def login_trabajador(
             }, status_code=403)
 
         token = auth.crear_sesion('trabajador', trabajador['id_persona'])
-        response.set_cookie(
+        nombre = trabajador['nombre_completo'].split()[0] if trabajador.get('nombre_completo') else 'Trabajador'
+        resp = JSONResponse({
+            "mensaje": f"Bienvenido, {nombre}",
+            "redirect": f"/trabajador/panel?nombre={trabajador['nombre_completo']}&doc={trabajador['numero_documento']}&id={trabajador['id_persona']}"
+        })
+        resp.set_cookie(
             key="session_token",
             value=token,
             httponly=False,
             max_age=86400,
             samesite="lax"
         )
-        nombre = trabajador['nombre_completo'].split()[0] if trabajador.get('nombre_completo') else 'Trabajador'
-        return JSONResponse({
-            "mensaje": f"Bienvenido, {nombre}",
-            "redirect": f"/trabajador/panel?nombre={trabajador['nombre_completo']}&doc={trabajador['numero_documento']}&id={trabajador['id_persona']}"
-        })
+        return resp
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
