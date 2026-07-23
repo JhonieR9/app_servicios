@@ -97,6 +97,14 @@ def crear_tablas():
                 INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, descripcion, estado)
                 VALUES (32, 'Reparaciones Locativas', 'Mantenimiento general de inmuebles, arreglos menores, adecuaciones', 'activo')
             """)
+            cursor.execute("""
+                INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, descripcion, estado)
+                VALUES (33, 'Psicología', 'Terapia, orientación y acompañamiento psicológico a domicilio', 'activo')
+            """)
+            cursor.execute("""
+                INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, descripcion, estado)
+                VALUES (34, 'Derecho', 'Asesoría legal, trámites jurídicos y consultoría', 'activo')
+            """)
             conn.commit()
         except Exception:
             pass

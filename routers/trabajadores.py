@@ -682,6 +682,8 @@ ESPECIALIDADES_POR_CATEGORIA = {
     "Eventos": ["Decoración de fiestas", "Sonido y DJ", "Animación infantil", "Meseros", "Logística de eventos", "Floristería"],
     "Fotografía": ["Fotografía de eventos", "Retratos", "Fotografía de producto", "Video corporativo", "Edición de fotos", "Drones"],
     "Reparaciones Locativas": ["Resane de paredes", "Cambio de chapas y cerraduras", "Reparación de pisos", "Arreglo de techos y goteras", "Mantenimiento de baños", "Adecuaciones menores"],
+    "Psicología": ["Terapia individual", "Terapia de pareja", "Terapia familiar", "Orientación vocacional", "Manejo de ansiedad", "Intervención en crisis"],
+    "Derecho": ["Asesoría civil", "Derecho laboral", "Derecho de familia", "Derecho penal", "Trámites notariales", "Consultoría empresarial"],
 }
 
 @router.get("/especialidades/catalogo")
