@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from routers import clientes, trabajadores, chat, pagos
+from routers import clientes, trabajadores, chat, pagos, psicologa
 from config import DB_CONFIG, conectar_bd
 
 app = FastAPI(title="TalentHub API", version="2.0.0")
@@ -18,6 +18,7 @@ app.include_router(clientes.router)
 app.include_router(trabajadores.router)
 app.include_router(chat.router)
 app.include_router(pagos.router)
+app.include_router(psicologa.router)
 
 # ============================================
 # CREAR TABLAS AL ARRANCAR (si no existen)

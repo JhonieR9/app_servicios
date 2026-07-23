@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Psicología - TalentHub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            color: #1e293b;
+        }
+        .header {
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);
+            color: white;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { font-size: 1.2rem; font-weight: 700; }
+        .header .subtitle { font-size: 0.78rem; opacity: 0.85; }
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.3); }
+        .content { padding: 20px; max-width: 900px; margin: 0 auto; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .stat-card .num { font-size: 1.8rem; font-weight: 800; color: #7c3aed; }
+        .stat-card .label { font-size: 0.72rem; color: #64748b; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .worker-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border-left: 4px solid #fbbf24;
+        }
+        .worker-card.aprobado { border-left-color: #4ade80; opacity: 0.6; }
+        .worker-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .worker-name { font-size: 1.05rem; font-weight: 700; color: #1e293b; }
+        .worker-meta { font-size: 0.78rem; color: #64748b; margin-top: 2px; }
+        .badge-pendiente {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .info-item {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+        .info-item .lbl { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; }
+        .info-item .val { font-size: 0.85rem; color: #1e293b; font-weight: 600; margin-top: 2px; }
+        .docs-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .doc-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: #ede9fe;
+            color: #6d28d9;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .doc-btn:hover { background: #ddd6fe; }
+        .servicios-list {
+            margin-bottom: 14px;
+        }
+        .servicio-chip {
+            display: inline-block;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            color: #0369a1;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 2px 4px 2px 0;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .btn-aprobar {
+            flex: 2;
+            padding: 12px;
+            background: linear-gradient(135deg, #4ade80, #16a34a);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-aprobar:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(74,222,128,0.4); }
+        .btn-rechazar {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            color: #dc2626;
+            border: 2px solid #fecaca;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-rechazar:hover { background: #fef2f2; }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 12px; display: block; }
+        .toast-psico {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            padding: 14px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            font-size: 0.88rem;
+            font-weight: 600;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid #4ade80;
+        }
+        .toast-psico.error { border-left-color: #dc2626; }
+        @keyframes slideIn {
+            from { opacity:0; transform:translateX(30px); }
+            to { opacity:1; transform:translateX(0); }
+        }
+        @media (max-width: 600px) {
+            .info-grid { grid-template-columns: 1fr; }
+            .actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1><i class="bi bi-clipboard2-pulse"></i> Panel de Psicología</h1>
+            <div class="subtitle">Revisión y aprobación de hojas de vida</div>
+        </div>
+        <a href="/psicologa/logout" class="btn-logout"><i class="bi bi-box-arrow-right"></i> Salir</a>
+    </div>
+
+    <div class="content">
+        <div class="stats">
+            <div class="stat-card">
+                <div class="num" id="totalPendientes">-</div>
+                <div class="label">Pendientes</div>
+            </div>
+            <div class="stat-card">
+                <div class="num" id="totalHoy">-</div>
+                <div class="label">Hoy revisados</div>
+            </div>
+        </div>
+
+        <div id="listaPendientes">
+            <div class="empty-state">
+                <i class="bi bi-hourglass-split"></i>
+                Cargando...
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let trabajadoresPendientes = [];
+
+    async function cargarPendientes() {
+        try {
+            const res = await fetch('/psicologa/pendientes');
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            trabajadoresPendientes = data.trabajadores || [];
+            renderLista();
+        } catch(e) {
+            document.getElementById('listaPendientes').innerHTML =
+                `<div class="empty-state"><i class="bi bi-exclamation-circle"></i> Error al cargar: ${e.message}</div>`;
+        }
+    }
+
+    function renderLista() {
+        const el = document.getElementById('listaPendientes');
+        document.getElementById('totalPendientes').textContent = trabajadoresPendientes.length;
+
+        if (trabajadoresPendientes.length === 0) {
+            el.innerHTML = `<div class="empty-state">
+                <i class="bi bi-check-circle"></i>
+                <div style="font-size:1rem;font-weight:600;color:#64748b;margin-top:8px">¡Todo revisado!</div>
+                <div style="font-size:0.85rem;margin-top:4px">No hay hojas de vida pendientes</div>
+            </div>`;
+            return;
+        }
+
+        el.innerHTML = trabajadoresPendientes.map(t => {
+            const serviciosHtml = (t.servicios || []).map(s =>
+                `<span class="servicio-chip">${s.categoria} — $${(s.valor_hora || 0).toLocaleString('es-CO')}/h — ${s.anios_experiencia || 0} años</span>`
+            ).join('');
+
+            const docsHtml = [
+                t.foto_url ? `<a href="${t.foto_url}" target="_blank" class="doc-btn"><i class="bi bi-person-badge"></i> Identificación</a>` : '',
+                t.antecedentes_url ? `<a href="${t.antecedentes_url}" target="_blank" class="doc-btn"><i class="bi bi-file-earmark-text"></i> Antecedentes</a>` : '',
+                t.recomendaciones_url ? `<a href="${t.recomendaciones_url}" target="_blank" class="doc-btn"><i class="bi bi-file-earmark-check"></i> Recomendaciones</a>` : '',
+                t.certificado_url ? `<a href="${t.certificado_url}" target="_blank" class="doc-btn"><i class="bi bi-mortarboard"></i> Certificado</a>` : '',
+            ].filter(Boolean).join('');
+
+            return `
+            <div class="worker-card" id="card-${t.id_persona}">
+                <div class="worker-header">
+                    <div>
+                        <div class="worker-name">${t.nombre_completo}</div>
+                        <div class="worker-meta">${t.ciudad}${t.departamento ? ', ' + t.departamento : ''} · Doc: ${t.numero_documento}</div>
+                    </div>
+                    <span class="badge-pendiente">⏳ Pendiente</span>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="lbl">Teléfono</div>
+                        <div class="val">${t.telefono || 'No registra'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="lbl">Correo</div>
+                        <div class="val">${t.correo || 'No registra'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="lbl">Nivel de Estudio</div>
+                        <div class="val">${t.nivel_estudio || 'No registra'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="lbl">Fecha Nacimiento</div>
+                        <div class="val">${t.fecha_nacimiento || 'N/A'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="lbl">Nacionalidad</div>
+                        <div class="val">${t.nacionalidad || 'N/A'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="lbl">Registrado</div>
+                        <div class="val">${t.fecha_registro || 'N/A'}</div>
+                    </div>
+                </div>
+
+                ${docsHtml ? `<div class="docs-row">${docsHtml}</div>` : ''}
+
+                ${serviciosHtml ? `
+                <div class="servicios-list">
+                    <div style="font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:6px">Servicios</div>
+                    ${serviciosHtml}
+                </div>` : ''}
+
+                <div class="actions">
+                    <button class="btn-aprobar" onclick="aprobar(${t.id_persona})">
+                        <i class="bi bi-check-circle"></i> Aprobar — Listo para trabajar
+                    </button>
+                    <button class="btn-rechazar" onclick="rechazar(${t.id_persona})">
+                        <i class="bi bi-x-circle"></i> Rechazar
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    async function aprobar(id) {
+        const fd = new FormData();
+        fd.append('id_persona', id);
+        try {
+            const res = await fetch('/psicologa/aprobar', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                mostrarToast('✅ ' + data.mensaje);
+                // Remover de la lista
+                trabajadoresPendientes = trabajadoresPendientes.filter(t => t.id_persona !== id);
+                renderLista();
+            } else {
+                mostrarToast('❌ ' + (data.error || 'Error'), true);
+            }
+        } catch(e) {
+            mostrarToast('❌ Error de conexión', true);
+        }
+    }
+
+    async function rechazar(id) {
+        if (!confirm('¿Seguro que deseas rechazar esta hoja de vida?')) return;
+        const fd = new FormData();
+        fd.append('id_persona', id);
+        try {
+            const res = await fetch('/psicologa/rechazar', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                mostrarToast('❌ ' + data.mensaje);
+                trabajadoresPendientes = trabajadoresPendientes.filter(t => t.id_persona !== id);
+                renderLista();
+            } else {
+                mostrarToast('❌ ' + (data.error || 'Error'), true);
+            }
+        } catch(e) {
+            mostrarToast('❌ Error de conexión', true);
+        }
+    }
+
+    function mostrarToast(msg, esError = false) {
+        const t = document.createElement('div');
+        t.className = 'toast-psico' + (esError ? ' error' : '');
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+    }
+
+    // Cargar al iniciar
+    cargarPendientes();
+    // Actualizar "hoy" (placeholder)
+    document.getElementById('totalHoy').textContent = '—';
+    </script>
+</body>
+</html>

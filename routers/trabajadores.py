@@ -1302,11 +1302,11 @@ async def crear_trabajador(
         # Iniciar transacción
         conexion.autocommit = False
         
-        # 1. Insertar persona
+        # 1. Insertar persona (estado pendiente_revision hasta que la psicóloga apruebe)
         cursor.execute("""
             INSERT INTO personas 
-            (id_tipo_documento, numero_documento, id_genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, registrado_por, departamento, ciudad_nacimiento)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (id_tipo_documento, numero_documento, id_genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, registrado_por, departamento, ciudad_nacimiento, estado)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pendiente_revision')
         """, (tipo_doc_id, numero_documento, genero_id, nombre_completo, ciudad.title() if ciudad else '', codigo_dane, fecha_nacimiento, nacionalidad, nombre_completo, departamento.title() if departamento else '', ciudad_nacimiento or ''))        
         id_persona = cursor.lastrowid
         
@@ -1408,7 +1408,7 @@ async def crear_trabajador(
         conexion.commit()
 
         return {
-            "mensaje": f"✅ Registro exitoso: {nombre_completo} fue registrado",
+            "mensaje": f"✅ Registro exitoso: {nombre_completo}. Tu hoja de vida será revisada por nuestro equipo antes de activar tu cuenta.",
             "id_persona": id_persona,
             "redirect": f"/trabajador/crear_password?id_persona={id_persona}"
         }
@@ -3070,7 +3070,7 @@ async def login_trabajador(
             SELECT p.*, tp.telefono
             FROM personas p
             LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
-            WHERE p.numero_documento = %s AND (p.estado = 'activo' OR p.estado IS NULL)
+            WHERE p.numero_documento = %s AND (p.estado = 'activo' OR p.estado IS NULL OR p.estado = 'pendiente_revision')
             LIMIT 1
         """, (numero_documento,))
         trabajador = cursor.fetchone()
@@ -3078,17 +3078,23 @@ async def login_trabajador(
         conexion.close()
 
         if not trabajador:
-            return JSONResponse({"error": "Documento no registrado"}, status_code=401)
+            return JSONResponse({"error": "Documento no registrado o cuenta rechazada"}, status_code=401)
         if not trabajador.get('password_hash'):
             return JSONResponse({"error": "Debes crear tu contraseña primero", "redirect": f"/trabajador/crear_password?id_persona={trabajador['id_persona']}"}, status_code=401)
         if not auth.verificar_password(password, trabajador['password_hash']):
             return JSONResponse({"error": "Contraseña incorrecta"}, status_code=401)
 
+        # Si está pendiente de revisión, informar pero no dejar acceder al panel completo
+        if trabajador.get('estado') == 'pendiente_revision':
+            return JSONResponse({
+                "error": "Tu hoja de vida está siendo revisada por nuestro equipo. Te notificaremos cuando sea aprobada. ¡Gracias por tu paciencia! 🙏"
+            }, status_code=403)
+
         token = auth.crear_sesion('trabajador', trabajador['id_persona'])
         response.set_cookie(
             key="session_token",
             value=token,
-            httponly=False,  # False para que JS pueda leerla si es necesario
+            httponly=False,
             max_age=86400,
             samesite="lax"
         )
