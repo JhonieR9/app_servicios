@@ -445,9 +445,78 @@ def editar_perfil_trabajador(
         if conexion and conexion.is_connected():
             conexion.close()
 
+# ============================================
+# CIUDADES DE SERVICIO
+# ============================================
+
+@router.get("/ciudades-servicio/mis")
+def mis_ciudades_servicio(id_persona: int):
+    """Lista las ciudades donde el trabajador ofrece servicios."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT id, ciudad, departamento FROM ciudades_servicio_trabajador
+            WHERE id_persona = %s ORDER BY ciudad
+        """, (id_persona,))
+        return JSONResponse({"ciudades": cursor.fetchall()})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "ciudades": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/ciudades-servicio/agregar")
+def agregar_ciudad_servicio(
+    id_persona:   int = Form(...),
+    ciudad:       str = Form(...),
+    departamento: str = Form(None)
+):
+    """Agrega una ciudad donde el trabajador ofrece servicios."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        # Evitar duplicados
+        cursor.execute("""
+            SELECT id FROM ciudades_servicio_trabajador
+            WHERE id_persona = %s AND ciudad = %s
+        """, (id_persona, ciudad.upper()))
+        if cursor.fetchone():
+            return JSONResponse({"error": "Ya tienes esta ciudad registrada"}, status_code=400)
+
+        cursor.execute("""
+            INSERT INTO ciudades_servicio_trabajador (id_persona, ciudad, departamento)
+            VALUES (%s, %s, %s)
+        """, (id_persona, ciudad.upper(), departamento or ''))
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": f"✅ {ciudad} agregada"})
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/ciudades-servicio/eliminar")
+def eliminar_ciudad_servicio(id: int = Form(...)):
+    """Elimina una ciudad de servicio del trabajador."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("DELETE FROM ciudades_servicio_trabajador WHERE id = %s", (id,))
+        conexion.commit()
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
 @router.post("/documentos/actualizar")
-async def actualizar_documento(
-    id_persona:     int = Form(...),
+async def actualizar_documento(    id_persona:     int = Form(...),
     tipo_documento: str = Form(...),
     archivo: UploadFile = File(...)
 ):
@@ -1066,12 +1135,14 @@ async def crear_trabajador(
     genero: str = Form(...),
     nombre_completo: str = Form(...),
     fecha_nacimiento: str = Form(None),
+    ciudad_nacimiento: str = Form(None),
     nacionalidad: str = Form(None),
     ciudad: str = Form(...),
     departamento: str = Form(None),
     codigo_dane: str = Form(...),
     celular: str = Form(...),
     correo: str = Form(None),
+    ciudades_servicio: str = Form(None),
     habilidades_tipo: str = Form(None),   # opcional ahora
     disponibilidad: str = Form(...),
     disponibilidad_dias: str = Form(...),
@@ -1184,9 +1255,9 @@ async def crear_trabajador(
         # 1. Insertar persona
         cursor.execute("""
             INSERT INTO personas 
-            (id_tipo_documento, numero_documento, id_genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, registrado_por, departamento)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (tipo_doc_id, numero_documento, genero_id, nombre_completo, ciudad.title() if ciudad else '', codigo_dane, fecha_nacimiento, nacionalidad, nombre_completo, departamento.title() if departamento else ''))        
+            (id_tipo_documento, numero_documento, id_genero, nombre_completo, ciudad, codigo_dane, fecha_nacimiento, nacionalidad, registrado_por, departamento, ciudad_nacimiento)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (tipo_doc_id, numero_documento, genero_id, nombre_completo, ciudad.title() if ciudad else '', codigo_dane, fecha_nacimiento, nacionalidad, nombre_completo, departamento.title() if departamento else '', ciudad_nacimiento or ''))        
         id_persona = cursor.lastrowid
         
         # 2. Insertar teléfono
@@ -1201,6 +1272,16 @@ async def crear_trabajador(
                 INSERT INTO correo_persona (id_persona, correo)
                 VALUES (%s, %s)
             """, (id_persona, correo))
+
+        # 3.5 Guardar ciudades de servicio
+        if ciudades_servicio:
+            for c in ciudades_servicio.split(','):
+                c_limpia = c.strip().upper()
+                if c_limpia:
+                    cursor.execute("""
+                        INSERT INTO ciudades_servicio_trabajador (id_persona, ciudad)
+                        VALUES (%s, %s)
+                    """, (id_persona, c_limpia))
         
         # 4. Obtener servicios del formulario
         form_data = await request.form()

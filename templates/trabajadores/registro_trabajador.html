@@ -294,6 +294,10 @@
                                 <input type="date" class="form-control" name="fecha_nacimiento" required>
                             </div>
                             <div class="col-md-4">
+                                <label class="form-label">Ciudad de Nacimiento</label>
+                                <input type="text" class="form-control" name="ciudad_nacimiento" placeholder="Ej: Cali">
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label required-label">Nacionalidad</label>
                                 <select class="form-select" name="nacionalidad" required>
                                     <option value="">Seleccionar...</option>
@@ -382,6 +386,12 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-12">
                                 <small class="text-muted">Puedes registrar hasta 10 servicios diferentes. Usa el botón "Agregar Otro Servicio" para añadir más.</small>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label required-label">Ciudades donde prestas servicio</label>
+                                <input type="text" class="form-control" name="ciudades_servicio" 
+                                       placeholder="Ej: Puerto Tejada, Cali, Jamundí (separadas por coma)" required>
+                                <small class="text-muted">Escribe las ciudades separadas por coma. Puedes agregar más después desde tu perfil.</small>
                             </div>
                         </div>
 

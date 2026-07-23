@@ -329,6 +329,26 @@ def crear_tablas():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """)
 
+        # Tabla ciudades de servicio del trabajador
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `ciudades_servicio_trabajador` (
+              `id`              int NOT NULL AUTO_INCREMENT,
+              `id_persona`      int NOT NULL,
+              `ciudad`          varchar(100) NOT NULL,
+              `departamento`    varchar(100) DEFAULT NULL,
+              `fecha_agregada`  datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              KEY `idx_ciudad_persona` (`id_persona`),
+              KEY `idx_ciudad_nombre` (`ciudad`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
+        # Columna ciudad_nacimiento en personas
+        try:
+            cursor.execute("ALTER TABLE personas ADD COLUMN ciudad_nacimiento varchar(100) DEFAULT NULL")
+        except Exception:
+            pass
+
         conn.commit()
         cursor.close()
         conn.close()
