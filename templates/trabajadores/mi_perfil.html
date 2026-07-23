@@ -154,6 +154,22 @@
 
             <!-- Sección Documentos -->
             <div class="info-card">
+                <h3>📍 Ciudades donde presto servicio</h3>
+                <div id="listaCiudadesServicio" style="margin-bottom:12px">Cargando...</div>
+                <div style="display:flex;gap:8px">
+                    <input type="text" id="nuevaCiudadServicio" placeholder="Ej: Cali"
+                        style="flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.88rem;outline:none">
+                    <button onclick="agregarCiudadServicio()"
+                        style="padding:10px 18px;background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                               color:white;border:none;border-radius:10px;font-weight:700;font-size:0.82rem;
+                               cursor:pointer;white-space:nowrap">
+                        + Agregar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sección Documentos -->
+            <div class="info-card">
                 <h3>📄 Mis Documentos</h3>
                 <div style="display:grid;gap:12px">
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">
@@ -290,6 +306,54 @@
             t.style.opacity = '0';
             setTimeout(() => t.remove(), 400);
         }, 3500);
+    }
+
+    // ── CIUDADES DE SERVICIO ─────────────────────────────────
+    async function cargarCiudadesServicio() {
+        try {
+            const res = await fetch('/trabajador/ciudades-servicio/mis?id_persona=' + idTrabajador);
+            const data = await res.json();
+            const lista = data.ciudades || [];
+            const el = document.getElementById('listaCiudadesServicio');
+            if (!el) return;
+            if (lista.length === 0) {
+                el.innerHTML = '<div style="color:#94a3b8;font-size:0.82rem;text-align:center;padding:10px">No has registrado ciudades de servicio</div>';
+                return;
+            }
+            el.innerHTML = lista.map(c =>
+                `<div style="display:inline-flex;align-items:center;gap:6px;background:#ede9fe;border:1px solid #c4b5fd;
+                             border-radius:99px;padding:6px 14px;margin:3px;font-size:0.8rem;font-weight:600;color:#5b21b6">
+                    📍 ${c.ciudad}
+                    <button onclick="eliminarCiudadServicio(${c.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.9rem;padding:0 2px">✕</button>
+                </div>`
+            ).join('');
+        } catch(e) {}
+    }
+
+    async function agregarCiudadServicio() {
+        const input = document.getElementById('nuevaCiudadServicio');
+        const ciudad = input.value.trim();
+        if (!ciudad) { mostrarToastPerfil('❌ Escribe una ciudad', false); return; }
+
+        const fd = new FormData();
+        fd.append('id_persona', idTrabajador);
+        fd.append('ciudad', ciudad);
+        const res = await fetch('/trabajador/ciudades-servicio/agregar', { method:'POST', body:fd });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            input.value = '';
+            mostrarToastPerfil(data.mensaje, true);
+            cargarCiudadesServicio();
+        } else {
+            mostrarToastPerfil('❌ ' + (data.error || 'Error'), false);
+        }
+    }
+
+    async function eliminarCiudadServicio(id) {
+        const fd = new FormData();
+        fd.append('id', id);
+        await fetch('/trabajador/ciudades-servicio/eliminar', { method:'POST', body:fd });
+        cargarCiudadesServicio();
     }
 
     // ── ACTUALIZAR DOCUMENTO ─────────────────────────────────
@@ -481,7 +545,7 @@
     }
 
     cargarPerfil();
-    setTimeout(() => { cargarEspecialidades(); cargarCategorias(); }, 500);
+    setTimeout(() => { cargarEspecialidades(); cargarCategorias(); cargarCiudadesServicio(); }, 500);
 </script>
 </body>
 </html>
