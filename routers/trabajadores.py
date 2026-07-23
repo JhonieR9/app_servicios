@@ -1201,7 +1201,7 @@ async def crear_trabajador(
     arl: str = Form(None),
     eps: str = Form(None),
     nivel_estudio: str = Form(None),
-    certificado_estudio: UploadFile = File(None)
+    certificado_estudio: UploadFile = File(...)
 ):
     import os
     from datetime import datetime
@@ -1289,19 +1289,15 @@ async def crear_trabajador(
                     f.write(recomend_bytes)
         except: pass
 
-        # Certificado de estudio (opcional)
-        cert_estudio_bytes = None
-        cert_estudio_filename = None
-        cert_estudio_tipo = None
-        if certificado_estudio and certificado_estudio.filename:
-            cert_estudio_bytes = await certificado_estudio.read()
-            cert_estudio_filename = f"cert_estudio_{timestamp}_{certificado_estudio.filename}"
-            cert_estudio_tipo = certificado_estudio.content_type or 'application/pdf'
-            try:
-                cert_path = os.path.join(UPLOAD_FOLDER, cert_estudio_filename)
-                with open(cert_path, "wb") as f:
-                    f.write(cert_estudio_bytes)
-            except: pass
+        # Certificado de estudio (obligatorio)
+        cert_estudio_bytes = await certificado_estudio.read()
+        cert_estudio_filename = f"cert_estudio_{timestamp}_{certificado_estudio.filename}"
+        cert_estudio_tipo = certificado_estudio.content_type or 'application/pdf'
+        try:
+            cert_path = os.path.join(UPLOAD_FOLDER, cert_estudio_filename)
+            with open(cert_path, "wb") as f:
+                f.write(cert_estudio_bytes)
+        except: pass
         
         # Iniciar transacción
         conexion.autocommit = False
