@@ -74,7 +74,13 @@ def obtener_mi_perfil_cliente(request: Request):
 
 @router.get("/panel", response_class=HTMLResponse)
 def mostrar_panel_cliente(request: Request):
-    """Panel principal del cliente"""
+    """Panel principal del cliente — requiere sesión activa"""
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    if not token:
+        return RedirectResponse(url="/cliente/login", status_code=302)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'cliente':
+        return RedirectResponse(url="/cliente/login", status_code=302)
     return templates.TemplateResponse("clientes/panel.html", {"request": request})
 
 @router.get("/registro", response_class=HTMLResponse)
@@ -186,10 +192,22 @@ def verificar_codigo_cliente(
 
 @router.get("/solicitar_servicio", response_class=HTMLResponse)
 def mostrar_solicitar_servicio(request: Request):
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    if not token:
+        return RedirectResponse(url="/cliente/login", status_code=302)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'cliente':
+        return RedirectResponse(url="/cliente/login", status_code=302)
     return templates.TemplateResponse("clientes/solicitar_servicio.html", {"request": request})
 
 @router.get("/seguimiento", response_class=HTMLResponse)
 def mostrar_seguimiento(request: Request):
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    if not token:
+        return RedirectResponse(url="/cliente/login", status_code=302)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'cliente':
+        return RedirectResponse(url="/cliente/login", status_code=302)
     return templates.TemplateResponse("clientes/seguimiento.html", {"request": request})
 
 @router.get("/seguimiento_api")
@@ -258,6 +276,12 @@ def api_seguimiento(id: int):
 
 @router.get("/mis_solicitudes", response_class=HTMLResponse)
 def mostrar_mis_solicitudes(request: Request):
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    if not token:
+        return RedirectResponse(url="/cliente/login", status_code=302)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'cliente':
+        return RedirectResponse(url="/cliente/login", status_code=302)
     return templates.TemplateResponse("clientes/mis_solicitudes.html", {"request": request})
 
 @router.get("/mis_solicitudes_api")

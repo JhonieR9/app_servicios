@@ -20,7 +20,13 @@ def mostrar_crear_password(request: Request):
 
 @router.get("/panel", response_class=HTMLResponse)
 def mostrar_panel_trabajador(request: Request):
-    """Panel principal del trabajador"""
+    """Panel principal del trabajador — requiere sesión activa"""
+    token = request.cookies.get("session_token")
+    if not token:
+        return RedirectResponse(url="/trabajador/login", status_code=302)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'trabajador':
+        return RedirectResponse(url="/trabajador/login", status_code=302)
     return templates.TemplateResponse("trabajadores/panel.html", {"request": request})
 
 @router.get("/mi-perfil")
@@ -56,6 +62,12 @@ def obtener_mi_perfil(request: Request):
 @router.get("/solicitudes_pendientes_panel", response_class=HTMLResponse)
 def mostrar_mis_solicitudes_panel(request: Request):
     """Panel de solicitudes del trabajador"""
+    token = request.cookies.get("session_token")
+    if not token:
+        return RedirectResponse(url="/trabajador/login", status_code=302)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'trabajador':
+        return RedirectResponse(url="/trabajador/login", status_code=302)
     return templates.TemplateResponse("trabajadores/mis_solicitudes.html", {"request": request})
 
 @router.get("/mis_solicitudes_api")
@@ -395,6 +407,12 @@ def obtener_perfil_completo(id: int = None):
 
 @router.get("/mi_perfil_page", response_class=HTMLResponse)
 def mostrar_mi_perfil(request: Request):
+    token = request.cookies.get("session_token")
+    if not token:
+        return RedirectResponse(url="/trabajador/login", status_code=302)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'trabajador':
+        return RedirectResponse(url="/trabajador/login", status_code=302)
     return templates.TemplateResponse("trabajadores/mi_perfil.html", {"request": request})
 
 @router.post("/perfil/editar")
