@@ -189,3 +189,50 @@ def rechazar_trabajador(request: Request, id_persona: int = Form(...), motivo: s
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
+
+
+# ============================================
+# API: LISTAR APROBADOS
+# ============================================
+
+@router.get("/aprobados")
+def listar_aprobados(request: Request):
+    """Lista trabajadores ya aprobados por la psicóloga"""
+    if not verificar_psicologa(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
+
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"error": "Error de conexión", "trabajadores": []}, status_code=500)
+
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT 
+                p.id_persona, p.nombre_completo, p.numero_documento, p.ciudad,
+                p.departamento, p.fecha_registro,
+                tp.telefono,
+                dp.nivel_estudio
+            FROM personas p
+            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+            LEFT JOIN detalles_persona dp ON p.id_persona = dp.id_persona
+            WHERE p.estado = 'activo'
+            ORDER BY p.fecha_registro DESC
+            LIMIT 100
+        """)
+        trabajadores = cursor.fetchall()
+
+        for t in trabajadores:
+            for k, v in t.items():
+                if v is None:
+                    t[k] = ''
+                elif hasattr(v, 'isoformat'):
+                    t[k] = v.strftime('%Y-%m-%d %H:%M')
+
+        return JSONResponse({"trabajadores": trabajadores})
+
+    except Exception as e:
+        return JSONResponse({"error": str(e), "trabajadores": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()

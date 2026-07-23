@@ -38,11 +38,51 @@
         }
         .btn-logout:hover { background: rgba(255,255,255,0.3); }
         .content { padding: 20px; max-width: 900px; margin: 0 auto; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: #e2e8f0;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: white;
+            color: #7c3aed;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .tab-btn .count {
+            background: #e2e8f0;
+            color: #64748b;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-size: 0.72rem;
+            margin-left: 6px;
+        }
+        .tab-btn.active .count {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 12px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
         .stat-card {
             background: white;
@@ -53,6 +93,8 @@
         }
         .stat-card .num { font-size: 1.8rem; font-weight: 800; color: #7c3aed; }
         .stat-card .label { font-size: 0.72rem; color: #64748b; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Worker cards */
         .worker-card {
             background: white;
             border-radius: 16px;
@@ -61,7 +103,7 @@
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
             border-left: 4px solid #fbbf24;
         }
-        .worker-card.aprobado { border-left-color: #4ade80; opacity: 0.6; }
+        .worker-card.aprobado { border-left-color: #4ade80; }
         .worker-header {
             display: flex;
             align-items: center;
@@ -73,6 +115,14 @@
         .badge-pendiente {
             background: #fef3c7;
             color: #92400e;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .badge-aprobado {
+            background: #dcfce7;
+            color: #166534;
             padding: 4px 10px;
             border-radius: 99px;
             font-size: 0.7rem;
@@ -111,9 +161,7 @@
             transition: all 0.2s;
         }
         .doc-btn:hover { background: #ddd6fe; }
-        .servicios-list {
-            margin-bottom: 14px;
-        }
+        .servicios-list { margin-bottom: 14px; }
         .servicio-chip {
             display: inline-block;
             background: #f0f9ff;
@@ -181,6 +229,8 @@
             from { opacity:0; transform:translateX(30px); }
             to { opacity:1; transform:translateX(0); }
         }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         @media (max-width: 600px) {
             .info-grid { grid-template-columns: 1fr; }
             .actions { flex-direction: column; }
@@ -200,24 +250,54 @@
         <div class="stats">
             <div class="stat-card">
                 <div class="num" id="totalPendientes">-</div>
-                <div class="label">Pendientes</div>
+                <div class="label">⏳ Pendientes</div>
             </div>
             <div class="stat-card">
-                <div class="num" id="totalHoy">-</div>
-                <div class="label">Hoy revisados</div>
+                <div class="num" id="totalAprobados">-</div>
+                <div class="label">✅ Aprobados</div>
             </div>
         </div>
 
-        <div id="listaPendientes">
-            <div class="empty-state">
-                <i class="bi bi-hourglass-split"></i>
-                Cargando...
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="cambiarTab('pendientes')">
+                <i class="bi bi-hourglass-split"></i> Pendientes <span class="count" id="countPendientes">0</span>
+            </button>
+            <button class="tab-btn" onclick="cambiarTab('aprobados')">
+                <i class="bi bi-check-circle"></i> Aprobados <span class="count" id="countAprobados">0</span>
+            </button>
+        </div>
+
+        <!-- Tab Pendientes -->
+        <div class="tab-content active" id="tab-pendientes">
+            <div id="listaPendientes">
+                <div class="empty-state"><i class="bi bi-hourglass-split"></i> Cargando...</div>
+            </div>
+        </div>
+
+        <!-- Tab Aprobados -->
+        <div class="tab-content" id="tab-aprobados">
+            <div id="listaAprobados">
+                <div class="empty-state"><i class="bi bi-hourglass-split"></i> Cargando...</div>
             </div>
         </div>
     </div>
 
     <script>
     let trabajadoresPendientes = [];
+    let trabajadoresAprobados = [];
+
+    function cambiarTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        if (tab === 'pendientes') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('tab-pendientes').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('tab-aprobados').classList.add('active');
+        }
+    }
 
     async function cargarPendientes() {
         try {
@@ -225,16 +305,30 @@
             const data = await res.json();
             if (data.error) throw new Error(data.error);
             trabajadoresPendientes = data.trabajadores || [];
-            renderLista();
+            renderPendientes();
         } catch(e) {
             document.getElementById('listaPendientes').innerHTML =
-                `<div class="empty-state"><i class="bi bi-exclamation-circle"></i> Error al cargar: ${e.message}</div>`;
+                `<div class="empty-state"><i class="bi bi-exclamation-circle"></i> Error: ${e.message}</div>`;
         }
     }
 
-    function renderLista() {
+    async function cargarAprobados() {
+        try {
+            const res = await fetch('/psicologa/aprobados');
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            trabajadoresAprobados = data.trabajadores || [];
+            renderAprobados();
+        } catch(e) {
+            document.getElementById('listaAprobados').innerHTML =
+                `<div class="empty-state"><i class="bi bi-exclamation-circle"></i> Error: ${e.message}</div>`;
+        }
+    }
+
+    function renderPendientes() {
         const el = document.getElementById('listaPendientes');
         document.getElementById('totalPendientes').textContent = trabajadoresPendientes.length;
+        document.getElementById('countPendientes').textContent = trabajadoresPendientes.length;
 
         if (trabajadoresPendientes.length === 0) {
             el.innerHTML = `<div class="empty-state">
@@ -304,7 +398,7 @@
 
                 <div class="actions">
                     <button class="btn-aprobar" onclick="aprobar(${t.id_persona})">
-                        <i class="bi bi-check-circle"></i> Aprobar — Listo para trabajar
+                        <i class="bi bi-check-circle"></i> ✅ Aprobar — Listo para trabajar
                     </button>
                     <button class="btn-rechazar" onclick="rechazar(${t.id_persona})">
                         <i class="bi bi-x-circle"></i> Rechazar
@@ -312,6 +406,37 @@
                 </div>
             </div>`;
         }).join('');
+    }
+
+    function renderAprobados() {
+        const el = document.getElementById('listaAprobados');
+        document.getElementById('totalAprobados').textContent = trabajadoresAprobados.length;
+        document.getElementById('countAprobados').textContent = trabajadoresAprobados.length;
+
+        if (trabajadoresAprobados.length === 0) {
+            el.innerHTML = `<div class="empty-state">
+                <i class="bi bi-person-x"></i>
+                <div style="font-size:0.85rem;margin-top:8px">Aún no hay trabajadores aprobados</div>
+            </div>`;
+            return;
+        }
+
+        el.innerHTML = trabajadoresAprobados.map(t => `
+            <div class="worker-card aprobado">
+                <div class="worker-header">
+                    <div>
+                        <div class="worker-name">${t.nombre_completo}</div>
+                        <div class="worker-meta">${t.ciudad}${t.departamento ? ', ' + t.departamento : ''} · Doc: ${t.numero_documento}</div>
+                    </div>
+                    <span class="badge-aprobado">✅ Aprobado</span>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem;color:#475569">
+                    <span><i class="bi bi-telephone"></i> ${t.telefono || 'N/A'}</span>
+                    <span><i class="bi bi-mortarboard"></i> ${t.nivel_estudio || 'N/A'}</span>
+                    <span><i class="bi bi-calendar"></i> ${t.fecha_registro || 'N/A'}</span>
+                </div>
+            </div>
+        `).join('');
     }
 
     async function aprobar(id) {
@@ -322,9 +447,9 @@
             const data = await res.json();
             if (res.ok && data.ok) {
                 mostrarToast('✅ ' + data.mensaje);
-                // Remover de la lista
                 trabajadoresPendientes = trabajadoresPendientes.filter(t => t.id_persona !== id);
-                renderLista();
+                renderPendientes();
+                cargarAprobados(); // recargar lista aprobados
             } else {
                 mostrarToast('❌ ' + (data.error || 'Error'), true);
             }
@@ -343,7 +468,7 @@
             if (res.ok && data.ok) {
                 mostrarToast('❌ ' + data.mensaje);
                 trabajadoresPendientes = trabajadoresPendientes.filter(t => t.id_persona !== id);
-                renderLista();
+                renderPendientes();
             } else {
                 mostrarToast('❌ ' + (data.error || 'Error'), true);
             }
@@ -362,8 +487,7 @@
 
     // Cargar al iniciar
     cargarPendientes();
-    // Actualizar "hoy" (placeholder)
-    document.getElementById('totalHoy').textContent = '—';
+    cargarAprobados();
     </script>
 </body>
 </html>
