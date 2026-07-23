@@ -635,6 +635,9 @@
                                     </div>
                                     <div style="font-size:0.82rem;color:#374151">
                                         ${reg.medio_pago_principal ? `<strong>${reg.medio_pago_principal}</strong> · ` : ''}${reg.medio_pago}
+                                        ${reg.numero_cuenta ? `<br>📱 <strong>Número:</strong> ${reg.numero_cuenta}` : ''}
+                                        ${reg.banco ? `<br>🏦 <strong>Banco:</strong> ${reg.banco}` : ''}
+                                        ${reg.titular_cuenta ? `<br>👤 <strong>Titular:</strong> ${reg.titular_cuenta}` : ''}
                                     </div>
                                 </li>` : ''}
                             </ul>
@@ -785,7 +788,7 @@
                     </div>
                     ${reg.correo ? `<div style="font-size:0.82rem;color:#475569;margin-bottom:12px">📧 ${reg.correo}</div>` : ''}
                     ${reg.arl || reg.eps ? `<div style="font-size:0.82rem;color:#475569;margin-bottom:12px">🛡️ ARL: ${reg.arl || 'N/A'} · EPS: ${reg.eps || 'N/A'}</div>` : ''}
-                    ${reg.medio_pago ? `<div style="font-size:0.82rem;color:#475569;margin-bottom:12px">💳 ${reg.medio_pago_principal || ''} ${reg.medio_pago}</div>` : ''}
+                    ${reg.medio_pago ? `<div style="font-size:0.82rem;color:#475569;margin-bottom:12px">💳 ${reg.medio_pago_principal || ''} ${reg.medio_pago}${reg.numero_cuenta ? ' · 📱 ' + reg.numero_cuenta : ''}${reg.banco ? ' · 🏦 ' + reg.banco : ''}</div>` : ''}
                     <div style="margin-bottom:12px">
                         <div style="font-size:0.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:8px">Servicios</div>
                         ${serviciosHtml || '<div style="color:#94a3b8;font-size:0.82rem">Sin servicios registrados</div>'}
