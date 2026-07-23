@@ -294,8 +294,8 @@
                                 <input type="date" class="form-control" name="fecha_nacimiento" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Ciudad de Nacimiento</label>
-                                <input type="text" class="form-control" name="ciudad_nacimiento" placeholder="Ej: Cali">
+                                <label class="form-label required-label">Ciudad de Nacimiento</label>
+                                <input type="text" class="form-control" name="ciudad_nacimiento" placeholder="Ej: Cali, Bogotá, Medellín..." required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label required-label">Nacionalidad</label>
@@ -310,9 +310,9 @@
                                 </select>
                             </div>
                             <div class="col-md-12" style="position:relative;">
-                                <label class="form-label required-label">Ciudad</label>
+                                <label class="form-label required-label">Ciudad de Residencia</label>
                                 <input type="text" class="form-control" id="ciudad_input" 
-                                       placeholder="Escriba su ciudad..." 
+                                       placeholder="Escriba su ciudad de residencia..." 
                                        autocomplete="off" required
                                        oninput="filtrarCiudades(this.value)"
                                        onblur="setTimeout(ocultarDropdown, 200)">
