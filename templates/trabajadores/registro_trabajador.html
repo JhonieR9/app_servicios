@@ -402,7 +402,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label class="form-label required-label">Categoría del Servicio</label>
-                                        <select class="form-control" name="servicio_categoria[]" required>
+                                        <select class="form-control" name="servicio_categoria[]" required onchange="ajustarTarifa(this)">
                                             <option value="">Seleccionar categoría...</option>
                                             <option value="Plomería">🔧 Plomería</option>
                                             <option value="Electricidad">⚡ Electricidad</option>
@@ -995,6 +995,23 @@
     // ============================================
     // AGREGAR SERVICIO
     // ============================================
+
+    // Ajustar label de tarifa según categoría
+    function ajustarTarifa(selectEl) {
+        var box = selectEl.closest('.habilidad-box');
+        if (!box) return;
+        var tarifaLabel = box.querySelector('input[name="habilidad_valor[]"]').closest('.col-md-6').querySelector('label');
+        var tarifaSmall = box.querySelector('input[name="habilidad_valor[]"]').closest('.col-md-6').querySelector('small');
+        var cat = selectEl.value;
+        if (cat === 'Transporte' || cat === 'Mensajería') {
+            tarifaLabel.innerHTML = 'Tarifa por Servicio (COP) <span style="color:#667eea;font-size:0.85em;font-weight:normal"><i class="bi bi-info-circle"></i> Por carrera/envío</span>';
+            tarifaSmall.innerHTML = '<i class="bi bi-exclamation-circle"></i> <strong>Importante:</strong> Ingrese el costo base por carrera o envío';
+        } else {
+            tarifaLabel.innerHTML = 'Tarifa/Hora (COP) <span style="color:#667eea;font-size:0.85em;font-weight:normal"><i class="bi bi-info-circle"></i> Solo mano de obra</span>';
+            tarifaSmall.innerHTML = '<i class="bi bi-exclamation-circle"></i> <strong>Importante:</strong> Ingrese solo el costo de su trabajo, sin incluir materiales';
+        }
+    }
+
     var contadorHabilidades = 1;
     function agregarHabilidad() {
         if (contadorHabilidades >= 10) { mostrarAlerta('warning', 'Máximo 10 servicios'); return; }
