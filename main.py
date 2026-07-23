@@ -77,6 +77,7 @@ def crear_tablas():
                 (29, 'Diseño',             'Diseño gráfico, logos y publicidad'),
                 (30, 'Mensajería',         'Envío de paquetes y documentos'),
                 (31, 'Mascotas',           'Paseo, cuidado, guardería y grooming de mascotas'),
+                (32, 'Reparaciones Locativas', 'Mantenimiento general de inmuebles, arreglos menores, adecuaciones'),
             ]
             for id_cat, nombre, descripcion in categorias:
                 cursor.execute(
@@ -90,6 +91,10 @@ def crear_tablas():
             cursor.execute("""
                 INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, descripcion, estado)
                 VALUES (31, 'Mascotas', 'Paseo, cuidado, guardería y grooming de mascotas', 'activo')
+            """)
+            cursor.execute("""
+                INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, descripcion, estado)
+                VALUES (32, 'Reparaciones Locativas', 'Mantenimiento general de inmuebles, arreglos menores, adecuaciones', 'activo')
             """)
             conn.commit()
         except Exception:

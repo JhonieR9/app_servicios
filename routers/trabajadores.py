@@ -627,6 +627,7 @@ ESPECIALIDADES_POR_CATEGORIA = {
     "Gastronomía": ["Chef a domicilio", "Catering eventos", "Repostería", "Comida saludable", "Asados y BBQ", "Cocina internacional"],
     "Eventos": ["Decoración de fiestas", "Sonido y DJ", "Animación infantil", "Meseros", "Logística de eventos", "Floristería"],
     "Fotografía": ["Fotografía de eventos", "Retratos", "Fotografía de producto", "Video corporativo", "Edición de fotos", "Drones"],
+    "Reparaciones Locativas": ["Resane de paredes", "Cambio de chapas y cerraduras", "Reparación de pisos", "Arreglo de techos y goteras", "Mantenimiento de baños", "Adecuaciones menores"],
 }
 
 @router.get("/especialidades/catalogo")
