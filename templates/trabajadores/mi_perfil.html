@@ -95,6 +95,11 @@
             const data = await res.json();
             if (data.error) throw new Error(data.error);
             renderPerfil(data);
+            // Setear nivel de estudio en el select
+            setTimeout(() => {
+                const sel = document.getElementById('nivelEstudioSelect');
+                if (sel && data.nivel_estudio) sel.value = data.nivel_estudio;
+            }, 100);
         } catch(e) {
             document.getElementById('contenido').innerHTML = `
                 <div class="loading"><i class="bi bi-exclamation-circle"></i> Error al cargar perfil</div>`;
@@ -165,6 +170,38 @@
                                cursor:pointer;white-space:nowrap">
                         + Agregar
                     </button>
+                </div>
+            </div>
+
+            <!-- Sección Documentos -->
+            <div class="info-card">
+                <h3>🎓 Nivel de Estudio</h3>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+                    <select id="nivelEstudioSelect" style="flex:1;min-width:180px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.88rem">
+                        <option value="">Seleccionar...</option>
+                        <option value="Primaria">Primaria</option>
+                        <option value="Bachiller">Bachiller</option>
+                        <option value="Técnico">Técnico</option>
+                        <option value="Tecnólogo">Tecnólogo</option>
+                        <option value="Profesional">Profesional</option>
+                        <option value="Especialización">Especialización</option>
+                        <option value="Maestría">Maestría</option>
+                        <option value="Doctorado">Doctorado</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                    <button onclick="guardarNivelEstudio()" style="padding:10px 18px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:10px;font-size:0.8rem;font-weight:700;cursor:pointer">
+                        Guardar
+                    </button>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">
+                    <div>
+                        <div style="font-size:0.82rem;font-weight:700;color:#0f172a">📜 Certificado de Estudio</div>
+                        <div style="font-size:0.72rem;color:#64748b">Diploma, acta de grado o certificado</div>
+                    </div>
+                    <label style="padding:8px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer">
+                        Actualizar
+                        <input type="file" accept="image/*,.pdf" style="display:none" onchange="actualizarDocumento('certificado_estudio', this)">
+                    </label>
                 </div>
             </div>
 
@@ -382,6 +419,26 @@
             mostrarToastPerfil('❌ Error de conexión', false);
         }
         inputEl.value = '';
+    }
+
+    // ── NIVEL DE ESTUDIO ─────────────────────────────────────
+    async function guardarNivelEstudio() {
+        const sel = document.getElementById('nivelEstudioSelect');
+        if (!sel || !sel.value) { mostrarToastPerfil('❌ Selecciona un nivel de estudio', false); return; }
+        const fd = new FormData();
+        fd.append('id_persona', idTrabajador);
+        fd.append('nivel_estudio', sel.value);
+        try {
+            const res = await fetch('/trabajador/perfil/nivel-estudio', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                mostrarToastPerfil('✅ Nivel de estudio actualizado', true);
+            } else {
+                mostrarToastPerfil('❌ ' + (data.error || 'Error'), false);
+            }
+        } catch(e) {
+            mostrarToastPerfil('❌ Error de conexión', false);
+        }
     }
 
     // ── ESPECIALIDADES ──────────────────────────────────────

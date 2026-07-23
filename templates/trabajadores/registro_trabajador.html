@@ -574,6 +574,34 @@
                         </div>
                     </div>
 
+                    <!-- SECCIÓN: NIVEL DE ESTUDIO -->
+                    <div class="section">
+                        <h4 class="section-title">
+                            <i class="bi bi-mortarboard-fill"></i> Nivel de Estudio
+                        </h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label required-label">Nivel de Estudio</label>
+                                <select class="form-select" name="nivel_estudio" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Primaria">Primaria</option>
+                                    <option value="Bachiller">Bachiller</option>
+                                    <option value="Técnico">Técnico</option>
+                                    <option value="Tecnólogo">Tecnólogo</option>
+                                    <option value="Profesional">Profesional</option>
+                                    <option value="Especialización">Especialización</option>
+                                    <option value="Maestría">Maestría</option>
+                                    <option value="Doctorado">Doctorado</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Certificado de Estudio</label>
+                                <input type="file" class="form-control" name="certificado_estudio" accept="image/*,.pdf">
+                                <small class="text-muted">Diploma, acta de grado o certificado (opcional)</small>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- SECCIÓN DE SEGURIDAD SOCIAL -->
                     <div class="section">
@@ -1000,6 +1028,7 @@
             {name:'celular',            label:'Celular'},
             {name:'disponibilidad',     label:'Horario'},
             {name:'disponibilidad_dias',label:'Días Disponibles'},
+            {name:'nivel_estudio',      label:'Nivel de Estudio'},
         ];
 
         for (var i = 0; i < campos.length; i++) {

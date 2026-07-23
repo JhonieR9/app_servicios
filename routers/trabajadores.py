@@ -366,10 +366,11 @@ def obtener_perfil_completo(id: int = None):
         cursor.execute("""
             SELECT p.id_persona, p.nombre_completo, p.numero_documento,
                    p.ciudad, p.departamento, p.nacionalidad, p.fecha_nacimiento,
-                   tp.telefono, cp.correo
+                   tp.telefono, cp.correo, dp.nivel_estudio
             FROM personas p
             LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
             LEFT JOIN correo_persona cp ON p.id_persona = cp.id_persona
+            LEFT JOIN detalles_persona dp ON p.id_persona = dp.id_persona
             WHERE p.id_persona = %s
         """, (id,))
         perfil = cursor.fetchone()
@@ -444,6 +445,35 @@ def editar_perfil_trabajador(
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
+
+
+@router.post("/perfil/nivel-estudio")
+def actualizar_nivel_estudio(
+    id_persona:    int = Form(...),
+    nivel_estudio: str = Form(...)
+):
+    """Permite al trabajador actualizar su nivel de estudio."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            UPDATE detalles_persona SET nivel_estudio = %s WHERE id_persona = %s
+        """, (nivel_estudio, id_persona))
+        if cursor.rowcount == 0:
+            # Si no existe fila en detalles_persona, intentar insertar
+            cursor.execute("""
+                INSERT INTO detalles_persona (id_persona, nivel_estudio) VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE nivel_estudio = %s
+            """, (id_persona, nivel_estudio, nivel_estudio))
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": "Nivel de estudio actualizado"})
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 
 # ============================================
 # CIUDADES DE SERVICIO
@@ -520,8 +550,8 @@ async def actualizar_documento(    id_persona:     int = Form(...),
     tipo_documento: str = Form(...),
     archivo: UploadFile = File(...)
 ):
-    """Actualiza un documento del trabajador (foto_identificacion, foto_antecedentes, recomendaciones_archivo)."""
-    campos_validos = ['foto_identificacion', 'foto_antecedentes', 'recomendaciones_archivo']
+    """Actualiza un documento del trabajador (foto_identificacion, foto_antecedentes, recomendaciones_archivo, certificado_estudio)."""
+    campos_validos = ['foto_identificacion', 'foto_antecedentes', 'recomendaciones_archivo', 'certificado_estudio']
     if tipo_documento not in campos_validos:
         return JSONResponse({"error": "Tipo de documento inválido"}, status_code=400)
 
@@ -552,6 +582,12 @@ async def actualizar_documento(    id_persona:     int = Form(...),
             cursor.execute("""
                 UPDATE detalles_persona
                 SET recomendaciones_archivo = %s, recomendaciones_data = %s, recomendaciones_tipo = %s
+                WHERE id_persona = %s
+            """, (archivo_nombre, archivo_bytes, archivo_tipo, id_persona))
+        elif tipo_documento == 'certificado_estudio':
+            cursor.execute("""
+                UPDATE detalles_persona
+                SET certificado_estudio = %s, certificado_estudio_data = %s, certificado_estudio_tipo = %s
                 WHERE id_persona = %s
             """, (archivo_nombre, archivo_bytes, archivo_tipo, id_persona))
 
@@ -797,6 +833,7 @@ def perfil_publico(request: Request, id_persona: int):
                    p.estado,
                    tp.telefono,
                    dp.foto_identificacion,
+                   dp.nivel_estudio,
                    (dp.foto_identificacion_data IS NOT NULL
                     AND LENGTH(dp.foto_identificacion_data) > 0) AS tiene_foto
             FROM personas p
@@ -961,6 +998,7 @@ def perfil_publico(request: Request, id_persona: int):
             "resenas":            resenas,
             "miembro_desde":      miembro_desde,
             "historial_trabajos": historial_trabajos,
+            "nivel_estudio":      perfil.get('nivel_estudio', ''),
         }
         return templates.TemplateResponse("trabajadores/perfil_publico.html", ctx)
 
@@ -1161,9 +1199,10 @@ async def crear_trabajador(
     titular_cuenta: str = Form(None),
     medio_pago_principal: str = Form(None),
     arl: str = Form(None),
-    eps: str = Form(None)
+    eps: str = Form(None),
+    nivel_estudio: str = Form(None),
+    certificado_estudio: UploadFile = File(None)
 ):
-    """Crear nuevo trabajador con todos sus datos"""
     import os
     from datetime import datetime
     from werkzeug.utils import secure_filename
@@ -1249,6 +1288,20 @@ async def crear_trabajador(
                 with open(rec_path, "wb") as f:
                     f.write(recomend_bytes)
         except: pass
+
+        # Certificado de estudio (opcional)
+        cert_estudio_bytes = None
+        cert_estudio_filename = None
+        cert_estudio_tipo = None
+        if certificado_estudio and certificado_estudio.filename:
+            cert_estudio_bytes = await certificado_estudio.read()
+            cert_estudio_filename = f"cert_estudio_{timestamp}_{certificado_estudio.filename}"
+            cert_estudio_tipo = certificado_estudio.content_type or 'application/pdf'
+            try:
+                cert_path = os.path.join(UPLOAD_FOLDER, cert_estudio_filename)
+                with open(cert_path, "wb") as f:
+                    f.write(cert_estudio_bytes)
+            except: pass
         
         # Iniciar transacción
         conexion.autocommit = False
@@ -1342,8 +1395,8 @@ async def crear_trabajador(
              antecedentes_data, antecedentes_tipo,
              recomendaciones_data, recomendaciones_tipo,
              medio_pago, banco, tipo_cuenta, numero_cuenta, titular_cuenta, medio_pago_principal,
-             arl, eps)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             arl, eps, nivel_estudio, certificado_estudio, certificado_estudio_data, certificado_estudio_tipo)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (id_persona, hab_tipo_id, resumen_servicios, antecedentes_filename, 
               foto_filename, acepta_terminos_val, permisos_ubicacion_val, 
               recomendaciones or '', recomend_filename,
@@ -1353,7 +1406,8 @@ async def crear_trabajador(
               medio_pago or '', banco or '', tipo_cuenta or '',
               numero_cuenta or '', titular_cuenta or '',
               medio_pago_principal or medio_pago or '',
-              arl or '', eps or ''))
+              arl or '', eps or '',
+              nivel_estudio or '', cert_estudio_filename or '', cert_estudio_bytes, cert_estudio_tipo or ''))
         
         conexion.commit()
 
@@ -1800,10 +1854,11 @@ def listar_registros(request: Request):
 
                 cursor.execute("""
                     SELECT foto_identificacion, antecedentes_pdf, recomendaciones, recomendaciones_archivo,
-                           arl, eps, medio_pago, medio_pago_principal, banco, numero_cuenta,
+                           arl, eps, medio_pago, medio_pago_principal, banco, numero_cuenta, nivel_estudio,
                            (foto_identificacion_data IS NOT NULL AND LENGTH(foto_identificacion_data) > 0) as tiene_foto,
                            (antecedentes_data IS NOT NULL AND LENGTH(antecedentes_data) > 0) as tiene_ant,
-                           (recomendaciones_data IS NOT NULL AND LENGTH(recomendaciones_data) > 0) as tiene_rec
+                           (recomendaciones_data IS NOT NULL AND LENGTH(recomendaciones_data) > 0) as tiene_rec,
+                           (certificado_estudio_data IS NOT NULL AND LENGTH(certificado_estudio_data) > 0) as tiene_cert_estudio
                     FROM detalles_persona WHERE id_persona = %s LIMIT 1
                 """, (reg['id_persona'],))
                 detalles = cursor.fetchone()
@@ -1816,6 +1871,7 @@ def listar_registros(request: Request):
                     reg['medio_pago_principal'] = str(detalles.get('medio_pago_principal') or '')
                     reg['arl'] = str(detalles.get('arl') or '')
                     reg['eps'] = str(detalles.get('eps') or '')
+                    reg['nivel_estudio'] = str(detalles.get('nivel_estudio') or '')
                     # URLs para servir desde BD
                     if detalles.get('tiene_foto'):
                         reg['foto_identificacion_url'] = f"/trabajador/archivo/{reg['id_persona']}/foto"
@@ -1823,6 +1879,8 @@ def listar_registros(request: Request):
                         reg['antecedentes_url'] = f"/trabajador/archivo/{reg['id_persona']}/antecedentes"
                     if detalles.get('tiene_rec'):
                         reg['recomendaciones_url'] = f"/trabajador/archivo/{reg['id_persona']}/recomendaciones"
+                    if detalles.get('tiene_cert_estudio'):
+                        reg['certificado_estudio_url'] = f"/trabajador/archivo/{reg['id_persona']}/certificado_estudio"
 
                 # Disponibilidad
                 cursor.execute("SELECT id_horario, id_dias FROM disponibilidad WHERE id_persona = %s LIMIT 1", (reg['id_persona'],))
@@ -2717,6 +2775,7 @@ def servir_archivo(id_persona: int, tipo: str):
             'foto': ('foto_identificacion_data', 'foto_identificacion_tipo'),
             'antecedentes': ('antecedentes_data', 'antecedentes_tipo'),
             'recomendaciones': ('recomendaciones_data', 'recomendaciones_tipo'),
+            'certificado_estudio': ('certificado_estudio_data', 'certificado_estudio_tipo'),
         }
         if tipo not in campos:
             return JSONResponse({"error": "Tipo inválido"}, status_code=400)
