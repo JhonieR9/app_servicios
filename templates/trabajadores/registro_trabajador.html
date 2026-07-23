@@ -999,11 +999,31 @@
         contadorHabilidades++;
         var container = document.getElementById('habilidadesContainer');
         var template = container.querySelector('.habilidad-box').cloneNode(true);
-        template.querySelector('h5').innerHTML = '<i class="bi bi-tools"></i> Servicio ' + contadorHabilidades;
+        template.querySelector('h5').innerHTML = '<i class="bi bi-tools"></i> Servicio ' + contadorHabilidades +
+            ' <button type="button" onclick="quitarServicio(this)" style="float:right;background:none;border:none;color:#dc3545;font-size:1.2rem;cursor:pointer;padding:0 6px" title="Quitar servicio">&times;</button>';
         template.querySelectorAll('input, textarea, select').forEach(function(el) { el.value = ''; });
         var cac = template.querySelector('.costo-ayudante-container');
         if (cac) cac.style.display = 'none';
         container.appendChild(template);
+    }
+
+    function quitarServicio(btn) {
+        var box = btn.closest('.habilidad-box');
+        if (box) {
+            box.remove();
+            contadorHabilidades--;
+            // Renumerar los servicios restantes
+            var boxes = document.querySelectorAll('#habilidadesContainer .habilidad-box');
+            boxes.forEach(function(b, i) {
+                var h5 = b.querySelector('h5');
+                if (i === 0) {
+                    h5.innerHTML = '<i class="bi bi-tools"></i> Servicio 1';
+                } else {
+                    h5.innerHTML = '<i class="bi bi-tools"></i> Servicio ' + (i + 1) +
+                        ' <button type="button" onclick="quitarServicio(this)" style="float:right;background:none;border:none;color:#dc3545;font-size:1.2rem;cursor:pointer;padding:0 6px" title="Quitar servicio">&times;</button>';
+                }
+            });
+        }
     }
 
     // ============================================
