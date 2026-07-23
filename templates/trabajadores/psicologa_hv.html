@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoja de Vida - Revisión Psicología</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        :root { --purple: #7c3aed; --purple-light: #a78bfa; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+            color: #212529;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 0;
+            margin: 20px auto;
+            max-width: 1000px;
+        }
+        .header {
+            background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+            color: white;
+            padding: 24px 30px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 1.4rem; font-weight: 700; margin: 0; }
+        .header .sub { font-size: 0.82rem; opacity: 0.85; margin-top: 4px; }
+        .btn-back {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.3); color: white; }
+        .form-content { padding: 28px; }
+        .section {
+            background: #f8f9fa;
+            border: none;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+        }
+        .section-title {
+            color: #7c3aed;
+            font-weight: 700; font-size: 0.82rem;
+            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        .field-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .field-value {
+            font-size: 0.92rem;
+            color: #1e293b;
+            font-weight: 600;
+            padding: 10px 14px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            min-height: 42px;
+        }
+        .field-value.empty { color: #94a3b8; font-style: italic; }
+        .doc-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            background: #ede9fe;
+            color: #6d28d9;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .doc-link:hover { background: #ddd6fe; color: #5b21b6; }
+        .doc-link.no-doc {
+            background: #f1f5f9;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+        .servicio-box {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 10px;
+        }
+        .servicio-box h5 { color: #7c3aed; font-size: 0.88rem; margin-bottom: 10px; font-weight: 700; }
+        .actions-bar {
+            display: flex;
+            gap: 12px;
+            padding: 20px 28px;
+            border-top: 1px solid #f1f5f9;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-radius: 0 0 20px 20px;
+        }
+        .btn-aprobar-hv {
+            flex: 2;
+            padding: 14px;
+            background: linear-gradient(135deg, #4ade80, #16a34a);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-aprobar-hv:hover { box-shadow: 0 6px 20px rgba(74,222,128,0.4); }
+        .btn-rechazar-hv {
+            flex: 1;
+            padding: 14px;
+            background: white;
+            color: #dc2626;
+            border: 2px solid #fecaca;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-rechazar-hv:hover { background: #fef2f2; }
+        .badge-estado {
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-pendiente { background: #fef3c7; color: #92400e; }
+        .badge-activo { background: #dcfce7; color: #166534; }
+        .toast-hv {
+            position: fixed; top: 20px; right: 20px;
+            background: white; padding: 14px 20px;
+            border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            font-size: 0.88rem; font-weight: 600; z-index: 9999;
+            border-left: 4px solid #4ade80;
+            animation: slideIn 0.3s ease;
+        }
+        .toast-hv.error { border-left-color: #dc2626; }
+        @keyframes slideIn { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+        @media (max-width: 768px) {
+            .main-container { margin: 10px; }
+            .form-content { padding: 16px; }
+            .actions-bar { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="main-container">
+        <div class="header">
+            <div>
+                <h1><i class="bi bi-clipboard2-pulse"></i> Hoja de Vida</h1>
+                <div class="sub">Revisión Psicológica</div>
+            </div>
+            <a href="/psicologa/panel" class="btn-back"><i class="bi bi-arrow-left"></i> Volver al panel</a>
+        </div>
+
+        <div class="form-content" id="contenido">
+            <div style="text-align:center;padding:40px;color:#94a3b8">
+                <i class="bi bi-hourglass-split" style="font-size:2rem"></i><br>Cargando hoja de vida...
+            </div>
+        </div>
+
+        <div class="actions-bar" id="actionsBar" style="display:none">
+            <button class="btn-aprobar-hv" onclick="aprobar()">✅ Aprobar — Listo para trabajar</button>
+            <button class="btn-rechazar-hv" onclick="rechazar()">❌ Rechazar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const ID_PERSONA = {{ id_persona }};
+
+async function cargarHV() {
+    try {
+        const res = await fetch(`/psicologa/detalle/${ID_PERSONA}`);
+        const d = await res.json();
+        if (d.error) throw new Error(d.error);
+        renderHV(d);
+    } catch(e) {
+        document.getElementById('contenido').innerHTML = `<div style="text-align:center;padding:40px;color:#dc2626">❌ Error: ${e.message}</div>`;
+    }
+}
+
+function renderHV(d) {
+    const estadoBadge = d.estado === 'pendiente_revision'
+        ? '<span class="badge-estado badge-pendiente">⏳ Pendiente de Revisión</span>'
+        : '<span class="badge-estado badge-activo">✅ Aprobado</span>';
+
+    const serviciosHtml = (d.servicios || []).map((s, i) => `
+        <div class="servicio-box">
+            <h5><i class="bi bi-tools"></i> Servicio ${i+1}: ${s.categoria}</h5>
+            <div class="row g-2">
+                <div class="col-md-12"><div class="field-label">Descripción</div><div class="field-value">${s.descripcion || '<span class="empty">Sin descripción</span>'}</div></div>
+                <div class="col-md-4"><div class="field-label">Experiencia</div><div class="field-value">${s.anios_experiencia || 0} años</div></div>
+                <div class="col-md-4"><div class="field-label">Tarifa/Hora</div><div class="field-value">$${(s.valor_hora || 0).toLocaleString('es-CO')}</div></div>
+                <div class="col-md-4"><div class="field-label">Ayudante</div><div class="field-value">${s.tiene_ayudante == 1 ? 'Sí — $' + (s.costo_ayudante || 0).toLocaleString('es-CO') + '/h' : 'No'}</div></div>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('contenido').innerHTML = `
+        <!-- Estado -->
+        <div style="text-align:center;margin-bottom:20px">${estadoBadge}</div>
+
+        <!-- SECCIÓN 1: INFORMACIÓN PERSONAL -->
+        <div class="section">
+            <h4 class="section-title"><i class="bi bi-person-circle"></i> Información Personal</h4>
+            <div class="row g-3">
+                <div class="col-md-4"><div class="field-label">Tipo de Documento</div><div class="field-value">${d.tipo_documento_texto}</div></div>
+                <div class="col-md-4"><div class="field-label">Número de Documento</div><div class="field-value">${d.numero_documento}</div></div>
+                <div class="col-md-4"><div class="field-label">Género</div><div class="field-value">${d.genero_texto}</div></div>
+                <div class="col-md-12"><div class="field-label">Nombre Completo</div><div class="field-value">${d.nombre_completo}</div></div>
+                <div class="col-md-4"><div class="field-label">Fecha de Nacimiento</div><div class="field-value">${d.fecha_nacimiento || 'N/A'}</div></div>
+                <div class="col-md-4"><div class="field-label">Ciudad de Nacimiento</div><div class="field-value">${d.ciudad_nacimiento || 'N/A'}</div></div>
+                <div class="col-md-4"><div class="field-label">Nacionalidad</div><div class="field-value">${d.nacionalidad || 'N/A'}</div></div>
+                <div class="col-md-6"><div class="field-label">Ciudad</div><div class="field-value">${d.ciudad}</div></div>
+                <div class="col-md-3"><div class="field-label">Departamento</div><div class="field-value">${d.departamento}</div></div>
+                <div class="col-md-3"><div class="field-label">Código DANE</div><div class="field-value">${d.codigo_dane || 'N/A'}</div></div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: CONTACTO -->
+        <div class="section">
+            <h4 class="section-title"><i class="bi bi-telephone"></i> Información de Contacto</h4>
+            <div class="row g-3">
+                <div class="col-md-6"><div class="field-label">Celular</div><div class="field-value">${d.telefono || 'No registra'}</div></div>
+                <div class="col-md-6"><div class="field-label">Correo Electrónico</div><div class="field-value">${d.correo || 'No registra'}</div></div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: SERVICIOS -->
+        <div class="section">
+            <h4 class="section-title"><i class="bi bi-briefcase-fill"></i> Servicios y Tarifas</h4>
+            ${serviciosHtml || '<div class="field-value empty">Sin servicios registrados</div>'}
+        </div>
+
+        <!-- SECCIÓN 4: DISPONIBILIDAD -->
+        <div class="section">
+            <h4 class="section-title"><i class="bi bi-calendar-check"></i> Disponibilidad</h4>
+            <div class="row g-3">
+                <div class="col-md-6"><div class="field-label">Horario</div><div class="field-value">${d.horario || 'N/A'}</div></div>
+                <div class="col-md-6"><div class="field-label">Días</div><div class="field-value">${d.dias || 'N/A'}</div></div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 5: NIVEL DE ESTUDIO -->
+        <div class="section">
+            <h4 class="section-title"><i class="bi bi-mortarboard-fill"></i> Nivel de Estudio</h4>
+            <div class="row g-3">
+                <div class="col-md-6"><div class="field-label">Nivel</div><div class="field-value">${d.nivel_estudio || 'No registra'}</div></div>
+                <div class="col-md-6">
+                    <div class="field-label">Certificado de Estudio</div>
+                    ${d.certificado_url
+                        ? `<a href="${d.certificado_url}" target="_blank" class="doc-link"><i class="bi bi-mortarboard"></i> Ver Certificado</a>`
+                        : '<span class="doc-link no-doc"><i class="bi bi-x-circle"></i> No subió certificado</span>'}
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 6: DOCUMENTOS -->
+        <div class="section">
+            <h4 class="section-title"><i class="bi bi-file-earmark-arrow-up"></i> Documentos</h4>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="field-label">Foto Identificación</div>
+                    ${d.foto_url
+                        ? `<a href="${d.foto_url}" target="_blank" class="doc-link"><i class="bi bi-person-badge"></i> Ver Documento</a>`
+                        : '<span class="doc-link no-doc"><i class="bi bi-x-circle"></i> No subió</span>'}
+                </div>
+                <div class="col-md-4">
+                    <div class="field-label">Antecedentes</div>
+                    ${d.antecedentes_url
+                        ? `<a href="${d.antecedentes_url}" target="_blank" class="doc-link"><i class="bi bi-file-earmark-text"></i> Ver Documento</a>`
+                        : '<span class="doc-link no-doc"><i class="bi bi-x-circle"></i> No subió</span>'}
+                </div>
+                <div class="col-md-4">
+                    <div class="field-label">Recomendaciones</div>
+                    ${d.recomendaciones_url
+                        ? `<a href="${d.recomendaciones_url}" target="_blank" class="doc-link"><i class="bi bi-file-earmark-check"></i> Ver Documento</a>`
+                        : '<span class="doc-link no-doc"><i class="bi bi-x-circle"></i> No subió</span>'}
+                </div>
+            </div>
+            ${d.recomendaciones ? `
+            <div class="row g-3 mt-2">
+                <div class="col-12">
+                    <div class="field-label">Texto de Recomendaciones</div>
+                    <div class="field-value" style="white-space:pre-wrap">${d.recomendaciones}</div>
+                </div>
+            </div>` : ''}
+        </div>
+
+        <!-- SECCIÓN 7: SEGURIDAD SOCIAL -->
+        <div class="section">
+            <h4 class="section-title"><i class="bi bi-shield-plus"></i> Seguridad Social</h4>
+            <div class="row g-3">
+                <div class="col-md-6"><div class="field-label">ARL</div><div class="field-value">${d.arl || 'No registra'}</div></div>
+                <div class="col-md-6"><div class="field-label">EPS</div><div class="field-value">${d.eps || 'No registra'}</div></div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 8: MEDIOS DE PAGO -->
+        <div class="section">
+            <h4 class="section-title"><i class="bi bi-credit-card-2-front"></i> Medios de Pago</h4>
+            <div class="row g-3">
+                <div class="col-md-6"><div class="field-label">Métodos aceptados</div><div class="field-value">${d.medio_pago || 'No registra'}</div></div>
+                <div class="col-md-6"><div class="field-label">Método principal</div><div class="field-value">${d.medio_pago_principal || 'N/A'}</div></div>
+                ${d.banco ? `<div class="col-md-4"><div class="field-label">Banco</div><div class="field-value">${d.banco}</div></div>` : ''}
+                ${d.tipo_cuenta ? `<div class="col-md-4"><div class="field-label">Tipo de cuenta</div><div class="field-value">${d.tipo_cuenta}</div></div>` : ''}
+                ${d.numero_cuenta ? `<div class="col-md-4"><div class="field-label">Número cuenta / Celular</div><div class="field-value">${d.numero_cuenta}</div></div>` : ''}
+                ${d.titular_cuenta ? `<div class="col-md-6"><div class="field-label">Titular</div><div class="field-value">${d.titular_cuenta}</div></div>` : ''}
+            </div>
+        </div>
+    `;
+
+    // Mostrar botones solo si está pendiente
+    if (d.estado === 'pendiente_revision') {
+        document.getElementById('actionsBar').style.display = 'flex';
+    }
+}
+
+async function aprobar() {
+    const fd = new FormData();
+    fd.append('id_persona', ID_PERSONA);
+    try {
+        const res = await fetch('/psicologa/aprobar', { method:'POST', body:fd });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            mostrarToast('✅ ' + data.mensaje);
+            document.getElementById('actionsBar').style.display = 'none';
+            setTimeout(() => window.location.href = '/psicologa/panel', 1500);
+        } else {
+            mostrarToast('❌ ' + (data.error || 'Error'), true);
+        }
+    } catch(e) { mostrarToast('❌ Error de conexión', true); }
+}
+
+async function rechazar() {
+    if (!confirm('¿Seguro que deseas rechazar esta hoja de vida?')) return;
+    const fd = new FormData();
+    fd.append('id_persona', ID_PERSONA);
+    try {
+        const res = await fetch('/psicologa/rechazar', { method:'POST', body:fd });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            mostrarToast('❌ Rechazado');
+            document.getElementById('actionsBar').style.display = 'none';
+            setTimeout(() => window.location.href = '/psicologa/panel', 1500);
+        } else {
+            mostrarToast('❌ ' + (data.error || 'Error'), true);
+        }
+    } catch(e) { mostrarToast('❌ Error de conexión', true); }
+}
+
+function mostrarToast(msg, esError = false) {
+    const t = document.createElement('div');
+    t.className = 'toast-hv' + (esError ? ' error' : '');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+cargarHV();
+</script>
+</body>
+</html>

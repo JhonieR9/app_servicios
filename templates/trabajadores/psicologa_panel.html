@@ -397,11 +397,14 @@
                 </div>` : ''}
 
                 <div class="actions">
-                    <button class="btn-aprobar" onclick="aprobar(${t.id_persona})">
-                        <i class="bi bi-check-circle"></i> ✅ Aprobar — Listo para trabajar
+                    <a href="/psicologa/hoja-de-vida/${t.id_persona}" style="flex:2;padding:12px;background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white;border:none;border-radius:10px;font-size:0.88rem;font-weight:700;text-decoration:none;text-align:center;display:block">
+                        <i class="bi bi-file-earmark-person"></i> Ver Hoja de Vida Completa
+                    </a>
+                    <button class="btn-aprobar" onclick="aprobar(${t.id_persona})" style="flex:1">
+                        <i class="bi bi-check-circle"></i> ✅ Aprobar
                     </button>
                     <button class="btn-rechazar" onclick="rechazar(${t.id_persona})">
-                        <i class="bi bi-x-circle"></i> Rechazar
+                        <i class="bi bi-x-circle"></i> ❌
                     </button>
                 </div>
             </div>`;
