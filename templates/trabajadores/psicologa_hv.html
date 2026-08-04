@@ -310,13 +310,19 @@ function renderHV(d) {
                         : '<span class="doc-link no-doc"><i class="bi bi-x-circle"></i> No subió</span>'}
                 </div>
             </div>
-            ${d.recomendaciones ? `
+            ${d.recomendaciones && d.recomendaciones.trim() ? `
             <div class="row g-3 mt-2">
                 <div class="col-12">
-                    <div class="field-label">Texto de Recomendaciones</div>
+                    <div class="field-label">Referencias Personales</div>
                     <div class="field-value" style="white-space:pre-wrap">${d.recomendaciones}</div>
                 </div>
-            </div>` : ''}
+            </div>` : `
+            <div class="row g-3 mt-2">
+                <div class="col-12">
+                    <div class="field-label">Referencias Personales</div>
+                    <div class="field-value empty">No registró referencias</div>
+                </div>
+            </div>`}
         </div>
 
         <!-- SECCIÓN 7: SEGURIDAD SOCIAL -->
