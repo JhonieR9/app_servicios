@@ -334,10 +334,10 @@ function renderHV(d) {
             <div class="row g-3">
                 <div class="col-md-6"><div class="field-label">Métodos aceptados</div><div class="field-value">${d.medio_pago || 'No registra'}</div></div>
                 <div class="col-md-6"><div class="field-label">Método principal</div><div class="field-value">${d.medio_pago_principal || 'N/A'}</div></div>
+                <div class="col-md-4"><div class="field-label">Número cuenta / Celular</div><div class="field-value">${d.numero_cuenta || d.telefono || 'No registra'}</div></div>
+                <div class="col-md-4"><div class="field-label">Titular</div><div class="field-value">${d.titular_cuenta || d.nombre_completo || 'No registra'}</div></div>
                 ${d.banco ? `<div class="col-md-4"><div class="field-label">Banco</div><div class="field-value">${d.banco}</div></div>` : ''}
                 ${d.tipo_cuenta ? `<div class="col-md-4"><div class="field-label">Tipo de cuenta</div><div class="field-value">${d.tipo_cuenta}</div></div>` : ''}
-                ${d.numero_cuenta ? `<div class="col-md-4"><div class="field-label">Número cuenta / Celular</div><div class="field-value">${d.numero_cuenta}</div></div>` : ''}
-                ${d.titular_cuenta ? `<div class="col-md-6"><div class="field-label">Titular</div><div class="field-value">${d.titular_cuenta}</div></div>` : ''}
             </div>
         </div>
     `;
