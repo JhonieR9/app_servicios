@@ -743,6 +743,12 @@ def calificar_servicio(
 @router.get("/mapa", response_class=HTMLResponse)
 def mostrar_mapa(request: Request):
     """Muestra lista visual de trabajadores cercanos."""
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    if not token:
+        return RedirectResponse(url="/cliente/login", status_code=302)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'cliente':
+        return RedirectResponse(url="/cliente/login", status_code=302)
     import os
     mapbox_token = os.getenv("MAPBOX_TOKEN", "pk.eyJ1IjoiamhvbmllcmNlc3BlZGVzMTItIiwiYSI6ImNtb25qeGJ1dTBtNGoycnB2NWZtb3V1ZDcifQ.oWycZCkDrln9HOGRaWT8Xg")
     return templates.TemplateResponse("clientes/mapa_simple.html", {"request": request, "mapbox_token": mapbox_token})

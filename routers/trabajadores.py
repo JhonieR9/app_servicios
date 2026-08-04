@@ -2819,6 +2819,12 @@ def servir_archivo(id_persona: int, tipo: str):
 @router.get("/disponibilidad", response_class=HTMLResponse)
 def mostrar_disponibilidad(request: Request):
     """Página para que trabajadores activen/desactiven su disponibilidad"""
+    token = request.cookies.get("session_token")
+    if not token:
+        return RedirectResponse(url="/trabajador/login", status_code=302)
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion['tipo_usuario'] != 'trabajador':
+        return RedirectResponse(url="/trabajador/login", status_code=302)
     return templates.TemplateResponse("trabajadores/mi_disponibilidad.html", {"request": request})
 
 @router.get("/disponibilidad/estado")

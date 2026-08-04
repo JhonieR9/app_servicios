@@ -160,7 +160,6 @@ async def wompi_webhook(request: Request):
             firma_calculada = hmac.new(evt_key.encode(), body, hashlib.sha256).hexdigest()
             if not hmac.compare_digest(firma_recibida, firma_calculada):
                 return JSONResponse({"error": "Firma inválida"}, status_code=401)
-                return JSONResponse({"error": "Firma inválida"}, status_code=401)
 
         evento = data.get("event", "")
         if evento != "transaction.updated":
@@ -299,7 +298,7 @@ async def establecer_precio(
             UPDATE solicitudes_servicio
             SET precio_final = %s
             WHERE id_solicitud = %s AND id_cliente = %s
-              AND precio_final IS NULL OR precio_final = 0
+              AND (precio_final IS NULL OR precio_final = 0)
         """, (precio_final, id_solicitud, sesion['id_usuario']))
         conexion.commit()
         return JSONResponse({"ok": True})

@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Form, Request, UploadFile, File
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from config import DB_CONFIG, conectar_bd
 from datetime import datetime
+import auth as _auth_module
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 templates = Jinja2Templates(directory="templates")
@@ -10,6 +11,12 @@ templates = Jinja2Templates(directory="templates")
 # ── Página de chat ────────────────────────────────────────────────
 @router.get("/", response_class=HTMLResponse)
 def mostrar_chat(request: Request):
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    if not token:
+        return RedirectResponse(url="/cliente/login", status_code=302)
+    sesion = _auth_module.verificar_sesion(token)
+    if not sesion:
+        return RedirectResponse(url="/cliente/login", status_code=302)
     return templates.TemplateResponse("clientes/chat.html", {"request": request})
 
 # ── Info de la solicitud para el header del chat ──────────────────
