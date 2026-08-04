@@ -161,30 +161,16 @@ def detalle_trabajador(request: Request, id_persona: int):
 
     try:
         cursor = conexion.cursor(dictionary=True)
+        # Datos básicos de la persona
         cursor.execute("""
             SELECT 
                 p.id_persona, p.nombre_completo, p.numero_documento, p.ciudad,
                 p.departamento, p.fecha_nacimiento, p.nacionalidad, p.fecha_registro,
                 p.id_tipo_documento, p.id_genero, p.codigo_dane, p.ciudad_nacimiento, p.estado,
-                tp.telefono, cp.correo,
-                COALESCE(dp.nivel_estudio, '') as nivel_estudio,
-                COALESCE(dp.arl, '') as arl,
-                COALESCE(dp.eps, '') as eps,
-                COALESCE(dp.recomendaciones, '') as recomendaciones,
-                COALESCE(dp.medio_pago, '') as medio_pago,
-                COALESCE(dp.medio_pago_principal, '') as medio_pago_principal,
-                COALESCE(dp.banco, '') as banco,
-                COALESCE(dp.tipo_cuenta, '') as tipo_cuenta,
-                COALESCE(dp.numero_cuenta, '') as numero_cuenta,
-                COALESCE(dp.titular_cuenta, '') as titular_cuenta,
-                (dp.foto_identificacion_data IS NOT NULL AND LENGTH(dp.foto_identificacion_data) > 0) as tiene_foto,
-                (dp.antecedentes_data IS NOT NULL AND LENGTH(dp.antecedentes_data) > 0) as tiene_antecedentes,
-                (dp.recomendaciones_data IS NOT NULL AND LENGTH(dp.recomendaciones_data) > 0) as tiene_recomendaciones,
-                (dp.certificado_estudio_data IS NOT NULL AND LENGTH(dp.certificado_estudio_data) > 0) as tiene_certificado
+                tp.telefono, cp.correo
             FROM personas p
             LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
             LEFT JOIN correo_persona cp ON p.id_persona = cp.id_persona
-            LEFT JOIN detalles_persona dp ON p.id_persona = dp.id_persona
             WHERE p.id_persona = %s
         """, (id_persona,))
         t = cursor.fetchone()
@@ -194,6 +180,38 @@ def detalle_trabajador(request: Request, id_persona: int):
         for k, v in t.items():
             if v is None: t[k] = ''
             elif hasattr(v, 'isoformat'): t[k] = v.strftime('%Y-%m-%d')
+
+        # Detalles (query separada para evitar duplicados con JOIN)
+        cursor.execute("""
+            SELECT nivel_estudio, arl, eps, recomendaciones,
+                   medio_pago, medio_pago_principal, banco, tipo_cuenta,
+                   numero_cuenta, titular_cuenta,
+                   (foto_identificacion_data IS NOT NULL AND LENGTH(foto_identificacion_data) > 0) as tiene_foto,
+                   (antecedentes_data IS NOT NULL AND LENGTH(antecedentes_data) > 0) as tiene_antecedentes,
+                   (recomendaciones_data IS NOT NULL AND LENGTH(recomendaciones_data) > 0) as tiene_recomendaciones,
+                   (certificado_estudio_data IS NOT NULL AND LENGTH(certificado_estudio_data) > 0) as tiene_certificado
+            FROM detalles_persona WHERE id_persona = %s LIMIT 1
+        """, (id_persona,))
+        detalles = cursor.fetchone()
+        if detalles:
+            for k, v in detalles.items():
+                if v is None: t[k] = ''
+                else: t[k] = v
+        else:
+            t['nivel_estudio'] = ''
+            t['arl'] = ''
+            t['eps'] = ''
+            t['recomendaciones'] = ''
+            t['medio_pago'] = ''
+            t['medio_pago_principal'] = ''
+            t['banco'] = ''
+            t['tipo_cuenta'] = ''
+            t['numero_cuenta'] = ''
+            t['titular_cuenta'] = ''
+            t['tiene_foto'] = 0
+            t['tiene_antecedentes'] = 0
+            t['tiene_recomendaciones'] = 0
+            t['tiene_certificado'] = 0
 
         # Mapear tipo doc y genero
         TIPOS_DOC = {1: 'CC', 2: 'CE', 3: 'PA', 4: 'TI', 5: 'NIT', 6: 'PPT'}
