@@ -222,6 +222,11 @@ def detalle_trabajador(request: Request, id_persona: int):
         t['horario'] = HORARIOS.get(disp['id_horario'], '') if disp else ''
         t['dias'] = DIAS.get(disp['id_dias'], '') if disp else ''
 
+        # Ciudades de servicio
+        cursor.execute("SELECT ciudad FROM ciudades_servicio_trabajador WHERE id_persona = %s ORDER BY ciudad", (id_persona,))
+        ciudades = cursor.fetchall()
+        t['ciudades_servicio'] = [c['ciudad'] for c in ciudades] if ciudades else []
+
         return JSONResponse(t)
 
     except Exception as e:

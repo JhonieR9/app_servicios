@@ -263,6 +263,13 @@ function renderHV(d) {
             <div class="row g-3">
                 <div class="col-md-6"><div class="field-label">Horario</div><div class="field-value">${d.horario || 'N/A'}</div></div>
                 <div class="col-md-6"><div class="field-label">Días</div><div class="field-value">${d.dias || 'N/A'}</div></div>
+                ${(d.ciudades_servicio && d.ciudades_servicio.length > 0) ? `
+                <div class="col-md-12">
+                    <div class="field-label">Ciudades donde presta servicio</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                        ${d.ciudades_servicio.map(c => `<span style="background:#ede9fe;border:1px solid #ddd6fe;color:#6d28d9;padding:5px 12px;border-radius:99px;font-size:0.8rem;font-weight:600">📍 ${c}</span>`).join('')}
+                    </div>
+                </div>` : ''}
             </div>
         </div>
 

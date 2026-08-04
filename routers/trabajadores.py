@@ -1927,6 +1927,13 @@ def listar_registros(request: Request):
                 if servicios_proc:
                     reg['servicio_tipo'] = servicios_proc[0]['categoria']
 
+                # Ciudades de servicio
+                cursor.execute("""
+                    SELECT ciudad FROM ciudades_servicio_trabajador WHERE id_persona = %s ORDER BY ciudad
+                """, (reg['id_persona'],))
+                ciudades_srv = cursor.fetchall()
+                reg['ciudades_servicio'] = [c['ciudad'] for c in ciudades_srv] if ciudades_srv else []
+
             except Exception as ex:
                 print(f"Error datos adicionales persona {reg['id_persona']}: {ex}")
                 pass

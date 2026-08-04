@@ -603,6 +603,16 @@
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Código DANE:</span><strong>${reg.codigo_dane}</strong>
                                 </li>
+                                ${reg.ciudades_servicio && reg.ciudades_servicio.length > 0 ? `
+                                <li class="list-group-item">
+                                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                                        <i class="bi bi-geo-alt-fill" style="color:#6366f1;font-size:0.9rem"></i>
+                                        <span style="font-size:0.78rem;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px">Ciudades de Servicio</span>
+                                    </div>
+                                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                                        ${reg.ciudades_servicio.map(c => `<span style="background:#ede9fe;border:1px solid #ddd6fe;color:#6d28d9;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:600">📍 ${c}</span>`).join('')}
+                                    </div>
+                                </li>` : ''}
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Teléfono:</span><strong>${reg.telefono}</strong>
                                 </li>
