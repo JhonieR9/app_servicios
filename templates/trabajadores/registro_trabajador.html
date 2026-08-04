@@ -669,7 +669,6 @@
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="agregarReferencia()" id="btnAgregarRef" style="margin-top:8px">
                                 <i class="bi bi-plus-circle"></i> Agregar otra referencia
                             </button>
-                            <small class="text-muted ms-2">Máximo 3</small>
 
                             <div class="form-text d-flex align-items-start gap-2 mt-3" style="background:#fff8e1; border-left:3px solid #f59e0b; padding:10px 12px; border-radius:0 8px 8px 0; font-size:0.82rem; color:#92400e;">
                                 <span style="font-size:1rem;">⚠️</span>
@@ -1026,7 +1025,6 @@
     // Referencias personales — agregar/quitar
     var contadorRefs = 1;
     function agregarReferencia() {
-        if (contadorRefs >= 3) { mostrarAlerta('warning', 'Máximo 3 referencias'); return; }
         contadorRefs++;
         var container = document.getElementById('referenciasContainer');
         var box = document.createElement('div');
@@ -1043,12 +1041,10 @@
                 <div class="col-md-6"><input type="text" class="form-control" name="ref_descripcion[]" placeholder="Relación (ej: Ex jefe, Vecino)"></div>
             </div>`;
         container.appendChild(box);
-        if (contadorRefs >= 3) document.getElementById('btnAgregarRef').style.display = 'none';
     }
     function quitarReferencia(btn) {
         btn.closest('.referencia-box').remove();
         contadorRefs--;
-        document.getElementById('btnAgregarRef').style.display = '';
     }
 
     // Ajustar label de tarifa según categoría
