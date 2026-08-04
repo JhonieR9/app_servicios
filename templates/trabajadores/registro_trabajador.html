@@ -1028,6 +1028,12 @@
         var cac = template.querySelector('.costo-ayudante-container');
         if (cac) cac.style.display = 'none';
         container.appendChild(template);
+
+        // Adjuntar validación en tiempo real a los nuevos campos
+        var nuevoValor = template.querySelector('[name="habilidad_valor[]"]');
+        if (nuevoValor) nuevoValor.addEventListener('input', function() { validarValorHora(this); });
+        var nuevaExp = template.querySelector('[name="habilidad_exp[]"]');
+        if (nuevaExp) nuevaExp.addEventListener('input', function() { validarExp(this); });
     }
 
     function quitarServicio(btn) {
@@ -1313,26 +1319,7 @@
             });
         }
 
-        // ── Al agregar nuevo servicio, attach listeners ──
-        var btnAgregar = document.getElementById('btnAgregarHabilidad');
-        if (btnAgregar) {
-            btnAgregar.addEventListener('click', function() {
-                setTimeout(function() {
-                    document.querySelectorAll('[name="habilidad_valor[]"]').forEach(function(el) {
-                        if (!el._valListener) {
-                            el._valListener = true;
-                            el.addEventListener('input', function() { validarValorHora(this); });
-                        }
-                    });
-                    document.querySelectorAll('[name="habilidad_exp[]"]').forEach(function(el) {
-                        if (!el._expListener) {
-                            el._expListener = true;
-                            el.addEventListener('input', function() { validarExp(this); });
-                        }
-                    });
-                }, 100);
-            });
-        }
+        // ── Validation listeners already attached in agregarHabilidad() ──
     });
     </script>
 </body>
