@@ -389,20 +389,32 @@
                             </div>
                             <div class="col-md-12" style="position:relative">
                                 <label class="form-label required-label">Ciudades donde prestas servicio</label>
-                                <input type="text" class="form-control" id="ciudadServicioInput" 
-                                       placeholder="Escriba una ciudad..."
-                                       autocomplete="off"
-                                       oninput="filtrarCiudadesServicio(this.value)"
-                                       onblur="setTimeout(ocultarDropdownServicio, 200)">
+                                <div style="border:1px solid #dee2e6;border-radius:12px;overflow:hidden;background:white">
+                                    <!-- Buscador -->
+                                    <div style="padding:10px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px">
+                                        <i class="bi bi-search" style="color:#94a3b8;font-size:0.85rem"></i>
+                                        <input type="text" id="ciudadServicioInput" 
+                                               placeholder="Buscar municipio..."
+                                               autocomplete="off"
+                                               oninput="filtrarCiudadesServicio(this.value)"
+                                               onblur="setTimeout(ocultarDropdownServicio, 200)"
+                                               style="border:none;outline:none;width:100%;font-size:0.88rem;background:transparent">
+                                    </div>
+                                    <!-- Lista de ciudades agregadas -->
+                                    <div id="ciudadesServicioLista" style="max-height:160px;overflow-y:auto"></div>
+                                    <!-- Estado vacío -->
+                                    <div id="ciudadesServicioEmpty" style="padding:14px;text-align:center;color:#94a3b8;font-size:0.78rem">
+                                        <i class="bi bi-geo-alt"></i> Agrega al menos una ciudad
+                                    </div>
+                                </div>
+                                <!-- Dropdown de resultados -->
                                 <div id="ciudadServicioDropdown" style="
                                     display:none; position:absolute; z-index:1000; width:100%;
-                                    background:white; border:1px solid #dee2e6; border-radius:8px;
+                                    background:white; border:1px solid #dee2e6; border-radius:10px;
                                     max-height:180px; overflow-y:auto;
-                                    box-shadow:0 4px 16px rgba(0,0,0,0.12); top:100%; left:0;
+                                    box-shadow:0 8px 24px rgba(0,0,0,0.12); margin-top:4px;
                                 "></div>
-                                <div id="ciudadesServicioChips" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"></div>
                                 <input type="hidden" name="ciudades_servicio" id="ciudadesServicioValue" required>
-                                <small class="text-muted">Busca y selecciona. Puedes agregar varias.</small>
                             </div>
                         </div>
 
@@ -981,13 +993,27 @@
     }
 
     function renderCiudadesServicioChips() {
-        var container = document.getElementById('ciudadesServicioChips');
-        container.innerHTML = ciudadesServicioSeleccionadas.map(function(c) {
-            return '<span style="background:#f0f4ff;border:1px solid #c7d2fe;color:#4338ca;padding:3px 8px;border-radius:6px;font-size:0.72rem;font-weight:600;display:inline-flex;align-items:center;gap:4px">'
-                + c.ciudad + ' <span style="color:#94a3b8;font-size:0.65rem">(' + c.depto.substring(0,3) + ')</span>'
-                + '<button type="button" onclick="quitarCiudadServicio(\''+c.dane+'\')" style="background:none;border:none;color:#dc2626;font-size:0.85rem;cursor:pointer;padding:0;line-height:1">&times;</button>'
-                + '</span>';
-        }).join('');
+        var lista = document.getElementById('ciudadesServicioLista');
+        var empty = document.getElementById('ciudadesServicioEmpty');
+        
+        if (ciudadesServicioSeleccionadas.length === 0) {
+            lista.innerHTML = '';
+            empty.style.display = 'block';
+        } else {
+            empty.style.display = 'none';
+            lista.innerHTML = ciudadesServicioSeleccionadas.map(function(c) {
+                return '<div style="padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f8fafc">'
+                    + '<div style="display:flex;align-items:center;gap:8px">'
+                    + '<span style="width:28px;height:28px;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#7c3aed;flex-shrink:0">📍</span>'
+                    + '<div>'
+                    + '<div style="font-size:0.82rem;font-weight:600;color:#1e293b">' + c.ciudad + '</div>'
+                    + '<div style="font-size:0.68rem;color:#94a3b8">' + c.depto + ' · ' + c.dane + '</div>'
+                    + '</div></div>'
+                    + '<button type="button" onclick="quitarCiudadServicio(\''+c.dane+'\')" style="background:none;border:none;color:#dc2626;font-size:1.1rem;cursor:pointer;padding:2px 6px;border-radius:6px" title="Quitar">&times;</button>'
+                    + '</div>';
+            }).join('');
+        }
+        
         var valor = ciudadesServicioSeleccionadas.map(function(c){ return c.ciudad; }).join(',');
         document.getElementById('ciudadesServicioValue').value = valor;
     }
