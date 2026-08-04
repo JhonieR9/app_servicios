@@ -189,7 +189,8 @@ def detalle_trabajador(request: Request, id_persona: int):
                    (foto_identificacion_data IS NOT NULL AND LENGTH(foto_identificacion_data) > 0) as tiene_foto,
                    (antecedentes_data IS NOT NULL AND LENGTH(antecedentes_data) > 0) as tiene_antecedentes,
                    (recomendaciones_data IS NOT NULL AND LENGTH(recomendaciones_data) > 0) as tiene_recomendaciones,
-                   (certificado_estudio_data IS NOT NULL AND LENGTH(certificado_estudio_data) > 0) as tiene_certificado
+                   (certificado_estudio_data IS NOT NULL AND LENGTH(certificado_estudio_data) > 0) as tiene_certificado,
+                   (foto_perfil_data IS NOT NULL AND LENGTH(foto_perfil_data) > 0) as tiene_foto_perfil
             FROM detalles_persona WHERE id_persona = %s
             ORDER BY (nivel_estudio IS NOT NULL AND nivel_estudio != '') DESC,
                      (foto_identificacion_data IS NOT NULL) DESC
@@ -231,6 +232,8 @@ def detalle_trabajador(request: Request, id_persona: int):
             t['recomendaciones_url'] = f"/trabajador/archivo/{id_persona}/recomendaciones"
         if t.get('tiene_certificado'):
             t['certificado_url'] = f"/trabajador/archivo/{id_persona}/certificado_estudio"
+        if t.get('tiene_foto_perfil'):
+            t['foto_perfil_url'] = f"/trabajador/archivo/{id_persona}/perfil"
 
         # Servicios
         cursor.execute("""
