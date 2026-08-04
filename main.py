@@ -367,6 +367,21 @@ def crear_tablas():
         except Exception:
             pass
 
+        # Tabla referencias personales del trabajador
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `referencias_personales` (
+              `id`              int NOT NULL AUTO_INCREMENT,
+              `id_persona`      int NOT NULL,
+              `nombre`          varchar(120) NOT NULL,
+              `celular`         varchar(15) NOT NULL,
+              `correo`          varchar(150) DEFAULT NULL,
+              `descripcion`     varchar(200) DEFAULT NULL,
+              `fecha_agregada`  datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              KEY `idx_ref_persona` (`id_persona`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
         conn.commit()
         cursor.close()
         conn.close()

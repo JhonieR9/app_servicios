@@ -313,8 +313,25 @@ function renderHV(d) {
             ${d.recomendaciones && d.recomendaciones.trim() ? `
             <div class="row g-3 mt-2">
                 <div class="col-12">
-                    <div class="field-label">Referencias Personales</div>
+                    <div class="field-label">Referencias Personales (texto)</div>
                     <div class="field-value" style="white-space:pre-wrap">${d.recomendaciones}</div>
+                </div>
+            </div>` : ''}
+            ${(d.referencias && d.referencias.length > 0) ? `
+            <div class="row g-3 mt-2">
+                <div class="col-12">
+                    <div class="field-label">Referencias Personales</div>
+                    ${d.referencias.map((r, i) => `
+                        <div style="background:white;border:2px solid #e9ecef;border-radius:12px;padding:14px;margin-top:8px">
+                            <div style="font-size:0.75rem;font-weight:700;color:#667eea;margin-bottom:6px">📋 Referencia ${i+1}</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                                <div><span style="font-size:0.68rem;color:#94a3b8;font-weight:700">NOMBRE</span><div style="font-size:0.88rem;font-weight:600;color:#1e293b">${r.nombre}</div></div>
+                                <div><span style="font-size:0.68rem;color:#94a3b8;font-weight:700">CELULAR</span><div style="font-size:0.88rem;font-weight:600;color:#1e293b">${r.celular}</div></div>
+                                ${r.correo ? `<div><span style="font-size:0.68rem;color:#94a3b8;font-weight:700">CORREO</span><div style="font-size:0.88rem;color:#1e293b">${r.correo}</div></div>` : ''}
+                                ${r.descripcion ? `<div><span style="font-size:0.68rem;color:#94a3b8;font-weight:700">RELACIÓN</span><div style="font-size:0.88rem;color:#1e293b">${r.descripcion}</div></div>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
             </div>` : `
             <div class="row g-3 mt-2">

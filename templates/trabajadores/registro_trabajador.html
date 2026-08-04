@@ -643,10 +643,37 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label required-label">Referencias Personales</label>
-                            <textarea class="form-control" name="recomendaciones" rows="3" placeholder="Ej: Juan Pérez, tel: 3001234567 — trabajó con nosotros durante 2 años como plomero..." required></textarea>
-                            <div class="form-text d-flex align-items-start gap-2 mt-2" style="background:#fff8e1; border-left:3px solid #f59e0b; padding:10px 12px; border-radius:0 8px 8px 0; font-size:0.82rem; color:#92400e;">
+                            <small class="text-muted d-block mb-2">Agrega al menos 1 referencia personal (máximo 3). Serán contactadas para verificar.</small>
+                            
+                            <div id="referenciasContainer">
+                                <!-- Referencia 1 -->
+                                <div class="referencia-box" style="background:white;border:2px solid #e9ecef;border-radius:12px;padding:16px;margin-bottom:10px">
+                                    <div style="font-size:0.82rem;font-weight:700;color:#667eea;margin-bottom:10px">📋 Referencia 1</div>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" name="ref_nombre[]" placeholder="Nombre completo *" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="tel" class="form-control" name="ref_celular[]" placeholder="Celular * (10 dígitos)" pattern="[0-9]{10}" maxlength="10" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="email" class="form-control" name="ref_correo[]" placeholder="Correo (opcional)">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" name="ref_descripcion[]" placeholder="Relación (ej: Ex jefe, Vecino, Cliente)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="agregarReferencia()" id="btnAgregarRef" style="margin-top:8px">
+                                <i class="bi bi-plus-circle"></i> Agregar otra referencia
+                            </button>
+                            <small class="text-muted ms-2">Máximo 3</small>
+
+                            <div class="form-text d-flex align-items-start gap-2 mt-3" style="background:#fff8e1; border-left:3px solid #f59e0b; padding:10px 12px; border-radius:0 8px 8px 0; font-size:0.82rem; color:#92400e;">
                                 <span style="font-size:1rem;">⚠️</span>
-                                <span><strong>Las referencias deben ser verificables.</strong> Incluye el <strong>nombre completo</strong> y el <strong>número de teléfono</strong> de cada persona que te recomienda. Serán contactadas para confirmar la referencia.</span>
+                                <span><strong>Las referencias serán verificadas.</strong> Las personas listadas podrán ser contactadas para confirmar la referencia.</span>
                             </div>
                         </div>
                     </div>
@@ -995,6 +1022,34 @@
     // ============================================
     // AGREGAR SERVICIO
     // ============================================
+
+    // Referencias personales — agregar/quitar
+    var contadorRefs = 1;
+    function agregarReferencia() {
+        if (contadorRefs >= 3) { mostrarAlerta('warning', 'Máximo 3 referencias'); return; }
+        contadorRefs++;
+        var container = document.getElementById('referenciasContainer');
+        var box = document.createElement('div');
+        box.className = 'referencia-box';
+        box.style.cssText = 'background:white;border:2px solid #e9ecef;border-radius:12px;padding:16px;margin-bottom:10px;position:relative';
+        box.innerHTML = `
+            <div style="font-size:0.82rem;font-weight:700;color:#667eea;margin-bottom:10px">📋 Referencia ${contadorRefs}
+                <button type="button" onclick="quitarReferencia(this)" style="float:right;background:none;border:none;color:#dc3545;font-size:1.1rem;cursor:pointer">&times;</button>
+            </div>
+            <div class="row g-2">
+                <div class="col-md-6"><input type="text" class="form-control" name="ref_nombre[]" placeholder="Nombre completo *" required></div>
+                <div class="col-md-6"><input type="tel" class="form-control" name="ref_celular[]" placeholder="Celular * (10 dígitos)" pattern="[0-9]{10}" maxlength="10" required></div>
+                <div class="col-md-6"><input type="email" class="form-control" name="ref_correo[]" placeholder="Correo (opcional)"></div>
+                <div class="col-md-6"><input type="text" class="form-control" name="ref_descripcion[]" placeholder="Relación (ej: Ex jefe, Vecino)"></div>
+            </div>`;
+        container.appendChild(box);
+        if (contadorRefs >= 3) document.getElementById('btnAgregarRef').style.display = 'none';
+    }
+    function quitarReferencia(btn) {
+        btn.closest('.referencia-box').remove();
+        contadorRefs--;
+        document.getElementById('btnAgregarRef').style.display = '';
+    }
 
     // Ajustar label de tarifa según categoría
     function ajustarTarifa(selectEl) {

@@ -1424,6 +1424,39 @@ async def crear_trabajador(
               arl or '', eps or '',
               nivel_estudio or '', cert_estudio_filename or '', cert_estudio_bytes, cert_estudio_tipo or ''))
         
+        # 8. Insertar referencias personales
+        try:
+            form_data = await request.form()
+            # Buscar campos de referencia (pueden venir como ref_nombre[] o ref_nombre)
+            ref_nombres = form_data.getlist('ref_nombre[]') or form_data.getlist('ref_nombre')
+            ref_celulares = form_data.getlist('ref_celular[]') or form_data.getlist('ref_celular')
+            ref_correos = form_data.getlist('ref_correo[]') or form_data.getlist('ref_correo')
+            ref_descripciones = form_data.getlist('ref_descripcion[]') or form_data.getlist('ref_descripcion')
+            
+            print(f"[REGISTRO] Referencias encontradas: {len(ref_nombres)} nombres, {len(ref_celulares)} celulares")
+            
+            for i in range(len(ref_nombres)):
+                nombre_ref = str(ref_nombres[i]) if i < len(ref_nombres) else ''
+                celular_ref = str(ref_celulares[i]) if i < len(ref_celulares) else ''
+                correo_ref = str(ref_correos[i]) if i < len(ref_correos) else ''
+                desc_ref = str(ref_descripciones[i]) if i < len(ref_descripciones) else ''
+                
+                if nombre_ref.strip() and celular_ref.strip():
+                    cursor.execute("""
+                        INSERT INTO referencias_personales (id_persona, nombre, celular, correo, descripcion)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (id_persona, nombre_ref.strip(), celular_ref.strip(), correo_ref.strip() or None, desc_ref.strip() or None))
+                    print(f"[REGISTRO] ✅ Referencia guardada: {nombre_ref.strip()} - {celular_ref.strip()}")
+        except Exception as e_ref:
+            print(f"[REGISTRO] ❌ Error guardando referencias: {e_ref}")
+
+        # También guardar en recomendaciones (texto legacy) para compatibilidad
+        try:
+            resumen_refs = '; '.join([f"{str(ref_nombres[i])} - {str(ref_celulares[i])}" for i in range(len(ref_nombres)) if i < len(ref_celulares) and str(ref_nombres[i]).strip()])
+            if resumen_refs:
+                cursor.execute("UPDATE detalles_persona SET recomendaciones = %s WHERE id_persona = %s", (resumen_refs, id_persona))
+        except: pass
+
         conexion.commit()
 
         return {

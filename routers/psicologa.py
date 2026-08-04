@@ -257,6 +257,14 @@ def detalle_trabajador(request: Request, id_persona: int):
         ciudades = cursor.fetchall()
         t['ciudades_servicio'] = [c['ciudad'] for c in ciudades] if ciudades else []
 
+        # Referencias personales
+        cursor.execute("SELECT nombre, celular, correo, descripcion FROM referencias_personales WHERE id_persona = %s", (id_persona,))
+        refs = cursor.fetchall()
+        for r in refs:
+            for k, v in r.items():
+                if v is None: r[k] = ''
+        t['referencias'] = refs
+
         return JSONResponse(t)
 
     except Exception as e:
