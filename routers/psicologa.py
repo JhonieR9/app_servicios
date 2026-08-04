@@ -190,7 +190,10 @@ def detalle_trabajador(request: Request, id_persona: int):
                    (antecedentes_data IS NOT NULL AND LENGTH(antecedentes_data) > 0) as tiene_antecedentes,
                    (recomendaciones_data IS NOT NULL AND LENGTH(recomendaciones_data) > 0) as tiene_recomendaciones,
                    (certificado_estudio_data IS NOT NULL AND LENGTH(certificado_estudio_data) > 0) as tiene_certificado
-            FROM detalles_persona WHERE id_persona = %s LIMIT 1
+            FROM detalles_persona WHERE id_persona = %s
+            ORDER BY (nivel_estudio IS NOT NULL AND nivel_estudio != '') DESC,
+                     (foto_identificacion_data IS NOT NULL) DESC
+            LIMIT 1
         """, (id_persona,))
         detalles = cursor.fetchone()
         if detalles:

@@ -2803,7 +2803,11 @@ def servir_archivo(id_persona: int, tipo: str):
             return JSONResponse({"error": "Tipo inválido"}, status_code=400)
         
         col_data, col_tipo = campos[tipo]
-        cursor.execute(f"SELECT {col_data}, {col_tipo} FROM detalles_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
+        cursor.execute(f"""
+            SELECT {col_data}, {col_tipo} FROM detalles_persona 
+            WHERE id_persona = %s AND {col_data} IS NOT NULL AND LENGTH({col_data}) > 0
+            LIMIT 1
+        """, (id_persona,))
         row = cursor.fetchone()
         
         if not row or not row[col_data]:
