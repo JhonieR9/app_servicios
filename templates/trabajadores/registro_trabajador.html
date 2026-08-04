@@ -387,31 +387,22 @@
                             <div class="col-md-12">
                                 <small class="text-muted">Puedes registrar hasta 10 servicios diferentes. Usa el botón "Agregar Otro Servicio" para añadir más.</small>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-12" style="position:relative">
                                 <label class="form-label required-label">Ciudades donde prestas servicio</label>
-                                <small class="text-muted d-block mb-2">Busca y agrega las ciudades donde ofreces tus servicios.</small>
-                                
-                                <!-- Chips de ciudades agregadas -->
-                                <div id="ciudadesServicioChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
-                                
-                                <!-- Input de búsqueda -->
-                                <div style="position:relative">
-                                    <input type="text" class="form-control" id="ciudadServicioInput" 
-                                           placeholder="Escriba una ciudad para buscar..."
-                                           autocomplete="off"
-                                           oninput="filtrarCiudadesServicio(this.value)"
-                                           onblur="setTimeout(ocultarDropdownServicio, 200)">
-                                    <div id="ciudadServicioDropdown" style="
-                                        display:none; position:absolute; z-index:1000; width:100%;
-                                        background:white; border:1px solid #dee2e6; border-radius:8px;
-                                        max-height:200px; overflow-y:auto;
-                                        box-shadow:0 4px 16px rgba(0,0,0,0.12); top:100%; left:0;
-                                    "></div>
-                                </div>
-                                
-                                <!-- Hidden inputs para enviar al servidor -->
-                                <div id="ciudadesServicioHidden"></div>
+                                <input type="text" class="form-control" id="ciudadServicioInput" 
+                                       placeholder="Escriba una ciudad..."
+                                       autocomplete="off"
+                                       oninput="filtrarCiudadesServicio(this.value)"
+                                       onblur="setTimeout(ocultarDropdownServicio, 200)">
+                                <div id="ciudadServicioDropdown" style="
+                                    display:none; position:absolute; z-index:1000; width:100%;
+                                    background:white; border:1px solid #dee2e6; border-radius:8px;
+                                    max-height:180px; overflow-y:auto;
+                                    box-shadow:0 4px 16px rgba(0,0,0,0.12); top:100%; left:0;
+                                "></div>
+                                <div id="ciudadesServicioChips" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"></div>
                                 <input type="hidden" name="ciudades_servicio" id="ciudadesServicioValue" required>
+                                <small class="text-muted">Busca y selecciona. Puedes agregar varias.</small>
                             </div>
                         </div>
 
@@ -992,12 +983,11 @@
     function renderCiudadesServicioChips() {
         var container = document.getElementById('ciudadesServicioChips');
         container.innerHTML = ciudadesServicioSeleccionadas.map(function(c) {
-            return '<span style="background:#ede9fe;border:1px solid #ddd6fe;color:#6d28d9;padding:6px 12px;border-radius:99px;font-size:0.8rem;font-weight:600;display:inline-flex;align-items:center;gap:6px">'
-                + '📍 ' + c.ciudad + ' <span style="color:#94a3b8;font-size:0.72rem">(' + c.depto + ')</span>'
-                + ' <button type="button" onclick="quitarCiudadServicio(\''+c.dane+'\')" style="background:none;border:none;color:#dc2626;font-size:1rem;cursor:pointer;padding:0;line-height:1">&times;</button>'
+            return '<span style="background:#f0f4ff;border:1px solid #c7d2fe;color:#4338ca;padding:3px 8px;border-radius:6px;font-size:0.72rem;font-weight:600;display:inline-flex;align-items:center;gap:4px">'
+                + c.ciudad + ' <span style="color:#94a3b8;font-size:0.65rem">(' + c.depto.substring(0,3) + ')</span>'
+                + '<button type="button" onclick="quitarCiudadServicio(\''+c.dane+'\')" style="background:none;border:none;color:#dc2626;font-size:0.85rem;cursor:pointer;padding:0;line-height:1">&times;</button>'
                 + '</span>';
         }).join('');
-        // Actualizar el campo hidden con las ciudades separadas por coma
         var valor = ciudadesServicioSeleccionadas.map(function(c){ return c.ciudad; }).join(',');
         document.getElementById('ciudadesServicioValue').value = valor;
     }
