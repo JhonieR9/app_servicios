@@ -568,8 +568,8 @@ async def actualizar_documento(    id_persona:     int = Form(...),
     tipo_documento: str = Form(...),
     archivo: UploadFile = File(...)
 ):
-    """Actualiza un documento del trabajador (foto_identificacion, foto_antecedentes, recomendaciones_archivo, certificado_estudio)."""
-    campos_validos = ['foto_identificacion', 'foto_antecedentes', 'recomendaciones_archivo', 'certificado_estudio']
+    """Actualiza un documento del trabajador (foto_identificacion, foto_antecedentes, recomendaciones_archivo, certificado_estudio, foto_perfil)."""
+    campos_validos = ['foto_identificacion', 'foto_antecedentes', 'recomendaciones_archivo', 'certificado_estudio', 'foto_perfil']
     if tipo_documento not in campos_validos:
         return JSONResponse({"error": "Tipo de documento inválido"}, status_code=400)
 
@@ -608,6 +608,12 @@ async def actualizar_documento(    id_persona:     int = Form(...),
                 SET certificado_estudio = %s, certificado_estudio_data = %s, certificado_estudio_tipo = %s
                 WHERE id_persona = %s
             """, (archivo_nombre, archivo_bytes, archivo_tipo, id_persona))
+        elif tipo_documento == 'foto_perfil':
+            cursor.execute("""
+                UPDATE detalles_persona
+                SET foto_perfil_data = %s, foto_perfil_tipo = %s
+                WHERE id_persona = %s
+            """, (archivo_bytes, archivo_tipo, id_persona))
 
         conexion.commit()
         return JSONResponse({"ok": True, "mensaje": "Documento actualizado"})
@@ -1221,7 +1227,8 @@ async def crear_trabajador(
     arl: str = Form(None),
     eps: str = Form(None),
     nivel_estudio: str = Form(None),
-    certificado_estudio: UploadFile = File(...)
+    certificado_estudio: UploadFile = File(...),
+    foto_perfil: UploadFile = File(None)
 ):
     import os
     from datetime import datetime
@@ -1317,6 +1324,13 @@ async def crear_trabajador(
             with open(cert_path, "wb") as f:
                 f.write(cert_estudio_bytes)
         except: pass
+
+        # Foto de perfil (opcional)
+        foto_perfil_bytes = None
+        foto_perfil_tipo = None
+        if foto_perfil and foto_perfil.filename:
+            foto_perfil_bytes = await foto_perfil.read()
+            foto_perfil_tipo = foto_perfil.content_type or 'image/jpeg'
         
         # Iniciar transacción
         conexion.autocommit = False
@@ -1410,8 +1424,9 @@ async def crear_trabajador(
              antecedentes_data, antecedentes_tipo,
              recomendaciones_data, recomendaciones_tipo,
              medio_pago, banco, tipo_cuenta, numero_cuenta, titular_cuenta, medio_pago_principal,
-             arl, eps, nivel_estudio, certificado_estudio, certificado_estudio_data, certificado_estudio_tipo)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             arl, eps, nivel_estudio, certificado_estudio, certificado_estudio_data, certificado_estudio_tipo,
+             foto_perfil_data, foto_perfil_tipo)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (id_persona, hab_tipo_id, resumen_servicios, antecedentes_filename, 
               foto_filename, acepta_terminos_val, permisos_ubicacion_val, 
               recomendaciones or '', recomend_filename,
@@ -1422,7 +1437,8 @@ async def crear_trabajador(
               numero_cuenta or '', titular_cuenta or '',
               medio_pago_principal or medio_pago or '',
               arl or '', eps or '',
-              nivel_estudio or '', cert_estudio_filename or '', cert_estudio_bytes, cert_estudio_tipo or ''))
+              nivel_estudio or '', cert_estudio_filename or '', cert_estudio_bytes, cert_estudio_tipo or '',
+              foto_perfil_bytes, foto_perfil_tipo or ''))
         
         # 8. Insertar referencias personales
         try:
@@ -2831,6 +2847,7 @@ def servir_archivo(id_persona: int, tipo: str):
             'antecedentes': ('antecedentes_data', 'antecedentes_tipo'),
             'recomendaciones': ('recomendaciones_data', 'recomendaciones_tipo'),
             'certificado_estudio': ('certificado_estudio_data', 'certificado_estudio_tipo'),
+            'perfil': ('foto_perfil_data', 'foto_perfil_tipo'),
         }
         if tipo not in campos:
             return JSONResponse({"error": "Tipo inválido"}, status_code=400)

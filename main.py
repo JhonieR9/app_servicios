@@ -194,6 +194,8 @@ def crear_tablas():
             ('certificado_estudio', "varchar(255) DEFAULT NULL"),
             ('certificado_estudio_data', "longblob DEFAULT NULL"),
             ('certificado_estudio_tipo', "varchar(50) DEFAULT NULL"),
+            ('foto_perfil_data',    "longblob DEFAULT NULL"),
+            ('foto_perfil_tipo',    "varchar(50) DEFAULT NULL"),
         ]:
             try:
                 cursor.execute(f"ALTER TABLE detalles_persona ADD COLUMN {col} {definition}")

@@ -251,6 +251,20 @@
                             <i class="bi bi-person-circle"></i> Información Personal
                         </h4>
                         <div class="row g-3">
+                            <!-- Foto de perfil -->
+                            <div class="col-md-12" style="text-align:center;margin-bottom:10px">
+                                <div style="position:relative;display:inline-block">
+                                    <div id="fotoPerfPreview" style="width:100px;height:100px;border-radius:50%;background:#f1f5f9;border:3px solid #e2e8f0;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto">
+                                        <i class="bi bi-camera-fill" style="font-size:1.8rem;color:#94a3b8" id="fotoPerfIcon"></i>
+                                        <img id="fotoPerfImg" style="width:100%;height:100%;object-fit:cover;display:none">
+                                    </div>
+                                    <label style="position:absolute;bottom:0;right:calc(50% - 50px);width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid white">
+                                        <i class="bi bi-pencil-fill" style="color:white;font-size:0.65rem"></i>
+                                        <input type="file" name="foto_perfil" accept="image/*" style="display:none" onchange="previewFotoPerfil(this)">
+                                    </label>
+                                </div>
+                                <div style="font-size:0.75rem;color:#64748b;margin-top:6px">Foto de perfil (opcional)</div>
+                            </div>
                             <div class="col-md-4">
                                 <label class="form-label required-label">Tipo de Documento</label>
                                 <select class="form-select" name="tipo_documento" required>
@@ -916,6 +930,19 @@
     // Datos de municipios Colombia (cargados desde JSON inline)
     var MUNICIPIOS = [];
     fetch('/static/municipios.json').then(r=>r.json()).then(d=>{ MUNICIPIOS = d; });
+
+    // Preview foto de perfil
+    function previewFotoPerfil(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('fotoPerfImg').src = e.target.result;
+                document.getElementById('fotoPerfImg').style.display = 'block';
+                document.getElementById('fotoPerfIcon').style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
 
     function filtrarCiudades(q) {
         var dd = document.getElementById('ciudad_dropdown');
