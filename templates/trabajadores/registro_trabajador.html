@@ -389,9 +389,29 @@
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label required-label">Ciudades donde prestas servicio</label>
-                                <input type="text" class="form-control" name="ciudades_servicio" 
-                                       placeholder="Ej: Puerto Tejada, Cali, Jamundí (separadas por coma)" required>
-                                <small class="text-muted">Escribe las ciudades separadas por coma. Puedes agregar más después desde tu perfil.</small>
+                                <small class="text-muted d-block mb-2">Busca y agrega las ciudades donde ofreces tus servicios.</small>
+                                
+                                <!-- Chips de ciudades agregadas -->
+                                <div id="ciudadesServicioChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+                                
+                                <!-- Input de búsqueda -->
+                                <div style="position:relative">
+                                    <input type="text" class="form-control" id="ciudadServicioInput" 
+                                           placeholder="Escriba una ciudad para buscar..."
+                                           autocomplete="off"
+                                           oninput="filtrarCiudadesServicio(this.value)"
+                                           onblur="setTimeout(ocultarDropdownServicio, 200)">
+                                    <div id="ciudadServicioDropdown" style="
+                                        display:none; position:absolute; z-index:1000; width:100%;
+                                        background:white; border:1px solid #dee2e6; border-radius:8px;
+                                        max-height:200px; overflow-y:auto;
+                                        box-shadow:0 4px 16px rgba(0,0,0,0.12); top:100%; left:0;
+                                    "></div>
+                                </div>
+                                
+                                <!-- Hidden inputs para enviar al servidor -->
+                                <div id="ciudadesServicioHidden"></div>
+                                <input type="hidden" name="ciudades_servicio" id="ciudadesServicioValue" required>
                             </div>
                         </div>
 
@@ -898,10 +918,10 @@
         var dd = document.getElementById('ciudad_dropdown');
         if (!q || q.length < 2) { dd.style.display='none'; return; }
         var upper = q.toUpperCase();
-        var found = MUNICIPIOS.filter(function(m){ return m.c.indexOf(upper) !== -1; }).slice(0,12);
+        var found = MUNICIPIOS.filter(function(m){ return m.c.toUpperCase().indexOf(upper) !== -1; }).slice(0,12);
         if (!found.length) { dd.style.display='none'; return; }
         dd.innerHTML = found.map(function(m){
-            return '<div onclick="seleccionarCiudad(\''+m.c+'\',\''+m.d+'\',\''+m.p+'\')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:0.88rem;" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'white\'">'
+            return '<div onclick="seleccionarCiudad(\''+m.c.replace(/'/g,"\\'")+'\',\''+m.d+'\',\''+m.p+'\')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:0.88rem;" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'white\'">'
                    + '<strong>' + m.c + '</strong> <span style="color:#6b7280;font-size:0.8rem;">— ' + m.p + '</span></div>';
         }).join('');
         dd.style.display = 'block';
@@ -929,6 +949,62 @@
 
     function fillDaneDepto(sel) {
         // Compatibilidad - no hace nada (el autocomplete maneja esto)
+    }
+
+    // ============================================
+    // CIUDADES DE SERVICIO — autocomplete múltiple
+    // ============================================
+    var ciudadesServicioSeleccionadas = [];
+
+    function filtrarCiudadesServicio(q) {
+        var dd = document.getElementById('ciudadServicioDropdown');
+        if (!q || q.length < 2) { dd.style.display='none'; return; }
+        var upper = q.toUpperCase();
+        var found = MUNICIPIOS.filter(function(m){
+            return m.c.toUpperCase().indexOf(upper) !== -1;
+        }).slice(0, 10);
+        if (!found.length) { dd.style.display='none'; return; }
+        dd.innerHTML = found.map(function(m){
+            return '<div onclick="agregarCiudadServicio(\''+m.c.replace(/'/g,"\\'")+'\',\''+m.d+'\',\''+m.p+'\')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:0.88rem;" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'white\'">'
+                   + '<strong>' + m.c + '</strong> <span style="color:#6b7280;font-size:0.8rem;">— ' + m.p + ' ('+m.d+')</span></div>';
+        }).join('');
+        dd.style.display = 'block';
+    }
+
+    function agregarCiudadServicio(ciudad, dane, depto) {
+        // Verificar que no esté duplicada
+        if (ciudadesServicioSeleccionadas.find(function(c){ return c.dane === dane; })) {
+            document.getElementById('ciudadServicioInput').value = '';
+            ocultarDropdownServicio();
+            return;
+        }
+        ciudadesServicioSeleccionadas.push({ ciudad: ciudad, dane: dane, depto: depto });
+        renderCiudadesServicioChips();
+        document.getElementById('ciudadServicioInput').value = '';
+        ocultarDropdownServicio();
+    }
+
+    function quitarCiudadServicio(dane) {
+        ciudadesServicioSeleccionadas = ciudadesServicioSeleccionadas.filter(function(c){ return c.dane !== dane; });
+        renderCiudadesServicioChips();
+    }
+
+    function renderCiudadesServicioChips() {
+        var container = document.getElementById('ciudadesServicioChips');
+        container.innerHTML = ciudadesServicioSeleccionadas.map(function(c) {
+            return '<span style="background:#ede9fe;border:1px solid #ddd6fe;color:#6d28d9;padding:6px 12px;border-radius:99px;font-size:0.8rem;font-weight:600;display:inline-flex;align-items:center;gap:6px">'
+                + '📍 ' + c.ciudad + ' <span style="color:#94a3b8;font-size:0.72rem">(' + c.depto + ')</span>'
+                + ' <button type="button" onclick="quitarCiudadServicio(\''+c.dane+'\')" style="background:none;border:none;color:#dc2626;font-size:1rem;cursor:pointer;padding:0;line-height:1">&times;</button>'
+                + '</span>';
+        }).join('');
+        // Actualizar el campo hidden con las ciudades separadas por coma
+        var valor = ciudadesServicioSeleccionadas.map(function(c){ return c.ciudad; }).join(',');
+        document.getElementById('ciudadesServicioValue').value = valor;
+    }
+
+    function ocultarDropdownServicio() {
+        var dd = document.getElementById('ciudadServicioDropdown');
+        if (dd) dd.style.display = 'none';
     }
 
     // ============================================
