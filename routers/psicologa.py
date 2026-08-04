@@ -245,7 +245,7 @@ def detalle_trabajador(request: Request, id_persona: int):
         cursor.execute("SELECT id_horario, id_dias FROM disponibilidad WHERE id_persona = %s LIMIT 1", (id_persona,))
         disp = cursor.fetchone()
         HORARIOS = {7: 'Mañanas (8am-12pm)', 8: 'Tardes (2pm-6pm)', 9: 'Noches (6pm-10pm)', 10: '24 horas', 11: 'Jornada completa (8am-6pm)', 12: 'Jornada extendida (8am-10pm)'}
-        DIAS = {1: 'Lunes a Viernes', 2: 'Lunes a Sábado', 3: 'Lunes a Domingo', 4: 'Fines de semana', 5: 'Días específicos'}
+        DIAS = {1: 'Lunes a Viernes', 2: 'Lunes a Sábado', 3: 'Lunes a Domingo', 4: 'Fines de semana', 5: 'Días específicos', 11: 'Entre semana', 12: 'Toda la semana'}
         t['horario'] = HORARIOS.get(disp['id_horario'], '') if disp else ''
         t['dias'] = DIAS.get(disp['id_dias'], '') if disp else ''
 

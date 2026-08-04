@@ -919,8 +919,8 @@ def perfil_publico(request: Request, id_persona: int):
         anios_experiencia = int(max_exp)
 
         # Disponibilidad
-        horarios = {7: '8am – 12pm', 8: '2pm – 6pm', 9: '6pm – 10pm', 10: '24 horas'}
-        dias_map = {11: 'Entre semana', 12: 'Toda la semana'}
+        horarios = {7: '8am – 12pm', 8: '2pm – 6pm', 9: '6pm – 10pm', 10: '24 horas', 11: '8am-6pm', 12: '8am-10pm'}
+        dias_map = {1: 'Lunes a Viernes', 2: 'Lunes a Sábado', 3: 'Lunes a Domingo', 4: 'Fines de semana', 5: 'Días específicos', 11: 'Entre semana', 12: 'Toda la semana'}
         cursor.execute("""
             SELECT id_horario, id_dias, disponible
             FROM disponibilidad
@@ -1820,8 +1820,8 @@ def listar_registros(request: Request):
         registros = cursor.fetchall()
         
         generos = {1: 'Masculino', 2: 'Femenino', 3: 'Otro', 4: 'Masculino', 5: 'Femenino', 6: 'Otro'}
-        horarios = {7: '8am-12pm', 8: '2pm-6pm', 9: '6pm-10pm', 10: '24 horas'}
-        dias = {11: 'Entre Semana', 12: 'Toda la Semana'}
+        horarios = {7: '8am-12pm', 8: '2pm-6pm', 9: '6pm-10pm', 10: '24 horas', 11: '8am-6pm', 12: '8am-10pm'}
+        dias = {1: 'Lunes a Viernes', 2: 'Lunes a Sábado', 3: 'Lunes a Domingo', 4: 'Fines de semana', 5: 'Días específicos', 11: 'Entre Semana', 12: 'Toda la Semana'}
 
         for reg in registros:
             for key, value in reg.items():
@@ -2362,8 +2362,8 @@ def exportar_excel(request: Request):
         """)
         registros = cursor.fetchall()
 
-        horarios = {7: '8am-12pm', 8: '2pm-6pm', 9: '6pm-10pm', 10: '24 horas'}
-        dias_map = {11: 'Entre Semana', 12: 'Toda la Semana'}
+        horarios = {7: '8am-12pm', 8: '2pm-6pm', 9: '6pm-10pm', 10: '24 horas', 11: '8am-6pm', 12: '8am-10pm'}
+        dias_map = {1: 'Lunes a Viernes', 2: 'Lunes a Sábado', 3: 'Lunes a Domingo', 4: 'Fines de semana', 5: 'Días específicos', 11: 'Entre Semana', 12: 'Toda la Semana'}
 
         filas = []
         for reg in registros:
