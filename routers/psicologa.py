@@ -112,7 +112,7 @@ def listar_pendientes(request: Request):
                 if v is None:
                     t[k] = ''
                 elif hasattr(v, 'isoformat'):
-                    t[k] = v.strftime('%Y-%m-%d %H:%M')
+                    t[k] = v.strftime('%Y-%m-%d') if k == 'fecha_nacimiento' else v.strftime('%Y-%m-%d %H:%M')
 
             # Agregar URLs de documentos
             if t.get('tiene_foto'):
@@ -350,7 +350,7 @@ def listar_aprobados(request: Request):
                 if v is None:
                     t[k] = ''
                 elif hasattr(v, 'isoformat'):
-                    t[k] = v.strftime('%Y-%m-%d %H:%M')
+                    t[k] = v.strftime('%Y-%m-%d') if k == 'fecha_nacimiento' else v.strftime('%Y-%m-%d %H:%M')
 
         return JSONResponse({"trabajadores": trabajadores})
 
