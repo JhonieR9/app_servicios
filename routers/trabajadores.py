@@ -1228,7 +1228,7 @@ async def crear_trabajador(
     eps: str = Form(None),
     nivel_estudio: str = Form(None),
     certificado_estudio: UploadFile = File(...),
-    foto_perfil: UploadFile = File(None)
+    foto_perfil: UploadFile = File(...)
 ):
     import os
     from datetime import datetime
@@ -1325,12 +1325,9 @@ async def crear_trabajador(
                 f.write(cert_estudio_bytes)
         except: pass
 
-        # Foto de perfil (opcional)
-        foto_perfil_bytes = None
-        foto_perfil_tipo = None
-        if foto_perfil and foto_perfil.filename:
-            foto_perfil_bytes = await foto_perfil.read()
-            foto_perfil_tipo = foto_perfil.content_type or 'image/jpeg'
+        # Foto de perfil (obligatorio)
+        foto_perfil_bytes = await foto_perfil.read()
+        foto_perfil_tipo = foto_perfil.content_type or 'image/jpeg'
         
         # Iniciar transacción
         conexion.autocommit = False
