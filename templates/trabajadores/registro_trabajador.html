@@ -744,24 +744,6 @@
                                         </label>
                                     </div>
                                     <div class="col-6 col-md-4">
-                                        <label id="lbl-bancolombia" style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.2s">
-                                            <input type="checkbox" name="metodos_pago[]" value="bancolombia" style="accent-color:#667eea;width:18px;height:18px" onchange="actualizarMetodos()">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">🏦 Bancolombia</span>
-                                        </label>
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                        <label id="lbl-davivienda" style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.2s">
-                                            <input type="checkbox" name="metodos_pago[]" value="davivienda" style="accent-color:#667eea;width:18px;height:18px" onchange="actualizarMetodos()">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">🏦 Davivienda</span>
-                                        </label>
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                        <label id="lbl-transferencia" style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.2s">
-                                            <input type="checkbox" name="metodos_pago[]" value="transferencia" style="accent-color:#667eea;width:18px;height:18px" onchange="actualizarMetodos()">
-                                            <span style="font-size:0.88rem;font-weight:600;color:#374151">🔄 Transferencia</span>
-                                        </label>
-                                    </div>
-                                    <div class="col-6 col-md-4">
                                         <label id="lbl-cuenta_bancaria" style="display:flex;align-items:center;gap:10px;background:white;border:2px solid #dee2e6;border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.2s">
                                             <input type="checkbox" name="metodos_pago[]" value="cuenta_bancaria" style="accent-color:#667eea;width:18px;height:18px" onchange="actualizarMetodos()">
                                             <span style="font-size:0.88rem;font-weight:600;color:#374151">🏛️ Cuenta Bancaria</span>
@@ -1074,11 +1056,10 @@
     // ============================================
     var LABELS_PAGO = {
         'nequi':'📱 Nequi','daviplata':'💳 Daviplata','bre_b':'📲 Bre-B',
-        'bancolombia':'🏦 Bancolombia','davivienda':'🏦 Davivienda',
-        'transferencia':'🔄 Transferencia','cuenta_bancaria':'🏛️ Cuenta Bancaria'
+        'cuenta_bancaria':'🏛️ Cuenta Bancaria'
     };
     var BILLETERAS = ['nequi','daviplata','bre_b'];
-    var BANCOS     = ['bancolombia','davivienda','transferencia','cuenta_bancaria'];
+    var BANCOS     = ['cuenta_bancaria'];
 
     function actualizarMetodos() {
         var checks = document.querySelectorAll('input[name="metodos_pago[]"]:checked');
