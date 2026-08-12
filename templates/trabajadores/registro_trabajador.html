@@ -1120,6 +1120,19 @@
             document.getElementById('campos-billetera').style.display = 'block';
             document.getElementById('numero_billetera').required  = true;
             document.getElementById('titular_billetera').required = true;
+            // Cambiar label según método
+            var lblBilletera = document.querySelector('#campos-billetera label.form-label');
+            var inputBilletera = document.getElementById('numero_billetera');
+            var smallBilletera = document.querySelector('#campos-billetera small');
+            if (valor === 'bre_b') {
+                if (lblBilletera) lblBilletera.innerHTML = '<span class="required-label">Llave Bre-B</span>';
+                if (inputBilletera) { inputBilletera.placeholder = 'Ej: tu llave Bre-B'; inputBilletera.maxLength = 30; inputBilletera.type = 'text'; }
+                if (smallBilletera) smallBilletera.textContent = 'La llave asociada a tu cuenta Bre-B';
+            } else {
+                if (lblBilletera) lblBilletera.innerHTML = '<span class="required-label">Número de celular registrado</span>';
+                if (inputBilletera) { inputBilletera.placeholder = 'Ej: 3001234567'; inputBilletera.maxLength = 10; inputBilletera.type = 'tel'; }
+                if (smallBilletera) smallBilletera.textContent = 'El número asociado a tu billetera digital';
+            }
         } else if (BANCOS.includes(valor)) {
             document.getElementById('campos-banco').style.display = 'block';
             document.getElementById('banco_select').required         = true;
