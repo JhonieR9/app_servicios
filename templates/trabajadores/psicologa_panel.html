@@ -266,6 +266,9 @@
             <button class="tab-btn" onclick="cambiarTab('aprobados')">
                 <i class="bi bi-check-circle"></i> Aprobados <span class="count" id="countAprobados">0</span>
             </button>
+            <button class="tab-btn" onclick="cambiarTab('rechazados')">
+                <i class="bi bi-x-circle"></i> Rechazados <span class="count" id="countRechazados">0</span>
+            </button>
         </div>
 
         <!-- Tab Pendientes -->
@@ -281,11 +284,19 @@
                 <div class="empty-state"><i class="bi bi-hourglass-split"></i> Cargando...</div>
             </div>
         </div>
+
+        <!-- Tab Rechazados -->
+        <div class="tab-content" id="tab-rechazados">
+            <div id="listaRechazados">
+                <div class="empty-state"><i class="bi bi-hourglass-split"></i> Cargando...</div>
+            </div>
+        </div>
     </div>
 
     <script>
     let trabajadoresPendientes = [];
     let trabajadoresAprobados = [];
+    let trabajadoresRechazados = [];
 
     function cambiarTab(tab) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -293,9 +304,12 @@
         if (tab === 'pendientes') {
             document.querySelectorAll('.tab-btn')[0].classList.add('active');
             document.getElementById('tab-pendientes').classList.add('active');
-        } else {
+        } else if (tab === 'aprobados') {
             document.querySelectorAll('.tab-btn')[1].classList.add('active');
             document.getElementById('tab-aprobados').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            document.getElementById('tab-rechazados').classList.add('active');
         }
     }
 
@@ -494,6 +508,63 @@
     // Cargar al iniciar
     cargarPendientes();
     cargarAprobados();
+    cargarRechazados();
+
+    async function cargarRechazados() {
+        try {
+            const res = await fetch('/psicologa/rechazados');
+            const data = await res.json();
+            trabajadoresRechazados = data.trabajadores || [];
+            renderRechazados();
+        } catch(e) {
+            document.getElementById('listaRechazados').innerHTML =
+                `<div class="empty-state"><i class="bi bi-exclamation-circle"></i> Error</div>`;
+        }
+    }
+
+    function renderRechazados() {
+        const el = document.getElementById('listaRechazados');
+        document.getElementById('countRechazados').textContent = trabajadoresRechazados.length;
+
+        if (trabajadoresRechazados.length === 0) {
+            el.innerHTML = `<div class="empty-state"><i class="bi bi-check-circle"></i><div style="margin-top:8px">No hay rechazados</div></div>`;
+            return;
+        }
+
+        el.innerHTML = trabajadoresRechazados.map(t => `
+            <div class="worker-card" style="border-left-color:#dc2626">
+                <div class="worker-header">
+                    <div>
+                        <div class="worker-name">${t.nombre_completo}</div>
+                        <div class="worker-meta">${t.ciudad || ''} · Doc: ${t.numero_documento}</div>
+                    </div>
+                    <span style="background:#fef2f2;color:#dc2626;padding:4px 10px;border-radius:99px;font-size:0.7rem;font-weight:700">❌ Rechazado</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px">
+                    <button onclick="devolverRevision(${t.id_persona})"
+                        style="flex:1;padding:10px;background:#f0f9ff;border:1px solid #bae6fd;color:#0369a1;border-radius:10px;font-size:0.82rem;font-weight:700;cursor:pointer">
+                        🔄 Devolver a revisión
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function devolverRevision(id) {
+        const fd = new FormData();
+        fd.append('id_persona', id);
+        try {
+            const res = await fetch('/psicologa/devolver-revision', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                mostrarToast('🔄 ' + data.mensaje);
+                cargarPendientes();
+                cargarRechazados();
+            } else {
+                mostrarToast('❌ ' + (data.error || 'Error'), true);
+            }
+        } catch(e) { mostrarToast('❌ Error', true); }
+    }
     </script>
 </body>
 </html>

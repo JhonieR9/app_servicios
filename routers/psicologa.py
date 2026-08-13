@@ -369,6 +369,60 @@ def rechazar_trabajador(request: Request, id_persona: int = Form(...), motivo: s
 # API: LISTAR APROBADOS
 # ============================================
 
+@router.post("/devolver-revision")
+def devolver_a_revision(request: Request, id_persona: int = Form(...)):
+    """Devuelve un trabajador rechazado o activo al estado pendiente_revision"""
+    if not verificar_psicologa(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            UPDATE personas SET estado = 'pendiente_revision'
+            WHERE id_persona = %s AND estado IN ('rechazado', 'activo')
+        """, (id_persona,))
+        if cursor.rowcount == 0:
+            return JSONResponse({"error": "No encontrado o ya está pendiente"}, status_code=400)
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": "🔄 Devuelto a revisión"})
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.get("/rechazados")
+def listar_rechazados(request: Request):
+    """Lista trabajadores rechazados"""
+    if not verificar_psicologa(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT p.id_persona, p.nombre_completo, p.numero_documento, p.ciudad, p.fecha_registro,
+                   tp.telefono
+            FROM personas p
+            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+            WHERE p.estado = 'rechazado'
+            ORDER BY p.fecha_registro DESC LIMIT 50
+        """)
+        trabajadores = cursor.fetchall()
+        for t in trabajadores:
+            for k, v in t.items():
+                if v is None: t[k] = ''
+                elif hasattr(v, 'isoformat'): t[k] = v.strftime('%Y-%m-%d %H:%M')
+        return JSONResponse({"trabajadores": trabajadores})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "trabajadores": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 @router.get("/aprobados")
 def listar_aprobados(request: Request):
     """Lista trabajadores ya aprobados por la psicóloga"""
