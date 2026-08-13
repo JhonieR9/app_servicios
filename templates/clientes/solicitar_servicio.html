@@ -1236,13 +1236,34 @@ async function cargarMapaProfesionales() {
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
     let userLat = 4.7110, userLng = -74.0721;
-    try {
-        const pos = await new Promise((res, rej) =>
-            navigator.geolocation.getCurrentPosition(res, rej, {timeout:5000})
-        );
-        userLat = pos.coords.latitude;
-        userLng = pos.coords.longitude;
-    } catch(e) {}
+
+    // Intentar usar la dirección/ciudad que el usuario escribió en el paso 3
+    const direccion = document.getElementById('direccionInput') ? document.getElementById('direccionInput').value.trim() : '';
+    const ciudad = document.getElementById('ciudadHidden') ? document.getElementById('ciudadHidden').value.trim() : '';
+    const buscarUbicacion = direccion && ciudad ? `${direccion}, ${ciudad}, Colombia` : ciudad ? `${ciudad}, Colombia` : '';
+
+    if (buscarUbicacion) {
+        // Geocodificar la dirección con Mapbox
+        try {
+            const geoRes = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(buscarUbicacion)}.json?access_token=${MAPBOX_TOKEN}&country=co&limit=1`);
+            const geoData = await geoRes.json();
+            if (geoData.features && geoData.features.length > 0) {
+                userLng = geoData.features[0].center[0];
+                userLat = geoData.features[0].center[1];
+            }
+        } catch(e) { console.warn('Geocodificación falló, usando GPS'); }
+    }
+
+    // Si no se encontró por dirección, usar GPS como fallback
+    if (!buscarUbicacion || (userLat === 4.7110 && userLng === -74.0721)) {
+        try {
+            const pos = await new Promise((res, rej) =>
+                navigator.geolocation.getCurrentPosition(res, rej, {timeout:5000})
+            );
+            userLat = pos.coords.latitude;
+            userLng = pos.coords.longitude;
+        } catch(e) {}
+    }
 
     if (mapaStep4) { mapaStep4.remove(); mapaStep4 = null; }
     document.getElementById('mapaLoading').style.display = 'flex';
