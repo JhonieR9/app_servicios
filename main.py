@@ -56,7 +56,7 @@ async def rate_limit_middleware(request: Request, call_next):
 # 3. CORS (controla qué dominios pueden hacer requests)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://web-production-191f4.up.railway.app", "https://talenthubcol.com"],
+    allow_origins=["*"],  # Permitir todos los orígenes (la app sirve su propio frontend)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1181,10 +1181,14 @@ function limpiarMunicipio() {
 }
 
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('.municipio-wrap'))
-        document.getElementById('municipioDropdown').classList.remove('open');
-    if (!e.target.closest('#direccionInput') && !e.target.closest('#direccionDropdown'))
-        document.getElementById('direccionDropdown').style.display = 'none';
+    if (!e.target.closest('.municipio-wrap')) {
+        var dd = document.getElementById('municipioDropdown');
+        if (dd) dd.classList.remove('open');
+    }
+    if (!e.target.closest('#direccionInput') && !e.target.closest('#direccionDropdown')) {
+        var dd2 = document.getElementById('direccionDropdown');
+        if (dd2) dd2.style.display = 'none';
+    }
 });
 
 // ── AUTOCOMPLETE DE DIRECCIÓN (Mapbox Geocoding) ──
