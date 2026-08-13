@@ -1,11 +1,66 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from routers import clientes, trabajadores, chat, pagos, psicologa
 from config import DB_CONFIG, conectar_bd
+import time
+from collections import defaultdict
 
 app = FastAPI(title="TalentHub API", version="2.0.0")
+
+# ============================================
+# MIDDLEWARE DE SEGURIDAD
+# ============================================
+
+# 1. Headers de seguridad (previene XSS, clickjacking, sniffing)
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)"
+        # HSTS solo si estamos en producción (HTTPS)
+        if request.url.scheme == "https":
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+# 2. Rate limiting (previene fuerza bruta en login)
+login_attempts = defaultdict(list)  # {ip: [timestamps]}
+RATE_LIMIT_WINDOW = 900  # 15 minutos
+RATE_LIMIT_MAX = 10      # máximo 10 intentos por ventana
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    # Solo aplicar rate limiting a endpoints de login
+    path = request.url.path
+    if request.method == "POST" and ("/login" in path):
+        ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        # Limpiar intentos viejos
+        login_attempts[ip] = [t for t in login_attempts[ip] if now - t < RATE_LIMIT_WINDOW]
+        if len(login_attempts[ip]) >= RATE_LIMIT_MAX:
+            return JSONResponse(
+                {"error": "Demasiados intentos. Espera 15 minutos."},
+                status_code=429
+            )
+        login_attempts[ip].append(now)
+    return await call_next(request)
+
+# 3. CORS (controla qué dominios pueden hacer requests)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://web-production-191f4.up.railway.app", "https://talenthubcol.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Montar archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
