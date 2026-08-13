@@ -324,8 +324,8 @@ def rechazar_trabajador(request: Request, id_persona: int = Form(...), motivo: s
         trabajador = cursor.fetchone()
         
         cursor.execute("""
-            UPDATE personas SET estado = 'rechazado' WHERE id_persona = %s AND estado = 'pendiente_revision'
-        """, (id_persona,))
+            UPDATE personas SET estado = 'rechazado', motivo_rechazo = %s WHERE id_persona = %s AND estado = 'pendiente_revision'
+        """, (motivo or '', id_persona))
         if cursor.rowcount == 0:
             return JSONResponse({"error": "Trabajador no encontrado"}, status_code=400)
         conexion.commit()

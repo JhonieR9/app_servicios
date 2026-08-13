@@ -424,6 +424,12 @@ def crear_tablas():
         except Exception:
             pass
 
+        # Columna motivo_rechazo en personas
+        try:
+            cursor.execute("ALTER TABLE personas ADD COLUMN motivo_rechazo text DEFAULT NULL")
+        except Exception:
+            pass
+
         # Tabla referencias personales del trabajador
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS `referencias_personales` (

@@ -111,12 +111,36 @@
             `<span class="servicio-chip">${s.categoria}</span>`
         ).join('');
 
+        // Banner de rechazo si aplica
+        const rechazoBanner = (d.estado === 'rechazado' && d.motivo_rechazo) ? `
+            <div style="background:#fef2f2;border:2px solid #fecaca;border-radius:16px;padding:18px;margin-bottom:16px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                    <span style="font-size:1.5rem">⚠️</span>
+                    <div>
+                        <div style="font-weight:800;color:#dc2626;font-size:0.95rem">Tu hoja de vida fue rechazada</div>
+                        <div style="font-size:0.78rem;color:#64748b">Corrige lo indicado y se enviará automáticamente a revisión</div>
+                    </div>
+                </div>
+                <div style="background:white;border-radius:10px;padding:12px 14px;border:1px solid #fecaca">
+                    <div style="font-size:0.72rem;font-weight:700;color:#dc2626;text-transform:uppercase;margin-bottom:4px">Motivo del rechazo:</div>
+                    <div style="font-size:0.88rem;color:#1e293b">${d.motivo_rechazo}</div>
+                </div>
+                <button onclick="reenviarRevision()" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.88rem;cursor:pointer">
+                    🔄 Enviar de nuevo a revisión
+                </button>
+            </div>` : '';
+
+        const estadoBadge = d.estado === 'rechazado' 
+            ? '<span style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:4px 12px;border-radius:99px;font-size:0.75rem;font-weight:700">❌ Rechazado</span>'
+            : '<span class="badge-activo">✅ Activo</span>';
+
         document.getElementById('contenido').innerHTML = `
+            ${rechazoBanner}
             <div class="avatar-card">
                 <div class="avatar">👤</div>
                 <div class="nombre">${d.nombre_completo || '-'}</div>
                 <div class="doc">Doc: ${d.numero_documento || '-'}</div>
-                <span class="badge-activo">✅ Activo</span>
+                ${estadoBadge}
             </div>
 
             <div class="info-card">
@@ -603,6 +627,22 @@
 
     cargarPerfil();
     setTimeout(() => { cargarEspecialidades(); cargarCategorias(); cargarCiudadesServicio(); }, 500);
+
+    // Reenviar a revisión (trabajador rechazado corrigió su perfil)
+    async function reenviarRevision() {
+        const fd = new FormData();
+        fd.append('id_persona', idTrabajador);
+        try {
+            const res = await fetch('/trabajador/reenviar-revision', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                mostrarToastPerfil('✅ ' + data.mensaje, true);
+                setTimeout(() => cargarPerfil(), 1000);
+            } else {
+                mostrarToastPerfil('❌ ' + (data.error || 'Error'), false);
+            }
+        } catch(e) { mostrarToastPerfil('❌ Error de conexión', false); }
+    }
 </script>
 </body>
 </html>

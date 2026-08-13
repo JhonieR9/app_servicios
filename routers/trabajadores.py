@@ -378,7 +378,7 @@ def obtener_perfil_completo(id: int = None):
         cursor.execute("""
             SELECT p.id_persona, p.nombre_completo, p.numero_documento,
                    p.ciudad, p.departamento, p.nacionalidad, p.fecha_nacimiento,
-                   tp.telefono, cp.correo, dp.nivel_estudio
+                   tp.telefono, cp.correo, dp.nivel_estudio, p.estado, p.motivo_rechazo
             FROM personas p
             LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
             LEFT JOIN correo_persona cp ON p.id_persona = cp.id_persona
@@ -414,6 +414,28 @@ def mostrar_mi_perfil(request: Request):
     if not sesion or sesion['tipo_usuario'] != 'trabajador':
         return RedirectResponse(url="/trabajador/login", status_code=302)
     return templates.TemplateResponse("trabajadores/mi_perfil.html", {"request": request})
+
+@router.post("/reenviar-revision")
+def reenviar_a_revision(id_persona: int = Form(...)):
+    """El trabajador rechazado corrigió su perfil y lo reenvía a revisión"""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            UPDATE personas SET estado = 'pendiente_revision', motivo_rechazo = NULL
+            WHERE id_persona = %s AND estado = 'rechazado'
+        """, (id_persona,))
+        if cursor.rowcount == 0:
+            return JSONResponse({"error": "No se pudo reenviar"}, status_code=400)
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": "Tu hoja de vida fue enviada a revisión nuevamente. Te notificaremos pronto."})
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 
 @router.post("/perfil/editar")
 def editar_perfil_trabajador(
@@ -3172,6 +3194,18 @@ async def login_trabajador(
             return JSONResponse({
                 "error": "Tu hoja de vida está siendo revisada por nuestro equipo. Te notificaremos cuando sea aprobada. ¡Gracias por tu paciencia! 🙏"
             }, status_code=403)
+
+        # Si fue rechazado, permitir acceso a Mi Perfil para corregir
+        if trabajador.get('estado') == 'rechazado':
+            token = auth.crear_sesion('trabajador', trabajador['id_persona'])
+            resp = JSONResponse({
+                "mensaje": "Tu hoja de vida fue rechazada. Puedes corregirla.",
+                "rechazado": True,
+                "motivo_rechazo": trabajador.get('motivo_rechazo', ''),
+                "redirect": f"/trabajador/mi_perfil_page?id={trabajador['id_persona']}&rechazado=1"
+            })
+            resp.set_cookie(key="session_token", value=token, httponly=False, max_age=86400, samesite="lax")
+            return resp
 
         token = auth.crear_sesion('trabajador', trabajador['id_persona'])
         nombre = trabajador['nombre_completo'].split()[0] if trabajador.get('nombre_completo') else 'Trabajador'
