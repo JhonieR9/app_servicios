@@ -3175,7 +3175,7 @@ async def login_trabajador(
             SELECT p.*, tp.telefono
             FROM personas p
             LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
-            WHERE p.numero_documento = %s AND (p.estado = 'activo' OR p.estado IS NULL OR p.estado = 'pendiente_revision')
+            WHERE p.numero_documento = %s AND (p.estado = 'activo' OR p.estado IS NULL OR p.estado = 'pendiente_revision' OR p.estado = 'rechazado')
             LIMIT 1
         """, (numero_documento,))
         trabajador = cursor.fetchone()
