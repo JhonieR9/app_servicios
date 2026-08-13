@@ -1196,6 +1196,7 @@ let direccionTimer = null;
 function buscarDireccion(q) {
     clearTimeout(direccionTimer);
     const dd = document.getElementById('direccionDropdown');
+    if (!dd) return;
     if (!q || q.length < 3) { dd.style.display = 'none'; return; }
 
     direccionTimer = setTimeout(async () => {
@@ -1212,15 +1213,16 @@ function buscarDireccion(q) {
             if (!data.features || data.features.length === 0) {
                 dd.style.display = 'none'; return;
             }
-            dd.innerHTML = data.features.map(f => {
-                const nombre = f.place_name.replace(', Colombia', '');
-                return `<div onclick="selDireccion('${f.center[1]}','${f.center[0]}','${nombre.replace(/'/g,"\\'")}','${f.place_name.replace(/'/g,"\\'")}')"
+            dd.innerHTML = data.features.map((f, idx) => {
+                const nombre = f.place_name.replace(', Colombia', '').replace(/"/g, '&quot;');
+                return `<div onclick="selDireccionIdx(${idx})"
                     style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:0.85rem;color:#1e293b"
                     onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='white'">
                     <div style="font-weight:600">${f.text || ''}</div>
                     <div style="font-size:0.75rem;color:#64748b;margin-top:2px">${nombre}</div>
                 </div>`;
             }).join('');
+            window._direccionFeatures = data.features;
             dd.style.display = 'block';
         } catch(e) { dd.style.display = 'none'; }
     }, 400);
@@ -1230,6 +1232,16 @@ function selDireccion(lat, lng, nombre, full) {
     document.getElementById('direccionInput').value = nombre;
     document.getElementById('direccionLat').value = lat;
     document.getElementById('direccionLng').value = lng;
+    document.getElementById('direccionDropdown').style.display = 'none';
+}
+
+function selDireccionIdx(idx) {
+    const f = window._direccionFeatures[idx];
+    if (!f) return;
+    const nombre = f.place_name.replace(', Colombia', '');
+    document.getElementById('direccionInput').value = nombre;
+    document.getElementById('direccionLat').value = f.center[1];
+    document.getElementById('direccionLng').value = f.center[0];
     document.getElementById('direccionDropdown').style.display = 'none';
 }
 });
