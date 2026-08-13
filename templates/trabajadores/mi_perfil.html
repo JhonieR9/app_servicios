@@ -185,8 +185,10 @@
             <div class="info-card">
                 <h3>📍 Ciudades donde presto servicio</h3>
                 <div id="listaCiudadesServicio" style="margin-bottom:12px">Cargando...</div>
-                <div style="display:flex;gap:8px">
-                    <input type="text" id="nuevaCiudadServicio" placeholder="Ej: Cali"
+                <div style="position:relative;display:flex;gap:8px">
+                    <input type="text" id="nuevaCiudadServicio" placeholder="Buscar municipio..."
+                        autocomplete="off"
+                        oninput="filtrarCiudadesPerfil(this.value)"
                         style="flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.88rem;outline:none">
                     <button onclick="agregarCiudadServicio()"
                         style="padding:10px 18px;background:linear-gradient(135deg,#4f46e5,#7c3aed);
@@ -194,6 +196,12 @@
                                cursor:pointer;white-space:nowrap">
                         + Agregar
                     </button>
+                    <div id="ciudadPerfilDropdown" style="
+                        display:none;position:absolute;z-index:1000;width:calc(100% - 110px);
+                        background:white;border:1px solid #e2e8f0;border-radius:10px;
+                        max-height:160px;overflow-y:auto;top:100%;left:0;margin-top:4px;
+                        box-shadow:0 4px 16px rgba(0,0,0,0.1);
+                    "></div>
                 </div>
             </div>
 
@@ -391,10 +399,40 @@
         } catch(e) {}
     }
 
+    // Autocomplete de ciudades en Mi Perfil
+    let _municipiosPerfil = null;
+    async function filtrarCiudadesPerfil(q) {
+        const dd = document.getElementById('ciudadPerfilDropdown');
+        if (!q || q.length < 2) { dd.style.display = 'none'; return; }
+        if (!_municipiosPerfil) {
+            const res = await fetch('/static/municipios.json');
+            _municipiosPerfil = await res.json();
+        }
+        const upper = q.toUpperCase();
+        const found = _municipiosPerfil.filter(m => m.c.toUpperCase().indexOf(upper) !== -1).slice(0, 8);
+        if (!found.length) { dd.style.display = 'none'; return; }
+        dd.innerHTML = found.map(m =>
+            `<div onclick="document.getElementById('nuevaCiudadServicio').value='${m.c}';document.getElementById('ciudadPerfilDropdown').style.display='none'"
+                 style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f8fafc;font-size:0.85rem"
+                 onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='white'">
+                <strong>${m.c}</strong> <span style="color:#64748b;font-size:0.75rem">— ${m.p}</span>
+            </div>`
+        ).join('');
+        dd.style.display = 'block';
+    }
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#nuevaCiudadServicio') && !e.target.closest('#ciudadPerfilDropdown')) {
+            var dd = document.getElementById('ciudadPerfilDropdown');
+            if (dd) dd.style.display = 'none';
+        }
+    });
+
     async function agregarCiudadServicio() {
         const input = document.getElementById('nuevaCiudadServicio');
         const ciudad = input.value.trim();
         if (!ciudad) { mostrarToastPerfil('❌ Escribe una ciudad', false); return; }
+        // Ocultar dropdown
+        document.getElementById('ciudadPerfilDropdown').style.display = 'none';
 
         const fd = new FormData();
         fd.append('id_persona', idTrabajador);
