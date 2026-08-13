@@ -307,11 +307,11 @@
             </div>
 
             <button onclick="guardarPerfil()" id="btnGuardar"
-                style="width:100%;padding:15px;background:linear-gradient(135deg,#1e3a8a,#2563eb);
+                style="width:100%;padding:15px;background:${d.estado === 'rechazado' ? 'linear-gradient(135deg,#dc2626,#b91c1c)' : 'linear-gradient(135deg,#1e3a8a,#2563eb)'};
                        color:white;border:none;border-radius:14px;font-weight:700;font-size:0.95rem;
                        cursor:pointer;margin-top:8px;transition:all .2s;
-                       box-shadow:0 4px 16px rgba(30,58,138,0.3)">
-                <i class="bi bi-check-circle"></i> Guardar cambios
+                       box-shadow:0 4px 16px ${d.estado === 'rechazado' ? 'rgba(220,38,38,0.3)' : 'rgba(30,58,138,0.3)'}">
+                ${d.estado === 'rechazado' ? '<i class="bi bi-arrow-repeat"></i> Corregir y enviar a revisión' : '<i class="bi bi-check-circle"></i> Guardar cambios'}
             </button>
             <div id="msgGuardar" style="display:none;text-align:center;margin-top:10px;
                  padding:10px;border-radius:10px;font-size:0.85rem;font-weight:600"></div>
@@ -335,7 +335,13 @@
             const res = await fetch('/trabajador/perfil/editar', { method:'POST', body:fd });
             const data = await res.json();
             if (res.ok) {
-                mostrarToastPerfil('✅ ¡Datos actualizados correctamente!', true);
+                // Si está rechazado, enviar automáticamente a revisión
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('rechazado') === '1') {
+                    await reenviarRevision();
+                } else {
+                    mostrarToastPerfil('✅ ¡Datos actualizados correctamente!', true);
+                }
             } else {
                 mostrarToastPerfil('❌ ' + (data.error || 'Error al guardar'), false);
             }
