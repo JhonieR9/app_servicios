@@ -467,11 +467,6 @@
 
                 <!-- Ubicación -->
                 <div class="form-group">
-                    <label>Dirección *</label>
-                    <input type="text" name="direccion_servicio" id="direccionInput"
-                           placeholder="Calle, número, barrio" required>
-                </div>
-                <div class="form-group">
                     <label>Ciudad / Municipio *</label>
                     <div class="municipio-wrap">
                         <div class="municipio-input-box">
@@ -488,6 +483,23 @@
                     <div class="municipio-confirm" id="municipioConfirm">
                         📍 <span id="municipioConfirmText"></span>
                     </div>
+                </div>
+                <div class="form-group" style="position:relative">
+                    <label>Dirección *</label>
+                    <input type="text" name="direccion_servicio" id="direccionInput"
+                           placeholder="Escribe dirección, barrio..."
+                           autocomplete="off"
+                           oninput="buscarDireccion(this.value)"
+                           required>
+                    <div id="direccionDropdown" style="
+                        display:none; position:absolute; z-index:1000; width:100%;
+                        background:white; border:1px solid #e2e8f0; border-radius:10px;
+                        max-height:200px; overflow-y:auto; top:100%;
+                        box-shadow:0 8px 24px rgba(0,0,0,0.12);
+                    "></div>
+                    <input type="hidden" id="direccionLat" value="">
+                    <input type="hidden" id="direccionLng" value="">
+                    <small style="color:#94a3b8;font-size:0.72rem">Escribe y selecciona de las sugerencias</small>
                 </div>
 
                 <!-- Urgencia -->
@@ -1171,6 +1183,51 @@ function limpiarMunicipio() {
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.municipio-wrap'))
         document.getElementById('municipioDropdown').classList.remove('open');
+    if (!e.target.closest('#direccionInput') && !e.target.closest('#direccionDropdown'))
+        document.getElementById('direccionDropdown').style.display = 'none';
+});
+
+// ── AUTOCOMPLETE DE DIRECCIÓN (Mapbox Geocoding) ──
+let direccionTimer = null;
+function buscarDireccion(q) {
+    clearTimeout(direccionTimer);
+    const dd = document.getElementById('direccionDropdown');
+    if (!q || q.length < 3) { dd.style.display = 'none'; return; }
+
+    direccionTimer = setTimeout(async () => {
+        const ciudad = document.getElementById('ciudadHidden') ? document.getElementById('ciudadHidden').value : '';
+        const proximity = ciudad ? `&proximity=ip` : '';
+        const bbox = '&bbox=-79.0,-4.2,-66.8,13.5'; // Colombia bounds
+        const query = ciudad ? `${q}, ${ciudad}, Colombia` : `${q}, Colombia`;
+
+        try {
+            const res = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&country=co&limit=5&types=address,poi,neighborhood${bbox}`
+            );
+            const data = await res.json();
+            if (!data.features || data.features.length === 0) {
+                dd.style.display = 'none'; return;
+            }
+            dd.innerHTML = data.features.map(f => {
+                const nombre = f.place_name.replace(', Colombia', '');
+                return `<div onclick="selDireccion('${f.center[1]}','${f.center[0]}','${nombre.replace(/'/g,"\\'")}','${f.place_name.replace(/'/g,"\\'")}')"
+                    style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:0.85rem;color:#1e293b"
+                    onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='white'">
+                    <div style="font-weight:600">${f.text || ''}</div>
+                    <div style="font-size:0.75rem;color:#64748b;margin-top:2px">${nombre}</div>
+                </div>`;
+            }).join('');
+            dd.style.display = 'block';
+        } catch(e) { dd.style.display = 'none'; }
+    }, 400);
+}
+
+function selDireccion(lat, lng, nombre, full) {
+    document.getElementById('direccionInput').value = nombre;
+    document.getElementById('direccionLat').value = lat;
+    document.getElementById('direccionLng').value = lng;
+    document.getElementById('direccionDropdown').style.display = 'none';
+}
 });
 
 document.getElementById('municipioBuscar').addEventListener('keydown', function(e) {
@@ -1237,25 +1294,34 @@ async function cargarMapaProfesionales() {
 
     let userLat = 4.7110, userLng = -74.0721;
 
-    // Intentar usar la dirección/ciudad que el usuario escribió en el paso 3
-    const direccion = document.getElementById('direccionInput') ? document.getElementById('direccionInput').value.trim() : '';
-    const ciudad = document.getElementById('ciudadHidden') ? document.getElementById('ciudadHidden').value.trim() : '';
-    const buscarUbicacion = direccion && ciudad ? `${direccion}, ${ciudad}, Colombia` : ciudad ? `${ciudad}, Colombia` : '';
+    // Intentar usar las coordenadas exactas de la dirección seleccionada
+    const latInput = document.getElementById('direccionLat');
+    const lngInput = document.getElementById('direccionLng');
+    
+    if (latInput && lngInput && latInput.value && lngInput.value) {
+        // Coordenadas exactas de la sugerencia de Mapbox
+        userLat = parseFloat(latInput.value);
+        userLng = parseFloat(lngInput.value);
+    } else {
+        // Fallback: geocodificar texto libre
+        const direccion = document.getElementById('direccionInput') ? document.getElementById('direccionInput').value.trim() : '';
+        const ciudad = document.getElementById('ciudadHidden') ? document.getElementById('ciudadHidden').value.trim() : '';
+        const buscarUbicacion = direccion && ciudad ? `${direccion}, ${ciudad}, Colombia` : ciudad ? `${ciudad}, Colombia` : '';
 
-    if (buscarUbicacion) {
-        // Geocodificar la dirección con Mapbox
-        try {
-            const geoRes = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(buscarUbicacion)}.json?access_token=${MAPBOX_TOKEN}&country=co&limit=1`);
-            const geoData = await geoRes.json();
-            if (geoData.features && geoData.features.length > 0) {
-                userLng = geoData.features[0].center[0];
-                userLat = geoData.features[0].center[1];
-            }
-        } catch(e) { console.warn('Geocodificación falló, usando GPS'); }
+        if (buscarUbicacion) {
+            try {
+                const geoRes = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(buscarUbicacion)}.json?access_token=${MAPBOX_TOKEN}&country=co&limit=1`);
+                const geoData = await geoRes.json();
+                if (geoData.features && geoData.features.length > 0) {
+                    userLng = geoData.features[0].center[0];
+                    userLat = geoData.features[0].center[1];
+                }
+            } catch(e) {}
+        }
     }
 
-    // Si no se encontró por dirección, usar GPS como fallback
-    if (!buscarUbicacion || (userLat === 4.7110 && userLng === -74.0721)) {
+    // Si aún no tenemos coordenadas, usar GPS como último recurso
+    if (userLat === 4.7110 && userLng === -74.0721) {
         try {
             const pos = await new Promise((res, rej) =>
                 navigator.geolocation.getCurrentPosition(res, rej, {timeout:5000})
