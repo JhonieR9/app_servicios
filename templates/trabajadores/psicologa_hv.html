@@ -404,12 +404,42 @@ async function aprobar() {
 }
 
 async function rechazar() {
-    const motivo = prompt('¿Por qué rechazas esta hoja de vida?\n\nEscribe el motivo (se le notificará al trabajador):');
-    if (motivo === null) return;
-    if (!motivo.trim()) { mostrarToast('❌ Debes escribir un motivo', true); return; }
+    let modal = document.getElementById('modalRechazo');
+    if (modal) modal.remove();
+    modal = document.createElement('div');
+    modal.id = 'modalRechazo';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = `
+        <div style="background:white;border-radius:20px;padding:28px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.2)">
+            <div style="text-align:center;margin-bottom:20px">
+                <div style="width:56px;height:56px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.5rem">❌</div>
+                <h3 style="font-size:1.1rem;font-weight:800;color:#1e293b;margin:0">Rechazar hoja de vida</h3>
+                <p style="font-size:0.82rem;color:#64748b;margin-top:6px">El trabajador será notificado con el motivo</p>
+            </div>
+            <textarea id="motivoRechazoHV" rows="3" placeholder="Escribe el motivo del rechazo..."
+                style="width:100%;padding:12px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.9rem;font-family:inherit;resize:none;outline:none"></textarea>
+            <div style="display:flex;gap:10px;margin-top:16px">
+                <button onclick="document.getElementById('modalRechazo').remove()"
+                    style="flex:1;padding:12px;border:2px solid #e2e8f0;background:white;color:#64748b;border-radius:12px;font-weight:700;cursor:pointer">
+                    Cancelar
+                </button>
+                <button onclick="confirmarRechazoHV()"
+                    style="flex:2;padding:12px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer">
+                    ❌ Rechazar
+                </button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function confirmarRechazoHV() {
+    const motivo = document.getElementById('motivoRechazoHV').value.trim();
+    if (!motivo) { document.getElementById('motivoRechazoHV').style.borderColor = '#dc2626'; return; }
+    document.getElementById('modalRechazo').remove();
     const fd = new FormData();
     fd.append('id_persona', ID_PERSONA);
-    fd.append('motivo', motivo.trim());
+    fd.append('motivo', motivo);
     try {
         const res = await fetch('/psicologa/rechazar', { method:'POST', body:fd });
         const data = await res.json();
