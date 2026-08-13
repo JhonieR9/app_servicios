@@ -554,7 +554,7 @@
         }
         el.innerHTML = lista.map(esp => {
             const sel = yaSeleccionadas.includes(esp);
-            return `<label onclick="this.style.background=this.querySelector('input').checked?'#f8fafc':'#ede9fe';this.style.borderColor=this.querySelector('input').checked?'#e2e8f0':'#7c3aed';this.style.color=this.querySelector('input').checked?'#374151':'#4f46e5'" style="display:inline-flex;align-items:center;gap:6px;background:${sel?'#ede9fe':'#f8fafc'};
+            return `<label onclick="setTimeout(()=>{const c=this.querySelector('input').checked;this.style.background=c?'#ede9fe':'#f8fafc';this.style.borderColor=c?'#7c3aed':'#e2e8f0';this.style.color=c?'#4f46e5':'#374151'},0)" style="display:inline-flex;align-items:center;gap:6px;background:${sel?'#ede9fe':'#f8fafc'};
                            border:1px solid ${sel?'#7c3aed':'#e2e8f0'};border-radius:99px;padding:8px 14px;margin:3px;
                            cursor:pointer;font-size:0.82rem;font-weight:600;color:${sel?'#4f46e5':'#374151'};transition:all .15s">
                 <input type="checkbox" class="espCheck" value="${esp}" ${sel?'checked':''} style="display:none">
