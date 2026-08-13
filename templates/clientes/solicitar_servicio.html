@@ -1344,10 +1344,35 @@ async function cargarMapaProfesionales() {
     mapaStep4.on('load', async () => {
         document.getElementById('mapaLoading').style.display = 'none';
 
-        new mapboxgl.Marker({ color: '#667eea' })
+        // Marcador arrastrable para ajustar ubicación
+        const userMarker = new mapboxgl.Marker({ color: '#667eea', draggable: true })
             .setLngLat([userLng, userLat])
-            .setPopup(new mapboxgl.Popup().setHTML('<strong>📍 Tu ubicación</strong>'))
+            .setPopup(new mapboxgl.Popup().setHTML('<strong>📍 Tu ubicación</strong><br><small>Arrastra para ajustar</small>'))
             .addTo(mapaStep4);
+
+        // Al soltar el marcador, recargar trabajadores cercanos
+        userMarker.on('dragend', async () => {
+            const lngLat = userMarker.getLngLat();
+            userLat = lngLat.lat;
+            userLng = lngLat.lng;
+            // Actualizar coordenadas guardadas
+            document.getElementById('direccionLat').value = userLat;
+            document.getElementById('direccionLng').value = userLng;
+            // Mostrar mensaje
+            document.getElementById('step4Sub').textContent = '📍 Ubicación ajustada. Buscando profesionales...';
+            // Recargar trabajadores con nueva posición
+            try {
+                const res2 = await fetch(`/cliente/trabajadores-cercanos?lat=${userLat}&lng=${userLng}&radio=20&categoria=${encodeURIComponent(selectedCatName)}`);
+                const data2 = await res2.json();
+                const t2 = data2.trabajadores || [];
+                document.getElementById('step4Sub').textContent = t2.length > 0
+                    ? `${t2.length} profesionales encontrados en esta zona`
+                    : 'No hay profesionales cercanos en esta zona';
+            } catch(e) {}
+        });
+
+        // Mensaje de ayuda para arrastrar
+        document.getElementById('step4Sub').innerHTML += '<br><small style="color:#6366f1">📌 Mantén presionado el marcador y arrastra para ajustar tu ubicación</small>';
 
         try {
             const res  = await fetch(`/cliente/trabajadores-cercanos?lat=${userLat}&lng=${userLng}&radio=20&categoria=${encodeURIComponent(selectedCatName)}`);
