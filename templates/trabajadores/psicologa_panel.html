@@ -462,9 +462,12 @@
     }
 
     async function rechazar(id) {
-        if (!confirm('¿Seguro que deseas rechazar esta hoja de vida?')) return;
+        const motivo = prompt('¿Por qué rechazas esta hoja de vida?\n\nEscribe el motivo (se le notificará al trabajador):');
+        if (motivo === null) return; // canceló
+        if (!motivo.trim()) { mostrarToast('❌ Debes escribir un motivo', true); return; }
         const fd = new FormData();
         fd.append('id_persona', id);
+        fd.append('motivo', motivo.trim());
         try {
             const res = await fetch('/psicologa/rechazar', { method: 'POST', body: fd });
             const data = await res.json();

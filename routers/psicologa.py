@@ -306,20 +306,57 @@ def aprobar_trabajador(request: Request, id_persona: int = Form(...)):
 
 @router.post("/rechazar")
 def rechazar_trabajador(request: Request, id_persona: int = Form(...), motivo: str = Form(None)):
-    """La psicóloga rechaza al trabajador"""
+    """La psicóloga rechaza al trabajador con motivo"""
     if not verificar_psicologa(request):
         return JSONResponse({"error": "No autorizado"}, status_code=401)
 
     conexion = conectar_bd()
     try:
-        cursor = conexion.cursor()
+        cursor = conexion.cursor(dictionary=True)
+        
+        # Obtener datos del trabajador para notificar
+        cursor.execute("""
+            SELECT p.nombre_completo, cp.correo
+            FROM personas p
+            LEFT JOIN correo_persona cp ON p.id_persona = cp.id_persona
+            WHERE p.id_persona = %s
+        """, (id_persona,))
+        trabajador = cursor.fetchone()
+        
         cursor.execute("""
             UPDATE personas SET estado = 'rechazado' WHERE id_persona = %s AND estado = 'pendiente_revision'
         """, (id_persona,))
         if cursor.rowcount == 0:
             return JSONResponse({"error": "Trabajador no encontrado"}, status_code=400)
         conexion.commit()
-        return JSONResponse({"ok": True, "mensaje": "❌ Trabajador rechazado"})
+        
+        # Notificar al trabajador por email si tiene correo
+        if trabajador and trabajador.get('correo') and motivo:
+            try:
+                import threading
+                import auth as _auth
+                nombre = trabajador.get('nombre_completo', 'Profesional')
+                correo = trabajador['correo']
+                
+                def _enviar():
+                    html = f"""<div style="font-family:Arial;max-width:480px;margin:0 auto;padding:20px">
+                        <h2 style="color:#dc2626">Resultado de la revisión de tu perfil</h2>
+                        <p>Hola <strong>{nombre.split()[0]}</strong>,</p>
+                        <p>Lamentamos informarte que tu hoja de vida no fue aprobada por nuestro equipo de revisión.</p>
+                        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;margin:16px 0">
+                            <strong style="color:#dc2626">Motivo:</strong><br>
+                            <p style="margin:8px 0 0;color:#374151">{motivo}</p>
+                        </div>
+                        <p style="color:#64748b;font-size:0.9rem">Si deseas corregir la información, puedes volver a registrarte o contactarnos para más detalles.</p>
+                        <p style="color:#94a3b8;font-size:0.8rem;margin-top:20px">— Equipo TalentHub</p>
+                    </div>"""
+                    _auth._enviar_gmail(correo, "Resultado de revisión - TalentHub", html)
+                
+                threading.Thread(target=_enviar, daemon=True).start()
+            except Exception as e_mail:
+                print(f"[PSICO] Error enviando email rechazo: {e_mail}")
+        
+        return JSONResponse({"ok": True, "mensaje": "❌ Trabajador rechazado — se le notificó el motivo"})
     except Exception as e:
         if conexion: conexion.rollback()
         return JSONResponse({"error": str(e)}, status_code=500)
