@@ -284,13 +284,51 @@ def aprobar_trabajador(request: Request, id_persona: int = Form(...)):
 
     conexion = conectar_bd()
     try:
-        cursor = conexion.cursor()
+        cursor = conexion.cursor(dictionary=True)
+        
+        # Obtener datos para notificar
         cursor.execute("""
-            UPDATE personas SET estado = 'activo' WHERE id_persona = %s AND estado = 'pendiente_revision'
+            SELECT p.nombre_completo, cp.correo
+            FROM personas p
+            LEFT JOIN correo_persona cp ON p.id_persona = cp.id_persona
+            WHERE p.id_persona = %s
+        """, (id_persona,))
+        trabajador = cursor.fetchone()
+        
+        cursor.execute("""
+            UPDATE personas SET estado = 'activo', motivo_rechazo = NULL WHERE id_persona = %s AND estado = 'pendiente_revision'
         """, (id_persona,))
         if cursor.rowcount == 0:
             return JSONResponse({"error": "Trabajador no encontrado o ya aprobado"}, status_code=400)
         conexion.commit()
+        
+        # Enviar email de aprobación
+        if trabajador and trabajador.get('correo'):
+            try:
+                import threading
+                import auth as _auth
+                nombre = trabajador.get('nombre_completo', 'Profesional')
+                correo = trabajador['correo']
+                
+                def _enviar():
+                    html = f"""<div style="font-family:Arial;max-width:480px;margin:0 auto;padding:20px">
+                        <div style="text-align:center;margin-bottom:20px">
+                            <div style="font-size:3rem">🎉</div>
+                            <h2 style="color:#16a34a;margin:10px 0">¡Felicidades, {nombre.split()[0]}!</h2>
+                        </div>
+                        <p style="color:#374151;font-size:0.95rem;line-height:1.7">Tu hoja de vida ha sido <strong style="color:#16a34a">aprobada</strong> por nuestro equipo de revisión.</p>
+                        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;margin:16px 0;text-align:center">
+                            <p style="margin:0;font-size:1rem;font-weight:700;color:#166534">✅ Ya puedes recibir solicitudes de servicio</p>
+                        </div>
+                        <p style="color:#64748b;font-size:0.88rem">Ingresa a tu cuenta, activa tu disponibilidad y empieza a conectar con clientes.</p>
+                        <p style="color:#94a3b8;font-size:0.8rem;margin-top:20px">— Equipo TalentHub</p>
+                    </div>"""
+                    _auth._enviar_gmail(correo, "🎉 ¡Tu perfil fue aprobado! - TalentHub", html)
+                
+                threading.Thread(target=_enviar, daemon=True).start()
+            except Exception as e_mail:
+                print(f"[PSICO] Error email aprobación: {e_mail}")
+        
         return JSONResponse({"ok": True, "mensaje": "✅ Trabajador aprobado — ya puede recibir solicitudes"})
     except Exception as e:
         if conexion: conexion.rollback()
