@@ -355,7 +355,10 @@
 
         el.innerHTML = trabajadoresPendientes.map(t => {
             const serviciosHtml = (t.servicios || []).map(s =>
-                `<span class="servicio-chip">${s.categoria} — $${(s.valor_hora || 0).toLocaleString('es-CO')}/h — ${s.anios_experiencia || 0} años</span>`
+                `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:8px;margin-bottom:4px;border:1px solid #e2e8f0">
+                    <span style="font-weight:700;color:#1e293b;font-size:0.82rem">${s.categoria}</span>
+                    <span style="font-size:0.75rem;color:#64748b">💰 $${(s.valor_hora || 0).toLocaleString('es-CO')}/h · 📅 ${s.anios_experiencia || 0} años</span>
+                </div>`
             ).join('');
 
             const docsHtml = [
