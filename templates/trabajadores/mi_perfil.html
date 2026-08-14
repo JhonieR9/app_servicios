@@ -275,6 +275,24 @@
                 <div id="msgDocumento" style="display:none;margin-top:10px;padding:10px;border-radius:10px;text-align:center;font-size:0.82rem;font-weight:600"></div>
             </div>
 
+            <!-- Sección Referencias Personales -->
+            <div class="info-card">
+                <h3>📋 Referencias Personales</h3>
+                <div id="listaReferencias" style="margin-bottom:12px">Cargando...</div>
+                <div style="background:#f8fafc;border-radius:12px;padding:14px;border:1px solid #e2e8f0">
+                    <div style="font-size:0.75rem;font-weight:700;color:#374151;margin-bottom:8px">Agregar referencia</div>
+                    <div style="display:grid;gap:8px">
+                        <input type="text" id="refNombre" placeholder="Nombre completo *" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
+                        <input type="tel" id="refCelular" placeholder="Celular * (10 dígitos)" maxlength="10" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
+                        <input type="email" id="refCorreo" placeholder="Correo (opcional)" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
+                        <input type="text" id="refDescripcion" placeholder="Descripción (ej: Trabajó conmigo 2 años)" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
+                        <button onclick="agregarReferenciaPerfil()" style="padding:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.82rem;cursor:pointer">
+                            + Agregar referencia
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Sección Especialidades -->
             <div class="info-card" id="seccionEspecialidades">
                 <h3>⭐ Mis Especialidades</h3>
@@ -670,7 +688,69 @@
     }
 
     cargarPerfil();
-    setTimeout(() => { cargarEspecialidades(); cargarCategorias(); cargarCiudadesServicio(); }, 500);
+    setTimeout(() => { cargarEspecialidades(); cargarCategorias(); cargarCiudadesServicio(); cargarReferencias(); }, 500);
+
+    // ── REFERENCIAS PERSONALES ────────────────────────────────
+    async function cargarReferencias() {
+        try {
+            const res = await fetch('/trabajador/referencias/mis?id_persona=' + idTrabajador);
+            const data = await res.json();
+            const refs = data.referencias || [];
+            const el = document.getElementById('listaReferencias');
+            if (refs.length === 0) {
+                el.innerHTML = '<div style="color:#94a3b8;font-size:0.82rem;padding:8px">Sin referencias registradas</div>';
+                return;
+            }
+            el.innerHTML = refs.map(r => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f8fafc;border-radius:10px;margin-bottom:6px;border:1px solid #e2e8f0">
+                    <div>
+                        <div style="font-size:0.85rem;font-weight:700;color:#1e293b">${r.nombre}</div>
+                        <div style="font-size:0.75rem;color:#64748b">📱 ${r.celular}${r.correo ? ' · ✉️ ' + r.correo : ''}${r.descripcion ? ' · ' + r.descripcion : ''}</div>
+                    </div>
+                    <button onclick="eliminarReferencia(${r.id})" style="background:none;border:none;color:#dc2626;font-size:1rem;cursor:pointer;padding:4px">✕</button>
+                </div>
+            `).join('');
+        } catch(e) {
+            document.getElementById('listaReferencias').innerHTML = '<div style="color:#dc2626;font-size:0.82rem">Error cargando</div>';
+        }
+    }
+
+    async function agregarReferenciaPerfil() {
+        const nombre = document.getElementById('refNombre').value.trim();
+        const celular = document.getElementById('refCelular').value.trim();
+        const correo = document.getElementById('refCorreo').value.trim();
+        const descripcion = document.getElementById('refDescripcion').value.trim();
+        if (!nombre || !celular) { mostrarToastPerfil('❌ Nombre y celular son obligatorios', false); return; }
+        const fd = new FormData();
+        fd.append('id_persona', idTrabajador);
+        fd.append('nombre', nombre);
+        fd.append('celular', celular);
+        if (correo) fd.append('correo', correo);
+        if (descripcion) fd.append('descripcion', descripcion);
+        try {
+            const res = await fetch('/trabajador/referencias/agregar', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                mostrarToastPerfil('✅ Referencia agregada', true);
+                document.getElementById('refNombre').value = '';
+                document.getElementById('refCelular').value = '';
+                document.getElementById('refCorreo').value = '';
+                document.getElementById('refDescripcion').value = '';
+                cargarReferencias();
+            } else {
+                mostrarToastPerfil('❌ ' + (data.error || 'Error'), false);
+            }
+        } catch(e) { mostrarToastPerfil('❌ Error de conexión', false); }
+    }
+
+    async function eliminarReferencia(id) {
+        const fd = new FormData();
+        fd.append('id', id);
+        try {
+            const res = await fetch('/trabajador/referencias/eliminar', { method:'POST', body:fd });
+            if (res.ok) { cargarReferencias(); mostrarToastPerfil('✅ Referencia eliminada', true); }
+        } catch(e) {}
+    }
 
     // Reenviar a revisión (trabajador rechazado corrigió su perfil)
     async function reenviarRevision() {

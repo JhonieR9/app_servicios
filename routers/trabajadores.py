@@ -585,6 +585,67 @@ def eliminar_ciudad_servicio(id: int = Form(...)):
             conexion.close()
 
 
+# ============================================
+# REFERENCIAS PERSONALES (CRUD desde Mi Perfil)
+# ============================================
+
+@router.get("/referencias/mis")
+def mis_referencias(id_persona: int):
+    """Lista las referencias personales del trabajador."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("SELECT id, nombre, celular, correo, descripcion FROM referencias_personales WHERE id_persona = %s", (id_persona,))
+        return JSONResponse({"referencias": cursor.fetchall()})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "referencias": []}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/referencias/agregar")
+def agregar_referencia(
+    id_persona: int = Form(...),
+    nombre: str = Form(...),
+    celular: str = Form(...),
+    correo: str = Form(None),
+    descripcion: str = Form(None)
+):
+    """Agrega una referencia personal."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            INSERT INTO referencias_personales (id_persona, nombre, celular, correo, descripcion)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (id_persona, nombre.strip(), celular.strip(), correo.strip() if correo else None, descripcion.strip() if descripcion else None))
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": "✅ Referencia agregada"})
+    except Exception as e:
+        if conexion: conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/referencias/eliminar")
+def eliminar_referencia(id: int = Form(...)):
+    """Elimina una referencia personal."""
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("DELETE FROM referencias_personales WHERE id = %s", (id,))
+        conexion.commit()
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
 @router.post("/documentos/actualizar")
 async def actualizar_documento(    id_persona:     int = Form(...),
     tipo_documento: str = Form(...),
