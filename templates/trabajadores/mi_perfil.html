@@ -5,80 +5,406 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Perfil - TalentHub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI',sans-serif; background:#f0f2f5; min-height:100vh; }
+        body {
+            font-family:'Inter',sans-serif;
+            background:#0a0a0f;
+            min-height:100vh;
+            color:#e2e8f0;
+        }
+
+        /* ── TOPBAR ─────────────────────────────── */
         .topbar {
-            background: linear-gradient(135deg, #1e3a8a, #2563eb);
-            color: white; padding: 16px 20px;
-            display: flex; align-items: center; gap: 12px;
+            background: rgba(15,15,25,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         .back-btn {
-            width:36px;height:36px;border-radius:50%;
-            background:rgba(255,255,255,0.2);border:none;
-            color:white;font-size:1rem;cursor:pointer;
+            width:38px;height:38px;border-radius:12px;
+            background:rgba(255,255,255,0.06);
+            border:1px solid rgba(255,255,255,0.08);
+            color:#a5b4fc;font-size:1rem;cursor:pointer;
             display:flex;align-items:center;justify-content:center;
-            text-decoration:none;
+            text-decoration:none;transition:all .2s;
         }
-        .topbar h1 { font-size:1.1rem;font-weight:700; }
-        .content { max-width:600px;margin:0 auto;padding:20px 16px; }
+        .back-btn:hover { background:rgba(165,180,252,0.15); }
+        .topbar h1 {
+            font-size:1.05rem;font-weight:700;
+            background:linear-gradient(135deg,#a5b4fc,#818cf8);
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
 
-        .avatar-card {
-            background:white;border-radius:16px;padding:28px;
-            text-align:center;margin-bottom:16px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.06);
+        /* ── CONTENT ────────────────────────────── */
+        .content {
+            max-width:620px;margin:0 auto;
+            padding:24px 16px 40px;
+        }
+
+        /* ── PROFILE HEADER CARD ────────────────── */
+        .profile-header {
+            background: linear-gradient(145deg, rgba(30,27,75,0.7), rgba(15,15,25,0.9));
+            border: 1px solid rgba(139,92,246,0.2);
+            border-radius: 24px;
+            padding: 32px 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-header::before {
+            content:'';position:absolute;top:-50%;left:-50%;
+            width:200%;height:200%;
+            background:radial-gradient(circle at 30% 50%,rgba(139,92,246,0.08),transparent 50%);
+            pointer-events:none;
+        }
+        .avatar-wrapper {
+            position:relative;display:inline-block;margin-bottom:16px;
         }
         .avatar {
-            width:80px;height:80px;border-radius:50%;
-            background:linear-gradient(135deg,#1e3a8a,#2563eb);
+            width:90px;height:90px;border-radius:50%;
+            background:linear-gradient(135deg,#6366f1,#8b5cf6);
             display:flex;align-items:center;justify-content:center;
-            font-size:2rem;color:white;margin:0 auto 14px;
+            font-size:2.2rem;color:white;
+            border:3px solid rgba(139,92,246,0.4);
+            box-shadow:0 0 30px rgba(139,92,246,0.3);
         }
-        .nombre { font-size:1.2rem;font-weight:700;color:#0f172a; }
-        .doc { color:#64748b;font-size:0.85rem;margin-top:4px; }
+        .avatar img {
+            width:100%;height:100%;border-radius:50%;object-fit:cover;
+        }
+        .status-dot {
+            position:absolute;bottom:4px;right:4px;
+            width:16px;height:16px;border-radius:50%;
+            background:#10b981;border:3px solid #0a0a0f;
+        }
+        .nombre {
+            font-size:1.3rem;font-weight:800;color:#f8fafc;
+            margin-bottom:4px;
+        }
+        .doc { color:#94a3b8;font-size:0.82rem;font-weight:400; }
+        .badge-estado {
+            display:inline-flex;align-items:center;gap:6px;
+            margin-top:12px;padding:6px 16px;
+            border-radius:99px;font-size:0.75rem;font-weight:700;
+            letter-spacing:0.5px;
+        }
         .badge-activo {
-            display:inline-block;margin-top:8px;
-            padding:4px 12px;background:#dcfce7;color:#16a34a;
-            border-radius:99px;font-size:0.78rem;font-weight:600;
+            background:rgba(16,185,129,0.12);
+            border:1px solid rgba(16,185,129,0.3);
+            color:#34d399;
+        }
+        .badge-rechazado {
+            background:rgba(239,68,68,0.12);
+            border:1px solid rgba(239,68,68,0.3);
+            color:#f87171;
+        }
+        .badge-pendiente {
+            background:rgba(251,191,36,0.12);
+            border:1px solid rgba(251,191,36,0.3);
+            color:#fbbf24;
         }
 
-        .info-card {
-            background:white;border-radius:16px;padding:20px;
-            margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);
+        /* ── CARDS ──────────────────────────────── */
+        .card {
+            background: rgba(20,20,35,0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 20px;
+            padding: 22px;
+            margin-bottom: 16px;
+            transition: border-color .2s;
         }
-        .info-card h3 {
-            font-size:0.82rem;font-weight:700;color:#94a3b8;
-            text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;
+        .card:hover {
+            border-color: rgba(139,92,246,0.2);
         }
+        .card-title {
+            font-size:0.75rem;font-weight:700;
+            color:#818cf8;text-transform:uppercase;
+            letter-spacing:1.5px;margin-bottom:16px;
+            display:flex;align-items:center;gap:8px;
+        }
+        .card-title i {
+            font-size:1rem;opacity:0.8;
+        }
+
+        /* ── INFO ROWS ──────────────────────────── */
         .info-row {
             display:flex;justify-content:space-between;align-items:center;
-            padding:10px 0;border-bottom:1px solid #f1f5f9;
+            padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);
         }
         .info-row:last-child { border-bottom:none; }
-        .info-label { font-size:0.82rem;color:#64748b; }
-        .info-value { font-size:0.88rem;font-weight:600;color:#0f172a;text-align:right;max-width:60%; }
-
-        .servicio-chip {
-            display:inline-block;padding:4px 12px;
-            background:#dbeafe;color:#1d4ed8;
-            border-radius:99px;font-size:0.78rem;font-weight:600;
-            margin:3px;
+        .info-label {
+            font-size:0.8rem;color:#94a3b8;font-weight:500;
         }
-        .loading { text-align:center;padding:40px;color:#94a3b8; }
+        .info-value {
+            font-size:0.85rem;font-weight:600;color:#f1f5f9;
+            text-align:right;max-width:60%;
+        }
         .info-input {
-            border:1px solid #e2e8f0;border-radius:8px;
-            padding:8px 12px;font-size:0.88rem;color:#0f172a;
+            background:rgba(255,255,255,0.04);
+            border:1px solid rgba(255,255,255,0.08);
+            border-radius:10px;padding:10px 14px;
+            font-size:0.85rem;color:#f1f5f9;
             text-align:right;width:55%;outline:none;
-            font-family:'Segoe UI',sans-serif;
-            transition:border-color .2s;
+            font-family:'Inter',sans-serif;
+            transition:all .2s;
         }
-        .info-input:focus { border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.1); }
+        .info-input:focus {
+            border-color:rgba(139,92,246,0.5);
+            background:rgba(139,92,246,0.06);
+            box-shadow:0 0 0 3px rgba(139,92,246,0.1);
+        }
+        .info-input::placeholder { color:#475569; }
+
+        /* ── CHIPS & TAGS ───────────────────────── */
+        .chip {
+            display:inline-flex;align-items:center;gap:6px;
+            background:rgba(139,92,246,0.1);
+            border:1px solid rgba(139,92,246,0.25);
+            border-radius:99px;padding:6px 14px;margin:3px;
+            font-size:0.78rem;font-weight:600;color:#a5b4fc;
+            transition:all .2s;
+        }
+        .chip:hover { background:rgba(139,92,246,0.18); }
+        .chip-ciudad {
+            background:rgba(16,185,129,0.1);
+            border:1px solid rgba(16,185,129,0.25);
+            color:#6ee7b7;
+        }
+        .chip-ciudad:hover { background:rgba(16,185,129,0.18); }
+        .chip-esp {
+            background:rgba(251,191,36,0.1);
+            border:1px solid rgba(251,191,36,0.25);
+            color:#fcd34d;
+        }
+        .chip-esp:hover { background:rgba(251,191,36,0.18); }
+        .chip-btn-delete {
+            background:none;border:none;color:#f87171;
+            cursor:pointer;font-size:0.85rem;padding:0 2px;
+            opacity:0.7;transition:opacity .2s;
+        }
+        .chip-btn-delete:hover { opacity:1; }
+
+        /* ── BUTTONS ────────────────────────────── */
+        .btn-primary {
+            padding:12px 22px;
+            background:linear-gradient(135deg,#6366f1,#8b5cf6);
+            color:white;border:none;border-radius:12px;
+            font-weight:700;font-size:0.82rem;cursor:pointer;
+            transition:all .2s;font-family:'Inter',sans-serif;
+            box-shadow:0 4px 16px rgba(99,102,241,0.25);
+        }
+        .btn-primary:hover {
+            transform:translateY(-1px);
+            box-shadow:0 6px 24px rgba(99,102,241,0.35);
+        }
+        .btn-primary:active { transform:translateY(0); }
+        .btn-secondary {
+            padding:10px 18px;
+            background:rgba(255,255,255,0.04);
+            border:1px solid rgba(255,255,255,0.1);
+            color:#a5b4fc;border-radius:12px;
+            font-weight:600;font-size:0.82rem;cursor:pointer;
+            transition:all .2s;font-family:'Inter',sans-serif;
+        }
+        .btn-secondary:hover {
+            background:rgba(139,92,246,0.1);
+            border-color:rgba(139,92,246,0.3);
+        }
+        .btn-danger {
+            padding:12px 22px;
+            background:linear-gradient(135deg,#dc2626,#b91c1c);
+            color:white;border:none;border-radius:12px;
+            font-weight:700;font-size:0.82rem;cursor:pointer;
+            box-shadow:0 4px 16px rgba(220,38,38,0.25);
+            font-family:'Inter',sans-serif;
+        }
+        .btn-success {
+            padding:12px 22px;
+            background:linear-gradient(135deg,#059669,#10b981);
+            color:white;border:none;border-radius:12px;
+            font-weight:700;font-size:0.82rem;cursor:pointer;
+            box-shadow:0 4px 16px rgba(16,185,129,0.25);
+            font-family:'Inter',sans-serif;
+        }
+        .btn-amber {
+            background:linear-gradient(135deg,#d97706,#f59e0b);
+            color:white;border:none;border-radius:12px;
+            font-weight:700;cursor:pointer;
+            box-shadow:0 4px 16px rgba(217,119,6,0.25);
+            font-family:'Inter',sans-serif;
+        }
+
+        /* ── DOCUMENT ROW ───────────────────────── */
+        .doc-row {
+            display:flex;align-items:center;justify-content:space-between;
+            padding:14px 16px;
+            background:rgba(255,255,255,0.02);
+            border:1px solid rgba(255,255,255,0.05);
+            border-radius:14px;margin-bottom:10px;
+            transition:all .2s;
+        }
+        .doc-row:hover {
+            background:rgba(139,92,246,0.04);
+            border-color:rgba(139,92,246,0.15);
+        }
+        .doc-row .doc-icon {
+            font-size:1.2rem;margin-right:12px;
+        }
+        .doc-row .doc-info {
+            flex:1;
+        }
+        .doc-row .doc-title {
+            font-size:0.82rem;font-weight:700;color:#e2e8f0;
+        }
+        .doc-row .doc-desc {
+            font-size:0.7rem;color:#64748b;margin-top:2px;
+        }
+        .doc-row label {
+            padding:8px 16px;
+            background:rgba(139,92,246,0.12);
+            border:1px solid rgba(139,92,246,0.3);
+            color:#a5b4fc;border-radius:10px;
+            font-size:0.72rem;font-weight:700;cursor:pointer;
+            transition:all .2s;
+        }
+        .doc-row label:hover {
+            background:rgba(139,92,246,0.2);
+        }
+
+        /* ── SELECT DARK ────────────────────────── */
+        .select-dark {
+            width:100%;padding:11px 14px;
+            background:rgba(255,255,255,0.04);
+            border:1px solid rgba(255,255,255,0.08);
+            border-radius:10px;font-size:0.85rem;
+            color:#f1f5f9;outline:none;
+            font-family:'Inter',sans-serif;
+            transition:all .2s;
+            -webkit-appearance:none;appearance:none;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23818cf8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat:no-repeat;
+            background-position:right 12px center;
+        }
+        .select-dark:focus {
+            border-color:rgba(139,92,246,0.5);
+            box-shadow:0 0 0 3px rgba(139,92,246,0.1);
+        }
+        .select-dark option { background:#1e1e2e;color:#f1f5f9; }
+
+        /* ── INPUT DARK ─────────────────────────── */
+        .input-dark {
+            width:100%;padding:11px 14px;
+            background:rgba(255,255,255,0.04);
+            border:1px solid rgba(255,255,255,0.08);
+            border-radius:10px;font-size:0.85rem;
+            color:#f1f5f9;outline:none;
+            font-family:'Inter',sans-serif;
+            transition:all .2s;
+        }
+        .input-dark:focus {
+            border-color:rgba(139,92,246,0.5);
+            background:rgba(139,92,246,0.06);
+            box-shadow:0 0 0 3px rgba(139,92,246,0.1);
+        }
+        .input-dark::placeholder { color:#475569; }
+
+        /* ── RECHAZO BANNER ─────────────────────── */
+        .rechazo-banner {
+            background:rgba(239,68,68,0.06);
+            border:1px solid rgba(239,68,68,0.2);
+            border-radius:20px;padding:20px;
+            margin-bottom:20px;
+        }
+        .rechazo-header {
+            display:flex;align-items:center;gap:12px;
+            margin-bottom:14px;
+        }
+        .rechazo-icon {
+            width:42px;height:42px;border-radius:12px;
+            background:rgba(239,68,68,0.12);
+            display:flex;align-items:center;justify-content:center;
+            font-size:1.3rem;
+        }
+        .rechazo-title {
+            font-weight:800;color:#f87171;font-size:0.9rem;
+        }
+        .rechazo-subtitle {
+            font-size:0.72rem;color:#94a3b8;margin-top:2px;
+        }
+        .rechazo-motivo {
+            background:rgba(0,0,0,0.3);
+            border-radius:12px;padding:14px 16px;
+            border:1px solid rgba(239,68,68,0.15);
+        }
+        .rechazo-motivo-label {
+            font-size:0.68rem;font-weight:700;color:#f87171;
+            text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;
+        }
+        .rechazo-motivo-text {
+            font-size:0.85rem;color:#e2e8f0;line-height:1.5;
+        }
+
+        /* ── SAVE BUTTON FULL ───────────────────── */
+        .btn-save-full {
+            width:100%;padding:16px;
+            color:white;border:none;border-radius:16px;
+            font-weight:800;font-size:0.95rem;cursor:pointer;
+            transition:all .25s;font-family:'Inter',sans-serif;
+            margin-top:12px;
+            display:flex;align-items:center;justify-content:center;gap:8px;
+        }
+        .btn-save-full:hover { transform:translateY(-2px); }
+        .btn-save-full:active { transform:translateY(0); }
+
+        /* ── LOADING ────────────────────────────── */
+        .loading {
+            text-align:center;padding:60px 20px;
+            color:#64748b;font-size:0.9rem;
+        }
+        .loading i { display:block;font-size:2rem;margin-bottom:12px;color:#6366f1; }
+
+        /* ── TOAST ──────────────────────────────── */
+        @keyframes slideDown {
+            from { opacity:0;transform:translateX(-50%) translateY(-20px); }
+            to { opacity:1;transform:translateX(-50%) translateY(0); }
+        }
+
+        /* ── REFS ROW ───────────────────────────── */
+        .ref-row {
+            display:flex;align-items:center;justify-content:space-between;
+            padding:12px 14px;
+            background:rgba(255,255,255,0.02);
+            border:1px solid rgba(255,255,255,0.05);
+            border-radius:12px;margin-bottom:8px;
+            transition:all .2s;
+        }
+        .ref-row:hover {
+            background:rgba(139,92,246,0.04);
+            border-color:rgba(139,92,246,0.15);
+        }
+
+        /* ── RESPONSIVE ─────────────────────────── */
+        @media(max-width:400px) {
+            .info-input { width:50%;font-size:0.8rem; }
+            .profile-header { padding:24px 16px; }
+        }
     </style>
 </head>
 <body>
 <div class="topbar">
     <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
-    <h1>👤 Mi Perfil</h1>
+    <h1>Mi Perfil</h1>
 </div>
 
 <div class="content" id="contenido">
@@ -95,7 +421,6 @@
             const data = await res.json();
             if (data.error) throw new Error(data.error);
             renderPerfil(data);
-            // Setear nivel de estudio en el select
             setTimeout(() => {
                 const sel = document.getElementById('nivelEstudioSelect');
                 if (sel && data.nivel_estudio) sel.value = data.nivel_estudio;
@@ -108,54 +433,66 @@
 
     function renderPerfil(d) {
         const serviciosHtml = (d.servicios || []).map(s =>
-            `<span class="servicio-chip">${s.categoria}</span>`
+            `<span class="chip">${s.categoria}</span>`
         ).join('');
 
-        // Banner de rechazo si aplica
+        // Banner de rechazo
         const rechazoBanner = (d.estado === 'rechazado' && d.motivo_rechazo) ? `
-            <div style="background:#fef2f2;border:2px solid #fecaca;border-radius:16px;padding:18px;margin-bottom:16px">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-                    <span style="font-size:1.5rem">⚠️</span>
+            <div class="rechazo-banner">
+                <div class="rechazo-header">
+                    <div class="rechazo-icon">⚠️</div>
                     <div>
-                        <div style="font-weight:800;color:#dc2626;font-size:0.95rem">Tu hoja de vida fue rechazada</div>
-                        <div style="font-size:0.78rem;color:#64748b">Corrige lo indicado y se enviará automáticamente a revisión</div>
+                        <div class="rechazo-title">Tu hoja de vida fue rechazada</div>
+                        <div class="rechazo-subtitle">Corrige lo indicado y se enviará automáticamente a revisión</div>
                     </div>
                 </div>
-                <div style="background:white;border-radius:10px;padding:12px 14px;border:1px solid #fecaca">
-                    <div style="font-size:0.72rem;font-weight:700;color:#dc2626;text-transform:uppercase;margin-bottom:4px">Motivo del rechazo:</div>
-                    <div style="font-size:0.88rem;color:#1e293b">${d.motivo_rechazo}</div>
+                <div class="rechazo-motivo">
+                    <div class="rechazo-motivo-label">Motivo del rechazo</div>
+                    <div class="rechazo-motivo-text">${d.motivo_rechazo}</div>
                 </div>
-                <button onclick="reenviarRevision()" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.88rem;cursor:pointer">
-                    🔄 Enviar de nuevo a revisión
+                <button onclick="reenviarRevision()" class="btn-save-full" style="margin-top:14px;background:linear-gradient(135deg,#7c3aed,#6366f1);box-shadow:0 4px 20px rgba(124,58,237,0.3)">
+                    <i class="bi bi-arrow-repeat"></i> Enviar de nuevo a revisión
                 </button>
             </div>` : '';
 
-        const estadoBadge = d.estado === 'rechazado' 
-            ? '<span style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:4px 12px;border-radius:99px;font-size:0.75rem;font-weight:700">❌ Rechazado</span>'
-            : '<span class="badge-activo">✅ Activo</span>';
+        // Badge de estado
+        let estadoBadge = '';
+        if (d.estado === 'rechazado') {
+            estadoBadge = '<span class="badge-estado badge-rechazado"><i class="bi bi-x-circle-fill"></i> Rechazado</span>';
+        } else if (d.estado === 'pendiente_revision') {
+            estadoBadge = '<span class="badge-estado badge-pendiente"><i class="bi bi-clock-fill"></i> En revisión</span>';
+        } else {
+            estadoBadge = '<span class="badge-estado badge-activo"><i class="bi bi-check-circle-fill"></i> Activo</span>';
+        }
 
         document.getElementById('contenido').innerHTML = `
             ${rechazoBanner}
-            <div class="avatar-card">
-                <div class="avatar">👤</div>
+
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="avatar-wrapper">
+                    <div class="avatar" id="avatarDisplay">👤</div>
+                    <div class="status-dot" style="background:${d.estado==='rechazado'?'#ef4444':d.estado==='pendiente_revision'?'#fbbf24':'#10b981'}"></div>
+                </div>
                 <div class="nombre">${d.nombre_completo || '-'}</div>
-                <div class="doc">Doc: ${d.numero_documento || '-'}</div>
+                <div class="doc"><i class="bi bi-credit-card-2-front"></i> ${d.numero_documento || '-'}</div>
                 ${estadoBadge}
             </div>
 
-            <div class="info-card">
-                <h3>Información Personal</h3>
+            <!-- Información Personal -->
+            <div class="card">
+                <div class="card-title"><i class="bi bi-person-lines-fill"></i> Información Personal</div>
                 <div class="info-row">
-                    <span class="info-label">Ciudad</span>
-                    <input class="info-input" id="edit_ciudad" value="${d.ciudad || ''}">
+                    <span class="info-label">Ciudad de Residencia</span>
+                    <input class="info-input" id="edit_ciudad" value="${d.ciudad || ''}" placeholder="Ciudad">
                 </div>
                 <div class="info-row">
                     <span class="info-label">Departamento</span>
-                    <input class="info-input" id="edit_departamento" value="${d.departamento || ''}">
+                    <input class="info-input" id="edit_departamento" value="${d.departamento || ''}" placeholder="Departamento">
                 </div>
                 <div class="info-row">
                     <span class="info-label">Nacionalidad</span>
-                    <input class="info-input" id="edit_nacionalidad" value="${d.nacionalidad || ''}">
+                    <input class="info-input" id="edit_nacionalidad" value="${d.nacionalidad || ''}" placeholder="Nacionalidad">
                 </div>
                 <div class="info-row">
                     <span class="info-label">Fecha Nac.</span>
@@ -163,53 +500,52 @@
                 </div>
             </div>
 
-            <div class="info-card">
-                <h3>Contacto</h3>
+            <!-- Contacto -->
+            <div class="card">
+                <div class="card-title"><i class="bi bi-telephone-fill"></i> Contacto</div>
                 <div class="info-row">
                     <span class="info-label">Teléfono</span>
-                    <input class="info-input" id="edit_telefono" value="${d.telefono || ''}" type="tel">
+                    <input class="info-input" id="edit_telefono" value="${d.telefono || ''}" type="tel" placeholder="Teléfono">
                 </div>
                 <div class="info-row">
                     <span class="info-label">Correo</span>
-                    <input class="info-input" id="edit_correo" value="${d.correo || ''}" type="email">
+                    <input class="info-input" id="edit_correo" value="${d.correo || ''}" type="email" placeholder="Correo (opcional)">
                 </div>
             </div>
 
+            <!-- Servicios -->
             ${serviciosHtml ? `
-            <div class="info-card">
-                <h3>🔧 Mis Servicios</h3>
+            <div class="card">
+                <div class="card-title"><i class="bi bi-tools"></i> Mis Servicios</div>
                 <div style="padding:4px 0">${serviciosHtml}</div>
             </div>` : ''}
 
-            <!-- Sección Documentos -->
-            <div class="info-card">
-                <h3>📍 Ciudades donde presto servicio</h3>
-                <div id="listaCiudadesServicio" style="margin-bottom:12px">Cargando...</div>
+            <!-- Ciudades de Servicio -->
+            <div class="card">
+                <div class="card-title"><i class="bi bi-geo-alt-fill"></i> Ciudades donde presto servicio</div>
+                <div id="listaCiudadesServicio" style="margin-bottom:14px"><span style="color:#64748b;font-size:0.82rem">Cargando...</span></div>
                 <div style="position:relative;display:flex;gap:8px">
                     <input type="text" id="nuevaCiudadServicio" placeholder="Buscar municipio..."
-                        autocomplete="off"
-                        oninput="filtrarCiudadesPerfil(this.value)"
-                        style="flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.88rem;outline:none">
-                    <button onclick="agregarCiudadServicio()"
-                        style="padding:10px 18px;background:linear-gradient(135deg,#4f46e5,#7c3aed);
-                               color:white;border:none;border-radius:10px;font-weight:700;font-size:0.82rem;
-                               cursor:pointer;white-space:nowrap">
-                        + Agregar
+                        autocomplete="off" class="input-dark" style="flex:1"
+                        oninput="filtrarCiudadesPerfil(this.value)">
+                    <button onclick="agregarCiudadServicio()" class="btn-primary" style="white-space:nowrap;padding:11px 18px">
+                        <i class="bi bi-plus-lg"></i> Agregar
                     </button>
                     <div id="ciudadPerfilDropdown" style="
-                        display:none;position:absolute;z-index:1000;width:calc(100% - 110px);
-                        background:white;border:1px solid #e2e8f0;border-radius:10px;
-                        max-height:160px;overflow-y:auto;top:100%;left:0;margin-top:4px;
-                        box-shadow:0 4px 16px rgba(0,0,0,0.1);
+                        display:none;position:absolute;z-index:1000;width:calc(100% - 120px);
+                        background:rgba(20,20,35,0.98);backdrop-filter:blur(20px);
+                        border:1px solid rgba(139,92,246,0.2);border-radius:12px;
+                        max-height:180px;overflow-y:auto;top:100%;left:0;margin-top:6px;
+                        box-shadow:0 8px 32px rgba(0,0,0,0.5);
                     "></div>
                 </div>
             </div>
 
-            <!-- Sección Documentos -->
-            <div class="info-card">
-                <h3>🎓 Nivel de Estudio</h3>
-                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-                    <select id="nivelEstudioSelect" style="flex:1;min-width:180px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.88rem">
+            <!-- Nivel de Estudio -->
+            <div class="card">
+                <div class="card-title"><i class="bi bi-mortarboard-fill"></i> Nivel de Estudio</div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+                    <select id="nivelEstudioSelect" class="select-dark" style="flex:1;min-width:160px">
                         <option value="">Seleccionar...</option>
                         <option value="Primaria">Primaria</option>
                         <option value="Bachiller">Bachiller</option>
@@ -221,121 +557,113 @@
                         <option value="Doctorado">Doctorado</option>
                         <option value="Otro">Otro</option>
                     </select>
-                    <button onclick="guardarNivelEstudio()" style="padding:10px 18px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:10px;font-size:0.8rem;font-weight:700;cursor:pointer">
+                    <button onclick="guardarNivelEstudio()" class="btn-primary" style="padding:11px 18px">
                         Guardar
                     </button>
                 </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">
-                    <div>
-                        <div style="font-size:0.82rem;font-weight:700;color:#0f172a">📜 Certificado de Estudio</div>
-                        <div style="font-size:0.72rem;color:#64748b">Diploma, acta de grado o certificado</div>
+                <div class="doc-row">
+                    <span class="doc-icon">📜</span>
+                    <div class="doc-info">
+                        <div class="doc-title">Certificado de Estudio</div>
+                        <div class="doc-desc">Diploma, acta de grado o certificado</div>
                     </div>
-                    <label style="padding:8px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer">
+                    <label>
                         Actualizar
                         <input type="file" accept="image/*,.pdf" style="display:none" onchange="actualizarDocumento('certificado_estudio', this)">
                     </label>
                 </div>
             </div>
 
-            <!-- Sección Documentos -->
-            <div class="info-card">
-                <h3>📄 Mis Documentos</h3>
-                <div style="display:grid;gap:12px">
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">
-                        <div>
-                            <div style="font-size:0.82rem;font-weight:700;color:#0f172a">📷 Foto de identificación</div>
-                            <div style="font-size:0.72rem;color:#64748b">Cédula o documento de identidad</div>
-                        </div>
-                        <label style="padding:8px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer">
-                            Actualizar
-                            <input type="file" accept="image/*" style="display:none" onchange="actualizarDocumento('foto_identificacion', this)">
-                        </label>
+            <!-- Documentos -->
+            <div class="card">
+                <div class="card-title"><i class="bi bi-folder-fill"></i> Mis Documentos</div>
+                <div class="doc-row">
+                    <span class="doc-icon">📷</span>
+                    <div class="doc-info">
+                        <div class="doc-title">Foto de identificación</div>
+                        <div class="doc-desc">Cédula o documento de identidad</div>
                     </div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">
-                        <div>
-                            <div style="font-size:0.82rem;font-weight:700;color:#0f172a">📋 Antecedentes</div>
-                            <div style="font-size:0.72rem;color:#64748b">Documento de antecedentes disciplinarios</div>
-                        </div>
-                        <label style="padding:8px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer">
-                            Actualizar
-                            <input type="file" accept="image/*,.pdf" style="display:none" onchange="actualizarDocumento('foto_antecedentes', this)">
-                        </label>
-                    </div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">
-                        <div>
-                            <div style="font-size:0.82rem;font-weight:700;color:#0f172a">📝 Recomendaciones</div>
-                            <div style="font-size:0.72rem;color:#64748b">Carta de recomendación o certificado</div>
-                        </div>
-                        <label style="padding:8px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer">
-                            Actualizar
-                            <input type="file" accept="image/*,.pdf" style="display:none" onchange="actualizarDocumento('recomendaciones_archivo', this)">
-                        </label>
-                    </div>
+                    <label>
+                        Actualizar
+                        <input type="file" accept="image/*" style="display:none" onchange="actualizarDocumento('foto_identificacion', this)">
+                    </label>
                 </div>
-                <div id="msgDocumento" style="display:none;margin-top:10px;padding:10px;border-radius:10px;text-align:center;font-size:0.82rem;font-weight:600"></div>
+                <div class="doc-row">
+                    <span class="doc-icon">📋</span>
+                    <div class="doc-info">
+                        <div class="doc-title">Antecedentes</div>
+                        <div class="doc-desc">Documento de antecedentes disciplinarios</div>
+                    </div>
+                    <label>
+                        Actualizar
+                        <input type="file" accept="image/*,.pdf" style="display:none" onchange="actualizarDocumento('foto_antecedentes', this)">
+                    </label>
+                </div>
+                <div class="doc-row">
+                    <span class="doc-icon">📝</span>
+                    <div class="doc-info">
+                        <div class="doc-title">Recomendaciones</div>
+                        <div class="doc-desc">Carta de recomendación o certificado</div>
+                    </div>
+                    <label>
+                        Actualizar
+                        <input type="file" accept="image/*,.pdf" style="display:none" onchange="actualizarDocumento('recomendaciones_archivo', this)">
+                    </label>
+                </div>
             </div>
 
-            <!-- Sección Referencias Personales -->
-            <div class="info-card">
-                <h3>📋 Referencias Personales</h3>
-                <div id="listaReferencias" style="margin-bottom:12px">Cargando...</div>
-                <div style="background:#f8fafc;border-radius:12px;padding:14px;border:1px solid #e2e8f0">
-                    <div style="font-size:0.75rem;font-weight:700;color:#374151;margin-bottom:8px">Agregar referencia</div>
+            <!-- Referencias Personales -->
+            <div class="card">
+                <div class="card-title"><i class="bi bi-people-fill"></i> Referencias Personales</div>
+                <div id="listaReferencias" style="margin-bottom:14px"><span style="color:#64748b;font-size:0.82rem">Cargando...</span></div>
+                <div style="background:rgba(255,255,255,0.02);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,0.05)">
+                    <div style="font-size:0.72rem;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Agregar referencia</div>
                     <div style="display:grid;gap:8px">
-                        <input type="text" id="refNombre" placeholder="Nombre completo *" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
-                        <input type="tel" id="refCelular" placeholder="Celular * (10 dígitos)" maxlength="10" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
-                        <input type="email" id="refCorreo" placeholder="Correo (opcional)" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
-                        <input type="text" id="refDescripcion" placeholder="Descripción * (ej: Trabajó conmigo 2 años)" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
-                        <button onclick="agregarReferenciaPerfil()" style="padding:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.82rem;cursor:pointer">
-                            + Agregar referencia
+                        <input type="text" id="refNombre" placeholder="Nombre completo *" class="input-dark">
+                        <input type="tel" id="refCelular" placeholder="Celular * (10 dígitos)" maxlength="10" class="input-dark">
+                        <input type="email" id="refCorreo" placeholder="Correo (opcional)" class="input-dark">
+                        <input type="text" id="refDescripcion" placeholder="Descripción * (ej: Trabajó conmigo 2 años)" class="input-dark">
+                        <button onclick="agregarReferenciaPerfil()" class="btn-primary" style="width:100%;padding:12px">
+                            <i class="bi bi-plus-circle"></i> Agregar referencia
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Sección Especialidades -->
-            <div class="info-card" id="seccionEspecialidades">
-                <h3>⭐ Mis Especialidades</h3>
-                <div id="listaEspecialidades" style="margin-bottom:12px">Cargando...</div>
-                <button onclick="abrirModalEspecialidad()"
-                    style="width:100%;padding:12px;background:linear-gradient(135deg,#f59e0b,#d97706);
-                           color:white;border:none;border-radius:12px;font-weight:700;font-size:0.88rem;
-                           cursor:pointer">
-                    + Agregar especialidad
+            <!-- Especialidades -->
+            <div class="card" id="seccionEspecialidades">
+                <div class="card-title"><i class="bi bi-star-fill"></i> Mis Especialidades</div>
+                <div id="listaEspecialidades" style="margin-bottom:14px"><span style="color:#64748b;font-size:0.82rem">Cargando...</span></div>
+                <button onclick="abrirModalEspecialidad()" class="btn-amber" style="width:100%;padding:12px;font-size:0.85rem">
+                    <i class="bi bi-plus-lg"></i> Agregar especialidad
                 </button>
             </div>
 
-            <!-- Agregar nuevo servicio -->
-            <div class="info-card">
-                <h3>➕ Agregar Servicio</h3>
-                <select id="nuevaCategoria" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;font-size:0.88rem">
+            <!-- Agregar Servicio -->
+            <div class="card">
+                <div class="card-title"><i class="bi bi-plus-circle-fill"></i> Agregar Servicio</div>
+                <select id="nuevaCategoria" class="select-dark" style="margin-bottom:10px">
                     <option value="">Seleccionar categoría...</option>
                 </select>
-                <input id="nuevaDescripcion" placeholder="Descripción del servicio" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;font-size:0.88rem">
-                <div style="display:flex;gap:8px;margin-bottom:8px">
-                    <input id="nuevaTarifa" type="number" placeholder="Tarifa/hora" min="5000" step="1000" style="flex:1;padding:10px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.88rem">
-                    <input id="nuevaExp" type="number" placeholder="Años exp." min="0" max="50" step="0.5" style="width:100px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;font-size:0.88rem">
+                <input id="nuevaDescripcion" placeholder="Descripción del servicio" class="input-dark" style="margin-bottom:10px">
+                <div style="display:flex;gap:8px;margin-bottom:12px">
+                    <input id="nuevaTarifa" type="number" placeholder="Tarifa/hora" min="5000" step="1000" class="input-dark" style="flex:1">
+                    <input id="nuevaExp" type="number" placeholder="Años exp." min="0" max="50" step="0.5" class="input-dark" style="width:100px">
                 </div>
-                <button onclick="agregarServicio()"
-                    style="width:100%;padding:12px;background:linear-gradient(135deg,#10b981,#059669);
-                           color:white;border:none;border-radius:12px;font-weight:700;font-size:0.88rem;
-                           cursor:pointer">
-                    ✅ Agregar servicio
+                <button onclick="agregarServicio()" class="btn-success" style="width:100%;padding:12px;font-size:0.85rem">
+                    <i class="bi bi-check-circle"></i> Agregar servicio
                 </button>
             </div>
 
-            <button onclick="guardarPerfil()" id="btnGuardar"
-                style="width:100%;padding:15px;background:${d.estado === 'rechazado' ? 'linear-gradient(135deg,#dc2626,#b91c1c)' : 'linear-gradient(135deg,#1e3a8a,#2563eb)'};
-                       color:white;border:none;border-radius:14px;font-weight:700;font-size:0.95rem;
-                       cursor:pointer;margin-top:8px;transition:all .2s;
-                       box-shadow:0 4px 16px ${d.estado === 'rechazado' ? 'rgba(220,38,38,0.3)' : 'rgba(30,58,138,0.3)'}">
-                ${d.estado === 'rechazado' ? '<i class="bi bi-arrow-repeat"></i> Corregir y enviar a revisión' : '<i class="bi bi-check-circle"></i> Guardar cambios'}
+            <!-- Botón Guardar -->
+            <button onclick="guardarPerfil()" id="btnGuardar" class="btn-save-full"
+                style="background:${d.estado === 'rechazado' ? 'linear-gradient(135deg,#dc2626,#b91c1c);box-shadow:0 4px 24px rgba(220,38,38,0.3)' : 'linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 4px 24px rgba(99,102,241,0.3)'}">
+                ${d.estado === 'rechazado' ? '<i class="bi bi-arrow-repeat"></i> Corregir y enviar a revisión' : '<i class="bi bi-check-circle-fill"></i> Guardar cambios'}
             </button>
-            <div id="msgGuardar" style="display:none;text-align:center;margin-top:10px;
-                 padding:10px;border-radius:10px;font-size:0.85rem;font-weight:600"></div>
         `;
     }
 
+    // ── GUARDAR PERFIL ───────────────────────────────────────
     async function guardarPerfil() {
         const btn = document.getElementById('btnGuardar');
         btn.disabled = true;
@@ -353,7 +681,6 @@
             const res = await fetch('/trabajador/perfil/editar', { method:'POST', body:fd });
             const data = await res.json();
             if (res.ok) {
-                // Si está rechazado, enviar automáticamente a revisión
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('rechazado') === '1') {
                     await reenviarRevision();
@@ -367,10 +694,11 @@
             mostrarToastPerfil('❌ Error de conexión', false);
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar cambios';
+            btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Guardar cambios';
         }
     }
 
+    // ── TOAST ────────────────────────────────────────────────
     function mostrarToastPerfil(msg, ok) {
         const viejo = document.getElementById('toastPerfil');
         if (viejo) viejo.remove();
@@ -378,21 +706,15 @@
         const t = document.createElement('div');
         t.id = 'toastPerfil';
         t.style.cssText = `
-            position: fixed;
-            top: 20px; left: 50%;
-            transform: translateX(-50%);
-            z-index: 9999;
-            background: ${ok ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#ef4444,#dc2626)'};
-            color: white;
-            padding: 16px 32px;
-            border-radius: 16px;
-            font-size: 1.05rem;
-            font-weight: 800;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-            animation: slideDown 0.4s ease;
-            white-space: nowrap;
+            position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;
+            background:${ok ? 'linear-gradient(135deg,#059669,#10b981)' : 'linear-gradient(135deg,#dc2626,#ef4444)'};
+            color:white;padding:14px 28px;border-radius:14px;
+            font-size:0.9rem;font-weight:700;font-family:'Inter',sans-serif;
+            box-shadow:0 8px 32px rgba(0,0,0,0.4);
+            animation:slideDown 0.35s ease;white-space:nowrap;
+            border:1px solid ${ok ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};
         `;
-        t.innerHTML = `<style>@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}</style>${msg}`;
+        t.textContent = msg;
         document.body.appendChild(t);
         setTimeout(() => {
             t.style.transition = 'opacity 0.4s';
@@ -410,20 +732,19 @@
             const el = document.getElementById('listaCiudadesServicio');
             if (!el) return;
             if (lista.length === 0) {
-                el.innerHTML = '<div style="color:#94a3b8;font-size:0.82rem;text-align:center;padding:10px">No has registrado ciudades de servicio</div>';
+                el.innerHTML = '<div style="color:#64748b;font-size:0.82rem;text-align:center;padding:12px">No has registrado ciudades de servicio</div>';
                 return;
             }
             el.innerHTML = lista.map(c =>
-                `<div style="display:inline-flex;align-items:center;gap:6px;background:#ede9fe;border:1px solid #c4b5fd;
-                             border-radius:99px;padding:6px 14px;margin:3px;font-size:0.8rem;font-weight:600;color:#5b21b6">
-                    📍 ${c.ciudad}
-                    <button onclick="eliminarCiudadServicio(${c.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.9rem;padding:0 2px">✕</button>
+                `<div class="chip chip-ciudad">
+                    <i class="bi bi-geo-alt"></i> ${c.ciudad}
+                    <button onclick="eliminarCiudadServicio(${c.id})" class="chip-btn-delete">✕</button>
                 </div>`
             ).join('');
         } catch(e) {}
     }
 
-    // Autocomplete de ciudades en Mi Perfil
+    // Autocomplete ciudades
     let _municipiosPerfil = null;
     async function filtrarCiudadesPerfil(q) {
         const dd = document.getElementById('ciudadPerfilDropdown');
@@ -437,9 +758,9 @@
         if (!found.length) { dd.style.display = 'none'; return; }
         dd.innerHTML = found.map(m =>
             `<div onclick="document.getElementById('nuevaCiudadServicio').value='${m.c}';document.getElementById('ciudadPerfilDropdown').style.display='none'"
-                 style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f8fafc;font-size:0.85rem"
-                 onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='white'">
-                <strong>${m.c}</strong> <span style="color:#64748b;font-size:0.75rem">— ${m.p}</span>
+                 style="padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.85rem;color:#e2e8f0;transition:background .15s"
+                 onmouseover="this.style.background='rgba(139,92,246,0.1)'" onmouseout="this.style.background='transparent'">
+                <strong style="color:#a5b4fc">${m.c}</strong> <span style="color:#64748b;font-size:0.75rem">— ${m.p}</span>
             </div>`
         ).join('');
         dd.style.display = 'block';
@@ -455,9 +776,7 @@
         const input = document.getElementById('nuevaCiudadServicio');
         const ciudad = input.value.trim();
         if (!ciudad) { mostrarToastPerfil('❌ Escribe una ciudad', false); return; }
-        // Ocultar dropdown
         document.getElementById('ciudadPerfilDropdown').style.display = 'none';
-
         const fd = new FormData();
         fd.append('id_persona', idTrabajador);
         fd.append('ciudad', ciudad);
@@ -487,12 +806,10 @@
             mostrarToastPerfil('❌ El archivo no puede pesar más de 5MB', false);
             return;
         }
-
         const fd = new FormData();
         fd.append('id_persona', idTrabajador);
         fd.append('tipo_documento', tipoDoc);
         fd.append('archivo', file);
-
         try {
             const res = await fetch('/trabajador/documentos/actualizar', { method:'POST', body:fd });
             const data = await res.json();
@@ -536,14 +853,13 @@
             const el = document.getElementById('listaEspecialidades');
             if (!el) return;
             if (lista.length === 0) {
-                el.innerHTML = '<div style="color:#94a3b8;font-size:0.82rem;text-align:center;padding:10px">Aún no has agregado especialidades</div>';
+                el.innerHTML = '<div style="color:#64748b;font-size:0.82rem;text-align:center;padding:12px">Aún no has agregado especialidades</div>';
                 return;
             }
             el.innerHTML = lista.map(e =>
-                `<div style="display:inline-flex;align-items:center;gap:6px;background:#f0f4ff;border:1px solid #c7d2fe;
-                             border-radius:99px;padding:6px 14px;margin:3px;font-size:0.8rem;font-weight:600;color:#4f46e5">
+                `<div class="chip chip-esp">
                     ${e.especialidad}
-                    <button onclick="eliminarEspecialidad(${e.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.9rem;padding:0 2px">✕</button>
+                    <button onclick="eliminarEspecialidad(${e.id})" class="chip-btn-delete">✕</button>
                 </div>`
             ).join('');
         } catch(e) {}
@@ -557,38 +873,34 @@
     }
 
     async function abrirModalEspecialidad() {
-        // Obtener categorías del trabajador
         const resSrv = await fetch('/trabajador/perfil_completo?id=' + idTrabajador);
         const dataSrv = await resSrv.json();
         const cats = (dataSrv.servicios || []).map(s => s.categoria);
-
         if (cats.length === 0) {
             mostrarToastPerfil('❌ Primero agrega un servicio', false);
             return;
         }
-
         const viejo = document.getElementById('modalEsp');
         if (viejo) viejo.remove();
 
         const modal = document.createElement('div');
         modal.id = 'modalEsp';
-        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
         modal.innerHTML = `
-            <div style="background:white;border-radius:20px;padding:24px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto">
-                <h3 style="margin:0 0 16px;font-size:1.1rem">⭐ Agregar Especialidades</h3>
-                <label style="font-size:0.78rem;font-weight:700;color:#374151;display:block;margin-bottom:6px">Categoría:</label>
-                <select id="espCategoria" onchange="cargarChipsEsp()"
-                    style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:14px;font-size:0.88rem">
+            <div style="background:rgba(20,20,35,0.98);border:1px solid rgba(139,92,246,0.2);border-radius:24px;padding:28px;width:100%;max-width:440px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+                <h3 style="margin:0 0 18px;font-size:1.1rem;color:#f1f5f9;font-weight:800;display:flex;align-items:center;gap:8px">
+                    <i class="bi bi-star-fill" style="color:#fbbf24"></i> Agregar Especialidades
+                </h3>
+                <label style="font-size:0.72rem;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:8px">Categoría</label>
+                <select id="espCategoria" onchange="cargarChipsEsp()" class="select-dark" style="margin-bottom:16px">
                     ${cats.map(c => `<option value="${c}">${c}</option>`).join('')}
                 </select>
-                <div id="chipsEsp" style="margin-bottom:14px">Cargando...</div>
+                <div id="chipsEsp" style="margin-bottom:18px"><span style="color:#64748b;font-size:0.82rem">Cargando...</span></div>
                 <div style="display:flex;gap:10px">
-                    <button onclick="guardarEspecialidades()"
-                        style="flex:1;padding:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer">
-                        ✅ Guardar
+                    <button onclick="guardarEspecialidades()" class="btn-primary" style="flex:1;padding:13px">
+                        <i class="bi bi-check-lg"></i> Guardar
                     </button>
-                    <button onclick="document.getElementById('modalEsp').remove()"
-                        style="padding:12px 18px;background:#f1f5f9;border:none;border-radius:12px;color:#64748b;font-weight:600;cursor:pointer">
+                    <button onclick="document.getElementById('modalEsp').remove()" class="btn-secondary" style="padding:13px 20px">
                         Cancelar
                     </button>
                 </div>
@@ -603,22 +915,24 @@
         const res = await fetch('/trabajador/especialidades/catalogo?categoria=' + encodeURIComponent(cat));
         const data = await res.json();
         const lista = data.especialidades || [];
-
-        // Obtener ya seleccionadas
         const resMis = await fetch('/trabajador/especialidades/mis?id_persona=' + idTrabajador);
         const dataMis = await resMis.json();
         const yaSeleccionadas = (dataMis.especialidades || []).filter(e => e.categoria === cat).map(e => e.especialidad);
 
         const el = document.getElementById('chipsEsp');
         if (lista.length === 0) {
-            el.innerHTML = '<div style="color:#94a3b8;font-size:0.82rem">No hay especialidades predefinidas para esta categoría</div>';
+            el.innerHTML = '<div style="color:#64748b;font-size:0.82rem">No hay especialidades predefinidas para esta categoría</div>';
             return;
         }
         el.innerHTML = lista.map(esp => {
             const sel = yaSeleccionadas.includes(esp);
-            return `<label onclick="setTimeout(()=>{const c=this.querySelector('input').checked;this.style.background=c?'#ede9fe':'#f8fafc';this.style.borderColor=c?'#7c3aed':'#e2e8f0';this.style.color=c?'#4f46e5':'#374151'},0)" style="display:inline-flex;align-items:center;gap:6px;background:${sel?'#ede9fe':'#f8fafc'};
-                           border:1px solid ${sel?'#7c3aed':'#e2e8f0'};border-radius:99px;padding:8px 14px;margin:3px;
-                           cursor:pointer;font-size:0.82rem;font-weight:600;color:${sel?'#4f46e5':'#374151'};transition:all .15s">
+            return `<label onclick="setTimeout(()=>{const c=this.querySelector('input').checked;this.style.background=c?'rgba(139,92,246,0.15)':'rgba(255,255,255,0.03)';this.style.borderColor=c?'rgba(139,92,246,0.4)':'rgba(255,255,255,0.08)';this.style.color=c?'#a5b4fc':'#94a3b8'},0)"
+                style="display:inline-flex;align-items:center;gap:6px;
+                       background:${sel?'rgba(139,92,246,0.15)':'rgba(255,255,255,0.03)'};
+                       border:1px solid ${sel?'rgba(139,92,246,0.4)':'rgba(255,255,255,0.08)'};
+                       border-radius:99px;padding:8px 16px;margin:3px;
+                       cursor:pointer;font-size:0.82rem;font-weight:600;
+                       color:${sel?'#a5b4fc':'#94a3b8'};transition:all .15s">
                 <input type="checkbox" class="espCheck" value="${esp}" ${sel?'checked':''} style="display:none">
                 ${esp}
             </label>`;
@@ -629,7 +943,6 @@
         const cat = document.getElementById('espCategoria').value;
         const checks = document.querySelectorAll('.espCheck:checked');
         const seleccionadas = Array.from(checks).map(c => c.value);
-
         const fd = new FormData();
         fd.append('id_persona', idTrabajador);
         fd.append('categoria', cat);
@@ -651,10 +964,8 @@
         const desc = document.getElementById('nuevaDescripcion').value.trim();
         const tar  = parseFloat(document.getElementById('nuevaTarifa').value) || 0;
         const exp  = parseFloat(document.getElementById('nuevaExp').value) || 0;
-
         if (!cat) { mostrarToastPerfil('❌ Selecciona una categoría', false); return; }
         if (!desc) { mostrarToastPerfil('❌ Ingresa una descripción', false); return; }
-
         const fd = new FormData();
         fd.append('id_persona', idTrabajador);
         fd.append('categoria', cat);
@@ -665,13 +976,13 @@
         const data = await res.json();
         if (data.ok) {
             mostrarToastPerfil(data.mensaje, true);
-            cargarPerfil(); // recargar todo
+            cargarPerfil();
         } else {
             mostrarToastPerfil('❌ ' + (data.error || 'Error'), false);
         }
     }
 
-    // Cargar categorías en el select de agregar servicio
+    // Cargar categorías
     async function cargarCategorias() {
         try {
             const res = await fetch('/cliente/categorias');
@@ -698,20 +1009,22 @@
             const refs = data.referencias || [];
             const el = document.getElementById('listaReferencias');
             if (refs.length === 0) {
-                el.innerHTML = '<div style="color:#94a3b8;font-size:0.82rem;padding:8px">Sin referencias registradas</div>';
+                el.innerHTML = '<div style="color:#64748b;font-size:0.82rem;padding:10px;text-align:center">Sin referencias registradas</div>';
                 return;
             }
             el.innerHTML = refs.map(r => `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f8fafc;border-radius:10px;margin-bottom:6px;border:1px solid #e2e8f0">
-                    <div>
-                        <div style="font-size:0.85rem;font-weight:700;color:#1e293b">${r.nombre}</div>
-                        <div style="font-size:0.75rem;color:#64748b">📱 ${r.celular}${r.correo ? ' · ✉️ ' + r.correo : ''}${r.descripcion ? ' · ' + r.descripcion : ''}</div>
+                <div class="ref-row">
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:0.85rem;font-weight:700;color:#e2e8f0">${r.nombre}</div>
+                        <div style="font-size:0.73rem;color:#64748b;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                            📱 ${r.celular}${r.correo ? ' · ✉️ ' + r.correo : ''}${r.descripcion ? ' · ' + r.descripcion : ''}
+                        </div>
                     </div>
-                    <button onclick="eliminarReferencia(${r.id})" style="background:none;border:none;color:#dc2626;font-size:1rem;cursor:pointer;padding:4px">✕</button>
+                    <button onclick="eliminarReferencia(${r.id})" class="chip-btn-delete" style="font-size:1.1rem;margin-left:10px">✕</button>
                 </div>
             `).join('');
         } catch(e) {
-            document.getElementById('listaReferencias').innerHTML = '<div style="color:#dc2626;font-size:0.82rem">Error cargando</div>';
+            document.getElementById('listaReferencias').innerHTML = '<div style="color:#f87171;font-size:0.82rem">Error cargando</div>';
         }
     }
 
@@ -752,7 +1065,7 @@
         } catch(e) {}
     }
 
-    // Reenviar a revisión (trabajador rechazado corrigió su perfil)
+    // Reenviar a revisión
     async function reenviarRevision() {
         const fd = new FormData();
         fd.append('id_persona', idTrabajador);
