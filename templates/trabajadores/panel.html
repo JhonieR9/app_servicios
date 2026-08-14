@@ -136,7 +136,10 @@
 
     <!-- Perfil -->
     <div class="th-profile-card" style="margin-bottom:18px">
-        <div class="th-avatar th-avatar-purple" id="avatarInicial" style="font-size:1rem;font-weight:800">👤</div>
+        <div class="th-avatar th-avatar-purple" id="avatarInicial" style="font-size:1rem;font-weight:800;overflow:hidden">
+            <img id="avatarFotoPerfil" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:none" alt="">
+            <span id="avatarTexto">👤</span>
+        </div>
         <div style="flex:1">
             <div style="font-weight:700;font-size:1rem" id="nombreTrabajador">Cargando...</div>
             <div style="font-size:0.75rem;color:var(--muted);margin-top:2px" id="docTrabajador"></div>
@@ -437,8 +440,16 @@
         if (doc) document.getElementById('docTrabajador').textContent = 'Doc: ' + doc;
         const partes = (nombre || '').split(' ');
         const ini = partes.slice(0,2).map(p => p[0]).join('').toUpperCase();
-        const av = document.getElementById('avatarInicial');
-        if (ini) { av.textContent = ini; av.style.fontSize = '1rem'; }
+        const avatarTexto = document.getElementById('avatarTexto');
+        if (ini) { avatarTexto.textContent = ini; }
+
+        // Cargar foto de perfil
+        if (idTrabajador) {
+            const img = document.getElementById('avatarFotoPerfil');
+            img.src = '/trabajador/archivo/' + idTrabajador + '/perfil';
+            img.onload = function() { this.style.display = 'block'; avatarTexto.style.display = 'none'; };
+            img.onerror = function() { this.style.display = 'none'; avatarTexto.style.display = 'inline'; };
+        }
     }
 
     // ── Stats ──
