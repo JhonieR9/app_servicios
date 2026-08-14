@@ -25,9 +25,10 @@
         .stat-val {
             font-size: 1.5rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+            background: linear-gradient(135deg, #4f46e5, #0891b2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
             line-height: 1;
         }
         .stat-label { font-size: 0.68rem; color: var(--muted); margin-top: 4px; font-weight: 500; }
@@ -308,7 +309,7 @@
         const overlay = document.createElement('div');
         overlay.id = 'onboarding';
         overlay.style.cssText = `
-            position:fixed;inset:0;z-index:99999;background:#0a0a0f;
+            position:fixed;inset:0;z-index:99999;background:white;
             display:flex;flex-direction:column;align-items:center;justify-content:center;
             padding:40px 24px;overflow:hidden;
         `;
@@ -322,17 +323,17 @@
                 .ob-slide.active{opacity:1;transform:translateX(0)}
                 .ob-slide.left{opacity:0;transform:translateX(-100%)}
                 .ob-emoji{font-size:4rem;margin-bottom:20px;display:block;line-height:1}
-                .ob-title{font-size:1.4rem;font-weight:800;color:#ffffff;margin-bottom:10px}
-                .ob-desc{font-size:0.9rem;color:#94a3b8;line-height:1.6}
+                .ob-title{font-size:1.4rem;font-weight:800;color:#1e293b;margin-bottom:10px}
+                .ob-desc{font-size:0.9rem;color:#64748b;line-height:1.6}
                 .ob-dots{display:flex;gap:8px;margin:20px 0}
-                .ob-dot{width:8px;height:8px;border-radius:50%;background:#334155;transition:all .3s}
-                .ob-dot.active{background:#667eea;width:24px;border-radius:4px}
-                .ob-btn{padding:16px 48px;background:linear-gradient(135deg,#667eea,#764ba2);
+                .ob-dot{width:8px;height:8px;border-radius:50%;background:#e2e8f0;transition:all .3s}
+                .ob-dot.active{background:#6366f1;width:24px;border-radius:4px}
+                .ob-btn{padding:16px 48px;background:linear-gradient(135deg,#6366f1,#7c3aed);
                         color:#ffffff;border:none;border-radius:14px;font-size:1rem;font-weight:700;
-                        cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(102,126,234,.4);
+                        cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(99,102,241,.25);
                         font-family:inherit}
                 .ob-btn:hover{transform:translateY(-2px)}
-                .ob-skip{background:none;border:none;color:#64748b;font-size:0.82rem;
+                .ob-skip{background:none;border:none;color:#94a3b8;font-size:0.82rem;
                          cursor:pointer;margin-top:16px;padding:8px;font-family:inherit}
             </style>
             <div class="ob-slides" id="obSlides">
