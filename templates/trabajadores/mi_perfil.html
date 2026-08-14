@@ -285,7 +285,7 @@
                         <input type="text" id="refNombre" placeholder="Nombre completo *" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
                         <input type="tel" id="refCelular" placeholder="Celular * (10 dígitos)" maxlength="10" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
                         <input type="email" id="refCorreo" placeholder="Correo (opcional)" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
-                        <input type="text" id="refDescripcion" placeholder="Descripción (ej: Trabajó conmigo 2 años)" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
+                        <input type="text" id="refDescripcion" placeholder="Descripción * (ej: Trabajó conmigo 2 años)" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none">
                         <button onclick="agregarReferenciaPerfil()" style="padding:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.82rem;cursor:pointer">
                             + Agregar referencia
                         </button>
@@ -720,7 +720,7 @@
         const celular = document.getElementById('refCelular').value.trim();
         const correo = document.getElementById('refCorreo').value.trim();
         const descripcion = document.getElementById('refDescripcion').value.trim();
-        if (!nombre || !celular) { mostrarToastPerfil('❌ Nombre y celular son obligatorios', false); return; }
+        if (!nombre || !celular || !descripcion) { mostrarToastPerfil('❌ Nombre, celular y descripción son obligatorios', false); return; }
         const fd = new FormData();
         fd.append('id_persona', idTrabajador);
         fd.append('nombre', nombre);
