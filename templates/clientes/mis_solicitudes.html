@@ -537,8 +537,12 @@
         <div class="card-hist">
             <div style="width:48px;height:48px;border-radius:14px;
                         background:${estado === 'completada' ? 'linear-gradient(135deg,#dcfce7,#bbf7d0)' : 'linear-gradient(135deg,#fee2e2,#fecaca)'};
-                        display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">
-                ${emoji}
+                        display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;overflow:hidden">
+                ${s.id_trabajador 
+                    ? `<img src="/trabajador/archivo/${s.id_trabajador}/perfil" 
+                           onerror="this.remove();this.parentElement.textContent='${emoji}'"
+                           style="width:100%;height:100%;object-fit:cover;border-radius:14px">`
+                    : emoji}
             </div>
             <div class="hist-info">
                 <div class="hist-titulo">${s.titulo || s.nombre_categoria || 'Solicitud'}</div>

@@ -45,9 +45,11 @@ def info_chat(id_solicitud: int, tipo: str = "cliente", id_usuario: int = 0):
             contraparte = sol["nombre_cliente"] or "Cliente"
 
         return JSONResponse({
-            "titulo":     sol["titulo"] or "",
-            "estado":     sol["estado"] or "",
-            "contraparte": contraparte
+            "titulo":       sol["titulo"] or "",
+            "estado":       sol["estado"] or "",
+            "contraparte":  contraparte,
+            "id_trabajador": sol["id_trabajador"],
+            "id_cliente":    sol["id_cliente"]
         })
     finally:
         conexion.close()

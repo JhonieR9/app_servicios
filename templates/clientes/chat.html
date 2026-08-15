@@ -28,7 +28,7 @@
             width:40px;height:40px;border-radius:50%;
             background:rgba(255,255,255,0.25);
             display:flex;align-items:center;justify-content:center;
-            font-size:1.2rem;flex-shrink:0;
+            font-size:1.2rem;flex-shrink:0;overflow:hidden;
         }
         .header-info { flex:1;min-width:0; }
         .header-name { font-weight:700;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
@@ -193,7 +193,16 @@
             document.getElementById('headerName').textContent  = data.contraparte || 'Chat';
             document.getElementById('headerSub').textContent   = data.titulo      || '';
             document.getElementById('headerEstado').textContent = data.estado     || '';
-            document.getElementById('headerAvatar').textContent = tipoUsuario === 'cliente' ? '👷' : '👤';
+            // Mostrar foto del trabajador en el avatar
+            const avatarEl = document.getElementById('headerAvatar');
+            const idTrab = data.id_trabajador || data.id_contraparte;
+            if (idTrab) {
+                avatarEl.innerHTML = `<img src="/trabajador/archivo/${idTrab}/perfil" 
+                    onerror="this.remove();this.parentElement.textContent='👷'"
+                    style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            } else {
+                avatarEl.textContent = tipoUsuario === 'cliente' ? '👷' : '👤';
+            }
         } catch(e) {}
     }
 
@@ -479,7 +488,7 @@
             badge.textContent = '👁 Modo Admin';
             document.querySelector('.header').appendChild(badge);
         }
-        // Polling cada 4 segundos (balance entre fluidez y carga al server)
+        // Polling cada 2 segundos para mensajes más rápidos
         pollingTimer = setInterval(() => {
             cargarMensajes(true);
             if (tipoUsuario !== 'sistema') {
@@ -488,7 +497,7 @@
                 fd.append('tipo_receptor', tipoUsuario);
                 fetch('/chat/leer', { method:'POST', body:fd }).catch(()=>{});
             }
-        }, 4000);
+        }, 2000);
     }
 
     // Limpiar polling al salir
