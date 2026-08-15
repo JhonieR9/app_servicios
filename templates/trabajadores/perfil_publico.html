@@ -266,7 +266,7 @@
 <div class="hero">
     <div class="hero-inner">
         <div class="avatar-wrap">
-            <div class="avatar-circle">
+            <div class="avatar-circle" onclick="ampliarFoto()" style="cursor:pointer">
                 <img src="/trabajador/archivo/{{ perfil.id_persona }}/perfil"
                      onerror="this.remove();this.parentElement.textContent='{{ iniciales }}'">
             </div>
@@ -488,6 +488,20 @@
 </div>
 
 <script>
+function ampliarFoto() {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease;cursor:pointer';
+    overlay.innerHTML = `
+        <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes zoomIn{from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1}}</style>
+        <img src="/trabajador/archivo/{{ perfil.id_persona }}/perfil" 
+             onerror="this.parentElement.innerHTML='<div style=color:white;font-size:1.2rem;text-align:center>No hay foto disponible</div>'"
+             style="max-width:90vw;max-height:80vh;border-radius:16px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:zoomIn .25s ease">
+        <div style="position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;border:1px solid rgba(255,255,255,0.2)">✕</div>
+    `;
+    overlay.onclick = () => overlay.remove();
+    document.body.appendChild(overlay);
+}
+
 function compartirPerfil() {
     const url  = window.location.href;
     const text = "Mira el perfil de {{ perfil.nombre_completo }} en TalentHub";
