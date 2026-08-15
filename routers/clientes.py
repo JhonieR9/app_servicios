@@ -1493,7 +1493,8 @@ def buscar_cliente(nombre: str = "", correo: str = ""):
 @router.post("/cotizacion/responder")
 def responder_cotizacion(
     id_solicitud: int = Form(...),
-    respuesta:    str = Form(...)   # 'aceptar' o 'rechazar'
+    respuesta:    str = Form(...),   # 'aceptar' o 'rechazar'
+    metodo_pago:  str = Form("nequi")
 ):
     """El cliente acepta o rechaza una cotización enviada por el trabajador."""
     if respuesta not in ('aceptar', 'rechazar'):
@@ -1523,9 +1524,10 @@ def responder_cotizacion(
                     precio_final = cotizacion_precio,
                     fecha_aceptacion = NOW(),
                     codigo_confirmacion = %s,
-                    codigo_inicio = %s
+                    codigo_inicio = %s,
+                    metodo_pago = %s
                 WHERE id_solicitud = %s
-            """, (codigo_conf, codigo_inicio, id_solicitud))
+            """, (codigo_conf, codigo_inicio, metodo_pago or 'nequi', id_solicitud))
             conexion.commit()
             return JSONResponse({
                 "ok": True,
