@@ -618,7 +618,7 @@
 
                 <!-- Profesional seleccionado -->
                 <div id="profSelCard" style="display:none;margin-top:12px;background:#f5f3ff;border:2px solid #667eea;border-radius:14px;padding:14px 16px;display:none;align-items:center;gap:12px">
-                    <div id="profSelAvatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:white;flex-shrink:0"></div>
+                    <div id="profSelAvatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:white;flex-shrink:0;overflow:hidden"></div>
                     <div style="flex:1;min-width:0">
                         <div id="profSelNombre" style="font-weight:700;font-size:0.92rem;color:#0f172a"></div>
                         <div id="profSelMeta" style="font-size:0.75rem;color:#64748b;margin-top:2px"></div>
@@ -1417,8 +1417,13 @@ async function cargarMapaProfesionales() {
                 const categoriaSafe = (t.categoria || '').replace(/'/g, "\\'");
 
                 const el = document.createElement('div');
-                el.style.cssText = 'width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);border:3px solid white;box-shadow:0 3px 12px rgba(102,126,234,.5);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:white;cursor:pointer;';
-                el.textContent = iniciales;
+                el.style.cssText = 'width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);border:3px solid white;box-shadow:0 3px 12px rgba(102,126,234,.5);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:white;cursor:pointer;overflow:hidden;';
+                // Intentar cargar foto de perfil
+                const markerImg = document.createElement('img');
+                markerImg.src = '/trabajador/archivo/' + t.id + '/perfil';
+                markerImg.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;';
+                markerImg.onerror = function() { this.remove(); el.textContent = iniciales; };
+                el.appendChild(markerImg);
 
                 // Estrellas visuales
                 const numEst = calNum > 0 ? Math.round(calNum) : 0;
@@ -1454,8 +1459,10 @@ async function cargarMapaProfesionales() {
                         <div style="width:48px;height:48px;border-radius:50%;flex-shrink:0;
                                     background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);
                                     display:flex;align-items:center;justify-content:center;
-                                    font-size:1rem;font-weight:800;color:white">
-                            ${iniciales}
+                                    font-size:1rem;font-weight:800;color:white;overflow:hidden">
+                            <img src="/trabajador/archivo/${t.id}/perfil" 
+                                 onerror="this.remove();this.parentElement.textContent='${iniciales}'"
+                                 style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
                         </div>
                         <div style="flex:1;min-width:0">
                             <div style="font-weight:800;font-size:0.92rem;color:white;
@@ -1559,7 +1566,10 @@ function selProf(id, nombre, estrellas, distancia) {
 
     if (id) {
         const iniciales = (nombre || 'P').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
-        document.getElementById('profSelAvatar').textContent = iniciales;
+        const avatarEl = document.getElementById('profSelAvatar');
+        avatarEl.innerHTML = `<img src="/trabajador/archivo/${id}/perfil" 
+            onerror="this.remove();this.parentElement.textContent='${iniciales}'"
+            style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
         document.getElementById('profSelNombre').textContent = nombre;
         document.getElementById('profSelMeta').textContent = (estrellas || '') + (distancia ? ' · ' + distancia + ' km' : '');
         card.style.display = 'flex';
