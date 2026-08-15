@@ -481,6 +481,21 @@
                     <div style="margin-bottom:14px">
                         <label style="font-size:0.72rem;font-weight:700;color:#64748b;
                                       letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">
+                            📍 Dirección del servicio *
+                        </label>
+                        <input id="modalDireccion" type="text"
+                            placeholder="Ej: Cra 10 #25-30, Barrio Centro"
+                            style="width:100%;background:rgba(255,255,255,0.04);
+                                   border:1px solid rgba(255,255,255,0.1);border-radius:12px;
+                                   color:#f1f5f9;font-family:'Inter',sans-serif;font-size:0.88rem;
+                                   padding:12px 14px;outline:none;
+                                   transition:border-color 0.2s"
+                            onfocus="this.style.borderColor='rgba(99,102,241,0.5)'"
+                            onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                    </div>
+                    <div style="margin-bottom:14px">
+                        <label style="font-size:0.72rem;font-weight:700;color:#64748b;
+                                      letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">
                             Mensaje inicial (opcional)
                         </label>
                         <textarea id="modalMensaje" rows="3"
@@ -516,6 +531,7 @@
         document.getElementById('modalNombre').textContent    = '💬 Chatear con ' + nombre;
         document.getElementById('modalCategoria').textContent = '🔧 ' + categoria;
         document.getElementById('modalMensaje').value = '';
+        document.getElementById('modalDireccion').value = '';
         modal.style.display = 'flex';
     }
 
@@ -560,6 +576,13 @@
         const modal   = document.getElementById('chatModal');
         const btn     = document.getElementById('modalBtn');
         const mensaje = document.getElementById('modalMensaje').value.trim();
+        const direccion = document.getElementById('modalDireccion').value.trim();
+
+        if (!direccion) {
+            document.getElementById('modalDireccion').style.borderColor = '#ef4444';
+            document.getElementById('modalDireccion').focus();
+            return;
+        }
 
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Iniciando...';
@@ -568,6 +591,7 @@
         fd.append('id_cliente',      modal._idCliente);
         fd.append('id_trabajador',   modal._idTrabajador);
         fd.append('categoria',       modal._categoria);
+        fd.append('direccion',       direccion);
         if (mensaje) fd.append('mensaje_inicial', mensaje);
 
         try {
