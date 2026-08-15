@@ -694,6 +694,24 @@ def iniciar_scheduler():
 
                     print(f"[SCHEDULER] 📅 Recordatorio programado enviado: solicitud #{sol['id_solicitud']}")
 
+                    # WhatsApp recordatorio
+                    try:
+                        from whatsapp import notificar_recordatorio as _wa_rec
+                        # Al trabajador
+                        if sol['id_trabajador']:
+                            cursor.execute("SELECT telefono FROM telefono_persona WHERE id_persona = %s LIMIT 1", (sol['id_trabajador'],))
+                            tel_t = cursor.fetchone()
+                            if tel_t and tel_t['telefono']:
+                                _wa_rec(tel_t['telefono'], sol['nombre_trabajador'] or 'Profesional', sol['titulo'] or 'Servicio', fecha_str, True)
+                        # Al cliente
+                        if sol['id_cliente']:
+                            cursor.execute("SELECT telefono FROM clientes WHERE id_cliente = %s LIMIT 1", (sol['id_cliente'],))
+                            tel_c = cursor.fetchone()
+                            if tel_c and tel_c.get('telefono'):
+                                _wa_rec(tel_c['telefono'], sol['nombre_cliente'] or 'Cliente', sol['titulo'] or 'Servicio', fecha_str, False)
+                    except Exception as _we:
+                        print(f"[WA] Error recordatorio: {_we}")
+
                 cursor.close()
                 conn.close()
 

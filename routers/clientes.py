@@ -569,6 +569,30 @@ def crear_solicitud(
                         )
                     except Exception as _pe:
                         print(f"[PUSH] No se pudo enviar: {_pe}")
+
+                    # WhatsApp notifications
+                    try:
+                        from whatsapp import notificar_nueva_solicitud as _wa_nueva
+                        conn3 = _conectar()
+                        cur3  = conn3.cursor(dictionary=True)
+                        cur3.execute("""
+                            SELECT DISTINCT p.id_persona, p.nombre_completo, tp.telefono
+                            FROM personas p
+                            INNER JOIN servicios_persona sp ON p.id_persona = sp.id_persona
+                            INNER JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+                            LEFT JOIN disponibilidad d ON p.id_persona = d.id_persona
+                            WHERE sp.id_categoria = %s
+                              AND (p.estado = 'activo' OR p.estado IS NULL)
+                              AND (d.disponible = 1 OR d.disponible IS NULL)
+                              AND tp.telefono IS NOT NULL
+                            LIMIT 10
+                        """, (id_categoria,))
+                        trabs_wa = cur3.fetchall()
+                        cur3.close(); conn3.close()
+                        for tw in trabs_wa:
+                            _wa_nueva(tw['telefono'], tw['nombre_completo'], nombre_cat, ciudad or '', nombre_cli)
+                    except Exception as _we:
+                        print(f"[WA] No se pudo enviar: {_we}")
                 except Exception as ex:
                     print(f"[NOTIF] Error en hilo: {ex}")
             threading.Thread(target=_notificar, daemon=True).start()
@@ -1531,6 +1555,32 @@ def responder_cotizacion(
                 WHERE id_solicitud = %s
             """, (codigo_conf, codigo_inicio, metodo_pago or 'nequi', id_solicitud))
             conexion.commit()
+
+            # Notificar al trabajador por WhatsApp
+            try:
+                import threading
+                def _wa_cotizacion():
+                    try:
+                        from whatsapp import notificar_cotizacion_aceptada
+                        from config import conectar_bd as _c
+                        c2 = _c(); cur2 = c2.cursor(dictionary=True)
+                        cur2.execute("""
+                            SELECT p.nombre_completo, tp.telefono, s.titulo, s.cotizacion_precio
+                            FROM solicitudes_servicio s
+                            INNER JOIN personas p ON s.id_trabajador = p.id_persona
+                            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+                            WHERE s.id_solicitud = %s
+                        """, (id_solicitud,))
+                        row = cur2.fetchone()
+                        cur2.close(); c2.close()
+                        if row and row.get('telefono'):
+                            precio_str = f"{int(row['cotizacion_precio'] or 0):,}".replace(",",".")
+                            notificar_cotizacion_aceptada(row['telefono'], row['nombre_completo'], precio_str, row['titulo'] or 'Servicio')
+                    except Exception as e:
+                        print(f"[WA] Error cotización aceptada: {e}")
+                threading.Thread(target=_wa_cotizacion, daemon=True).start()
+            except: pass
+
             return JSONResponse({
                 "ok": True,
                 "mensaje": "✅ ¡Cotización aceptada! El profesional fue notificado.",
