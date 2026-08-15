@@ -1028,8 +1028,6 @@ def perfil_publico(request: Request, id_persona: int):
             FROM calificaciones cal
             LEFT JOIN clientes c ON cal.id_cliente = c.id_cliente
             WHERE cal.id_trabajador = %s
-              AND cal.comentario IS NOT NULL
-              AND cal.comentario != ''
             ORDER BY cal.fecha_calificacion DESC
             LIMIT 8
         """, (id_persona,))
