@@ -7,215 +7,249 @@
     <link rel="icon" href="data:,">
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; width: 100%; overflow: hidden; }
-        body { font-family: 'Lato', sans-serif; }
-        #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100%; width:100%; overflow:hidden; font-family:'Inter',sans-serif; }
+        #map { position:absolute; top:0; left:0; width:100%; height:100%; }
 
-        /* Botón volver */
+        /* ── TOP BAR ── */
+        .top-bar {
+            position:absolute; top:0; left:0; right:0; z-index:10;
+            padding:12px 16px;
+            display:flex; align-items:center; gap:10px;
+            background:linear-gradient(180deg,rgba(255,255,255,0.95) 0%,rgba(255,255,255,0) 100%);
+            pointer-events:none;
+        }
+        .top-bar > * { pointer-events:all; }
         .btn-back {
-            position: absolute;
-            top: 16px; left: 16px;
-            z-index: 10;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(8px);
-            padding: 10px 18px;
-            border-radius: 50px;
-            text-decoration: none;
-            color: #1e293b;
-            font-weight: 700;
-            font-size: 0.88rem;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            display: flex; align-items: center; gap: 6px;
-            border: 1px solid rgba(0,0,0,0.06);
-            transition: transform .15s;
+            width:42px; height:42px; border-radius:50%;
+            background:white; border:none;
+            box-shadow:0 2px 12px rgba(0,0,0,0.12);
+            display:flex; align-items:center; justify-content:center;
+            font-size:1.1rem; color:#1e293b; cursor:pointer;
+            text-decoration:none; transition:all .2s;
         }
-        .btn-back:hover { background: #f1f5f9; color: #1e293b; transform:scale(1.03); }
+        .btn-back:hover { background:#f1f5f9; }
+        .search-pill {
+            flex:1; background:white; border-radius:99px;
+            padding:12px 18px; box-shadow:0 2px 12px rgba(0,0,0,0.1);
+            display:flex; align-items:center; gap:10px;
+            font-size:0.88rem; color:#1e293b; font-weight:600;
+        }
+        .search-pill i { color:#6366f1; }
+        .search-pill span { color:#64748b; font-weight:400; }
 
-        /* Badge de estado */
-        .status-badge {
-            position: absolute;
-            top: 16px; right: 16px;
-            z-index: 10;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(8px);
-            padding: 10px 18px;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            border: 1px solid rgba(0,0,0,0.06);
+        /* ── STATUS BADGE ── */
+        .status-float {
+            position:absolute; top:70px; left:50%; transform:translateX(-50%);
+            z-index:10; background:white; border-radius:99px;
+            padding:8px 18px; box-shadow:0 4px 16px rgba(0,0,0,0.12);
+            font-size:0.8rem; font-weight:700; color:#1e293b;
+            display:flex; align-items:center; gap:6px;
+            transition:all .3s;
         }
 
-        /* Panel de filtros */
-        .filters-panel {
-            position: absolute;
-            bottom: 16px; left: 12px; right: 12px;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(12px);
-            border-radius: 22px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-            z-index: 10;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.6);
+        /* ── BOTTOM SHEET ── */
+        .bottom-sheet {
+            position:absolute; bottom:0; left:0; right:0; z-index:20;
+            background:white;
+            border-radius:24px 24px 0 0;
+            box-shadow:0 -4px 30px rgba(0,0,0,0.12);
+            transform:translateY(100%);
+            transition:transform .35s cubic-bezier(.4,0,.2,1);
+            max-height:70vh; overflow-y:auto;
         }
-        .filters-top {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            align-items: end;
-            padding: 14px 16px 10px;
+        .bottom-sheet.open { transform:translateY(0); }
+        .bottom-sheet-handle {
+            width:36px; height:4px; background:#d1d5db;
+            border-radius:99px; margin:10px auto 0;
         }
-        .filter-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #374151;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .filter-group input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 0.88rem;
-            outline: none;
-            font-family: 'Lato', sans-serif;
-        }
-        .filter-group input:focus { border-color: #667eea; }
-        .btn-search {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white; border: none; border-radius: 10px;
-            cursor: pointer; font-weight: 700; font-size: 0.88rem;
-            white-space: nowrap; font-family: 'Lato', sans-serif;
-            height: 42px;
-        }
-        .btn-search:hover { opacity: 0.9; }
+        .bs-content { padding:16px 20px 28px; }
 
-        /* Chips de categoría */
-        .cats-scroll {
-            display: flex; gap: 8px;
-            overflow-x: auto; padding: 0 16px 14px;
-            scrollbar-width: none;
+        /* ── WORKER CARD (inside bottom sheet) ── */
+        .bs-header {
+            display:flex; align-items:center; gap:14px; margin-bottom:16px;
         }
-        .cats-scroll::-webkit-scrollbar { display: none; }
-        .cat-chip {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 7px 14px; border-radius: 99px;
-            border: 2px solid #e2e8f0; background: white;
-            font-size: 0.78rem; font-weight: 700; color: #374151;
-            cursor: pointer; white-space: nowrap;
-            transition: all 0.18s; flex-shrink: 0;
-            font-family: 'Lato', sans-serif;
+        .bs-avatar {
+            width:56px; height:56px; border-radius:50%;
+            background:linear-gradient(135deg,#6366f1,#7c3aed);
+            display:flex; align-items:center; justify-content:center;
+            font-size:1.2rem; font-weight:800; color:white;
+            flex-shrink:0; overflow:hidden;
+            border:3px solid white; box-shadow:0 4px 12px rgba(99,102,241,0.2);
         }
-        .cat-chip:hover { border-color: #667eea; color: #667eea; background: #f5f3ff; }
-        .cat-chip.active {
-            border-color: #667eea; color: white;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            box-shadow: 0 3px 10px rgba(102,126,234,0.35);
+        .bs-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+        .bs-name { font-size:1.05rem; font-weight:800; color:#0f172a; }
+        .bs-category { font-size:0.78rem; color:#6366f1; font-weight:600; margin-top:2px; }
+        .bs-badge {
+            display:inline-flex; align-items:center; gap:4px;
+            background:#ecfdf5; border:1px solid #a7f3d0;
+            color:#059669; padding:3px 10px; border-radius:99px;
+            font-size:0.68rem; font-weight:700; margin-top:6px;
         }
 
-        /* Popup personalizado */
-        .mapboxgl-popup-content {
-            border-radius: 14px !important;
-            padding: 0 !important;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important;
-            min-width: 230px;
+        /* ── STATS ROW ── */
+        .bs-stats {
+            display:grid; grid-template-columns:repeat(3,1fr);
+            gap:8px; margin-bottom:16px;
         }
-        .popup-inner {
-            padding: 16px;
+        .bs-stat {
+            text-align:center; padding:12px 8px;
+            background:#f8fafc; border-radius:12px;
+            border:1px solid #f1f5f9;
         }
-        .popup-nombre {
-            font-weight: 700;
-            font-size: 1.05rem;
-            color: #1e293b;
-            margin-bottom: 8px;
-            font-family: 'Playfair Display', serif;
-        }
-        .popup-info {
-            font-size: 0.82rem;
-            color: #475569;
-            margin-bottom: 4px;
-            font-family: 'Lato', sans-serif;
-        }
-        .popup-btns {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 12px;
-        }
-        .popup-btn {
-            width: 100%;
-            padding: 9px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.82rem;
-            color: white;
-            font-family: 'Lato', sans-serif;
-            letter-spacing: 0.5px;
-        }
-        .popup-btn.solicitar { background: linear-gradient(135deg, #667eea, #764ba2); }
-        .popup-btn.solicitar { background: linear-gradient(135deg,#4f46e5,#7c3aed); }
+        .bs-stat-val { font-size:1rem; font-weight:800; color:#0f172a; }
+        .bs-stat-val.stars { color:#f59e0b; }
+        .bs-stat-label { font-size:0.65rem; color:#64748b; font-weight:600; margin-top:2px; text-transform:uppercase; }
 
-        /* Marcador usuario */
-        .user-marker {
-            width: 22px; height: 22px;
-            background: #4285F4;
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 2px 8px rgba(66,133,244,0.5);
-            animation: pulseUser 2s infinite;
+        /* ── ACTIONS ── */
+        .bs-actions { display:flex; gap:10px; }
+        .bs-btn-primary {
+            flex:1; padding:14px; border:none; border-radius:14px;
+            background:linear-gradient(135deg,#4f46e5,#7c3aed);
+            color:white; font-size:0.9rem; font-weight:700;
+            cursor:pointer; display:flex; align-items:center;
+            justify-content:center; gap:8px;
+            box-shadow:0 4px 16px rgba(99,102,241,0.25);
+            transition:all .2s; font-family:'Inter',sans-serif;
         }
-        @keyframes pulseUser { 0%,100%{box-shadow:0 0 0 0 rgba(66,133,244,0.4)} 50%{box-shadow:0 0 0 10px rgba(66,133,244,0)} }
-        /* Marcador trabajador */
+        .bs-btn-primary:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(99,102,241,0.35); }
+        .bs-btn-secondary {
+            padding:14px 18px; border:1px solid #e2e8f0; border-radius:14px;
+            background:white; color:#475569; font-size:0.85rem;
+            font-weight:700; cursor:pointer; transition:all .2s;
+            font-family:'Inter',sans-serif; text-decoration:none;
+            display:flex; align-items:center; justify-content:center; gap:6px;
+        }
+        .bs-btn-secondary:hover { background:#f8fafc; border-color:#6366f1; color:#4f46e5; }
+        .bs-btn-fav {
+            width:48px; height:48px; border-radius:14px;
+            border:1px solid #e2e8f0; background:white;
+            display:flex; align-items:center; justify-content:center;
+            font-size:1.3rem; cursor:pointer; transition:all .2s;
+        }
+        .bs-btn-fav:hover { border-color:#ef4444; background:#fef2f2; }
+
+        /* ── FILTER CHIPS ── */
+        .filter-bar {
+            position:absolute; bottom:0; left:0; right:0; z-index:15;
+            padding:0 12px 16px;
+            transition:transform .3s;
+        }
+        .filter-bar.hidden { transform:translateY(100%); }
+        .filter-scroll {
+            display:flex; gap:8px; overflow-x:auto;
+            padding:8px 4px; scrollbar-width:none;
+        }
+        .filter-scroll::-webkit-scrollbar { display:none; }
+        .filter-chip {
+            padding:10px 16px; border-radius:99px;
+            background:white; border:1.5px solid #e2e8f0;
+            font-size:0.8rem; font-weight:600; color:#374151;
+            white-space:nowrap; cursor:pointer;
+            box-shadow:0 2px 8px rgba(0,0,0,0.06);
+            transition:all .18s; flex-shrink:0;
+            font-family:'Inter',sans-serif;
+        }
+        .filter-chip:hover { border-color:#6366f1; color:#4f46e5; }
+        .filter-chip.active {
+            background:linear-gradient(135deg,#4f46e5,#7c3aed);
+            color:white; border-color:transparent;
+            box-shadow:0 4px 12px rgba(99,102,241,0.3);
+        }
+
+        /* ── WORKER MARKER ── */
         .worker-marker {
-            width: 44px; height: 44px;
-            background: linear-gradient(135deg, #6366f1, #7c3aed);
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 4px 12px rgba(99,102,241,0.35);
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 900; font-size: 0.85rem;
-            cursor: pointer;
-            transition: transform .15s;
-            overflow: hidden;
+            width:48px; height:48px; border-radius:50%;
+            background:linear-gradient(135deg,#6366f1,#7c3aed);
+            border:3px solid white;
+            box-shadow:0 4px 16px rgba(99,102,241,0.35);
+            display:flex; align-items:center; justify-content:center;
+            font-size:0.8rem; font-weight:800; color:white;
+            cursor:pointer; transition:all .2s; overflow:hidden;
         }
-        .worker-marker:hover { transform: scale(1.15); }
+        .worker-marker:hover { transform:scale(1.15); }
+        .worker-marker.selected {
+            border-color:#4f46e5;
+            box-shadow:0 0 0 4px rgba(99,102,241,0.25), 0 4px 16px rgba(99,102,241,0.4);
+            transform:scale(1.1);
+        }
+        .worker-marker img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 
-        @media (max-width: 600px) {
-            .filters-content { grid-template-columns: 1fr; }
+        /* ── USER MARKER ── */
+        .user-marker {
+            width:20px; height:20px;
+            background:#4f46e5; border-radius:50%;
+            border:3px solid white;
+            box-shadow:0 0 0 4px rgba(79,70,229,0.2), 0 2px 8px rgba(79,70,229,0.4);
+            animation:pulseUser 2s infinite;
+        }
+        @keyframes pulseUser {
+            0%,100% { box-shadow:0 0 0 4px rgba(79,70,229,0.2), 0 2px 8px rgba(79,70,229,0.4); }
+            50% { box-shadow:0 0 0 10px rgba(79,70,229,0), 0 2px 8px rgba(79,70,229,0.4); }
+        }
+
+        /* ── RADIUS CONTROL ── */
+        .radius-control {
+            position:absolute; top:70px; right:16px; z-index:10;
+            background:white; border-radius:14px;
+            padding:10px 14px; box-shadow:0 2px 12px rgba(0,0,0,0.1);
+            display:flex; align-items:center; gap:8px;
+        }
+        .radius-control input {
+            width:60px; padding:6px 8px; border:1px solid #e2e8f0;
+            border-radius:8px; font-size:0.82rem; text-align:center;
+            font-family:'Inter',sans-serif; outline:none;
+        }
+        .radius-control input:focus { border-color:#6366f1; }
+        .radius-control label { font-size:0.72rem; color:#64748b; font-weight:600; }
+        .radius-control button {
+            padding:6px 12px; background:#6366f1; color:white;
+            border:none; border-radius:8px; font-size:0.75rem;
+            font-weight:700; cursor:pointer; font-family:'Inter',sans-serif;
         }
     </style>
 </head>
 <body>
 
-<a href="javascript:history.back()" class="btn-back">← Volver</a>
-<div class="status-badge" id="statusBadge">🔍 Cargando...</div>
+<!-- TOP BAR -->
+<div class="top-bar">
+    <a href="javascript:history.back()" class="btn-back"><i class="bi bi-arrow-left"></i></a>
+    <div class="search-pill">
+        <i class="bi bi-geo-alt-fill"></i>
+        <span id="locationText">Buscando ubicación...</span>
+    </div>
+</div>
+
+<!-- STATUS -->
+<div class="status-float" id="statusBadge">
+    <div style="width:8px;height:8px;border-radius:50%;background:#6366f1;animation:pulseUser 1.5s infinite"></div>
+    Buscando...
+</div>
+
+<!-- RADIUS -->
+<div class="radius-control">
+    <label>📏</label>
+    <input type="number" id="radio" value="10" min="1" max="50">
+    <label>km</label>
+    <button onclick="buscarTrabajadores()">🔍</button>
+</div>
+
+<!-- MAP -->
 <div id="map"></div>
 
-<div class="filters-panel">
-    <div class="filters-top">
-        <div class="filter-group">
-            <label>📏 Radio de búsqueda (km)</label>
-            <input type="number" id="radio" value="10" min="1" max="50">
-        </div>
-        <button class="btn-search" onclick="buscarTrabajadores()">🔍 Buscar</button>
+<!-- FILTER CHIPS -->
+<div class="filter-bar" id="filterBar">
+    <div class="filter-scroll" id="filterScroll">
+        <div class="filter-chip active" onclick="selCat(this,'')">🌐 Todas</div>
     </div>
-    <!-- Chips de categoría -->
-    <div class="cats-scroll" id="catsScroll">
-        <div class="cat-chip active" data-cat="" onclick="selCat(this, '')">
-            🌐 Todas
-        </div>
-        <!-- Se cargan dinámicamente -->
-    </div>
+</div>
+
+<!-- BOTTOM SHEET -->
+<div class="bottom-sheet" id="bottomSheet">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bs-content" id="bsContent"></div>
 </div>
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
@@ -224,192 +258,207 @@
 
     let map, userMarker;
     let workerMarkers = [];
-    let userLat = 3.431608;
-    let userLng = -76.522041;
+    let selectedMarkerEl = null;
+    let userLat = 3.431608, userLng = -76.522041;
+    let trabajadoresData = [];
 
-    // Pre-cargar categoría desde URL
     const urlParams = new URLSearchParams(window.location.search);
     let categoriaActiva = urlParams.get('categoria') || '';
 
-    // Cargar chips de categorías desde la BD
-    async function cargarCategorias() {
-        try {
-            const res  = await fetch('/cliente/categorias');
-            const data = await res.json();
-            const cats = (data.categorias || []).sort((a,b) =>
-                a.nombre_categoria.localeCompare(b.nombre_categoria, 'es'));
-
-            const ICONOS = {
-                'Plomería':'🔧','Electricidad':'⚡','Limpieza':'🧹','Carpintería':'🪚',
-                'Pintura':'🎨','Jardinería':'🌱','Cerrajería':'🔑','Mudanza':'📦',
-                'Construcción':'🏗️','Vidriería':'🪟','Impermeabilización':'🛡️',
-                'Lavandería':'👕','Control de plagas':'🐛','Tecnología':'💻',
-                'Electrodomésticos':'🔌','CCTV y Alarmas':'📷','Transporte':'🚚',
-                'Mecánica':'🔩','Salud':'🩺','Belleza':'💇','Masajes':'💆',
-                'Veterinaria':'🐾','Educación':'📚','Idiomas':'🌍','Gastronomía':'🍳',
-                'Eventos':'🎉','Fotografía':'📸','Contabilidad':'📊','Diseño':'🎨',
-                'Mensajería':'📬',
-            };
-
-            const scroll = document.getElementById('catsScroll');
-            cats.forEach(cat => {
-                const icono = ICONOS[cat.nombre_categoria] || '🛠️';
-                const chip  = document.createElement('div');
-                chip.className = 'cat-chip' + (cat.nombre_categoria === categoriaActiva ? ' active' : '');
-                chip.dataset.cat = cat.nombre_categoria;
-                chip.innerHTML   = `${icono} ${cat.nombre_categoria}`;
-                chip.onclick = () => selCat(chip, cat.nombre_categoria);
-                scroll.appendChild(chip);
-            });
-
-            // Scroll al chip activo si viene de URL
-            if (categoriaActiva) {
-                setTimeout(() => {
-                    const activeChip = scroll.querySelector('.cat-chip.active[data-cat]');
-                    if (activeChip) activeChip.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
-                }, 400);
-            }
-        } catch(e) { console.error('Error cargando categorías:', e); }
-    }
-
-    function selCat(el, cat) {
-        categoriaActiva = cat;
-        document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
-        buscarTrabajadores();
-    }
-
-    // Inicializar mapa
+    // ── Init Map ──
     map = new mapboxgl.Map({
         container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v12',
+        style: 'mapbox://styles/mapbox/light-v11',
         center: [userLng, userLat],
-        zoom: 13
+        zoom: 13,
+        attributionControl: false
     });
+    map.addControl(new mapboxgl.NavigationControl({ showCompass:false }), 'bottom-right');
 
-    // Controles de navegación
-    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    // Marcador del usuario
+    // User marker
     const userEl = document.createElement('div');
     userEl.className = 'user-marker';
-    userMarker = new mapboxgl.Marker({ element: userEl })
+    userMarker = new mapboxgl.Marker({ element:userEl })
         .setLngLat([userLng, userLat])
-        .setPopup(new mapboxgl.Popup().setHTML('<b>📍 Tu ubicación</b>'))
         .addTo(map);
 
-    // Obtener ubicación real y cargar categorías en paralelo
+    // Close bottom sheet on map click
+    map.on('click', () => cerrarBottomSheet());
+
+    // ── Geolocation ──
     cargarCategorias();
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 userLat = pos.coords.latitude;
                 userLng = pos.coords.longitude;
-                map.flyTo({ center: [userLng, userLat], zoom: 13 });
+                map.flyTo({ center:[userLng,userLat], zoom:14 });
                 userMarker.setLngLat([userLng, userLat]);
+                document.getElementById('locationText').textContent = 'Tu ubicación actual';
                 buscarTrabajadores();
             },
-            () => buscarTrabajadores()
+            () => {
+                document.getElementById('locationText').textContent = 'Ubicación aproximada';
+                buscarTrabajadores();
+            },
+            { enableHighAccuracy:true, timeout:8000 }
         );
-    } else {
-        buscarTrabajadores();
+    } else { buscarTrabajadores(); }
+
+    // ── Categories ──
+    async function cargarCategorias() {
+        try {
+            const res = await fetch('/cliente/categorias');
+            const data = await res.json();
+            const cats = (data.categorias||[]).sort((a,b) => a.nombre_categoria.localeCompare(b.nombre_categoria,'es'));
+            const ICONOS = {'Plomería':'🔧','Electricidad':'⚡','Limpieza':'🧹','Carpintería':'🪚','Pintura':'🎨','Jardinería':'🌱','Cerrajería':'🔑','Mudanza':'📦','Construcción':'🏗️','Tecnología':'💻','Transporte':'🚚','Mecánica':'🔩','Belleza':'💇','Salud':'🩺','Educación':'📚','Gastronomía':'🍳','Eventos':'🎉','Fotografía':'📸','Mensajería':'📬'};
+            const scroll = document.getElementById('filterScroll');
+            cats.forEach(cat => {
+                const chip = document.createElement('div');
+                chip.className = 'filter-chip' + (cat.nombre_categoria === categoriaActiva ? ' active' : '');
+                chip.textContent = (ICONOS[cat.nombre_categoria]||'🛠️') + ' ' + cat.nombre_categoria;
+                chip.onclick = () => selCat(chip, cat.nombre_categoria);
+                scroll.appendChild(chip);
+            });
+        } catch(e) {}
     }
 
+    function selCat(el, cat) {
+        categoriaActiva = cat;
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        buscarTrabajadores();
+        cerrarBottomSheet();
+    }
+
+    // ── Search Workers ──
     function limpiarMarcadores() {
         workerMarkers.forEach(m => m.remove());
         workerMarkers = [];
-    }
-
-    function agregarMarcadoresTrabajadores(trabajadores) {
-        limpiarMarcadores();
-
-        trabajadores.forEach((t, i) => {
-            const el = document.createElement('div');
-            el.className = 'worker-marker';
-            // Mostrar foto de perfil si existe
-            const img = document.createElement('img');
-            img.src = `/trabajador/archivo/${t.id}/perfil`;
-            img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;';
-            img.onerror = function() { this.remove(); el.textContent = (i + 1); };
-            el.appendChild(img);
-
-            const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-                <div class="popup-inner">
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-                        <img src="/trabajador/archivo/${t.id}/perfil" 
-                             onerror="this.style.display='none'"
-                             style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;flex-shrink:0">
-                        <div style="flex:1;min-width:0">
-                            <div class="popup-nombre" style="margin-bottom:0">${t.nombre}</div>
-                            <div style="font-size:0.75rem;color:#6366f1;font-weight:600">🔧 ${t.categoria}</div>
-                        </div>
-                        <button id="fav-btn-${t.id}" onclick="toggleFavorito(${t.id}, document.getElementById('fav-btn-${t.id}'))"
-                            style="background:none;border:none;cursor:pointer;font-size:1.3rem;
-                                   padding:2px 4px;line-height:1;transition:transform .2s"
-                            title="Guardar como favorito">🤍</button>
-                    </div>
-                    <div class="popup-info">📍 ${t.distancia} km de distancia</div>
-                    <div class="popup-info">⭐ ${t.experiencia} años de experiencia</div>
-                    ${t.calificacion > 0
-                        ? `<div class="popup-info">${'★'.repeat(Math.round(t.calificacion))}${'☆'.repeat(5-Math.round(t.calificacion))} <strong>${t.calificacion}</strong> (${t.total_calificaciones} reseñas)</div>`
-                        : `<div class="popup-info">⭐ Sin calificaciones aún</div>`
-                    }
-                    <div class="popup-btns">
-                        <button class="popup-btn solicitar" onclick="solicitarServicio(${t.id}, '${t.nombre.replace(/'/g,"\\'")}', '${t.categoria.replace(/'/g,"\\'")}')">
-                            📋 Solicitar Servicio
-                        </button>
-                        <a href="/trabajador/perfil/${t.id}"
-                           style="display:block;width:100%;padding:9px;border-radius:8px;
-                                  text-align:center;background:rgba(99,102,241,0.1);
-                                  color:#4f46e5;font-weight:700;
-                                  text-decoration:none;font-family:'Lato',sans-serif;
-                                  border:1px solid rgba(99,102,241,0.25);margin-top:4px;
-                                  font-size:0.82rem">
-                            👤 Ver perfil
-                        </a>
-                    </div>
-                </div>
-            `);
-
-            const marker = new mapboxgl.Marker({ element: el })
-                .setLngLat([t.longitud, t.latitud])
-                .setPopup(popup)
-                .addTo(map);
-
-            workerMarkers.push(marker);
-        });
-
-        if (trabajadores.length > 0) {
-            const bounds = new mapboxgl.LngLatBounds();
-            trabajadores.forEach(t => bounds.extend([t.longitud, t.latitud]));
-            bounds.extend([userLng, userLat]);
-            map.fitBounds(bounds, { padding: 80 });
-        }
+        if (selectedMarkerEl) { selectedMarkerEl.classList.remove('selected'); selectedMarkerEl = null; }
     }
 
     async function buscarTrabajadores() {
         const radio = document.getElementById('radio').value;
-        document.getElementById('statusBadge').textContent = '🔍 Buscando...';
+        document.getElementById('statusBadge').innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:#6366f1;animation:pulseUser 1.5s infinite"></div> Buscando...';
 
         try {
-            const url = `/cliente/trabajadores-cercanos?lat=${userLat}&lng=${userLng}&radio=${radio}${categoriaActiva ? '&categoria=' + encodeURIComponent(categoriaActiva) : ''}`;
+            const url = `/cliente/trabajadores-cercanos?lat=${userLat}&lng=${userLng}&radio=${radio}${categoriaActiva ? '&categoria='+encodeURIComponent(categoriaActiva) : ''}`;
             const res = await fetch(url);
             const data = await res.json();
+            trabajadoresData = data.trabajadores || [];
 
-            if (data.trabajadores && data.trabajadores.length > 0) {
-                agregarMarcadoresTrabajadores(data.trabajadores);
+            if (trabajadoresData.length > 0) {
+                agregarMarcadores(trabajadoresData);
                 const label = categoriaActiva ? ` de ${categoriaActiva}` : '';
-                document.getElementById('statusBadge').textContent = `✅ ${data.trabajadores.length} encontrados${label}`;
+                document.getElementById('statusBadge').innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:#10b981"></div> ${trabajadoresData.length} profesional${trabajadoresData.length>1?'es':''}${label}`;
             } else {
                 limpiarMarcadores();
-                const label = categoriaActiva ? ` de ${categoriaActiva}` : '';
-                document.getElementById('statusBadge').textContent = `❌ Sin resultados${label}`;
+                document.getElementById('statusBadge').innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div> Sin resultados`;
             }
-        } catch (e) {
-            document.getElementById('statusBadge').textContent = '❌ Error de conexión';
+        } catch(e) {
+            document.getElementById('statusBadge').innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div> Error`;
         }
     }
 
+    function agregarMarcadores(trabajadores) {
+        limpiarMarcadores();
+        trabajadores.forEach((t, i) => {
+            const el = document.createElement('div');
+            el.className = 'worker-marker';
+            const img = document.createElement('img');
+            img.src = '/trabajador/archivo/' + t.id + '/perfil';
+            img.onerror = function() {
+                this.remove();
+                el.textContent = (t.nombre||'P').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
+            };
+            el.appendChild(img);
+
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                seleccionarTrabajador(t, el);
+            });
+
+            const marker = new mapboxgl.Marker({ element:el })
+                .setLngLat([t.longitud, t.latitud])
+                .addTo(map);
+            workerMarkers.push(marker);
+        });
+
+        // Fit bounds
+        if (trabajadores.length > 0) {
+            const bounds = new mapboxgl.LngLatBounds();
+            trabajadores.forEach(t => bounds.extend([t.longitud, t.latitud]));
+            bounds.extend([userLng, userLat]);
+            map.fitBounds(bounds, { padding:80 });
+        }
+    }
+
+    // ── Select Worker → Bottom Sheet ──
+    function seleccionarTrabajador(t, el) {
+        // Deselect previous
+        if (selectedMarkerEl) selectedMarkerEl.classList.remove('selected');
+        el.classList.add('selected');
+        selectedMarkerEl = el;
+
+        // Fly to worker
+        map.flyTo({ center:[t.longitud, t.latitud], zoom:15, duration:800 });
+
+        // Hide filters
+        document.getElementById('filterBar').classList.add('hidden');
+
+        // Build bottom sheet
+        const calNum = parseFloat(t.calificacion) || 0;
+        const estrellas = calNum > 0 ? '★'.repeat(Math.round(calNum)) + ' ' + calNum.toFixed(1) : '—';
+        const iniciales = (t.nombre||'P').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
+
+        document.getElementById('bsContent').innerHTML = `
+            <div class="bs-header">
+                <div class="bs-avatar">
+                    <img src="/trabajador/archivo/${t.id}/perfil" onerror="this.remove();this.parentElement.textContent='${iniciales}'">
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div class="bs-name">${t.nombre}</div>
+                    <div class="bs-category">🔧 ${t.categoria || 'Profesional'}</div>
+                    <div class="bs-badge"><i class="bi bi-patch-check-fill"></i> Verificado · ${t.distancia} km</div>
+                </div>
+                <button class="bs-btn-fav" id="bsFav" onclick="toggleFav(${t.id}, this)" title="Favorito">🤍</button>
+            </div>
+            <div class="bs-stats">
+                <div class="bs-stat">
+                    <div class="bs-stat-val stars">${estrellas}</div>
+                    <div class="bs-stat-label">Calificación</div>
+                </div>
+                <div class="bs-stat">
+                    <div class="bs-stat-val">${t.experiencia || 0}+</div>
+                    <div class="bs-stat-label">Años exp.</div>
+                </div>
+                <div class="bs-stat">
+                    <div class="bs-stat-val">${t.tarifa ? '$'+parseInt(t.tarifa).toLocaleString('es-CO') : '—'}</div>
+                    <div class="bs-stat-label">Por hora</div>
+                </div>
+            </div>
+            <div class="bs-actions">
+                <button class="bs-btn-primary" onclick="solicitarServicio(${t.id},'${(t.nombre||'').replace(/'/g,"\\'")}','${(t.categoria||'').replace(/'/g,"\\'")}')">
+                    <i class="bi bi-send-fill"></i> Solicitar
+                </button>
+                <a href="/trabajador/perfil/${t.id}" class="bs-btn-secondary">
+                    <i class="bi bi-person"></i> Perfil
+                </a>
+            </div>
+        `;
+
+        // Open sheet
+        document.getElementById('bottomSheet').classList.add('open');
+    }
+
+    function cerrarBottomSheet() {
+        document.getElementById('bottomSheet').classList.remove('open');
+        document.getElementById('filterBar').classList.remove('hidden');
+        if (selectedMarkerEl) { selectedMarkerEl.classList.remove('selected'); selectedMarkerEl = null; }
+    }
+
+    // ── Solicitar ──
     function solicitarServicio(id, nombre, categoria) {
         const idCliente = parseInt(localStorage.getItem('id_cliente') || 0);
         if (!idCliente) {
@@ -419,116 +468,62 @@
         abrirModalChat(id, nombre, categoria, idCliente);
     }
 
-    // ── Favoritos ────────────────────────────────────────────────
-    async function toggleFavorito(idTrabajador, btnEl) {
+    // ── Favorito ──
+    async function toggleFav(idTrabajador, btn) {
         const idCliente = parseInt(localStorage.getItem('id_cliente') || 0);
-        if (!idCliente) {
-            alert('Debes iniciar sesión para guardar favoritos');
-            return;
-        }
+        if (!idCliente) { alert('Inicia sesión para guardar favoritos'); return; }
+        btn.style.transform = 'scale(1.3)';
+        setTimeout(() => btn.style.transform = '', 200);
         const fd = new FormData();
-        fd.append('id_cliente', idCliente);
         fd.append('id_trabajador', idTrabajador);
-
+        fd.append('id_cliente', idCliente);
         try {
-            const res  = await fetch('/cliente/favorito/toggle', { method: 'POST', body: fd });
+            const res = await fetch('/cliente/favorito/toggle', { method:'POST', body:fd });
             const data = await res.json();
-            if (data.favorito) {
-                btnEl.textContent = '❤️';
-                btnEl.style.transform = 'scale(1.3)';
-                setTimeout(() => { btnEl.style.transform = 'scale(1)'; }, 300);
-            } else {
-                btnEl.textContent = '🤍';
-            }
-        } catch(e) {
-            console.error('Error favorito:', e);
-        }
+            if (data.ok) btn.textContent = data.favorito ? '❤️' : '🤍';
+        } catch(e) {}
     }
 
-    // ── Modal de chat directo ────────────────────────────────────
+    // ── Chat Modal ──
     function abrirModalChat(idTrabajador, nombre, categoria, idCliente) {
-        // Crear modal si no existe
         let modal = document.getElementById('chatModal');
         if (!modal) {
             modal = document.createElement('div');
             modal.id = 'chatModal';
-            modal.style.cssText = `
-                position:fixed;inset:0;z-index:9999;
-                background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
-                display:flex;align-items:flex-end;justify-content:center;
-                animation:fadeIn 0.2s ease;
-            `;
+            modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;';
             modal.innerHTML = `
-                <style>
-                @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-                @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-                </style>
-                <div style="background:#111118;border-radius:24px 24px 0 0;width:100%;max-width:500px;
-                            padding:24px 20px 32px;animation:slideUp 0.3s ease;
-                            border:1px solid rgba(255,255,255,0.1);">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+                <div style="background:white;border-radius:24px 24px 0 0;width:100%;max-width:500px;padding:24px 20px 32px;box-shadow:0 -8px 40px rgba(0,0,0,0.15)">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
                         <div>
-                            <div style="font-size:1rem;font-weight:800;color:#f1f5f9" id="modalNombre"></div>
+                            <div style="font-size:1rem;font-weight:800;color:#0f172a" id="modalNombre"></div>
                             <div style="font-size:0.78rem;color:#6366f1;margin-top:2px" id="modalCategoria"></div>
                         </div>
-                        <button onclick="cerrarModalChat()"
-                                style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-                                       color:#94a3b8;width:32px;height:32px;border-radius:50%;
-                                       cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center">
-                            ✕
-                        </button>
+                        <button onclick="cerrarModalChat()" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center">✕</button>
                     </div>
-                    <div style="margin-bottom:14px">
-                        <label style="font-size:0.72rem;font-weight:700;color:#64748b;
-                                      letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">
-                            📍 Dirección del servicio *
-                        </label>
-                        <input id="modalDireccion" type="text"
-                            placeholder="Ej: Cra 10 #25-30, Barrio Centro"
-                            style="width:100%;background:rgba(255,255,255,0.04);
-                                   border:1px solid rgba(255,255,255,0.1);border-radius:12px;
-                                   color:#f1f5f9;font-family:'Inter',sans-serif;font-size:0.88rem;
-                                   padding:12px 14px;outline:none;
-                                   transition:border-color 0.2s"
-                            onfocus="this.style.borderColor='rgba(99,102,241,0.5)'"
-                            onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                    <div style="margin-bottom:12px">
+                        <label style="font-size:0.72rem;font-weight:700;color:#6366f1;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">📍 Dirección del servicio *</label>
+                        <input id="modalDireccion" type="text" placeholder="Ej: Cra 10 #25-30, Barrio Centro"
+                            style="width:100%;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;font-size:0.88rem;color:#1e293b;outline:none;font-family:'Inter',sans-serif"
+                            onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
                     </div>
-                    <div style="margin-bottom:14px">
-                        <label style="font-size:0.72rem;font-weight:700;color:#64748b;
-                                      letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">
-                            Mensaje inicial (opcional)
-                        </label>
-                        <textarea id="modalMensaje" rows="3"
-                            placeholder="Ej: Hola, necesito ayuda con una tubería rota en mi cocina..."
-                            style="width:100%;background:rgba(255,255,255,0.04);
-                                   border:1px solid rgba(255,255,255,0.1);border-radius:12px;
-                                   color:#f1f5f9;font-family:'Inter',sans-serif;font-size:0.88rem;
-                                   padding:12px 14px;outline:none;resize:none;
-                                   transition:border-color 0.2s"
-                            onfocus="this.style.borderColor='rgba(99,102,241,0.5)'"
-                            onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
+                    <div style="margin-bottom:16px">
+                        <label style="font-size:0.72rem;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Mensaje inicial (opcional)</label>
+                        <textarea id="modalMensaje" rows="2" placeholder="Ej: Hola, necesito ayuda con..."
+                            style="width:100%;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;font-size:0.88rem;color:#1e293b;outline:none;resize:none;font-family:'Inter',sans-serif"
+                            onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
                     </div>
                     <button id="modalBtn" onclick="confirmarChat()"
-                            style="width:100%;padding:14px;
-                                   background:linear-gradient(135deg,#4f46e5,#7c3aed);
-                                   color:white;border:none;border-radius:12px;
-                                   font-size:0.95rem;font-weight:700;cursor:pointer;
-                                   font-family:'Inter',sans-serif;
-                                   display:flex;align-items:center;justify-content:center;gap:8px;
-                                   box-shadow:0 4px 16px rgba(99,102,241,0.3)">
+                        style="width:100%;padding:15px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:14px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(99,102,241,0.25)">
                         <i class="bi bi-chat-fill"></i> Iniciar conversación
                     </button>
-                </div>
-            `;
+                </div>`;
             document.body.appendChild(modal);
             modal.addEventListener('click', e => { if (e.target === modal) cerrarModalChat(); });
         }
-
-        // Guardar datos en el modal
         modal._idTrabajador = idTrabajador;
-        modal._idCliente    = idCliente;
-        modal._categoria    = categoria;
-        document.getElementById('modalNombre').textContent    = '💬 Chatear con ' + nombre;
+        modal._idCliente = idCliente;
+        modal._categoria = categoria;
+        document.getElementById('modalNombre').textContent = '💬 Chatear con ' + nombre;
         document.getElementById('modalCategoria').textContent = '🔧 ' + categoria;
         document.getElementById('modalMensaje').value = '';
         document.getElementById('modalDireccion').value = '';
@@ -540,41 +535,9 @@
         if (modal) modal.style.display = 'none';
     }
 
-    // ── Favoritos ──────────────────────────────────────────────
-    async function toggleFavorito(idTrabajador, btn) {
-        const idCliente = parseInt(localStorage.getItem('id_cliente') || 0);
-        if (!idCliente) {
-            alert('Inicia sesión para guardar favoritos');
-            return;
-        }
-        btn.style.transform = 'scale(1.4)';
-        setTimeout(() => btn.style.transform = 'scale(1)', 200);
-
-        const fd = new FormData();
-        fd.append('id_trabajador', idTrabajador);
-        fd.append('id_cliente', idCliente);
-        try {
-            const res  = await fetch('/cliente/favorito/toggle', { method:'POST', body:fd });
-            const data = await res.json();
-            if (data.ok) {
-                btn.textContent = data.favorito ? '❤️' : '🤍';
-                btn.title = data.favorito ? 'Quitar de favoritos' : 'Guardar como favorito';
-                // Mini toast
-                const t = document.createElement('div');
-                t.textContent = data.mensaje;
-                t.style.cssText = `position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
-                    background:#111;color:white;padding:8px 18px;border-radius:99px;
-                    font-size:0.82rem;font-weight:600;z-index:9999;white-space:nowrap;
-                    animation:fadeIn .3s ease`;
-                document.body.appendChild(t);
-                setTimeout(() => t.remove(), 2500);
-            }
-        } catch(e) {}
-    }
-
     async function confirmarChat() {
-        const modal   = document.getElementById('chatModal');
-        const btn     = document.getElementById('modalBtn');
+        const modal = document.getElementById('chatModal');
+        const btn = document.getElementById('modalBtn');
         const mensaje = document.getElementById('modalMensaje').value.trim();
         const direccion = document.getElementById('modalDireccion').value.trim();
 
@@ -588,19 +551,19 @@
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Iniciando...';
 
         const fd = new FormData();
-        fd.append('id_cliente',      modal._idCliente);
-        fd.append('id_trabajador',   modal._idTrabajador);
-        fd.append('categoria',       modal._categoria);
-        fd.append('direccion',       direccion);
+        fd.append('id_cliente', modal._idCliente);
+        fd.append('id_trabajador', modal._idTrabajador);
+        fd.append('categoria', modal._categoria);
+        fd.append('direccion', direccion);
         if (mensaje) fd.append('mensaje_inicial', mensaje);
 
         try {
-            const res  = await fetch('/cliente/iniciar-chat', { method:'POST', body:fd });
+            const res = await fetch('/cliente/iniciar-chat', { method:'POST', body:fd });
             const data = await res.json();
             if (res.ok && data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                alert('Error: ' + (data.error || 'No se pudo iniciar el chat'));
+                alert('Error: ' + (data.error || 'No se pudo iniciar'));
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-chat-fill"></i> Iniciar conversación';
             }
