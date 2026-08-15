@@ -790,6 +790,51 @@
     }
     setTimeout(() => intentarSuscribirPush(0), 2000);
 
+    // ── Banner de notificaciones si están bloqueadas ──
+    setTimeout(() => {
+        if ('Notification' in window && Notification.permission === 'default') {
+            const banner = document.createElement('div');
+            banner.id = 'pushBanner';
+            banner.style.cssText = 'position:fixed;bottom:20px;left:16px;right:16px;z-index:999;background:white;border:1px solid #e8ecf2;border-radius:16px;padding:16px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.12);display:flex;align-items:center;gap:14px;animation:slideUp .3s ease;max-width:500px;margin:0 auto';
+            banner.innerHTML = `
+                <style>@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}</style>
+                <div style="width:42px;height:42px;border-radius:12px;background:#f0f0ff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🔔</div>
+                <div style="flex:1">
+                    <div style="font-size:0.85rem;font-weight:700;color:#0f172a">Activa las notificaciones</div>
+                    <div style="font-size:0.72rem;color:#64748b;margin-top:2px">Para recibir solicitudes sin tener la app abierta</div>
+                </div>
+                <button onclick="pedirPermisoManual()" style="padding:8px 16px;background:linear-gradient(135deg,#6366f1,#7c3aed);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.78rem;cursor:pointer;white-space:nowrap">Activar</button>
+                <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer;padding:4px">✕</button>
+            `;
+            document.body.appendChild(banner);
+        } else if ('Notification' in window && Notification.permission === 'denied') {
+            const banner = document.createElement('div');
+            banner.style.cssText = 'position:fixed;bottom:20px;left:16px;right:16px;z-index:999;background:#fef2f2;border:1px solid #fecaca;border-radius:16px;padding:14px 18px;box-shadow:0 4px 16px rgba(0,0,0,0.08);display:flex;align-items:center;gap:12px;max-width:500px;margin:0 auto';
+            banner.innerHTML = `
+                <div style="font-size:1.2rem">⚠️</div>
+                <div style="flex:1;font-size:0.78rem;color:#dc2626;font-weight:600">Notificaciones bloqueadas. Ve a configuración del navegador para activarlas.</div>
+                <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer">✕</button>
+            `;
+            document.body.appendChild(banner);
+            setTimeout(() => { if (banner.parentElement) banner.remove(); }, 8000);
+        }
+    }, 4000);
+
+    async function pedirPermisoManual() {
+        const perm = await Notification.requestPermission();
+        const banner = document.getElementById('pushBanner');
+        if (banner) banner.remove();
+        if (perm === 'granted') {
+            suscribirPush();
+            // Mini toast de éxito
+            const t = document.createElement('div');
+            t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 24px;border-radius:99px;font-size:0.85rem;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(5,150,105,0.3)';
+            t.textContent = '✅ Notificaciones activadas';
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+    }
+
     // ── Llenar campos edición trabajador ──
     setTimeout(async () => {
         try {
