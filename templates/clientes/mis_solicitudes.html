@@ -294,6 +294,17 @@
         window.location.href = `/chat/?id_solicitud=${idSolicitud}&tipo=cliente&id_usuario=${idCli}`;
     }
 
+    function formatFechaProg(f) {
+        if (!f) return '';
+        try {
+            const d = new Date(f);
+            const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+            const h = d.getHours(); const m = String(d.getMinutes()).padStart(2,'0');
+            const ampm = h >= 12 ? 'PM' : 'AM'; const h12 = h % 12 || 12;
+            return `${d.getDate()} ${meses[d.getMonth()]} — ${h12}:${m} ${ampm}`;
+        } catch(e) { return String(f).slice(0,16); }
+    }
+
     const CAT_EMOJI = {
         'Plomería':'🔧','Electricidad':'⚡','Limpieza':'🧹','Carpintería':'🪚',
         'Pintura':'🎨','Jardinería':'🌱','Mecánica':'🔩','Tecnología':'💻',
@@ -446,6 +457,7 @@
                 <div style="flex:1;min-width:0">
                     <div class="card-activa-titulo">${s.titulo || s.nombre_categoria || 'Solicitud'}</div>
                     <div class="card-activa-sub">${ESTADO_LABEL[estado] || estado} · ${s.fecha_solicitud || ''}</div>
+                    ${s.fecha_programada ? `<div style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:3px 8px;border-radius:99px;font-size:0.68rem;font-weight:700;margin-top:4px">📅 ${formatFechaProg(s.fecha_programada)}</div>` : ''}
                 </div>
                 <span class="estado-pill ${estado}">${estado.replace('_',' ')}</span>
             </div>

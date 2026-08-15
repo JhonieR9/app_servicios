@@ -519,7 +519,11 @@
                         </div>
                     </div>
                     <div class="fecha-wrap" id="fechaWrap">
-                        <input type="datetime-local" name="fecha_programada" id="fechaInput">
+                        <label style="font-size:0.75rem;font-weight:600;color:#475569;display:block;margin-bottom:6px">📅 Elige fecha y hora:</label>
+                        <input type="datetime-local" name="fecha_programada" id="fechaInput"
+                            style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.9rem;font-family:'Inter',sans-serif;outline:none"
+                            onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
+                        <div style="font-size:0.72rem;color:#94a3b8;margin-top:6px">⏰ El profesional será notificado y confirmará tu cita</div>
                     </div>
                 </div>
 
@@ -1039,6 +1043,11 @@ function selUrgencia(tipo) {
         btnProgramar.classList.add('selected-programar');
         fechaWrap.classList.add('show');
         fechaInput.setAttribute('required','required');
+        // Set minimum to now + 1 hour
+        const ahora = new Date();
+        ahora.setHours(ahora.getHours() + 1);
+        const min = ahora.toISOString().slice(0,16);
+        fechaInput.min = min;
         hidden.value = 'programar';
         submitBtn.innerHTML = '<i class="bi bi-calendar-check"></i> Programar Servicio';
         submitBtn.onclick = irAPaso4;

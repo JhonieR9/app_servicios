@@ -257,6 +257,21 @@
 <script>
     var idTrabajador = null;
 
+    function formatFechaProgramada(f) {
+        if (!f) return '';
+        try {
+            const d = new Date(f);
+            const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+            const dia = d.getDate();
+            const mes = meses[d.getMonth()];
+            const h = d.getHours();
+            const m = String(d.getMinutes()).padStart(2,'0');
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const h12 = h % 12 || 12;
+            return `${dia} ${mes} — ${h12}:${m} ${ampm}`;
+        } catch(e) { return String(f).slice(0,16); }
+    }
+
     // ── Notificación sonora ──
     function sonarNotificacion() {
         try {
@@ -549,9 +564,11 @@
                         <div class="sol-titulo">${s.nombre_categoria || s.titulo || 'Servicio'}</div>
                         <span class="sol-badge ${badgeClass}">${estadoLabel}</span>
                     </div>
+                    ${s.fecha_programada ? `<div style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:4px 10px;border-radius:99px;font-size:0.7rem;font-weight:700;margin-bottom:6px">📅 Programado: ${formatFechaProgramada(s.fecha_programada)}</div>` : ''}
                     <div class="sol-meta">
                         <span>👤 ${s.nombre_cliente || 'Cliente'}</span>
                         <span>📍 ${s.ciudad || 'Sin ciudad'}</span>
+                        ${s.direccion_servicio ? `<span>🏠 ${s.direccion_servicio.slice(0,30)}${s.direccion_servicio.length>30?'...':''}</span>` : ''}
                         <span>🕐 ${s.fecha_solicitud ? s.fecha_solicitud.slice(5,16) : ''}</span>
                     </div>
                     ${s.descripcion ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:6px;line-height:1.4">${s.descripcion.slice(0,80)}${s.descripcion.length>80?'...':''}</div>` : ''}
