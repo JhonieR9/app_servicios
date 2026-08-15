@@ -942,6 +942,10 @@
         const toggle = document.getElementById('toggleDisp');
         if (toggle && toggle.checked) {
             iniciarGPSAutomatico();
+        } else if (toggle && !toggle.checked) {
+            // Auto-activar disponibilidad al entrar al panel
+            toggle.checked = true;
+            cambiarDisponibilidad();
         }
     }, 3000);
 
