@@ -561,6 +561,151 @@ def iniciar_scheduler():
     thread.start()
     print("✅ Scheduler de recordatorios iniciado")
 
+    # ── RECORDATORIO DE SERVICIOS PROGRAMADOS (24h antes) ──
+    recordados_programados = set()
+
+    def _loop_programados():
+        nonlocal recordados_programados
+        while True:
+            try:
+                import json
+                ahora = datetime.utcnow() - timedelta(hours=5)  # hora Colombia
+                manana = ahora + timedelta(hours=24)
+
+                conn = conectar_bd()
+                if not conn:
+                    time.sleep(300)
+                    continue
+                cursor = conn.cursor(dictionary=True)
+
+                # Buscar solicitudes programadas para las próximas 24-25 horas que no hemos recordado
+                cursor.execute("""
+                    SELECT s.id_solicitud, s.titulo, s.fecha_programada, s.id_cliente, s.id_trabajador,
+                           c.nombre_completo AS nombre_cliente,
+                           p.nombre_completo AS nombre_trabajador
+                    FROM solicitudes_servicio s
+                    LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+                    LEFT JOIN personas p ON s.id_trabajador = p.id_persona
+                    WHERE s.fecha_programada IS NOT NULL
+                      AND s.estado IN ('pendiente', 'aceptada')
+                      AND s.fecha_programada BETWEEN %s AND %s
+                """, (manana - timedelta(minutes=30), manana + timedelta(minutes=30)))
+                programadas = cursor.fetchall()
+
+                for sol in programadas:
+                    clave = f"prog_{sol['id_solicitud']}"
+                    if clave in recordados_programados:
+                        continue
+                    recordados_programados.add(clave)
+
+                    fecha_str = sol['fecha_programada'].strftime('%d/%m/%Y %I:%M %p') if hasattr(sol['fecha_programada'], 'strftime') else str(sol['fecha_programada'])
+
+                    # Push al trabajador
+                    if sol['id_trabajador']:
+                        cursor.execute("""
+                            SELECT endpoint, p256dh, auth FROM push_subscriptions
+                            WHERE tipo_usuario = 'trabajador' AND id_usuario = %s
+                        """, (sol['id_trabajador'],))
+                        subs_t = cursor.fetchall()
+                        if subs_t:
+                            try:
+                                from pywebpush import webpush, WebPushException
+                                payload = json.dumps({
+                                    "title": "📅 Recordatorio — Servicio mañana",
+                                    "body": f"Tienes un servicio programado mañana: {sol['titulo'] or 'Servicio'} a las {fecha_str.split(' ')[1]} {fecha_str.split(' ')[2] if len(fecha_str.split(' '))>2 else ''}",
+                                    "url": "/trabajador/panel",
+                                    "icon": "/static/icons/icon-192.png"
+                                })
+                                for sub in subs_t:
+                                    try:
+                                        webpush(
+                                            subscription_info={"endpoint": sub["endpoint"], "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}},
+                                            data=payload,
+                                            vapid_private_key=VAPID_PRIVATE,
+                                            vapid_claims=VAPID_CLAIMS
+                                        )
+                                    except: pass
+                            except ImportError: pass
+
+                    # Push al cliente
+                    if sol['id_cliente']:
+                        cursor.execute("""
+                            SELECT endpoint, p256dh, auth FROM push_subscriptions
+                            WHERE tipo_usuario = 'cliente' AND id_usuario = %s
+                        """, (sol['id_cliente'],))
+                        subs_c = cursor.fetchall()
+                        if subs_c:
+                            try:
+                                from pywebpush import webpush, WebPushException
+                                payload = json.dumps({
+                                    "title": "📅 Recordatorio — Servicio mañana",
+                                    "body": f"Tu servicio '{sol['titulo'] or 'Servicio'}' es mañana {fecha_str}. ¡Prepárate!",
+                                    "url": "/cliente/mis_solicitudes",
+                                    "icon": "/static/icons/icon-192.png"
+                                })
+                                for sub in subs_c:
+                                    try:
+                                        webpush(
+                                            subscription_info={"endpoint": sub["endpoint"], "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}},
+                                            data=payload,
+                                            vapid_private_key=VAPID_PRIVATE,
+                                            vapid_claims=VAPID_CLAIMS
+                                        )
+                                    except: pass
+                            except ImportError: pass
+
+                    # Email recordatorio al trabajador
+                    if sol['id_trabajador']:
+                        try:
+                            cursor.execute("SELECT correo FROM correo_persona WHERE id_persona = %s LIMIT 1", (sol['id_trabajador'],))
+                            row_email = cursor.fetchone()
+                            if row_email and row_email['correo']:
+                                import smtplib
+                                from email.mime.text import MIMEText
+                                from email.mime.multipart import MIMEMultipart
+                                import os
+                                correo_dest = row_email['correo']
+                                msg = MIMEMultipart('alternative')
+                                msg['Subject'] = f"📅 Recordatorio: Servicio mañana — {sol['titulo'] or 'TalentHub'}"
+                                msg['From'] = os.getenv('MAIL_USER', 'talenthubcol@gmail.com')
+                                msg['To'] = correo_dest
+                                html_body = f"""
+                                <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:20px">
+                                    <h2 style="color:#4f46e5">📅 Recordatorio de servicio</h2>
+                                    <p>Hola <strong>{sol['nombre_trabajador'] or 'Profesional'}</strong>,</p>
+                                    <p>Te recordamos que tienes un servicio programado para <strong>mañana</strong>:</p>
+                                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin:16px 0">
+                                        <p style="margin:0"><strong>📋 {sol['titulo'] or 'Servicio'}</strong></p>
+                                        <p style="margin:8px 0 0;color:#64748b">🕐 {fecha_str}</p>
+                                        <p style="margin:4px 0 0;color:#64748b">👤 Cliente: {sol['nombre_cliente'] or 'Cliente'}</p>
+                                    </div>
+                                    <p style="color:#64748b;font-size:0.9rem">¡No olvides confirmar tu asistencia!</p>
+                                </div>
+                                """
+                                msg.attach(MIMEText(html_body, 'html'))
+                                try:
+                                    smtp = smtplib.SMTP('smtp.gmail.com', 587)
+                                    smtp.starttls()
+                                    smtp.login(os.getenv('MAIL_USER','talenthubcol@gmail.com'), os.getenv('MAIL_PASS',''))
+                                    smtp.send_message(msg)
+                                    smtp.quit()
+                                except: pass
+                        except: pass
+
+                    print(f"[SCHEDULER] 📅 Recordatorio programado enviado: solicitud #{sol['id_solicitud']}")
+
+                cursor.close()
+                conn.close()
+
+            except Exception as ex:
+                print(f"[SCHEDULER-PROG] Error: {ex}")
+
+            time.sleep(600)  # revisar cada 10 minutos
+
+    thread2 = threading.Thread(target=_loop_programados, daemon=True)
+    thread2.start()
+    print("✅ Scheduler de recordatorios programados (24h antes) iniciado")
+
 # Iniciar scheduler al arrancar
 @app.on_event("startup")
 def iniciar_recordatorios():
