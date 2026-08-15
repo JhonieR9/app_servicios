@@ -427,7 +427,7 @@ def crear_solicitud(
     departamento: str = Form(...),
     fecha_programada: str = Form(None),
     id_trabajador: str = Form(None),   # string para manejar '' sin error
-    metodo_pago: str = Form("efectivo")
+    metodo_pago: str = Form("nequi")
 ):
     # Convertir id_trabajador a int si viene con valor
     id_trab = None
@@ -487,7 +487,7 @@ def crear_solicitud(
             cursor.execute(sql, (
                 id_cliente, id_categoria, id_trab, titulo, descripcion, direccion_servicio,
                 ciudad, departamento, fecha_programada if fecha_programada else None,
-                metodo_pago or 'efectivo'
+                metodo_pago or 'nequi'
             ))
         else:
             sql = """
@@ -499,7 +499,7 @@ def crear_solicitud(
             cursor.execute(sql, (
                 id_cliente, id_categoria, titulo, descripcion, direccion_servicio,
                 ciudad, departamento, fecha_programada if fecha_programada else None,
-                metodo_pago or 'efectivo'
+                metodo_pago or 'nequi'
             ))
         conexion.commit()
         id_solicitud = cursor.lastrowid
@@ -1301,8 +1301,8 @@ async def iniciar_chat_directo(
         titulo = f"{categoria} - {trabajador['nombre_completo']}"
         cursor.execute("""
             INSERT INTO solicitudes_servicio
-            (id_cliente, id_trabajador, id_categoria, titulo, descripcion, estado, fecha_solicitud)
-            VALUES (%s, %s, %s, %s, %s, 'pendiente', NOW())
+            (id_cliente, id_trabajador, id_categoria, titulo, descripcion, estado, fecha_solicitud, metodo_pago)
+            VALUES (%s, %s, %s, %s, %s, 'pendiente', NOW(), 'nequi')
         """, (id_cliente, id_trabajador, id_categoria, titulo,
               mensaje_inicial or f"Solicitud de {nombre_cliente}"))
         id_solicitud = cursor.lastrowid

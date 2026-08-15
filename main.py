@@ -198,7 +198,7 @@ def crear_tablas():
             ('fecha_inicio',       'datetime DEFAULT NULL'),
             ('fecha_finalizacion', 'datetime DEFAULT NULL'),
             ('precio_final',       'decimal(10,2) DEFAULT NULL'),
-            ('metodo_pago',        "varchar(50) DEFAULT 'efectivo'"),
+            ('metodo_pago',        "varchar(50) DEFAULT 'nequi'"),
             ('codigo_confirmacion',"varchar(10) DEFAULT NULL"),
             ('codigo_inicio',      "varchar(10) DEFAULT NULL"),
             ('cotizacion_horas',   "decimal(4,1) DEFAULT NULL"),
