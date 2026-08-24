@@ -1061,86 +1061,25 @@ function selMetodoPago(el, metodo) {
     document.getElementById('metodoPagoHidden').value = metodo;
 }
 
-// MUNICIPIOS DE COLOMBIA
-const MUNICIPIOS = [
-    {n:'BOGOTA',d:'CUNDINAMARCA'},{n:'MEDELLIN',d:'ANTIOQUIA'},{n:'CALI',d:'VALLE DEL CAUCA'},
-    {n:'BARRANQUILLA',d:'ATLANTICO'},{n:'CARTAGENA',d:'BOLIVAR'},{n:'CUCUTA',d:'NORTE DE SANTANDER'},
-    {n:'BUCARAMANGA',d:'SANTANDER'},{n:'PEREIRA',d:'RISARALDA'},{n:'MANIZALES',d:'CALDAS'},
-    {n:'IBAGUE',d:'TOLIMA'},{n:'SANTA MARTA',d:'MAGDALENA'},{n:'VILLAVICENCIO',d:'META'},
-    {n:'ARMENIA',d:'QUINDIO'},{n:'VALLEDUPAR',d:'CESAR'},{n:'MONTERIA',d:'CORDOBA'},
-    {n:'NEIVA',d:'HUILA'},{n:'PASTO',d:'NARINO'},{n:'POPAYAN',d:'CAUCA'},
-    {n:'SINCELEJO',d:'SUCRE'},{n:'TUNJA',d:'BOYACA'},{n:'RIOHACHA',d:'LA GUAJIRA'},
-    {n:'QUIBDO',d:'CHOCO'},{n:'FLORENCIA',d:'CAQUETA'},{n:'MOCOA',d:'PUTUMAYO'},
-    {n:'YOPAL',d:'CASANARE'},{n:'ARAUCA',d:'ARAUCA'},{n:'MITU',d:'VAUPES'},
-    {n:'INIRIDA',d:'GUAINIA'},{n:'SAN JOSE DEL GUAVIARE',d:'GUAVIARE'},{n:'LETICIA',d:'AMAZONAS'},
-    {n:'PUERTO CARRENO',d:'VICHADA'},{n:'BELLO',d:'ANTIOQUIA'},{n:'ITAGUI',d:'ANTIOQUIA'},
-    {n:'ENVIGADO',d:'ANTIOQUIA'},{n:'APARTADO',d:'ANTIOQUIA'},{n:'TURBO',d:'ANTIOQUIA'},
-    {n:'RIONEGRO',d:'ANTIOQUIA'},{n:'SABANETA',d:'ANTIOQUIA'},{n:'COPACABANA',d:'ANTIOQUIA'},
-    {n:'GIRARDOTA',d:'ANTIOQUIA'},{n:'CALDAS',d:'ANTIOQUIA'},{n:'LA ESTRELLA',d:'ANTIOQUIA'},
-    {n:'SOACHA',d:'CUNDINAMARCA'},{n:'FACATATIVA',d:'CUNDINAMARCA'},{n:'ZIPAQUIRA',d:'CUNDINAMARCA'},
-    {n:'CHIA',d:'CUNDINAMARCA'},{n:'MOSQUERA',d:'CUNDINAMARCA'},{n:'FUSAGASUGA',d:'CUNDINAMARCA'},
-    {n:'GIRARDOT',d:'CUNDINAMARCA'},{n:'MADRID',d:'CUNDINAMARCA'},{n:'FUNZA',d:'CUNDINAMARCA'},
-    {n:'CAJICA',d:'CUNDINAMARCA'},{n:'TOCANCIPA',d:'CUNDINAMARCA'},{n:'SOPO',d:'CUNDINAMARCA'},
-    {n:'PALMIRA',d:'VALLE DEL CAUCA'},{n:'BUENAVENTURA',d:'VALLE DEL CAUCA'},{n:'TULUA',d:'VALLE DEL CAUCA'},
-    {n:'BUGA',d:'VALLE DEL CAUCA'},{n:'CARTAGO',d:'VALLE DEL CAUCA'},{n:'FLORIDA',d:'VALLE DEL CAUCA'},
-    {n:'YUMBO',d:'VALLE DEL CAUCA'},{n:'JAMUNDI',d:'VALLE DEL CAUCA'},{n:'CANDELARIA',d:'VALLE DEL CAUCA'},
-    {n:'SOLEDAD',d:'ATLANTICO'},{n:'MALAMBO',d:'ATLANTICO'},{n:'SABANALARGA',d:'ATLANTICO'},
-    {n:'BARANOA',d:'ATLANTICO'},{n:'PUERTO COLOMBIA',d:'ATLANTICO'},
-    {n:'TURBACO',d:'BOLIVAR'},{n:'MAGANGUE',d:'BOLIVAR'},{n:'MOMPOS',d:'BOLIVAR'},
-    {n:'OCANA',d:'NORTE DE SANTANDER'},{n:'PAMPLONA',d:'NORTE DE SANTANDER'},{n:'VILLA DEL ROSARIO',d:'NORTE DE SANTANDER'},
-    {n:'FLORIDABLANCA',d:'SANTANDER'},{n:'GIRON',d:'SANTANDER'},{n:'PIEDECUESTA',d:'SANTANDER'},
-    {n:'BARRANCABERMEJA',d:'SANTANDER'},{n:'SAN GIL',d:'SANTANDER'},{n:'SOCORRO',d:'SANTANDER'},
-    {n:'DOSQUEBRADAS',d:'RISARALDA'},{n:'SANTA ROSA DE CABAL',d:'RISARALDA'},{n:'LA VIRGINIA',d:'RISARALDA'},
-    {n:'CHINCHINA',d:'CALDAS'},{n:'VILLAMARIA',d:'CALDAS'},{n:'RIOSUCIO',d:'CALDAS'},
-    {n:'ESPINAL',d:'TOLIMA'},{n:'MELGAR',d:'TOLIMA'},{n:'HONDA',d:'TOLIMA'},{n:'LIBANO',d:'TOLIMA'},
-    {n:'CIENAGA',d:'MAGDALENA'},{n:'FUNDACION',d:'MAGDALENA'},{n:'PLATO',d:'MAGDALENA'},
-    {n:'ACACIAS',d:'META'},{n:'GRANADA',d:'META'},{n:'PUERTO LOPEZ',d:'META'},
-    {n:'CALARCA',d:'QUINDIO'},{n:'MONTENEGRO',d:'QUINDIO'},{n:'QUIMBAYA',d:'QUINDIO'},
-    {n:'AGUACHICA',d:'CESAR'},{n:'BOSCONIA',d:'CESAR'},{n:'LA PAZ',d:'CESAR'},
-    {n:'CERETE',d:'CORDOBA'},{n:'LORICA',d:'CORDOBA'},{n:'SAHAGUN',d:'CORDOBA'},
-    {n:'CAMPOALEGRE',d:'HUILA'},{n:'GARZON',d:'HUILA'},{n:'PITALITO',d:'HUILA'},
-    {n:'IPIALES',d:'NARINO'},{n:'TUMACO',d:'NARINO'},{n:'TUQUERRES',d:'NARINO'},
-    {n:'SANTANDER DE QUILICHAO',d:'CAUCA'},{n:'PUERTO TEJADA',d:'CAUCA'},{n:'PATIA',d:'CAUCA'},
-    {n:'COROZAL',d:'SUCRE'},{n:'SAMPUES',d:'SUCRE'},{n:'TOLU',d:'SUCRE'},
-    {n:'DUITAMA',d:'BOYACA'},{n:'SOGAMOSO',d:'BOYACA'},{n:'CHIQUINQUIRA',d:'BOYACA'},
-    {n:'MAICAO',d:'LA GUAJIRA'},{n:'FONSECA',d:'LA GUAJIRA'},{n:'SAN JUAN DEL CESAR',d:'LA GUAJIRA'},
-    {n:'CAUCASIA',d:'ANTIOQUIA'},{n:'YARUMAL',d:'ANTIOQUIA'},{n:'PUERTO BERRIO',d:'ANTIOQUIA'},
-    {n:'MARINILLA',d:'ANTIOQUIA'},{n:'EL CARMEN DE VIBORAL',d:'ANTIOQUIA'},
-    {n:'CIENAGA DE ORO',d:'CORDOBA'},{n:'MONTELIBANO',d:'CORDOBA'},{n:'PLANETA RICA',d:'CORDOBA'},
-    {n:'EL BANCO',d:'MAGDALENA'},{n:'ARACATACA',d:'MAGDALENA'},{n:'PIVIJAY',d:'MAGDALENA'},
-    {n:'VILLANUEVA',d:'CASANARE'},{n:'AGUAZUL',d:'CASANARE'},{n:'TAURAMENA',d:'CASANARE'},
-    {n:'SARAVENA',d:'ARAUCA'},{n:'ARAUQUITA',d:'ARAUCA'},{n:'TAME',d:'ARAUCA'},
-    {n:'SAN VICENTE DEL CAGUAN',d:'CAQUETA'},{n:'BELEN DE LOS ANDAQUIES',d:'CAQUETA'},
-    {n:'ORITO',d:'PUTUMAYO'},{n:'PUERTO ASIS',d:'PUTUMAYO'},{n:'SIBUNDOY',d:'PUTUMAYO'},
-    {n:'BARBACOAS',d:'NARINO'},{n:'LA UNION',d:'NARINO'},{n:'SAMANIEGO',d:'NARINO'},
-    {n:'ROLDANILLO',d:'VALLE DEL CAUCA'},{n:'ZARZAL',d:'VALLE DEL CAUCA'},{n:'SEVILLA',d:'VALLE DEL CAUCA'},
-    {n:'PRADERA',d:'VALLE DEL CAUCA'},{n:'DAGUA',d:'VALLE DEL CAUCA'},{n:'RESTREPO',d:'VALLE DEL CAUCA'},
-    {n:'TIERRALTA',d:'CORDOBA'},{n:'PUERTO ESCONDIDO',d:'CORDOBA'},
-    {n:'MANAURE',d:'LA GUAJIRA'},{n:'URIBIA',d:'LA GUAJIRA'},{n:'DIBULLA',d:'LA GUAJIRA'},
-    {n:'CHAPARRAL',d:'TOLIMA'},{n:'MARIQUITA',d:'TOLIMA'},{n:'FRESNO',d:'TOLIMA'},
-    {n:'ANSERMA',d:'CALDAS'},{n:'AGUADAS',d:'CALDAS'},{n:'SALAMINA',d:'CALDAS'},
-    {n:'BELEN DE UMBRIA',d:'RISARALDA'},{n:'APIA',d:'RISARALDA'},{n:'QUINCHIA',d:'RISARALDA'},
-    {n:'FILANDIA',d:'QUINDIO'},{n:'CIRCASIA',d:'QUINDIO'},{n:'SALENTO',d:'QUINDIO'},
-    {n:'VELEZ',d:'SANTANDER'},{n:'MALAGA',d:'SANTANDER'},{n:'BARBOSA',d:'SANTANDER'},
-    {n:'TIBU',d:'NORTE DE SANTANDER'},{n:'CONVENCION',d:'NORTE DE SANTANDER'},
-    {n:'GACHETA',d:'CUNDINAMARCA'},{n:'VILLETA',d:'CUNDINAMARCA'},{n:'LA MESA',d:'CUNDINAMARCA'},
-    {n:'SILVANIA',d:'CUNDINAMARCA'},{n:'ARBELAEZ',d:'CUNDINAMARCA'},{n:'PASCA',d:'CUNDINAMARCA'},
-    {n:'PAIPA',d:'BOYACA'},{n:'MONGUI',d:'BOYACA'},{n:'VILLA DE LEYVA',d:'BOYACA'},
-    {n:'GARAGOA',d:'BOYACA'},{n:'GUATEQUE',d:'BOYACA'},{n:'MIRAFLORES',d:'BOYACA'},
-    {n:'LA FLORIDA',d:'NARINO'},{n:'TAMINANGO',d:'NARINO'},{n:'CUMBAL',d:'NARINO'},{n:'GUACHUCAL',d:'NARINO'},
-    {n:'INZA',d:'CAUCA'},{n:'SILVIA',d:'CAUCA'},{n:'PIENDAMO',d:'CAUCA'},
-    {n:'MIRANDA',d:'CAUCA'},{n:'CORINTO',d:'CAUCA'},
-    {n:'ALGECIRAS',d:'HUILA'},{n:'PALERMO',d:'HUILA'},{n:'AIPE',d:'HUILA'},{n:'HOBO',d:'HUILA'},{n:'GIGANTE',d:'HUILA'},
-    {n:'OVEJAS',d:'SUCRE'},{n:'MORROA',d:'SUCRE'},{n:'GALERAS',d:'SUCRE'},
-    {n:'VALENCIA',d:'CORDOBA'},{n:'BUENAVISTA',d:'CORDOBA'},
-    {n:'ALBANIA',d:'CAQUETA'},{n:'CURILLO',d:'CAQUETA'},
-    {n:'VILLAGARZON',d:'PUTUMAYO'},{n:'COLON',d:'PUTUMAYO'},{n:'SANTIAGO',d:'PUTUMAYO'},
-    {n:'CARURU',d:'VAUPES'},{n:'TARAIRA',d:'VAUPES'},
-    {n:'BARRANCO MINAS',d:'GUAINIA'},
-    {n:'CALAMAR',d:'GUAVIARE'},{n:'EL RETORNO',d:'GUAVIARE'},
-    {n:'PUERTO NARINO',d:'AMAZONAS'},
-    {n:'LA PRIMAVERA',d:'VICHADA'},{n:'CUMARIBO',d:'VICHADA'}
-];
+// MUNICIPIOS DE COLOMBIA — cargados dinámicamente del DANE
+let MUNICIPIOS = [];
+(async function cargarMunicipios() {
+    try {
+        const res = await fetch('/static/municipios.json');
+        const data = await res.json();
+        // El JSON tiene formato [{c:"NOMBRE",d:"CODIGO",p:"DEPARTAMENTO"}]
+        MUNICIPIOS = data.map(m => ({ n: m.c, d: m.p }));
+        console.log(`[Municipios] ${MUNICIPIOS.length} municipios cargados del DANE`);
+    } catch(e) {
+        console.error('[Municipios] Error cargando JSON, usando fallback');
+        // Fallback mínimo por si falla la carga
+        MUNICIPIOS = [
+            {n:'BOGOTA',d:'BOGOTA D.C.'},{n:'MEDELLIN',d:'ANTIOQUIA'},{n:'CALI',d:'VALLE DEL CAUCA'},
+            {n:'BARRANQUILLA',d:'ATLANTICO'},{n:'CARTAGENA',d:'BOLIVAR'},{n:'CUCUTA',d:'NORTE DE SANTANDER'},
+            {n:'BUCARAMANGA',d:'SANTANDER'},{n:'PEREIRA',d:'RISARALDA'},{n:'MANIZALES',d:'CALDAS'}
+        ];
+    }
+})();
 
 let activeIdx = -1;
 
@@ -1151,16 +1090,16 @@ function filtrarMunicipios(q) {
     if (q.length < 2) { dd.classList.remove('open'); return; }
     const norm = q.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const res  = MUNICIPIOS.filter(m => {
-        const mn = m.n.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        const md = m.d.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const mn = m.n.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const md = m.d.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
         return mn.includes(norm) || md.includes(norm);
     }).slice(0,12);
     if (!res.length) {
-        dd.innerHTML = '<div class="muni-empty">No se encontro el municipio</div>';
+        dd.innerHTML = '<div class="muni-empty">No se encontró el municipio</div>';
     } else {
         dd.innerHTML = res.map((m,i) => {
             const hn = m.n.replace(new RegExp(q,'gi'), match => '<mark>' + match + '</mark>');
-            return '<div class="muni-item" data-idx="' + i + '" onclick="selMunicipio(\'' + m.n + '\',\'' + m.d + '\')">' +
+            return '<div class="muni-item" data-idx="' + i + '" onclick="selMunicipio(\'' + m.n.replace(/'/g,"\\'") + '\',\'' + m.d.replace(/'/g,"\\'") + '\')">' +
                 '<span class="muni-nombre">' + hn + '</span>' +
                 '<span class="muni-depto">' + m.d + '</span>' +
                 '</div>';
