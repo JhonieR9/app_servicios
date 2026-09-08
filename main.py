@@ -6,8 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from routers import clientes, trabajadores, chat, pagos, psicologa
 from config import DB_CONFIG, conectar_bd
-import time
-from collections import defaultdict
+import security   # módulo centralizado de seguridad
 
 app = FastAPI(title="TalentHub API", version="2.0.0")
 
@@ -15,42 +14,74 @@ app = FastAPI(title="TalentHub API", version="2.0.0")
 # MIDDLEWARE DE SEGURIDAD
 # ============================================
 
-# 1. Headers de seguridad (previene XSS, clickjacking, sniffing)
+# 1. Headers de seguridad HTTP (XSS, clickjacking, sniffing, CSP, HSTS)
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
-        response.headers["X-Frame-Options"] = "DENY"
+
+        # Previene que la página se cargue dentro de un iframe (clickjacking)
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+
+        # El navegador no debe inferir el Content-Type (MIME sniffing)
         response.headers["X-Content-Type-Options"] = "nosniff"
+
+        # Filtro XSS del navegador (legado, sigue siendo útil en IE/Edge old)
         response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        # No filtrar la URL completa en el Referer a sitios externos
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)"
-        # HSTS solo si estamos en producción (HTTPS)
+
+        # Permisos de APIs del navegador
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=(self), payment=(self)"
+        )
+
+        # Content-Security-Policy
+        # - Permite recursos propios + CDNs usadas (Bootstrap Icons, Leaflet, etc.)
+        # - Bloquea inline scripts fuera de los permitidos explícitamente
+        # - No afecta a las páginas ya que usan nonce/unsafe-inline por Jinja2
+        is_html = "text/html" in response.headers.get("content-type", "")
+        if is_html:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+                    "https://cdn.jsdelivr.net https://unpkg.com https://js.wompi.co; "
+                "style-src 'self' 'unsafe-inline' "
+                    "https://cdn.jsdelivr.net https://fonts.googleapis.com https://unpkg.com; "
+                "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
+                "img-src 'self' data: blob: https:; "
+                "connect-src 'self' https://api.wompi.co https://sandbox.wompi.co wss:; "
+                "frame-src https://checkout.wompi.co; "
+                "object-src 'none'; "
+                "base-uri 'self';"
+            )
+
+        # HSTS: fuerza HTTPS por 1 año (solo en producción con HTTPS)
         if request.url.scheme == "https":
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains; preload"
+            )
+
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)
 
-# 2. Rate limiting (previene fuerza bruta en login)
-login_attempts = defaultdict(list)  # {ip: [timestamps]}
-RATE_LIMIT_WINDOW = 900  # 15 minutos
-RATE_LIMIT_MAX = 10      # máximo 10 intentos por ventana
-
+# 2. Rate limiting sobre intentos fallidos en login (usa security.py)
+#    El bloqueo real se aplica en cada endpoint de login; este middleware
+#    solo hace un chequeo preventivo antes de que la request llegue al router.
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
-    # Solo aplicar rate limiting a endpoints de login
-    path = request.url.path
-    if request.method == "POST" and ("/login" in path):
-        ip = request.client.host if request.client else "unknown"
-        now = time.time()
-        # Limpiar intentos viejos
-        login_attempts[ip] = [t for t in login_attempts[ip] if now - t < RATE_LIMIT_WINDOW]
-        if len(login_attempts[ip]) >= RATE_LIMIT_MAX:
-            return JSONResponse(
-                {"error": "Demasiados intentos. Espera 15 minutos."},
-                status_code=429
-            )
-        login_attempts[ip].append(now)
+    path   = request.url.path
+    method = request.method
+
+    if method == "POST" and "/login" in path:
+        ip = security._get_ip(request)
+        # Determinar nivel de strictness según la ruta
+        tipo = "admin" if ("/admin/login" in path or "/psicologa/login" in path) else "normal"
+        if security.esta_bloqueado(ip, tipo):
+            security.log_rate_blocked(ip, path)
+            return security.respuesta_bloqueado()
+
     return await call_next(request)
 
 # 3. CORS (controla qué dominios pueden hacer requests)

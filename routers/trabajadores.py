@@ -3,7 +3,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, timedelta
 import bcrypt
-import auth  # Módulo de autenticación
+import auth      # Módulo de autenticación
+import security  # Rate limiting, MIME validation y logging
 from config import DB_CONFIG, conectar_bd
 
 router = APIRouter(prefix="/trabajador", tags=["trabajadores"])
@@ -647,21 +648,37 @@ def eliminar_referencia(id: int = Form(...)):
 
 
 @router.post("/documentos/actualizar")
-async def actualizar_documento(    id_persona:     int = Form(...),
+async def actualizar_documento(
+    request: Request,
+    id_persona:     int = Form(...),
     tipo_documento: str = Form(...),
     archivo: UploadFile = File(...)
 ):
     """Actualiza un documento del trabajador (foto_identificacion, foto_antecedentes, recomendaciones_archivo, certificado_estudio, foto_perfil)."""
+    ip = security._get_ip(request)
     campos_validos = ['foto_identificacion', 'foto_antecedentes', 'recomendaciones_archivo', 'certificado_estudio', 'foto_perfil']
     if tipo_documento not in campos_validos:
         return JSONResponse({"error": "Tipo de documento inválido"}, status_code=400)
 
     archivo_bytes = await archivo.read()
-    archivo_tipo  = archivo.content_type or 'image/jpeg'
     archivo_nombre = f"{tipo_documento}_{id_persona}_{archivo.filename}"
 
-    if len(archivo_bytes) > 5 * 1024 * 1024:
-        return JSONResponse({"error": "El archivo no puede pesar más de 5MB"}, status_code=400)
+    # Determinar categoría MIME según el tipo de documento
+    categoria_mime = "perfil" if tipo_documento == "foto_perfil" else \
+                     "imagen" if tipo_documento == "foto_identificacion" else \
+                     "documento"
+
+    # Validación MIME real (magic bytes)
+    valido, mime_detectado, error_msg = security.validar_archivo(
+        archivo_bytes, archivo.filename or "", categoria_mime
+    )
+    if not valido:
+        security.log_upload_blocked(ip, archivo_nombre, error_msg)
+        return JSONResponse({"error": error_msg}, status_code=400)
+
+    # Usar el MIME detectado por magic bytes, no el que dice el cliente
+    archivo_tipo = mime_detectado
+    security.log_upload_ok(ip, archivo_nombre, mime_detectado)
 
     conexion = conectar_bd()
     try:
@@ -1350,34 +1367,44 @@ async def crear_trabajador(
     
     conexion = None
     cursor = None
-    
+
     try:
         # Validar que el documento no exista
         conexion = conectar_bd()
         cursor = conexion.cursor()
-        
+
         cursor.execute("SELECT COUNT(*) FROM personas WHERE numero_documento = %s", (numero_documento,))
         if cursor.fetchone()[0] > 0:
             return {"error": f"El documento {numero_documento} ya está registrado"}
-        
-        # Leer archivos en memoria (para guardar en BD)
+
+        # ── Leer y validar archivos (MIME real por magic bytes) ──────────
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # Foto identificación
+        ip = "registro"  # no hay request aquí — se loguea como origen registro
+
+        # Foto identificación (imagen)
         foto_bytes = await foto_identificacion.read()
+        ok, mime_foto, err = security.validar_archivo(foto_bytes, foto_identificacion.filename or "", "imagen")
+        if not ok:
+            security.log_upload_blocked(ip, foto_identificacion.filename or "", err)
+            return JSONResponse({"error": f"Foto de identificación: {err}"}, status_code=400)
         foto_filename = f"foto_{timestamp}_{foto_identificacion.filename}"
-        foto_tipo = foto_identificacion.content_type or 'image/jpeg'
-        # Guardar también en disco si es posible
+        foto_tipo = mime_foto
+        security.log_upload_ok(ip, foto_filename, mime_foto)
         try:
             foto_path = os.path.join(UPLOAD_FOLDER, foto_filename)
             with open(foto_path, "wb") as f:
                 f.write(foto_bytes)
         except: pass
 
-        # Antecedentes
+        # Antecedentes (documento: PDF o imagen)
         antecedentes_bytes = await foto_antecedentes.read()
+        ok, mime_ant, err = security.validar_archivo(antecedentes_bytes, foto_antecedentes.filename or "", "documento")
+        if not ok:
+            security.log_upload_blocked(ip, foto_antecedentes.filename or "", err)
+            return JSONResponse({"error": f"Antecedentes: {err}"}, status_code=400)
         antecedentes_filename = f"antecedentes_{timestamp}_{foto_antecedentes.filename}" if foto_antecedentes.filename else None
-        antecedentes_tipo = foto_antecedentes.content_type or 'application/pdf'
+        antecedentes_tipo = mime_ant
+        security.log_upload_ok(ip, antecedentes_filename or "", mime_ant)
         try:
             if antecedentes_filename:
                 ant_path = os.path.join(UPLOAD_FOLDER, antecedentes_filename)
@@ -1385,10 +1412,15 @@ async def crear_trabajador(
                     f.write(antecedentes_bytes)
         except: pass
 
-        # Recomendaciones
+        # Recomendaciones (documento: PDF o imagen)
         recomend_bytes = await recomendaciones_archivo.read()
+        ok, mime_rec, err = security.validar_archivo(recomend_bytes, recomendaciones_archivo.filename or "", "documento")
+        if not ok:
+            security.log_upload_blocked(ip, recomendaciones_archivo.filename or "", err)
+            return JSONResponse({"error": f"Recomendaciones: {err}"}, status_code=400)
         recomend_filename = f"recom_{timestamp}_{recomendaciones_archivo.filename}" if recomendaciones_archivo.filename else None
-        recomend_tipo = recomendaciones_archivo.content_type or 'application/pdf'
+        recomend_tipo = mime_rec
+        security.log_upload_ok(ip, recomend_filename or "", mime_rec)
         try:
             if recomend_filename:
                 rec_path = os.path.join(UPLOAD_FOLDER, recomend_filename)
@@ -1396,19 +1428,29 @@ async def crear_trabajador(
                     f.write(recomend_bytes)
         except: pass
 
-        # Certificado de estudio (obligatorio)
+        # Certificado de estudio (documento: PDF o imagen)
         cert_estudio_bytes = await certificado_estudio.read()
+        ok, mime_cert, err = security.validar_archivo(cert_estudio_bytes, certificado_estudio.filename or "", "documento")
+        if not ok:
+            security.log_upload_blocked(ip, certificado_estudio.filename or "", err)
+            return JSONResponse({"error": f"Certificado de estudio: {err}"}, status_code=400)
         cert_estudio_filename = f"cert_estudio_{timestamp}_{certificado_estudio.filename}"
-        cert_estudio_tipo = certificado_estudio.content_type or 'application/pdf'
+        cert_estudio_tipo = mime_cert
+        security.log_upload_ok(ip, cert_estudio_filename, mime_cert)
         try:
             cert_path = os.path.join(UPLOAD_FOLDER, cert_estudio_filename)
             with open(cert_path, "wb") as f:
                 f.write(cert_estudio_bytes)
         except: pass
 
-        # Foto de perfil (obligatorio)
+        # Foto de perfil (imagen)
         foto_perfil_bytes = await foto_perfil.read()
-        foto_perfil_tipo = foto_perfil.content_type or 'image/jpeg'
+        ok, mime_perfil, err = security.validar_archivo(foto_perfil_bytes, foto_perfil.filename or "", "perfil")
+        if not ok:
+            security.log_upload_blocked(ip, foto_perfil.filename or "", err)
+            return JSONResponse({"error": f"Foto de perfil: {err}"}, status_code=400)
+        foto_perfil_tipo = mime_perfil
+        security.log_upload_ok(ip, foto_perfil.filename or "", mime_perfil)
         
         # Iniciar transacción
         conexion.autocommit = False
@@ -1840,10 +1882,19 @@ def mostrar_admin_login(request: Request):
     return templates.TemplateResponse("trabajadores/admin_login.html", {"request": request})
 
 @router.post("/admin/login")
-async def admin_login(response: Response, password: str = Form(...)):
+async def admin_login(request: Request, response: Response, password: str = Form(...)):
     """Login de administrador — establece cookie de sesión"""
+    ip = security._get_ip(request)
+
+    # Verificar bloqueo antes de procesar
+    if security.esta_bloqueado(ip, "admin"):
+        security.log_rate_blocked(ip, "/trabajador/admin/login")
+        return security.respuesta_bloqueado()
+
     try:
         if password == ADMIN_PASSWORD:
+            security.limpiar_bloqueo(ip, "admin")
+            security.log_login_ok(ip, "admin", "admin")
             resp = JSONResponse({
                 "success": True,
                 "mensaje": "Inicio de sesión exitoso"
@@ -1857,6 +1908,11 @@ async def admin_login(response: Response, password: str = Form(...)):
             )
             return resp
         else:
+            bloqueado = security.registrar_fallo(ip, "admin")
+            security.log_login_fail(ip, "admin", "admin", "contraseña incorrecta")
+            if bloqueado:
+                security.log_rate_blocked(ip, "/trabajador/admin/login")
+                return security.respuesta_bloqueado()
             return JSONResponse({
                 "success": False,
                 "error": "Contraseña incorrecta"
@@ -3222,11 +3278,19 @@ def mostrar_login_trabajador(request: Request):
 
 @router.post("/login")
 async def login_trabajador(
+    request: Request,
     response: Response,
     numero_documento: str = Form(...),
     password: str = Form(...)
 ):
     """Login de trabajador con número de documento + contraseña"""
+    ip = security._get_ip(request)
+
+    # Verificar bloqueo antes de procesar
+    if security.esta_bloqueado(ip, "normal"):
+        security.log_rate_blocked(ip, "/trabajador/login")
+        return security.respuesta_bloqueado()
+
     try:
         conexion = conectar_bd()
         cursor = conexion.cursor(dictionary=True)
@@ -3242,11 +3306,22 @@ async def login_trabajador(
         conexion.close()
 
         if not trabajador:
+            security.registrar_fallo(ip, "normal")
+            security.log_login_fail(ip, "trabajador", numero_documento, "documento no registrado")
             return JSONResponse({"error": "Documento no registrado o cuenta rechazada"}, status_code=401)
         if not trabajador.get('password_hash'):
             return JSONResponse({"error": "Debes crear tu contraseña primero", "redirect": f"/trabajador/crear_password?id_persona={trabajador['id_persona']}"}, status_code=401)
         if not auth.verificar_password(password, trabajador['password_hash']):
+            bloqueado = security.registrar_fallo(ip, "normal")
+            security.log_login_fail(ip, "trabajador", numero_documento, "contraseña incorrecta")
+            if bloqueado:
+                security.log_rate_blocked(ip, "/trabajador/login")
+                return security.respuesta_bloqueado()
             return JSONResponse({"error": "Contraseña incorrecta"}, status_code=401)
+
+        # Login exitoso — limpiar contador de fallos
+        security.limpiar_bloqueo(ip, "normal")
+        security.log_login_ok(ip, "trabajador", numero_documento)
 
         # Si está pendiente de revisión, informar pero no dejar acceder al panel completo
         if trabajador.get('estado') == 'pendiente_revision':

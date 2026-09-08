@@ -3,7 +3,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
 import math
-import auth  # Módulo de autenticación
+import auth      # Módulo de autenticación
+import security  # Rate limiting, MIME validation y logging
 from config import DB_CONFIG, conectar_bd
 
 router = APIRouter(prefix="/cliente", tags=["clientes"])
@@ -1009,20 +1010,37 @@ def mostrar_login_cliente(request: Request):
 
 @router.post("/login")
 async def login_cliente(
+    request: Request,
     response: Response,
     correo: str = Form(...),
     password: str = Form(...)
 ):
     """Endpoint de login para clientes"""
+    ip = security._get_ip(request)
+
+    # Verificar bloqueo antes de procesar
+    if security.esta_bloqueado(ip, "normal"):
+        security.log_rate_blocked(ip, "/cliente/login")
+        return security.respuesta_bloqueado()
+
     try:
         exitoso, cliente, mensaje = auth.autenticar_cliente(correo, password)
-        
+
         if not exitoso:
+            bloqueado = security.registrar_fallo(ip, "normal")
+            security.log_login_fail(ip, "cliente", correo, mensaje)
+            if bloqueado:
+                security.log_rate_blocked(ip, "/cliente/login")
+                return security.respuesta_bloqueado()
             return JSONResponse(
                 {"error": mensaje},
                 status_code=401
             )
         
+        # Login exitoso — limpiar contador de fallos
+        security.limpiar_bloqueo(ip, "normal")
+        security.log_login_ok(ip, "cliente", correo)
+
         # Verificar si requiere verificación SMS (tabla puede no existir)
         requiere_sms = False
         try:

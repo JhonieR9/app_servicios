@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from config import DB_CONFIG, conectar_bd
 from datetime import datetime
 import auth as _auth_module
+import security
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 templates = Jinja2Templates(directory="templates")
@@ -308,6 +309,7 @@ def listar_todos_chats(buscar: str = "", estado: str = ""):
 # ── Subir foto (antes/después/progreso) ───────────────────────────
 @router.post("/foto/subir")
 async def subir_foto_chat(
+    request: Request,
     id_solicitud:  int = Form(...),
     id_usuario:    int = Form(...),
     tipo_usuario:  str = Form("trabajador"),
@@ -316,15 +318,23 @@ async def subir_foto_chat(
     foto: UploadFile = File(...)
 ):
     """Subir una foto del servicio (trabajador o cliente)"""
+    ip = security._get_ip(request)
+
     if tipo_foto not in ('antes', 'despues', 'progreso'):
         tipo_foto = 'progreso'
 
     foto_bytes = await foto.read()
-    foto_tipo = foto.content_type or 'image/jpeg'
 
-    # Limitar tamaño (5MB)
-    if len(foto_bytes) > 5 * 1024 * 1024:
-        return JSONResponse({"error": "La foto no puede pesar más de 5MB"}, status_code=400)
+    # Validación MIME real (magic bytes) — solo imágenes en el chat
+    valido, mime_detectado, error_msg = security.validar_archivo(
+        foto_bytes, foto.filename or "", "imagen"
+    )
+    if not valido:
+        security.log_upload_blocked(ip, foto.filename or "", error_msg)
+        return JSONResponse({"error": error_msg}, status_code=400)
+
+    foto_tipo = mime_detectado
+    security.log_upload_ok(ip, foto.filename or "", mime_detectado)
 
     conexion = conectar_bd()
     try:

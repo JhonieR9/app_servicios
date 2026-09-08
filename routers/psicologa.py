@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Form, Request, Response
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from config import conectar_bd
+import security  # Rate limiting y logging
 import os
 
 router = APIRouter(prefix="/psicologa", tags=["psicologa"])
@@ -28,9 +30,18 @@ def mostrar_login(request: Request):
 
 
 @router.post("/login")
-async def login_psicologa(password: str = Form(...)):
+async def login_psicologa(request: Request, password: str = Form(...)):
     """Login de la psicóloga"""
+    ip = security._get_ip(request)
+
+    # Verificar bloqueo (umbral de admin — más estricto)
+    if security.esta_bloqueado(ip, "admin"):
+        security.log_rate_blocked(ip, "/psicologa/login")
+        return security.respuesta_bloqueado()
+
     if password == PSICO_PASSWORD:
+        security.limpiar_bloqueo(ip, "admin")
+        security.log_login_ok(ip, "psicologa", "psicologa")
         resp = JSONResponse({"success": True, "mensaje": "Inicio de sesión exitoso"})
         resp.set_cookie(
             key="psico_session",
@@ -40,6 +51,12 @@ async def login_psicologa(password: str = Form(...)):
             samesite="lax"
         )
         return resp
+
+    bloqueado = security.registrar_fallo(ip, "admin")
+    security.log_login_fail(ip, "psicologa", "psicologa", "contraseña incorrecta")
+    if bloqueado:
+        security.log_rate_blocked(ip, "/psicologa/login")
+        return security.respuesta_bloqueado()
     return JSONResponse({"success": False, "error": "Contraseña incorrecta"}, status_code=401)
 
 
