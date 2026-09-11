@@ -790,6 +790,11 @@ def home(request: Request):
 def instalar(request: Request):
     return templates.TemplateResponse("instalar.html", {"request": request})
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/icons/icon-192.png", media_type="image/png")
+
 @app.get("/privacidad", response_class=HTMLResponse)
 def privacidad(request: Request):
     return templates.TemplateResponse("privacidad.html", {"request": request})
