@@ -1406,7 +1406,12 @@ async def crear_trabajador(
 
         cursor.execute("SELECT COUNT(*) FROM personas WHERE numero_documento = %s", (numero_documento,))
         if cursor.fetchone()[0] > 0:
-            return {"error": f"El documento {numero_documento} ya está registrado"}
+            return JSONResponse({"error": f"El documento {numero_documento} ya está registrado"}, status_code=400)
+
+        # Validar que el correo no esté ya registrado
+        cursor.execute("SELECT COUNT(*) FROM correo_persona WHERE correo = %s", (correo,))
+        if cursor.fetchone()[0] > 0:
+            return JSONResponse({"error": f"El correo {correo} ya está registrado por otro trabajador"}, status_code=400)
 
         # ── Leer y validar archivos (MIME real por magic bytes) ──────────
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -1504,12 +1509,11 @@ async def crear_trabajador(
             VALUES (%s, %s)
         """, (id_persona, celular))
         
-        # 3. Insertar correo (opcional)
-        if correo:
-            cursor.execute("""
-                INSERT INTO correo_persona (id_persona, correo)
-                VALUES (%s, %s)
-            """, (id_persona, correo))
+        # 3. Insertar correo (obligatorio)
+        cursor.execute("""
+            INSERT INTO correo_persona (id_persona, correo)
+            VALUES (%s, %s)
+        """, (id_persona, correo))
 
         # 3.5 Guardar ciudades de servicio
         if ciudades_servicio:
