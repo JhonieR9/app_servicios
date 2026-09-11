@@ -1197,6 +1197,18 @@ document.addEventListener('click', function(e) {
 
 // ── AUTOCOMPLETE DE DIRECCIÓN (Mapbox Geocoding) ──
 let direccionTimer = null;
+let _userProximityLat = null;
+let _userProximityLng = null;
+
+// Obtener proximidad del usuario al cargar la página para mejorar sugerencias
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+        pos => { _userProximityLat = pos.coords.latitude; _userProximityLng = pos.coords.longitude; },
+        () => {},
+        { timeout: 5000, maximumAge: 60000 }
+    );
+}
+
 function buscarDireccion(q) {
     clearTimeout(direccionTimer);
     const dd = document.getElementById('direccionDropdown');
@@ -1204,32 +1216,61 @@ function buscarDireccion(q) {
     if (!q || q.length < 3) { dd.style.display = 'none'; return; }
 
     direccionTimer = setTimeout(async () => {
-        const ciudad = document.getElementById('ciudadHidden') ? document.getElementById('ciudadHidden').value : '';
-        const proximity = ciudad ? `&proximity=ip` : '';
-        const bbox = '&bbox=-79.0,-4.2,-66.8,13.5'; // Colombia bounds
-        const query = ciudad ? `${q}, ${ciudad}, Colombia` : `${q}, Colombia`;
+        // Proximidad: usar GPS del usuario si disponible, si no el centro de Colombia
+        const proxLat = _userProximityLat || 4.7110;
+        const proxLng = _userProximityLng || -74.0721;
+
+        // Ciudad seleccionada para refinar la búsqueda
+        const ciudad = document.getElementById('ciudadHidden')?.value || '';
+        const query  = ciudad ? `${q}, ${ciudad}, Colombia` : `${q}, Colombia`;
+
+        // bbox Colombia completo
+        const bbox = '&bbox=-79.0,-4.2,-66.8,13.5';
 
         try {
-            const res = await fetch(
-                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&country=co&limit=5&types=address,poi,neighborhood${bbox}`
-            );
+            const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json`
+                + `?access_token=${MAPBOX_TOKEN}`
+                + `&country=co`
+                + `&proximity=${proxLng},${proxLat}`
+                + `&limit=6`
+                + `&language=es`
+                + `&types=address,poi,neighborhood,locality`
+                + bbox;
+
+            const res  = await fetch(url);
             const data = await res.json();
+
             if (!data.features || data.features.length === 0) {
-                dd.style.display = 'none'; return;
+                dd.innerHTML = '<div style="padding:12px 14px;font-size:0.83rem;color:#94a3b8">No se encontraron resultados</div>';
+                dd.style.display = 'block';
+                return;
             }
+
             dd.innerHTML = data.features.map((f, idx) => {
-                const nombre = f.place_name.replace(', Colombia', '').replace(/"/g, '&quot;');
+                // Extraer nombre corto y contexto (barrio, ciudad)
+                const nombre    = f.text || f.place_name.split(',')[0];
+                const contexto  = f.place_name
+                    .replace(', Colombia', '')
+                    .replace(f.text + ', ', '')
+                    .split(',').slice(0, 2).join(',');
+                const tipo      = f.place_type?.[0];
+                const icono     = tipo === 'poi' ? '📍' : tipo === 'neighborhood' ? '🏘️' : '🏠';
                 return `<div onclick="selDireccionIdx(${idx})"
-                    style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:0.85rem;color:#1e293b"
+                    style="padding:12px 14px;cursor:pointer;border-bottom:1px solid #f8fafc;
+                           display:flex;align-items:flex-start;gap:10px"
                     onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='white'">
-                    <div style="font-weight:600">${f.text || ''}</div>
-                    <div style="font-size:0.75rem;color:#64748b;margin-top:2px">${nombre}</div>
+                    <span style="font-size:1.1rem;flex-shrink:0;margin-top:1px">${icono}</span>
+                    <div>
+                        <div style="font-weight:700;font-size:0.87rem;color:#0f172a">${nombre}</div>
+                        <div style="font-size:0.73rem;color:#64748b;margin-top:2px">${contexto}</div>
+                    </div>
                 </div>`;
             }).join('');
+
             window._direccionFeatures = data.features;
             dd.style.display = 'block';
         } catch(e) { dd.style.display = 'none'; }
-    }, 400);
+    }, 350);
 }
 
 function selDireccion(lat, lng, nombre, full) {
@@ -1244,9 +1285,24 @@ function selDireccionIdx(idx) {
     if (!f) return;
     const nombre = f.place_name.replace(', Colombia', '');
     document.getElementById('direccionInput').value = nombre;
-    document.getElementById('direccionLat').value = f.center[1];
-    document.getElementById('direccionLng').value = f.center[0];
+    document.getElementById('direccionLat').value   = f.center[1];
+    document.getElementById('direccionLng').value   = f.center[0];
     document.getElementById('direccionDropdown').style.display = 'none';
+
+    // Autocompletar ciudad/departamento si no está seleccionado
+    if (!document.getElementById('ciudadHidden').value) {
+        const ctx        = f.context || [];
+        const cityCtx    = ctx.find(c => c.id.startsWith('place'));
+        const regionCtx  = ctx.find(c => c.id.startsWith('region'));
+        if (cityCtx) {
+            document.getElementById('ciudadHidden').value       = cityCtx.text.toUpperCase();
+            document.getElementById('departamentoHidden').value = regionCtx ? regionCtx.text.toUpperCase() : '';
+            document.getElementById('municipioConfirmText').textContent =
+                cityCtx.text + (regionCtx ? ', ' + regionCtx.text : '');
+            document.getElementById('municipioConfirm').style.display = 'flex';
+            document.getElementById('municipioBuscar').value = cityCtx.text;
+        }
+    }
 }
 
 document.getElementById('municipioBuscar').addEventListener('keydown', function(e) {
