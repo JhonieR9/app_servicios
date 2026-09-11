@@ -352,7 +352,7 @@
 <!-- TOP BAR -->
 <div class="top-bar">
     <div class="top-bar-row">
-        <a href="javascript:history.back()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+        <a href="javascript:void(0)" onclick="volverAtras()" class="back-btn"><i class="bi bi-arrow-left"></i></a>
         <div class="top-bar-title">
             <h1>Solicitar Servicio</h1>
             <p>Encuentra al profesional ideal en minutos</p>
@@ -870,6 +870,14 @@ const CHIPS = {
 };
 
 // STEP NAVIGATION
+function volverAtras() {
+    if (currentStep > 1) {
+        goStep(currentStep - 1, true);
+    } else {
+        window.location.href = '/cliente/panel';
+    }
+}
+
 function goStep(n, isBack) {
     const current = document.getElementById('step' + currentStep);
     const next    = document.getElementById('step' + n);
