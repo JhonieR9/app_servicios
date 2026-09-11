@@ -1304,7 +1304,8 @@ async def iniciar_chat_directo(
     id_trabajador: int = Form(...),
     categoria:     str = Form("Servicio general"),
     mensaje_inicial: str = Form(None),
-    direccion:     str = Form(None)
+    direccion:     str = Form(None),
+    ciudad:        str = Form(None)
 ):
     """
     Crea una solicitud pendiente y un mensaje inicial en el chat.
@@ -1344,11 +1345,11 @@ async def iniciar_chat_directo(
         titulo = f"{categoria} - {trabajador['nombre_completo']}"
         cursor.execute("""
             INSERT INTO solicitudes_servicio
-            (id_cliente, id_trabajador, id_categoria, titulo, descripcion, estado, fecha_solicitud, metodo_pago, direccion_servicio)
-            VALUES (%s, %s, %s, %s, %s, 'pendiente', NOW(), 'nequi', %s)
+            (id_cliente, id_trabajador, id_categoria, titulo, descripcion, estado, fecha_solicitud, metodo_pago, direccion_servicio, ciudad)
+            VALUES (%s, %s, %s, %s, %s, 'pendiente', NOW(), 'nequi', %s, %s)
         """, (id_cliente, id_trabajador, id_categoria, titulo,
               mensaje_inicial or f"Solicitud de {nombre_cliente}",
-              direccion or None))
+              direccion or None, ciudad or None))
         id_solicitud = cursor.lastrowid
 
         # Mensaje de sistema

@@ -464,11 +464,14 @@
     // ── Solicitar ──
     function solicitarServicio(id, nombre, categoria) {
         const idCliente = parseInt(localStorage.getItem('id_cliente') || 0);
+        // Obtener ciudad del trabajador seleccionado
+        const trab = trabajadoresData.find(t => t.id === id);
+        const ciudad = trab ? (trab.ciudad || '') : '';
         if (!idCliente) {
             window.location.href = `/cliente/solicitar_servicio?trabajador_id=${id}&trabajador_nombre=${encodeURIComponent(nombre)}&categoria=${encodeURIComponent(categoria)}`;
             return;
         }
-        abrirModalChat(id, nombre, categoria, idCliente);
+        abrirModalChat(id, nombre, categoria, idCliente, ciudad);
     }
 
     // ── Favorito ──
@@ -488,7 +491,7 @@
     }
 
     // ── Chat Modal ──
-    function abrirModalChat(idTrabajador, nombre, categoria, idCliente) {
+    function abrirModalChat(idTrabajador, nombre, categoria, idCliente, ciudad) {
         let modal = document.getElementById('chatModal');
         if (!modal) {
             modal = document.createElement('div');
@@ -526,6 +529,7 @@
         modal._idTrabajador = idTrabajador;
         modal._idCliente = idCliente;
         modal._categoria = categoria;
+        modal._ciudad = ciudad || '';
         document.getElementById('modalNombre').textContent = '💬 Chatear con ' + nombre;
         document.getElementById('modalCategoria').textContent = '🔧 ' + categoria;
         document.getElementById('modalMensaje').value = '';
@@ -557,6 +561,7 @@
         fd.append('id_cliente', modal._idCliente);
         fd.append('id_trabajador', modal._idTrabajador);
         fd.append('categoria', modal._categoria);
+        fd.append('ciudad', modal._ciudad || '');
         fd.append('direccion', direccion);
         if (mensaje) fd.append('mensaje_inicial', mensaje);
 
