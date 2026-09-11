@@ -200,7 +200,12 @@ def mostrar_solicitar_servicio(request: Request):
     sesion = auth.verificar_sesion(token)
     if not sesion or sesion['tipo_usuario'] != 'cliente':
         return RedirectResponse(url="/cliente/login", status_code=302)
-    return templates.TemplateResponse("clientes/solicitar_servicio.html", {"request": request})
+    import os
+    google_maps_key = os.getenv("GOOGLE_MAPS_KEY", "")
+    return templates.TemplateResponse("clientes/solicitar_servicio.html", {
+        "request": request,
+        "google_maps_key": google_maps_key
+    })
 
 @router.get("/seguimiento", response_class=HTMLResponse)
 def mostrar_seguimiento(request: Request):
