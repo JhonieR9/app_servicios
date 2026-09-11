@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Form, Request, Response
-from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from config import conectar_bd

@@ -1379,7 +1379,7 @@ async def crear_trabajador(
 
         # ── Leer y validar archivos (MIME real por magic bytes) ──────────
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        ip = "registro"  # no hay request aquí — se loguea como origen registro
+        ip = security._get_ip(request)
 
         # Foto identificación (imagen)
         foto_bytes = await foto_identificacion.read()
@@ -1394,7 +1394,8 @@ async def crear_trabajador(
             foto_path = os.path.join(UPLOAD_FOLDER, foto_filename)
             with open(foto_path, "wb") as f:
                 f.write(foto_bytes)
-        except: pass
+        except Exception as e_disco:
+            security.security_logger.warning(f"DISCO_ERROR foto_identificacion: {e_disco}")
 
         # Antecedentes (documento: PDF o imagen)
         antecedentes_bytes = await foto_antecedentes.read()
@@ -1410,7 +1411,8 @@ async def crear_trabajador(
                 ant_path = os.path.join(UPLOAD_FOLDER, antecedentes_filename)
                 with open(ant_path, "wb") as f:
                     f.write(antecedentes_bytes)
-        except: pass
+        except Exception as e_disco:
+            security.security_logger.warning(f"DISCO_ERROR antecedentes: {e_disco}")
 
         # Recomendaciones (documento: PDF o imagen)
         recomend_bytes = await recomendaciones_archivo.read()
@@ -1426,7 +1428,8 @@ async def crear_trabajador(
                 rec_path = os.path.join(UPLOAD_FOLDER, recomend_filename)
                 with open(rec_path, "wb") as f:
                     f.write(recomend_bytes)
-        except: pass
+        except Exception as e_disco:
+            security.security_logger.warning(f"DISCO_ERROR recomendaciones: {e_disco}")
 
         # Certificado de estudio (documento: PDF o imagen)
         cert_estudio_bytes = await certificado_estudio.read()
@@ -1441,7 +1444,8 @@ async def crear_trabajador(
             cert_path = os.path.join(UPLOAD_FOLDER, cert_estudio_filename)
             with open(cert_path, "wb") as f:
                 f.write(cert_estudio_bytes)
-        except: pass
+        except Exception as e_disco:
+            security.security_logger.warning(f"DISCO_ERROR certificado_estudio: {e_disco}")
 
         # Foto de perfil (imagen)
         foto_perfil_bytes = await foto_perfil.read()
@@ -1591,7 +1595,8 @@ async def crear_trabajador(
             resumen_refs = '; '.join([f"{str(ref_nombres[i])} - {str(ref_celulares[i])}" for i in range(len(ref_nombres)) if i < len(ref_celulares) and str(ref_nombres[i]).strip()])
             if resumen_refs:
                 cursor.execute("UPDATE detalles_persona SET recomendaciones = %s WHERE id_persona = %s", (resumen_refs, id_persona))
-        except: pass
+        except Exception as e_ref:
+            print(f"[WARN] Error guardando referencias personales id={id_persona}: {e_ref}")
 
         conexion.commit()
 
@@ -1943,7 +1948,7 @@ def test_registros():
     conexion = conectar_bd()
     if not conexion:
         return {"error": "No se pudo conectar a la base de datos"}
-    
+    cursor = None
     try:
         cursor = conexion.cursor(dictionary=True)
         cursor.execute("SELECT COUNT(*) as total FROM personas")
@@ -1978,7 +1983,7 @@ def listar_registros(request: Request):
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión", "registros": []}, status_code=500)
-    
+    cursor = None
     try:
         cursor = conexion.cursor(dictionary=True)
         
