@@ -383,7 +383,7 @@
 
     <form id="formSolicitud">
         <!-- Hidden fields -->
-        <input type="hidden" id="id_cliente" name="id_cliente" value="1">
+        <input type="hidden" id="id_cliente" name="id_cliente" value="">
         <input type="hidden" id="id_categoria" name="id_categoria">
         <input type="hidden" id="id_trabajador" name="id_trabajador">
         <input type="hidden" id="titulo" name="titulo">
@@ -1538,6 +1538,20 @@ async function confirmarSolicitud() {
     const btn     = document.getElementById('btnConfirmar');
     btn.disabled  = true;
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
+
+    // Garantizar que id_cliente está cargado antes de enviar
+    if (!document.getElementById('id_cliente').value) {
+        try {
+            const r = await fetch('/cliente/mi-perfil', { credentials: 'include' });
+            if (r.ok) {
+                const d = await r.json();
+                if (d && d.id_cliente) {
+                    document.getElementById('id_cliente').value = d.id_cliente;
+                    localStorage.setItem('id_cliente', d.id_cliente);
+                }
+            }
+        } catch(e) {}
+    }
 
     const formData = new FormData(document.getElementById('formSolicitud'));
 
