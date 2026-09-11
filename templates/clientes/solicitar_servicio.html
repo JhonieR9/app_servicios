@@ -465,41 +465,89 @@
                 <div class="card-title">¿Dónde y cuándo?</div>
                 <div class="card-sub">Indica la ubicación y urgencia del servicio</div>
 
-                <!-- Ubicación -->
-                <div class="form-group">
-                    <label>Ciudad / Municipio *</label>
-                    <div class="municipio-wrap">
-                        <div class="municipio-input-box">
-                            <i class="bi bi-search"></i>
-                            <input type="text" id="municipioBuscar"
-                                   placeholder="Escribe tu municipio..."
-                                   autocomplete="off"
-                                   oninput="filtrarMunicipios(this.value)"
-                                   onfocus="filtrarMunicipios(this.value)">
-                            <span class="municipio-clear" id="municipioClear" onclick="limpiarMunicipio()">✕</span>
+                <!-- ¿Para quién es el servicio? -->
+                <div class="form-group" id="paraQuienGroup">
+                    <label>¿Para quién es el servicio?</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+                        <div id="btnParaMi" onclick="selParaQuien('yo')"
+                            style="border:2px solid #667eea;background:#f5f3ff;border-radius:16px;
+                                   padding:18px 12px;text-align:center;cursor:pointer;transition:all .2s">
+                            <div style="font-size:2rem">🙋</div>
+                            <div style="font-weight:800;color:#4f46e5;margin-top:6px">Para mí</div>
+                            <div style="font-size:0.72rem;color:#6366f1;margin-top:4px">Usamos tu ubicación GPS</div>
                         </div>
-                        <div class="municipio-dropdown" id="municipioDropdown"></div>
-                    </div>
-                    <div class="municipio-confirm" id="municipioConfirm">
-                        📍 <span id="municipioConfirmText"></span>
+                        <div id="btnParaOtro" onclick="selParaQuien('otro')"
+                            style="border:2px solid #e2e8f0;background:white;border-radius:16px;
+                                   padding:18px 12px;text-align:center;cursor:pointer;transition:all .2s">
+                            <div style="font-size:2rem">👥</div>
+                            <div style="font-weight:800;color:#374151;margin-top:6px">Para otra persona</div>
+                            <div style="font-size:0.72rem;color:#6b7280;margin-top:4px">Escribe la dirección exacta</div>
+                        </div>
                     </div>
                 </div>
-                <div class="form-group" style="position:relative">
-                    <label>Dirección *</label>
-                    <input type="text" name="direccion_servicio" id="direccionInput"
-                           placeholder="Escribe dirección, barrio..."
-                           autocomplete="off"
-                           oninput="buscarDireccion(this.value)"
-                           required>
-                    <div id="direccionDropdown" style="
-                        display:none; position:absolute; z-index:1000; width:100%;
-                        background:white; border:1px solid #e2e8f0; border-radius:10px;
-                        max-height:200px; overflow-y:auto; top:100%;
-                        box-shadow:0 8px 24px rgba(0,0,0,0.12);
-                    "></div>
-                    <input type="hidden" id="direccionLat" value="">
-                    <input type="hidden" id="direccionLng" value="">
-                    <small style="color:#94a3b8;font-size:0.72rem">Escribe y selecciona de las sugerencias</small>
+
+                <!-- GPS automático (Para mí) -->
+                <div id="ubicacionGPS" style="display:none">
+                    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #86efac;
+                                border-radius:16px;padding:16px;margin-bottom:16px;text-align:center">
+                        <div id="gpsStatus" style="font-size:0.88rem;font-weight:700;color:#166534">
+                            <span id="gpsSpinner">📡 Obteniendo tu ubicación...</span>
+                        </div>
+                        <div id="gpsDireccion" style="font-size:0.78rem;color:#15803d;margin-top:6px;display:none"></div>
+                    </div>
+                </div>
+
+                <!-- Dirección manual (Para otra persona) — estilo Uber -->
+                <div id="ubicacionManual" style="display:none">
+                    <!-- Ciudad -->
+                    <div class="form-group">
+                        <label>Ciudad / Municipio *</label>
+                        <div class="municipio-wrap">
+                            <div class="municipio-input-box">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="municipioBuscar"
+                                       placeholder="Escribe tu municipio..."
+                                       autocomplete="off"
+                                       oninput="filtrarMunicipios(this.value)"
+                                       onfocus="filtrarMunicipios(this.value)">
+                                <span class="municipio-clear" id="municipioClear" onclick="limpiarMunicipio()">✕</span>
+                            </div>
+                            <div class="municipio-dropdown" id="municipioDropdown"></div>
+                        </div>
+                        <div class="municipio-confirm" id="municipioConfirm">
+                            📍 <span id="municipioConfirmText"></span>
+                        </div>
+                    </div>
+                    <!-- Dirección exacta estilo Uber -->
+                    <div class="form-group" style="position:relative">
+                        <label>Dirección exacta *</label>
+                        <div style="position:relative">
+                            <i class="bi bi-geo-alt-fill" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#667eea;font-size:1.1rem;z-index:1"></i>
+                            <input type="text" name="direccion_servicio" id="direccionInput"
+                                   placeholder="Calle, carrera, barrio, referencia..."
+                                   autocomplete="off"
+                                   oninput="buscarDireccion(this.value)"
+                                   style="padding-left:40px"
+                                   required>
+                        </div>
+                        <div id="direccionDropdown" style="
+                            display:none; position:absolute; z-index:1000; width:100%;
+                            background:white; border:1px solid #e2e8f0; border-radius:10px;
+                            max-height:200px; overflow-y:auto; top:100%;
+                            box-shadow:0 8px 24px rgba(0,0,0,0.12);
+                        "></div>
+                        <input type="hidden" id="direccionLat" value="">
+                        <input type="hidden" id="direccionLng" value="">
+                        <small style="color:#94a3b8;font-size:0.72rem">Escribe y selecciona de las sugerencias para mayor precisión</small>
+                    </div>
+                    <!-- Referencia adicional -->
+                    <div class="form-group">
+                        <label>Referencia adicional <span style="color:#94a3b8;font-weight:400">(opcional)</span></label>
+                        <input type="text" id="referenciaInput" name="referencia_ubicacion"
+                               placeholder="Apto 301, casa amarilla, portería norte..."
+                               style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.88rem;outline:none"
+                               onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
+                    </div>
                 </div>
 
                 <!-- Urgencia -->
@@ -1230,16 +1278,117 @@ let trabajadorSeleccionado = null;
 let mapaStep4 = null;
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiamhvbmllcmNlc3BlZGVzMTItIiwiYSI6ImNtb25qeGJ1dTBtNGoycnB2NWZtb3V1ZDcifQ.oWycZCkDrln9HOGRaWT8Xg';
 
+// ── PARA QUIÉN ES EL SERVICIO ─────────────────────────────────────
+let paraQuien = null; // 'yo' o 'otro'
+
+function selParaQuien(opcion) {
+    paraQuien = opcion;
+    const btnYo   = document.getElementById('btnParaMi');
+    const btnOtro = document.getElementById('btnParaOtro');
+    const gpsDiv  = document.getElementById('ubicacionGPS');
+    const manDiv  = document.getElementById('ubicacionManual');
+
+    if (opcion === 'yo') {
+        btnYo.style.borderColor   = '#667eea';
+        btnYo.style.background    = '#f5f3ff';
+        btnOtro.style.borderColor = '#e2e8f0';
+        btnOtro.style.background  = 'white';
+        gpsDiv.style.display = 'block';
+        manDiv.style.display = 'none';
+        obtenerGPS();
+    } else {
+        btnOtro.style.borderColor = '#667eea';
+        btnOtro.style.background  = '#f5f3ff';
+        btnYo.style.borderColor   = '#e2e8f0';
+        btnYo.style.background    = 'white';
+        gpsDiv.style.display = 'none';
+        manDiv.style.display = 'block';
+    }
+}
+
+function obtenerGPS() {
+    const spinner = document.getElementById('gpsSpinner');
+    const dirDiv  = document.getElementById('gpsDireccion');
+    spinner.textContent = '📡 Obteniendo tu ubicación...';
+    dirDiv.style.display = 'none';
+
+    if (!navigator.geolocation) {
+        spinner.textContent = '❌ GPS no disponible — escribe tu dirección';
+        selParaQuien('otro');
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            // Guardar coordenadas
+            document.getElementById('direccionLat').value = lat;
+            document.getElementById('direccionLng').value = lng;
+            spinner.textContent = '✅ Ubicación obtenida';
+            // Geocodificar inverso para mostrar la dirección
+            try {
+                const r = await fetch(
+                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=es&limit=1`
+                );
+                const d = await r.json();
+                const lugar = d.features?.[0]?.place_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                dirDiv.textContent = '📍 ' + lugar;
+                dirDiv.style.display = 'block';
+                // Llenar campos ocultos con la dirección geocodificada
+                const partes = lugar.split(',');
+                document.querySelector('[name="direccion_servicio"]').value = partes[0] || lugar;
+                // Intentar extraer ciudad del resultado
+                const ctx = d.features?.[0]?.context || [];
+                const cityCtx = ctx.find(c => c.id.startsWith('place'));
+                const regionCtx = ctx.find(c => c.id.startsWith('region'));
+                if (cityCtx) {
+                    document.getElementById('ciudadHidden').value = cityCtx.text.toUpperCase();
+                    document.getElementById('municipioConfirmText').textContent = cityCtx.text + (regionCtx ? ', ' + regionCtx.text : '');
+                    document.getElementById('municipioConfirm').style.display = 'flex';
+                    document.getElementById('departamentoHidden').value = regionCtx ? regionCtx.text.toUpperCase() : '';
+                }
+            } catch(e) {
+                dirDiv.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                dirDiv.style.display = 'block';
+                document.querySelector('[name="direccion_servicio"]').value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            }
+        },
+        (err) => {
+            spinner.textContent = '⚠️ No se pudo obtener el GPS — escribe tu dirección';
+            selParaQuien('otro');
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
 async function irAPaso4() {
     const alertEl = document.getElementById('alertBox');
-    if (!document.getElementById('direccionInput').value.trim()) {
+
+    // Validar que se eligió para quién
+    if (!paraQuien) {
         alertEl.className = 'alert error'; alertEl.style.display = 'block';
-        alertEl.textContent = 'Por favor ingresa la dirección del servicio'; return;
+        alertEl.textContent = 'Por favor indica si el servicio es para ti o para otra persona'; return;
     }
-    if (!document.getElementById('ciudadHidden').value) {
+
+    // Si es para otra persona, validar dirección y ciudad
+    if (paraQuien === 'otro') {
+        if (!document.getElementById('direccionInput').value.trim()) {
+            alertEl.className = 'alert error'; alertEl.style.display = 'block';
+            alertEl.textContent = 'Por favor ingresa la dirección del servicio'; return;
+        }
+        if (!document.getElementById('ciudadHidden').value) {
+            alertEl.className = 'alert error'; alertEl.style.display = 'block';
+            alertEl.textContent = 'Por favor selecciona tu ciudad'; return;
+        }
+    }
+
+    // Si es para mí, validar que el GPS respondió
+    if (paraQuien === 'yo' && !document.getElementById('direccionLat').value) {
         alertEl.className = 'alert error'; alertEl.style.display = 'block';
-        alertEl.textContent = 'Por favor selecciona tu ciudad'; return;
+        alertEl.textContent = 'Esperando tu ubicación GPS... intenta de nuevo'; return;
     }
+
     if (!document.getElementById('inputNombre').value.trim()) {
         alertEl.className = 'alert error'; alertEl.style.display = 'block';
         alertEl.textContent = 'Por favor ingresa tu nombre'; return;
