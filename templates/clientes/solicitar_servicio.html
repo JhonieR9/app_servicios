@@ -1226,7 +1226,7 @@ function cargarGoogleMaps(callback) {
     _googleMapsLoaded = true;
     window._gmCallback = callback;
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places&language=es&region=CO&callback=_gmCallback`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places,marker&language=es&region=CO&loading=async&callback=_gmCallback`;
     s.async = true; s.defer = true;
     document.head.appendChild(s);
 }
