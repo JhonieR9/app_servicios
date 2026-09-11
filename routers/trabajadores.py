@@ -102,10 +102,17 @@ def listar_mis_solicitudes(id_trabajador: int = None):
                     LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
                     LEFT JOIN telefono_cliente tc ON c.id_cliente = tc.id_cliente
                     WHERE s.id_trabajador = %s
-                       OR (s.estado = 'pendiente' AND cat.nombre_categoria IN ({placeholders}))
+                       OR (
+                           s.estado = 'pendiente'
+                           AND cat.nombre_categoria IN ({placeholders})
+                           AND s.id_solicitud NOT IN (
+                               SELECT id_solicitud FROM solicitudes_rechazadas_trabajador
+                               WHERE id_persona = %s
+                           )
+                       )
                     ORDER BY s.fecha_solicitud DESC
                     LIMIT 50
-                """, (id_trabajador, *cats))
+                """, (id_trabajador, *cats, id_trabajador))
             else:
                 cursor.execute("""
                     SELECT s.id_solicitud, s.id_cliente, s.titulo, s.descripcion, s.estado,
@@ -322,12 +329,30 @@ def actualizar_estado_solicitud(
                         cotizacion_nota = NULL, cotizacion_fecha = NULL
                     WHERE id_solicitud = %s
                 """, (id_solicitud,))
+                # Registrar que este trabajador la rechazó — no le volverá a aparecer
+                if id_trabajador:
+                    try:
+                        cursor.execute("""
+                            INSERT IGNORE INTO solicitudes_rechazadas_trabajador
+                                (id_solicitud, id_persona)
+                            VALUES (%s, %s)
+                        """, (id_solicitud, id_trabajador))
+                    except Exception:
+                        pass
                 conexion.commit()
                 return JSONResponse({"mensaje": "Solicitud liberada — otros profesionales pueden tomarla"})
             elif sol and sol[0] == 'pendiente' and not sol[1]:
-                # Solicitud pendiente sin trabajador asignado — el trabajador solo la ignora
-                # No cancelar, solo informar que ya no la verá
-                conexion.commit()
+                # Solicitud pendiente sin trabajador asignado — registrar rechazo y punto
+                if id_trabajador:
+                    try:
+                        cursor.execute("""
+                            INSERT IGNORE INTO solicitudes_rechazadas_trabajador
+                                (id_solicitud, id_persona)
+                            VALUES (%s, %s)
+                        """, (id_solicitud, id_trabajador))
+                        conexion.commit()
+                    except Exception:
+                        pass
                 return JSONResponse({"mensaje": "Solicitud ignorada — seguirá disponible para otros profesionales"})
             else:
                 # En proceso o completada → cancelar normal
@@ -1629,7 +1654,7 @@ async def crear_trabajador(
 def listar_solicitudes_pendientes(id_categoria: int = None):
     conexion = conectar_bd()
     cursor = conexion.cursor(dictionary=True)
-    
+
     if id_categoria:
         sql = """
         SELECT s.*, c.nombre_completo as nombre_cliente, cat.nombre_categoria

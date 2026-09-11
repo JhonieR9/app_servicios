@@ -476,6 +476,20 @@ def crear_tablas():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """)
 
+        # Tabla para registrar solicitudes rechazadas por un trabajador
+        # Evita que la misma solicitud le aparezca de nuevo tras rechazarla
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS `solicitudes_rechazadas_trabajador` (
+              `id`            int NOT NULL AUTO_INCREMENT,
+              `id_solicitud`  int NOT NULL,
+              `id_persona`    int NOT NULL,
+              `fecha_rechazo` datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `uq_rechazo` (`id_solicitud`, `id_persona`),
+              KEY `idx_rechazos_persona` (`id_persona`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """)
+
         conn.commit()
         cursor.close()
         conn.close()
