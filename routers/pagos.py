@@ -385,6 +385,32 @@ def admin_dispersiones(request: Request):
     return templates.TemplateResponse("trabajadores/dispersiones.html", {"request": request})
 
 
+@router.post("/admin/confirmar-pago-manual")
+def confirmar_pago_manual(request: Request, id_solicitud: int = Form(...)):
+    """Admin marca manualmente un pago como recibido (fallback cuando el webhook falla)."""
+    from routers.trabajadores import verificar_admin
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            UPDATE solicitudes_servicio
+            SET pago_estado = 'pagado'
+            WHERE id_solicitud = %s AND estado = 'completada'
+        """, (id_solicitud,))
+        if cursor.rowcount == 0:
+            return JSONResponse({"error": "Solicitud no encontrada o no completada"}, status_code=404)
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": f"Pago de solicitud #{id_solicitud} marcado como recibido"})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
 @router.get("/admin/dispersiones-api")
 def api_dispersiones(tab: str = "pendientes"):
     """API: lista pagos aprobados pendientes o ya dispersados."""

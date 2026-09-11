@@ -486,7 +486,7 @@
                 </div>
             </div>` : ''}
 
-            ${estado === 'completada' ? `
+            ${estado === 'completada' && s.pago_estado !== 'pagado' ? `
             <div style="margin:0 18px 12px;background:linear-gradient(135deg,#fffbeb,#fef3c7);
                         border:2px solid #fbbf24;border-radius:16px;padding:18px;text-align:center;
                         box-shadow:0 4px 16px rgba(251,191,36,0.15)">
@@ -513,6 +513,14 @@
                 </button>
                 <div style="font-size:0.7rem;color:#94a3b8;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">
                     <span>Nequi</span>·<span>Daviplata</span>·<span>Tarjeta</span>·<span>PSE</span>·<span>Bre-B</span>
+                </div>
+            </div>` : ''}
+
+            ${estado === 'completada' && s.pago_estado === 'pagado' ? `
+            <div style="margin:0 18px 12px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);
+                        border:2px solid #6ee7b7;border-radius:16px;padding:14px 18px;text-align:center">
+                <div style="font-size:0.85rem;font-weight:800;color:#065f46">
+                    ✅ Pago recibido — $${Number(s.precio_final||0).toLocaleString('es-CO')}
                 </div>
             </div>` : ''}
 
