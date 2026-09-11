@@ -215,8 +215,12 @@
         const wrap = document.getElementById('messagesWrap');
         const empty = document.getElementById('emptyChat');
 
-        if (!mensajes.length) { empty.style.display = 'flex'; return; }
-        empty.style.display = 'none';
+        if (!wrap) return;  // DOM aún no listo
+        if (!mensajes || !mensajes.length) {
+            if (empty) empty.style.display = 'flex';
+            return;
+        }
+        if (empty) empty.style.display = 'none';
 
         let lastDate = '';
         let html = '';
@@ -308,7 +312,8 @@
     function agregarNuevosMensajes(nuevos) {
         const wrap  = document.getElementById('messagesWrap');
         const empty = document.getElementById('emptyChat');
-        empty.style.display = 'none';
+        if (!wrap) return;
+        if (empty) empty.style.display = 'none';
         const atBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 80;
 
         nuevos.forEach(m => {
