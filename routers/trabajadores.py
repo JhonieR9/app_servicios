@@ -1329,7 +1329,7 @@ async def crear_trabajador(
     departamento: str = Form(None),
     codigo_dane: str = Form(...),
     celular: str = Form(...),
-    correo: str = Form(None),
+    correo: str = Form(...),
     ciudades_servicio: str = Form(None),
     habilidades_tipo: str = Form(None),   # opcional ahora
     disponibilidad: str = Form(...),
@@ -1354,7 +1354,13 @@ async def crear_trabajador(
     foto_perfil: UploadFile = File(...)
 ):
     import os
+    import re
     from datetime import datetime
+
+    # Validar formato de correo en backend
+    if not correo or not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', correo.strip()):
+        return JSONResponse({"error": "El correo electrónico es obligatorio y debe tener un formato válido"}, status_code=400)
+    correo = correo.strip().lower()
 
     # ── Mapear valores de texto a IDs numéricos ──────────────────
     TIPO_DOC_MAP = {

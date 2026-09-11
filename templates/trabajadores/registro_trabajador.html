@@ -383,10 +383,10 @@
                                 <small class="text-muted">10 dígitos sin espacios</small>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Correo Electrónico (opcional)</label>
+                                <label class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
                                 <input type="email" class="form-control" name="correo" 
-                                       placeholder="ejemplo@correo.com">
-                                <small class="text-muted">Formato: usuario@dominio.com</small>
+                                       placeholder="ejemplo@correo.com" required>
+                                <small class="text-muted">Recibirás notificaciones de nuevas solicitudes</small>
                             </div>
                         </div>
                     </div>
@@ -1258,6 +1258,7 @@
             {name:'genero',             label:'Género'},
             {name:'nombre_completo',    label:'Nombre Completo'},
             {name:'celular',            label:'Celular'},
+            {name:'correo',             label:'Correo Electrónico'},
             {name:'disponibilidad',     label:'Horario'},
             {name:'disponibilidad_dias',label:'Días Disponibles'},
             {name:'nivel_estudio',      label:'Nivel de Estudio'},
@@ -1269,6 +1270,18 @@
                 mostrarAlerta('danger', 'El campo <strong>' + campos[i].label + '</strong> es obligatorio');
                 el.scrollIntoView({behavior:'smooth', block:'center'});
                 el.focus();
+                return;
+            }
+        }
+
+        // Validar formato de correo
+        var correoEl = document.querySelector('[name="correo"]');
+        if (correoEl) {
+            var correoVal = correoEl.value.trim();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoVal)) {
+                mostrarAlerta('danger', 'El <strong>Correo Electrónico</strong> no tiene un formato válido');
+                correoEl.scrollIntoView({behavior:'smooth', block:'center'});
+                correoEl.focus();
                 return;
             }
         }
@@ -1419,12 +1432,12 @@
             });
         }
 
-        // ── Correo electrónico (opcional pero válido si se llena) ──
+        // ── Correo electrónico (obligatorio y válido) ──
         var correo = document.querySelector('[name="correo"]');
         if (correo) {
             correo.addEventListener('input', function() {
                 var v = this.value.trim();
-                if (v.length === 0) { setFieldState(this, null); return; }
+                if (v.length === 0) { setFieldState(this, false, 'El correo es obligatorio'); return; }
                 var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
                 setFieldState(this, ok, ok ? 'Correo válido' : 'Formato inválido (ej: nombre@correo.com)');
             });
