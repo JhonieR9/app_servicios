@@ -2466,6 +2466,64 @@ def corregir_ciudades(request: Request):
         if conexion and conexion.is_connected():
             conexion.close()
 
+@router.get("/admin/solicitudes-api")
+def admin_listar_solicitudes(request: Request, estado: str = "pendiente"):
+    """Admin: lista solicitudes filtrables por estado"""
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        estados_validos = ['pendiente', 'aceptada', 'en_proceso', 'completada', 'cancelada', 'todas']
+        filtro = "" if estado == "todas" else f"WHERE s.estado = '{estado}'"
+        cursor.execute(f"""
+            SELECT s.id_solicitud, s.titulo, s.estado, s.ciudad,
+                   s.fecha_solicitud, s.precio_final, s.pago_estado,
+                   c.nombre_completo as nombre_cliente,
+                   p.nombre_completo as nombre_trabajador
+            FROM solicitudes_servicio s
+            LEFT JOIN clientes c ON s.id_cliente = c.id_cliente
+            LEFT JOIN personas p ON s.id_trabajador = p.id_persona
+            {filtro}
+            ORDER BY s.id_solicitud DESC
+            LIMIT 50
+        """)
+        rows = cursor.fetchall()
+        for r in rows:
+            for k, v in r.items():
+                if hasattr(v, 'isoformat'): r[k] = str(v)
+                elif v is None: r[k] = ''
+                elif hasattr(v, '__float__'): r[k] = float(v)
+        return JSONResponse({"solicitudes": rows})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+@router.post("/admin/cancelar-solicitud")
+def admin_cancelar_solicitud(request: Request, id_solicitud: int = Form(...)):
+    """Admin: cancela cualquier solicitud pendiente"""
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("""
+            UPDATE solicitudes_servicio SET estado = 'cancelada'
+            WHERE id_solicitud = %s AND estado IN ('pendiente','aceptada','cotizacion_enviada')
+        """, (id_solicitud,))
+        if cursor.rowcount == 0:
+            return JSONResponse({"error": "Solicitud no encontrada o ya no se puede cancelar"}, status_code=400)
+        conexion.commit()
+        return JSONResponse({"ok": True, "mensaje": f"Solicitud #{id_solicitud} cancelada"})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
 @router.post("/admin/editar-registro")
 def admin_editar_registro(
     request: Request,

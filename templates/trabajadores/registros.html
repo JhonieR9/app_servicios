@@ -940,7 +940,102 @@
             }
             btn.disabled = false; btn.textContent = '💾 Guardar';
         }
+
+        // ── GESTIÓN DE SOLICITUDES ──────────────────────────────
+        let estadoFiltro = 'pendiente';
+
+        async function cargarSolicitudesAdmin() {
+            const tbody = document.getElementById('tablaSolicitudes');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando...</td></tr>';
+            try {
+                const res  = await fetch(`/trabajador/admin/solicitudes-api?estado=${estadoFiltro}`);
+                const data = await res.json();
+                const sols = data.solicitudes || [];
+                if (!sols.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay solicitudes</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = sols.map(s => `
+                    <tr>
+                        <td><strong>#${s.id_solicitud}</strong></td>
+                        <td>${s.titulo || ''}</td>
+                        <td>${s.nombre_cliente || '-'}</td>
+                        <td>${s.nombre_trabajador || '<span class="text-muted">Sin asignar</span>'}</td>
+                        <td><span class="badge bg-${s.estado==='pendiente'?'warning text-dark':s.estado==='cancelada'?'danger':s.estado==='completada'?'success':'info'}">${s.estado}</span></td>
+                        <td>
+                            ${s.estado !== 'cancelada' && s.estado !== 'completada' ? `
+                            <button class="btn btn-sm btn-outline-danger" onclick="cancelarSolicitudAdmin(${s.id_solicitud})">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </button>` : ''}
+                            ${s.estado === 'completada' && s.pago_estado !== 'pagado' ? `
+                            <button class="btn btn-sm btn-outline-success ms-1" onclick="confirmarPagoAdmin(${s.id_solicitud})">
+                                <i class="bi bi-check-circle"></i> Confirmar pago
+                            </button>` : ''}
+                        </td>
+                    </tr>`).join('');
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-danger">Error cargando</td></tr>';
+            }
+        }
+
+        async function cancelarSolicitudAdmin(id) {
+            if (!confirm(`¿Cancelar solicitud #${id}?`)) return;
+            const fd = new FormData();
+            fd.append('id_solicitud', id);
+            const res = await fetch('/trabajador/admin/cancelar-solicitud', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok) { mostrarAlerta('success', data.mensaje); cargarSolicitudesAdmin(); }
+            else mostrarAlerta('danger', data.error || 'Error');
+        }
+
+        async function confirmarPagoAdmin(id) {
+            if (!confirm(`¿Confirmar pago de solicitud #${id}?`)) return;
+            const fd = new FormData();
+            fd.append('id_solicitud', id);
+            const res = await fetch('/pago/admin/confirmar-pago-manual', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok) { mostrarAlerta('success', data.mensaje); cargarSolicitudesAdmin(); }
+            else mostrarAlerta('danger', data.error || 'Error');
+        }
     </script>
+
+    <!-- SECCIÓN GESTIÓN DE SOLICITUDES -->
+    <div class="container mt-5 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="mb-0"><i class="bi bi-briefcase-fill me-2 text-primary"></i>Gestión de Solicitudes</h5>
+                    <div class="d-flex gap-2">
+                        <select id="filtroEstado" class="form-select form-select-sm" style="width:auto"
+                            onchange="estadoFiltro=this.value; cargarSolicitudesAdmin()">
+                            <option value="pendiente">Pendientes</option>
+                            <option value="aceptada">Aceptadas</option>
+                            <option value="en_proceso">En proceso</option>
+                            <option value="completada">Completadas</option>
+                            <option value="cancelada">Canceladas</option>
+                            <option value="todas">Todas</option>
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary" onclick="cargarSolicitudesAdmin()">
+                            <i class="bi bi-arrow-clockwise"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#ID</th><th>Título</th><th>Cliente</th>
+                                <th>Trabajador</th><th>Estado</th><th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaSolicitudes">
+                            <tr><td colspan="6" class="text-center text-muted">Haz clic en Actualizar para cargar</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div></div>
 </body>
 </html>

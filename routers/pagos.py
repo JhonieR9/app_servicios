@@ -394,13 +394,33 @@ def confirmar_pago_manual(request: Request, id_solicitud: int = Form(...)):
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor()
+        # Actualizar solicitud
         cursor.execute("""
             UPDATE solicitudes_servicio
             SET pago_estado = 'pagado'
             WHERE id_solicitud = %s AND estado = 'completada'
         """, (id_solicitud,))
-        if cursor.rowcount == 0:
-            return JSONResponse({"error": "Solicitud no encontrada o no completada"}, status_code=404)
+        # Actualizar registro en pagos_solicitud (para que aparezca en dispersiones)
+        cursor.execute("""
+            UPDATE pagos_solicitud
+            SET estado_wompi = 'APPROVED', id_transaccion_wompi = CONCAT('MANUAL-', %s),
+                fecha_actualizacion = NOW()
+            WHERE id_solicitud = %s
+        """, (id_solicitud, id_solicitud))
+        # Si no existe el registro de pago, crearlo
+        cursor.execute("SELECT id FROM pagos_solicitud WHERE id_solicitud = %s LIMIT 1", (id_solicitud,))
+        if not cursor.fetchone():
+            cursor.execute("""
+                SELECT id_cliente, precio_final FROM solicitudes_servicio
+                WHERE id_solicitud = %s LIMIT 1
+            """, (id_solicitud,))
+            sol = cursor.fetchone()
+            if sol:
+                cursor.execute("""
+                    INSERT INTO pagos_solicitud
+                    (id_solicitud, id_cliente, referencia_wompi, monto, estado_wompi, fecha_creacion, fecha_actualizacion)
+                    VALUES (%s, %s, %s, %s, 'APPROVED', NOW(), NOW())
+                """, (id_solicitud, sol[0], f"MANUAL-{id_solicitud}", sol[1] or 0))
         conexion.commit()
         return JSONResponse({"ok": True, "mensaje": f"Pago de solicitud #{id_solicitud} marcado como recibido"})
     except Exception as e:
