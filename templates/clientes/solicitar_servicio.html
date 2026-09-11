@@ -1364,8 +1364,9 @@ async function cargarMapaProfesionales() {
             bounds.extend([userLng, userLat]);
 
             trabajadores.forEach(t => {
-                const lat = t.latitud || (userLat + (Math.random()-0.5)*0.04);
-                const lng = t.longitud || (userLng + (Math.random()-0.5)*0.04);
+                // Usar coordenadas del backend — ya incluyen fallback aleatorio cerca del cliente
+                const lat = parseFloat(t.latitud) || (userLat + (Math.random()-0.5)*0.02);
+                const lng = parseFloat(t.longitud) || (userLng + (Math.random()-0.5)*0.02);
                 const iniciales = (t.nombre || 'P').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
                 const calNum = parseFloat(t.calificacion) || 0;
                 const estrellas = calNum > 0 ? '★'.repeat(Math.round(calNum)) + ' ' + calNum : 'Sin calificaciones';
