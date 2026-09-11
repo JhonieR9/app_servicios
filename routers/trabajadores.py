@@ -3035,6 +3035,17 @@ def servir_archivo(id_persona: int, tipo: str):
         row = cursor.fetchone()
         
         if not row or not row[col_data]:
+            # Sin foto — retornar avatar SVG genérico en vez de 404
+            if tipo == 'perfil':
+                svg = (
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
+                    '<rect width="128" height="128" rx="64" fill="#e2e8f0"/>'
+                    '<circle cx="64" cy="50" r="22" fill="#94a3b8"/>'
+                    '<ellipse cx="64" cy="105" rx="36" ry="24" fill="#94a3b8"/>'
+                    '</svg>'
+                )
+                return FastResponse(content=svg.encode(), media_type="image/svg+xml",
+                                    headers={"Cache-Control": "public, max-age=86400"})
             return JSONResponse({"error": "Archivo no encontrado"}, status_code=404)
         
         content_type = row[col_tipo] or 'application/octet-stream'
