@@ -1216,15 +1216,28 @@ function buscarDireccion(q) {
     if (!q || q.length < 3) { dd.style.display = 'none'; return; }
 
     direccionTimer = setTimeout(async () => {
-        // Proximidad: usar GPS del usuario si disponible, si no el centro de Colombia
-        const proxLat = _userProximityLat || 4.7110;
-        const proxLng = _userProximityLng || -74.0721;
+        // Normalizar nomenclatura colombiana para Mapbox
+        // "Cra. 85d #55-100" → "Carrera 85d 55 100"
+        // "Cll 10 #25-30"   → "Calle 10 25 30"
+        let query = q
+            .replace(/Cra\.?\s*/gi, 'Carrera ')
+            .replace(/Cll\.?\s*/gi, 'Calle ')
+            .replace(/Cl\.?\s*/gi,  'Calle ')
+            .replace(/Av\.?\s*/gi,  'Avenida ')
+            .replace(/Dg\.?\s*/gi,  'Diagonal ')
+            .replace(/Tv\.?\s*/gi,  'Transversal ')
+            .replace(/#/g, '')
+            .replace(/-/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
 
-        // Ciudad seleccionada para refinar la búsqueda
         const ciudad = document.getElementById('ciudadHidden')?.value || '';
-        const query  = ciudad ? `${q}, ${ciudad}, Colombia` : `${q}, Colombia`;
+        if (ciudad) query = `${query}, ${ciudad}, Colombia`;
+        else        query = `${query}, Colombia`;
 
-        // bbox Colombia completo
+        // Proximidad GPS del usuario
+        const proxLat = _userProximityLat || 3.4516;
+        const proxLng = _userProximityLng || -76.5320; // Cali por defecto
         const bbox = '&bbox=-79.0,-4.2,-66.8,13.5';
 
         try {
@@ -1241,20 +1254,21 @@ function buscarDireccion(q) {
             const data = await res.json();
 
             if (!data.features || data.features.length === 0) {
-                dd.innerHTML = '<div style="padding:12px 14px;font-size:0.83rem;color:#94a3b8">No se encontraron resultados</div>';
+                dd.innerHTML = `<div style="padding:12px 14px;font-size:0.83rem;color:#94a3b8">
+                    No se encontraron resultados — intenta escribir el nombre del barrio o un punto de referencia cercano
+                </div>`;
                 dd.style.display = 'block';
                 return;
             }
 
             dd.innerHTML = data.features.map((f, idx) => {
-                // Extraer nombre corto y contexto (barrio, ciudad)
-                const nombre    = f.text || f.place_name.split(',')[0];
-                const contexto  = f.place_name
+                const nombre   = f.text || f.place_name.split(',')[0];
+                const contexto = f.place_name
                     .replace(', Colombia', '')
                     .replace(f.text + ', ', '')
                     .split(',').slice(0, 2).join(',');
-                const tipo      = f.place_type?.[0];
-                const icono     = tipo === 'poi' ? '📍' : tipo === 'neighborhood' ? '🏘️' : '🏠';
+                const tipo  = f.place_type?.[0];
+                const icono = tipo === 'poi' ? '📍' : tipo === 'neighborhood' ? '🏘️' : '🏠';
                 return `<div onclick="selDireccionIdx(${idx})"
                     style="padding:12px 14px;cursor:pointer;border-bottom:1px solid #f8fafc;
                            display:flex;align-items:flex-start;gap:10px"
@@ -1265,7 +1279,10 @@ function buscarDireccion(q) {
                         <div style="font-size:0.73rem;color:#64748b;margin-top:2px">${contexto}</div>
                     </div>
                 </div>`;
-            }).join('');
+            }).join('')
+            + `<div style="padding:10px 14px;font-size:0.72rem;color:#94a3b8;border-top:1px solid #f1f5f9;text-align:center">
+                ¿No aparece? Selecciona el más cercano y ajusta el pin en el mapa
+               </div>`;
 
             window._direccionFeatures = data.features;
             dd.style.display = 'block';
@@ -1284,9 +1301,9 @@ function selDireccionIdx(idx) {
     const f = window._direccionFeatures[idx];
     if (!f) return;
     const nombre = f.place_name.replace(', Colombia', '');
-    document.getElementById('direccionInput').value = nombre;
-    document.getElementById('direccionLat').value   = f.center[1];
-    document.getElementById('direccionLng').value   = f.center[0];
+    document.getElementById('direccionInput').value   = nombre;
+    document.getElementById('direccionLat').value     = f.center[1];
+    document.getElementById('direccionLng').value     = f.center[0];
     document.getElementById('direccionDropdown').style.display = 'none';
 
     // Autocompletar ciudad/departamento si no está seleccionado
@@ -1302,6 +1319,84 @@ function selDireccionIdx(idx) {
             document.getElementById('municipioConfirm').style.display = 'flex';
             document.getElementById('municipioBuscar').value = cityCtx.text;
         }
+    }
+
+    // Mostrar mini mapa con pin arrastrable para afinar punto exacto
+    mostrarMinimapa(f.center[1], f.center[0], nombre);
+}
+
+// Mini mapa tipo Uber para afinar ubicación exacta
+let _minimap = null;
+let _minimapMarker = null;
+
+function mostrarMinimapa(lat, lng, direccionBase) {
+    let contenedor = document.getElementById('minimapaContenedor');
+    if (!contenedor) {
+        contenedor = document.createElement('div');
+        contenedor.id = 'minimapaContenedor';
+        contenedor.style.cssText = 'margin-top:12px;border-radius:14px;overflow:hidden;border:2px solid #e2e8f0;position:relative';
+        const dirInput = document.getElementById('direccionInput');
+        dirInput.closest('.form-group').appendChild(contenedor);
+    }
+    contenedor.innerHTML = `
+        <div style="background:#f0f4ff;padding:8px 14px;font-size:0.75rem;font-weight:700;color:#4f46e5;
+                    display:flex;align-items:center;gap:6px">
+            <i class="bi bi-pin-map-fill"></i>
+            Arrastra el pin para afinar la ubicación exacta
+        </div>
+        <div id="minimapaDiv" style="height:200px;width:100%"></div>
+        <div style="padding:8px 14px;font-size:0.72rem;color:#64748b;background:#f8fafc" id="minimapaDir">
+            📍 ${direccionBase}
+        </div>`;
+
+    // Cargar Mapbox si no está disponible
+    const initMap = () => {
+        if (_minimap) { _minimap.remove(); _minimap = null; }
+        mapboxgl.accessToken = MAPBOX_TOKEN;
+        _minimap = new mapboxgl.Map({
+            container: 'minimapaDiv',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [lng, lat],
+            zoom: 17,
+            attributionControl: false
+        });
+        _minimap.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+        const markerEl = document.createElement('div');
+        markerEl.innerHTML = `<div style="width:36px;height:36px;background:linear-gradient(135deg,#667eea,#764ba2);
+            border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;
+            box-shadow:0 4px 12px rgba(102,126,234,.5)"></div>`;
+        markerEl.style.cssText = 'width:36px;height:36px;cursor:grab';
+
+        _minimapMarker = new mapboxgl.Marker({ element: markerEl, draggable: true })
+            .setLngLat([lng, lat])
+            .addTo(_minimap);
+
+        _minimapMarker.on('dragend', async () => {
+            const pos = _minimapMarker.getLngLat();
+            document.getElementById('direccionLat').value = pos.lat;
+            document.getElementById('direccionLng').value = pos.lng;
+            // Geocodificar inverso para actualizar el texto
+            try {
+                const r = await fetch(
+                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${pos.lng},${pos.lat}.json`
+                    + `?access_token=${MAPBOX_TOKEN}&language=es&limit=1`
+                );
+                const d = await r.json();
+                const lugar = d.features?.[0]?.place_name?.replace(', Colombia', '') || `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
+                document.getElementById('minimapaDir').textContent = '📍 ' + lugar;
+                document.getElementById('direccionInput').value = lugar;
+            } catch(e) {}
+        });
+    };
+
+    if (window.mapboxgl) {
+        initMap();
+    } else {
+        const s = document.createElement('script');
+        s.src = 'https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js';
+        s.onload = initMap;
+        document.head.appendChild(s);
     }
 }
 
