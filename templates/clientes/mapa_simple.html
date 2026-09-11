@@ -285,25 +285,27 @@
     // Close bottom sheet on map click
     map.on('click', () => cerrarBottomSheet());
 
-    // ── Geolocation ──
-    cargarCategorias();
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                userLat = pos.coords.latitude;
-                userLng = pos.coords.longitude;
-                map.flyTo({ center:[userLng,userLat], zoom:14 });
-                userMarker.setLngLat([userLng, userLat]);
-                document.getElementById('locationText').textContent = 'Tu ubicación actual';
-                buscarTrabajadores();
-            },
-            () => {
-                document.getElementById('locationText').textContent = 'Ubicación aproximada';
-                buscarTrabajadores();
-            },
-            { enableHighAccuracy:true, timeout:8000 }
-        );
-    } else { buscarTrabajadores(); }
+    // ── Esperar a que el mapa cargue antes de pedir ubicación ──
+    map.on('load', () => {
+        cargarCategorias();
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    userLat = pos.coords.latitude;
+                    userLng = pos.coords.longitude;
+                    map.flyTo({ center:[userLng,userLat], zoom:14 });
+                    userMarker.setLngLat([userLng, userLat]);
+                    document.getElementById('locationText').textContent = 'Tu ubicación actual';
+                    buscarTrabajadores();
+                },
+                () => {
+                    document.getElementById('locationText').textContent = 'Ubicación aproximada';
+                    buscarTrabajadores();
+                },
+                { enableHighAccuracy:true, timeout:8000 }
+            );
+        } else { buscarTrabajadores(); }
+    });
 
     // ── Categories ──
     async function cargarCategorias() {
@@ -345,6 +347,7 @@
         try {
             const url = `/cliente/trabajadores-cercanos?lat=${userLat}&lng=${userLng}&radio=${radio}${categoriaActiva ? '&categoria='+encodeURIComponent(categoriaActiva) : ''}`;
             const res = await fetch(url);
+            if (!res.ok) throw new Error('Error ' + res.status);
             const data = await res.json();
             trabajadoresData = data.trabajadores || [];
 
@@ -354,7 +357,7 @@
                 document.getElementById('statusBadge').innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:#10b981"></div> ${trabajadoresData.length} profesional${trabajadoresData.length>1?'es':''}${label}`;
             } else {
                 limpiarMarcadores();
-                document.getElementById('statusBadge').innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div> Sin resultados`;
+                document.getElementById('statusBadge').innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div> Sin resultados en ${radio}km`;
             }
         } catch(e) {
             document.getElementById('statusBadge').innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div> Error`;
