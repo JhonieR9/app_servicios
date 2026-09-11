@@ -1303,6 +1303,14 @@ function selParaQuien(opcion) {
         btnYo.style.background    = 'white';
         gpsDiv.style.display = 'none';
         manDiv.style.display = 'block';
+        // Limpiar coordenadas y dirección del GPS para que no interfieran
+        document.getElementById('direccionLat').value = '';
+        document.getElementById('direccionLng').value = '';
+        document.querySelector('[name="direccion_servicio"]').value = '';
+        document.getElementById('ciudadHidden').value = '';
+        document.getElementById('departamentoHidden').value = '';
+        document.getElementById('municipioConfirm').style.display = 'none';
+        document.getElementById('municipioBuscar').value = '';
     }
 }
 
