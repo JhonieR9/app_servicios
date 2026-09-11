@@ -1258,7 +1258,7 @@ function buscarDireccion(q) {
                 + `&proximity=${proxLng},${proxLat}`
                 + `&limit=6`
                 + `&language=es`
-                + `&types=address,poi,neighborhood,locality`
+                + `&types=address,poi,neighborhood,locality,district,place`
                 + bbox;
 
             const res  = await fetch(url);
