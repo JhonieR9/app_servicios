@@ -2474,7 +2474,8 @@ def admin_editar_registro(
     ciudad:       str = Form(None),
     departamento: str = Form(None),
     telefono:     str = Form(None),
-    correo:       str = Form(None)
+    correo:       str = Form(None),
+    valor_hora:   str = Form(None)
 ):
     """Admin edita datos de un trabajador"""
     if not verificar_admin(request):
@@ -2500,6 +2501,16 @@ def admin_editar_registro(
                 cursor.execute("UPDATE correo_persona SET correo = %s WHERE id_persona = %s", (correo, id_persona))
             else:
                 cursor.execute("INSERT INTO correo_persona (id_persona, correo) VALUES (%s, %s)", (id_persona, correo))
+        # Actualizar valor_hora en todos los servicios del trabajador
+        if valor_hora is not None and valor_hora.strip():
+            try:
+                vh = float(valor_hora)
+                if vh >= 0:
+                    cursor.execute("""
+                        UPDATE servicios_persona SET valor_hora = %s WHERE id_persona = %s
+                    """, (vh, id_persona))
+            except ValueError:
+                pass
         conexion.commit()
         return JSONResponse({"mensaje": "Registro actualizado correctamente"})
     except Exception as e:
