@@ -2,788 +2,498 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Panel - TalentHub</title>
-    <script src="/static/js/confirm.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="/static/css/talenthub.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>TalentHub</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* ── Stats ── */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 18px;
-        }
-        .stat-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 14px 12px;
-            text-align: center;
-        }
-        .stat-val {
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #4f46e5, #0891b2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1;
-        }
-        .stat-label { font-size: 0.68rem; color: var(--muted); margin-top: 4px; font-weight: 500; }
-        .stat-icon  { font-size: 1.1rem; margin-bottom: 4px; }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        html,body { height:100%; background:#f8f9fb; font-family:'Inter',sans-serif; overflow-x:hidden; }
 
-        /* ── Solicitud activa card ── */
-        .activa-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 14px 16px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: border-color .2s;
+        /* ── HEADER ── */
+        .header {
+            background:white;
+            padding:16px 20px 12px;
+            display:flex; align-items:center; justify-content:space-between;
+            position:sticky; top:0; z-index:50;
+            border-bottom:1px solid #f1f3f5;
         }
-        .activa-card:hover { border-color: #6366f1; }
-        .activa-dot {
-            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+        .header-left { display:flex; align-items:center; gap:12px; }
+        .avatar {
+            width:44px; height:44px; border-radius:50%;
+            background:linear-gradient(135deg,#4f46e5,#7c3aed);
+            display:flex; align-items:center; justify-content:center;
+            font-size:1rem; font-weight:800; color:white; flex-shrink:0;
         }
-        .activa-dot.pendiente  { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,.5); }
-        .activa-dot.aceptada   { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,.5); }
-        .activa-dot.en_proceso { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,.5); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-        .activa-info { flex: 1; min-width: 0; }
-        .activa-titulo { font-size: 0.85rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .activa-meta   { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
-        .activa-badge  { font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
-        .badge-pendiente  { background: #fef3c7; color: #92400e; }
-        .badge-aceptada   { background: #dbeafe; color: #1e40af; }
-        .badge-en_proceso { background: #d1fae5; color: #065f46; }
-
-        /* ── Acceso rápido ── */
-        .quick-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 18px;
+        .greeting-sub { font-size:0.72rem; color:#9ca3af; font-weight:500; }
+        .greeting-name { font-size:1rem; font-weight:800; color:#111827; line-height:1.2; }
+        .header-right { display:flex; align-items:center; gap:10px; }
+        .btn-notif {
+            width:40px; height:40px; border-radius:50%; background:#f3f4f6;
+            border:none; display:flex; align-items:center; justify-content:center;
+            font-size:1.1rem; cursor:pointer; position:relative; text-decoration:none; color:#374151;
         }
-        .quick-btn {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 14px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            transition: border-color .2s, transform .15s;
-        }
-        .quick-btn:hover { border-color: #6366f1; transform: translateY(-2px); }
-        .quick-icon {
-            width: 40px; height: 40px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.1rem; flex-shrink: 0;
-        }
-        .qi-green  { background: rgba(16,185,129,.15); }
-        .qi-purple { background: rgba(99,102,241,.15); }
-        .qi-cyan   { background: rgba(6,182,212,.15); }
-        .qi-amber  { background: rgba(245,158,11,.15); }
-        .quick-label { font-size: 0.85rem; font-weight: 700; color: var(--text); }
-        .quick-sub   { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
-
-        /* ── Categorías rápidas ── */
-        .cat-scroll {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            margin-bottom: 18px;
-            scrollbar-width: none;
-        }
-        .cat-scroll::-webkit-scrollbar { display: none; }
-        .cat-chip {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 99px;
-            padding: 7px 14px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: var(--text);
-            white-space: nowrap;
-            text-decoration: none;
-            transition: all .2s;
-            flex-shrink: 0;
-        }
-        .cat-chip:hover { background: #6366f1; color: white; border-color: #6366f1; }
-
-        /* ── Empty state ── */
-        .empty-activas {
-            text-align: center;
-            padding: 20px;
-            color: var(--muted);
-            font-size: 0.82rem;
+        .btn-salir {
+            width:40px; height:40px; border-radius:50%; background:#fee2e2;
+            border:none; display:flex; align-items:center; justify-content:center;
+            font-size:1rem; cursor:pointer; color:#ef4444; text-decoration:none;
         }
 
-        /* ── Favoritos ── */
-        .fav-scroll {
-            display: flex; gap: 12px; overflow-x: auto;
-            padding-bottom: 8px; scrollbar-width: none;
+        /* ── CONTENIDO ── */
+        .content { padding:20px 16px 100px; max-width:600px; margin:0 auto; }
+
+        /* ── BARRA DE ACCIÓN PRINCIPAL ── */
+        .action-bar {
+            background:linear-gradient(135deg,#4f46e5,#7c3aed);
+            border-radius:20px;
+            padding:22px 20px;
+            margin-bottom:24px;
+            cursor:pointer;
+            position:relative;
+            overflow:hidden;
+            box-shadow:0 8px 32px rgba(79,70,229,0.35);
+            transition:transform .15s, box-shadow .15s;
         }
-        .fav-scroll::-webkit-scrollbar { display: none; }
+        .action-bar:active { transform:scale(0.98); }
+        .action-bar::before {
+            content:'';
+            position:absolute; top:-40px; right:-40px;
+            width:120px; height:120px; border-radius:50%;
+            background:rgba(255,255,255,0.08);
+        }
+        .action-bar::after {
+            content:'';
+            position:absolute; bottom:-30px; left:20px;
+            width:80px; height:80px; border-radius:50%;
+            background:rgba(255,255,255,0.05);
+        }
+        .action-label {
+            font-size:0.72rem; font-weight:700; color:rgba(255,255,255,0.75);
+            text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;
+        }
+        .action-question {
+            font-size:1.35rem; font-weight:900; color:white; line-height:1.2;
+            margin-bottom:16px; position:relative; z-index:1;
+        }
+        .action-cats {
+            display:flex; gap:8px; flex-wrap:wrap; position:relative; z-index:1;
+        }
+        .action-cat {
+            background:rgba(255,255,255,0.2);
+            color:white; font-size:0.75rem; font-weight:700;
+            padding:6px 12px; border-radius:99px;
+            cursor:pointer; border:none; font-family:'Inter',sans-serif;
+            transition:background .15s;
+        }
+        .action-cat:hover { background:rgba(255,255,255,0.35); }
+        .action-btn {
+            position:absolute; right:20px; top:50%; transform:translateY(-50%);
+            width:48px; height:48px; border-radius:50%;
+            background:white; border:none; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow:0 4px 16px rgba(0,0,0,0.15);
+            font-size:1.2rem; color:#4f46e5;
+        }
+
+        /* ── TARJETA DE SERVICIO ACTIVO ── */
+        .servicio-activo {
+            background:white; border-radius:20px;
+            border:2px solid #e0e7ff;
+            padding:18px 18px; margin-bottom:24px;
+            position:relative; overflow:hidden;
+        }
+        .servicio-activo::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:3px;
+            background:linear-gradient(90deg,#4f46e5,#7c3aed,#06b6d4);
+        }
+        .sa-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+        .sa-dot {
+            width:10px; height:10px; border-radius:50%; flex-shrink:0;
+            animation:pulse 1.5s infinite;
+        }
+        .sa-dot.pendiente  { background:#f59e0b; box-shadow:0 0 8px rgba(245,158,11,.5); }
+        .sa-dot.aceptada   { background:#3b82f6; box-shadow:0 0 8px rgba(59,130,246,.5); }
+        .sa-dot.en_proceso { background:#10b981; box-shadow:0 0 8px rgba(16,185,129,.5); }
+        .sa-dot.cotizacion_enviada { background:#8b5cf6; box-shadow:0 0 8px rgba(139,92,246,.5); }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .sa-label { font-size:0.7rem; font-weight:700; color:#6366f1; text-transform:uppercase; letter-spacing:1px; }
+        .sa-titulo { font-size:1rem; font-weight:800; color:#111827; margin-bottom:4px; }
+        .sa-meta   { font-size:0.78rem; color:#6b7280; }
+        .sa-badge  {
+            display:inline-flex; align-items:center; gap:5px;
+            font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:99px;
+        }
+        .badge-pendiente         { background:#fef3c7; color:#92400e; }
+        .badge-aceptada          { background:#dbeafe; color:#1e40af; }
+        .badge-en_proceso        { background:#d1fae5; color:#065f46; }
+        .badge-cotizacion_enviada{ background:#ede9fe; color:#5b21b6; }
+        .sa-actions { display:flex; gap:8px; margin-top:14px; }
+        .sa-btn {
+            flex:1; padding:11px; border-radius:12px; border:none;
+            font-size:0.82rem; font-weight:700; cursor:pointer;
+            font-family:'Inter',sans-serif; text-decoration:none;
+            display:flex; align-items:center; justify-content:center; gap:6px;
+            transition:transform .15s;
+        }
+        .sa-btn:active { transform:scale(0.97); }
+        .sa-btn-primary { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white; }
+        .sa-btn-secondary { background:#f3f4f6; color:#374151; }
+
+        /* Múltiples activas */
+        .multi-activas { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+        .mini-activa {
+            background:white; border-radius:14px; border:1px solid #e5e7eb;
+            padding:14px 16px; display:flex; align-items:center; gap:12px;
+            cursor:pointer; transition:border-color .2s;
+        }
+        .mini-activa:hover { border-color:#6366f1; }
+        .mini-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .mini-info { flex:1; min-width:0; }
+        .mini-titulo { font-size:0.85rem; font-weight:700; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .mini-meta   { font-size:0.72rem; color:#9ca3af; margin-top:1px; }
+        .mini-badge  { font-size:0.68rem; font-weight:700; padding:3px 8px; border-radius:99px; white-space:nowrap; }
+
+        /* ── VACÍO ── */
+        .empty-state {
+            text-align:center; padding:28px 20px; margin-bottom:24px;
+            background:white; border-radius:20px; border:2px dashed #e5e7eb;
+        }
+        .empty-emoji { font-size:2.5rem; margin-bottom:10px; }
+        .empty-title { font-size:1rem; font-weight:800; color:#111827; margin-bottom:6px; }
+        .empty-sub   { font-size:0.82rem; color:#9ca3af; margin-bottom:16px; }
+        .empty-btn {
+            display:inline-flex; align-items:center; gap:8px;
+            background:linear-gradient(135deg,#4f46e5,#7c3aed);
+            color:white; padding:12px 24px; border-radius:14px;
+            font-size:0.88rem; font-weight:700; text-decoration:none;
+            transition:transform .15s;
+        }
+        .empty-btn:active { transform:scale(0.97); }
+
+        /* ── SECTION TITLE ── */
+        .sec-title {
+            font-size:0.78rem; font-weight:700; color:#9ca3af;
+            text-transform:uppercase; letter-spacing:1.5px;
+            margin-bottom:12px; display:flex; align-items:center; gap:6px;
+        }
+
+        /* ── FAVORITOS ── */
+        .favs-scroll { display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none; margin-bottom:24px; }
+        .favs-scroll::-webkit-scrollbar { display:none; }
         .fav-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 16px; padding: 16px 18px;
-            min-width: 220px; flex-shrink: 0;
-            display: flex; flex-direction: column; gap: 6px;
-            position: relative;
-            transition: transform .15s, border-color .2s;
+            background:white; border-radius:16px; border:1px solid #e5e7eb;
+            padding:16px; min-width:180px; flex-shrink:0;
+            display:flex; flex-direction:column; gap:4px;
+            transition:transform .15s, border-color .2s;
         }
-        .fav-card:hover { transform:translateY(-3px); border-color:rgba(99,102,241,.4); }
-        .fav-name  { font-size: 0.9rem; font-weight: 800; color: var(--text); }
-        .fav-cat   { font-size: 0.75rem; color: #a5b4fc; font-weight: 600; }
-        .fav-city  { font-size: 0.72rem; color: var(--muted); }
-        .fav-stars { font-size: 0.78rem; color: #f59e0b; margin-top:4px; }
-        .fav-btns  { display: flex; gap: 8px; margin-top: 8px; }
-        .fav-btn-sol {
-            flex: 1; padding: 9px 10px; border: none; border-radius: 10px;
-            background: linear-gradient(135deg,#4f46e5,#7c3aed);
-            color: white; font-size: 0.78rem; font-weight: 700; cursor: pointer;
-            text-align: center; text-decoration: none; display: block;
-            transition: transform .15s;
+        .fav-card:hover { transform:translateY(-2px); border-color:#c7d2fe; }
+        .fav-nombre { font-size:0.88rem; font-weight:800; color:#111827; }
+        .fav-cat    { font-size:0.72rem; color:#6366f1; font-weight:600; }
+        .fav-city   { font-size:0.7rem; color:#9ca3af; }
+        .fav-stars  { font-size:0.75rem; color:#f59e0b; }
+        .fav-btn {
+            margin-top:10px; padding:9px; border:none; border-radius:10px;
+            background:linear-gradient(135deg,#4f46e5,#7c3aed);
+            color:white; font-size:0.78rem; font-weight:700;
+            cursor:pointer; font-family:'Inter',sans-serif;
+            text-decoration:none; text-align:center; display:block;
         }
-        .fav-btn-sol:hover { transform:scale(1.03); }
-        .fav-btn-del {
-            padding: 9px 12px; border: 1px solid rgba(239,68,68,.3); border-radius: 10px;
-            background: rgba(239,68,68,.08); color: #ef4444;
-            font-size: 0.78rem; cursor: pointer; font-weight:700;
+
+        /* ── BOTTOM NAV ── */
+        .bottom-nav {
+            position:fixed; bottom:0; left:0; right:0;
+            background:white; border-top:1px solid #f1f3f5;
+            display:flex; padding:8px 0 max(8px, env(safe-area-inset-bottom));
+            z-index:50; box-shadow:0 -4px 20px rgba(0,0,0,0.06);
         }
+        .nav-item {
+            flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+            padding:6px 4px; cursor:pointer; text-decoration:none;
+            border:none; background:none; font-family:'Inter',sans-serif;
+            transition:color .15s;
+        }
+        .nav-item i { font-size:1.25rem; color:#9ca3af; transition:color .15s; }
+        .nav-item span { font-size:0.62rem; font-weight:600; color:#9ca3af; transition:color .15s; }
+        .nav-item.active i, .nav-item.active span { color:#4f46e5; }
+        .nav-item:hover i, .nav-item:hover span { color:#4f46e5; }
+
+        /* ── TOAST ── */
+        .toast {
+            position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+            background:#111827; color:white; padding:10px 20px; border-radius:99px;
+            font-size:0.82rem; font-weight:600; z-index:200;
+            animation:fadeInUp .3s ease;
+        }
+        @keyframes fadeInUp { from{opacity:0;transform:translate(-50%,10px)} to{opacity:1;transform:translate(-50%,0)} }
     </style>
 </head>
 <body>
-<div class="th-bg"></div>
 
-<!-- Topbar -->
-<div class="th-topbar">
-    <div>
-        <div class="th-topbar-title">🔍 Mi Panel</div>
-        <div class="th-topbar-sub" id="bienvenida">TalentHub</div>
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left">
+        <div class="avatar" id="avatarInicial">👤</div>
+        <div>
+            <div class="greeting-sub" id="greetingSub">Buenos días</div>
+            <div class="greeting-name" id="greeting">Cargando...</div>
+        </div>
     </div>
-    <a href="/cliente/logout" class="th-logout">
-        <i class="bi bi-box-arrow-left"></i> Salir
+    <div class="header-right">
+        <a href="/cliente/mis_solicitudes" class="btn-notif" id="link-solicitudes-cliente" title="Mis solicitudes">
+            <i class="bi bi-list-check"></i>
+            <span id="badgeActivas" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid white"></span>
+        </a>
+        <a href="/cliente/logout" class="btn-salir" title="Salir">
+            <i class="bi bi-box-arrow-left"></i>
+        </a>
+    </div>
+</div>
+
+<div class="content">
+
+    <!-- BARRA DE ACCIÓN PRINCIPAL -->
+    <div class="action-bar" id="actionBar" onclick="irASolicitar()">
+        <div class="action-label">TalentHub</div>
+        <div class="action-question">¿Qué servicio<br>necesitas hoy?</div>
+        <div class="action-cats" id="actionCats">
+            <button class="action-cat" onclick="irACat(event,'Plomería')">🔧 Plomería</button>
+            <button class="action-cat" onclick="irACat(event,'Electricidad')">⚡ Electricidad</button>
+            <button class="action-cat" onclick="irACat(event,'Limpieza')">🧹 Limpieza</button>
+            <button class="action-cat" onclick="irACat(event,'Carpintería')">🪚 Carpintería</button>
+            <button class="action-cat" onclick="irACat(event,'Pintura')">🎨 Pintura</button>
+        </div>
+    </div>
+
+    <!-- ESTADO DE SERVICIOS ACTIVOS -->
+    <div id="activosSection"></div>
+
+    <!-- FAVORITOS -->
+    <div id="favoritosSection" style="display:none">
+        <div class="sec-title"><i class="bi bi-heart-fill" style="color:#ef4444"></i> Mis profesionales</div>
+        <div class="favs-scroll" id="favsScroll"></div>
+    </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+    <a href="/cliente/panel" class="nav-item active">
+        <i class="bi bi-house-fill"></i>
+        <span>Inicio</span>
+    </a>
+    <a href="/cliente/solicitar_servicio" class="nav-item" id="link-solicitar">
+        <i class="bi bi-plus-circle-fill"></i>
+        <span>Pedir</span>
+    </a>
+    <a href="/cliente/mapa" class="nav-item" id="link-mapa">
+        <i class="bi bi-map-fill"></i>
+        <span>Mapa</span>
+    </a>
+    <a href="/cliente/mis_solicitudes" class="nav-item" id="link-historial">
+        <i class="bi bi-clock-history"></i>
+        <span>Historial</span>
     </a>
 </div>
 
-<div class="th-content" style="position:relative;z-index:1;padding-top:20px">
-
-    <!-- Perfil -->
-    <div class="th-profile-card" style="margin-bottom:18px">
-        <div class="th-avatar th-avatar-cyan" id="avatarInicial">👤</div>
-        <div style="flex:1">
-            <div style="font-weight:700;font-size:1rem" id="nombreCliente">Cargando...</div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-top:2px" id="correoCliente"></div>
-            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-                <span class="th-badge th-badge-cyan">✅ Cliente activo</span>
-                <span class="th-badge" id="badgeSolicitudes" style="display:none;background:rgba(245,158,11,.15);color:#f59e0b"></span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-icon">📋</div>
-            <div class="stat-val" id="statTotal">-</div>
-            <div class="stat-label">Solicitudes</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">🔧</div>
-            <div class="stat-val" id="statActivas">-</div>
-            <div class="stat-label">Activas</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">🎉</div>
-            <div class="stat-val" id="statCompletadas">-</div>
-            <div class="stat-label">Completadas</div>
-        </div>
-    </div>
-
-    <!-- Solicitudes activas -->
-    <div class="th-section-title"><i class="bi bi-activity"></i> Solicitudes activas</div>
-    <div id="activasContainer">
-        <div class="empty-activas">Cargando...</div>
-    </div>
-
-    <!-- Mis Favoritos -->
-    <div class="th-section-title" style="margin-top:4px"><i class="bi bi-heart-fill" style="color:#ef4444"></i> Mis profesionales favoritos</div>
-    <div id="favoritosContainer" style="margin-bottom:18px">
-        <div style="text-align:center;padding:16px;color:var(--muted);font-size:0.82rem">Cargando...</div>
-    </div>
-
-    <!-- Acceso rápido -->
-    <div class="th-section-title" style="margin-top:4px"><i class="bi bi-lightning-fill"></i> Acceso rápido</div>
-    <div class="quick-grid">
-        <a href="/cliente/solicitar_servicio" class="quick-btn" id="link-solicitar">
-            <div class="quick-icon qi-green"><i class="bi bi-search" style="color:#10b981"></i></div>
-            <div>
-                <div class="quick-label">Solicitar</div>
-                <div class="quick-sub">Buscar profesional</div>
-            </div>
-        </a>
-        <a href="/cliente/mapa" class="quick-btn" id="link-mapa">
-            <div class="quick-icon qi-purple"><i class="bi bi-map-fill" style="color:#6366f1"></i></div>
-            <div>
-                <div class="quick-label">Ver Mapa</div>
-                <div class="quick-sub">Profesionales cerca</div>
-            </div>
-        </a>
-        <a href="/cliente/mis_solicitudes" class="quick-btn" id="link-solicitudes-cliente">
-            <div class="quick-icon qi-cyan"><i class="bi bi-list-check" style="color:#06b6d4"></i></div>
-            <div>
-                <div class="quick-label">Mis Solicitudes</div>
-                <div class="quick-sub">Ver historial</div>
-            </div>
-        </a>
-        <a href="#" class="quick-btn" id="link-seguimiento" onclick="irASeguimiento(event)">
-            <div class="quick-icon qi-amber"><i class="bi bi-geo-alt-fill" style="color:#f59e0b"></i></div>
-            <div>
-                <div class="quick-label">Seguimiento</div>
-                <div class="quick-sub">Estado del servicio</div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Categorías rápidas -->
-    <div class="th-section-title"><i class="bi bi-grid-fill"></i> Servicios populares</div>
-    <div class="cat-scroll" id="catScroll">
-        <!-- se llena dinámicamente -->
-    </div>
-
-    <!-- Mi cuenta -->
-    <div class="th-section-title"><i class="bi bi-gear-fill"></i> Mi cuenta</div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px">
-        <div style="font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:14px">Editar mis datos</div>
-        <div style="display:grid;gap:10px">
-            <div style="display:flex;gap:10px">
-                <input type="text" id="editNombre" placeholder="Nombre completo"
-                    style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:10px;
-                           background:var(--bg);color:var(--text);font-size:0.88rem;outline:none">
-                <input type="tel" id="editTelefono" placeholder="Teléfono"
-                    style="width:40%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;
-                           background:var(--bg);color:var(--text);font-size:0.88rem;outline:none">
-            </div>
-            <input type="email" id="editCorreo" placeholder="Correo electrónico"
-                style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;
-                       background:var(--bg);color:var(--text);font-size:0.88rem;outline:none">
-            <button onclick="guardarDatosCliente()" id="btnGuardarCliente"
-                style="padding:12px;background:linear-gradient(135deg,#059669,#0891b2);
-                       color:white;border:none;border-radius:10px;font-weight:700;
-                       font-size:0.88rem;cursor:pointer;transition:all .2s">
-                <i class="bi bi-check-circle"></i> Guardar cambios
-            </button>
-            <div id="msgGuardarCliente" style="display:none;text-align:center;padding:8px;
-                 border-radius:8px;font-size:0.82rem;font-weight:600"></div>
-        </div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:18px 0 14px">
-        <button onclick="darDeBaja()"
-            style="width:100%;padding:11px;background:rgba(239,68,68,.08);
-                   color:#ef4444;border:1px solid rgba(239,68,68,.2);border-radius:10px;
-                   font-weight:700;font-size:0.82rem;cursor:pointer">
-            <i class="bi bi-person-x"></i> Darme de baja
-        </button>
-    </div>
-
-</div>
-
 <script>
-    let idCliente = null;
-    // Rastrear estados anteriores para detectar cambios
-    let estadosAnteriores = {};
+let idCliente = null;
 
-    // ── ONBOARDING (solo primera vez) ────────────────────────────
-    (function() {
-        if (localStorage.getItem('onboarding_done')) return;
+// Saludo según hora
+const hora = new Date().getHours();
+const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches';
+document.getElementById('greetingSub').textContent = saludo;
 
-        const overlay = document.createElement('div');
-        overlay.id = 'onboarding';
-        overlay.style.cssText = `
-            position:fixed;inset:0;z-index:99999;background:white;
-            display:flex;flex-direction:column;align-items:center;justify-content:center;
-            padding:40px 24px;overflow:hidden;
-        `;
-        overlay.innerHTML = `
-            <style>
-                #onboarding *{box-sizing:border-box}
-                .ob-slides{position:relative;width:100%;max-width:360px;height:320px;overflow:hidden}
-                .ob-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-                           justify-content:center;text-align:center;padding:20px;
-                           transition:transform .4s ease,opacity .4s ease;opacity:0;transform:translateX(100%)}
-                .ob-slide.active{opacity:1;transform:translateX(0)}
-                .ob-slide.left{opacity:0;transform:translateX(-100%)}
-                .ob-emoji{font-size:4rem;margin-bottom:20px;display:block;line-height:1}
-                .ob-title{font-size:1.4rem;font-weight:800;color:#1e293b;margin-bottom:10px}
-                .ob-desc{font-size:0.9rem;color:#64748b;line-height:1.6}
-                .ob-dots{display:flex;gap:8px;margin:20px 0}
-                .ob-dot{width:8px;height:8px;border-radius:50%;background:#e2e8f0;transition:all .3s}
-                .ob-dot.active{background:#6366f1;width:24px;border-radius:4px}
-                .ob-btn{padding:16px 48px;background:linear-gradient(135deg,#6366f1,#7c3aed);
-                        color:#ffffff;border:none;border-radius:14px;font-size:1rem;font-weight:700;
-                        cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(99,102,241,.25);
-                        font-family:inherit}
-                .ob-btn:hover{transform:translateY(-2px)}
-                .ob-skip{background:none;border:none;color:#94a3b8;font-size:0.82rem;
-                         cursor:pointer;margin-top:16px;padding:8px;font-family:inherit}
-            </style>
-            <div class="ob-slides" id="obSlides">
-                <div class="ob-slide active">
-                    <span class="ob-emoji">🔍</span>
-                    <div class="ob-title">Encuentra profesionales</div>
-                    <div class="ob-desc">Busca entre cientos de profesionales cerca de ti para cualquier servicio a domicilio</div>
-                </div>
-                <div class="ob-slide">
-                    <span class="ob-emoji">⚡</span>
-                    <div class="ob-title">Solicita en minutos</div>
-                    <div class="ob-desc">Elige categoría, describe qué necesitas y te conectamos con el profesional ideal</div>
-                </div>
-                <div class="ob-slide">
-                    <span class="ob-emoji">🎉</span>
-                    <div class="ob-title">¡Listo!</div>
-                    <div class="ob-desc">Chatea, coordina y califica. Paga de forma segura con Nequi, Daviplata o transferencia</div>
-                </div>
-            </div>
-            <div class="ob-dots" id="obDots">
-                <div class="ob-dot active"></div>
-                <div class="ob-dot"></div>
-                <div class="ob-dot"></div>
-            </div>
-            <button class="ob-btn" id="obBtn" onclick="obNext()">Siguiente →</button>
-            <button class="ob-skip" onclick="obClose()">Saltar intro</button>
-        `;
-        document.body.appendChild(overlay);
+function setNombre(nombre) {
+    const primerNombre = nombre.split(' ')[0];
+    document.getElementById('greeting').textContent = 'Hola, ' + primerNombre + ' 👋';
+    const iniciales = nombre.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
+    const av = document.getElementById('avatarInicial');
+    av.textContent = iniciales || '👤';
+    av.style.fontSize = '0.95rem';
+}
 
-        let obStep = 0;
-        window.obNext = function() {
-            obStep++;
-            if (obStep >= 3) { obClose(); return; }
-            const slides = document.querySelectorAll('.ob-slide');
-            const dots   = document.querySelectorAll('.ob-dot');
-            slides.forEach((s, i) => {
-                s.classList.remove('active','left');
-                if (i < obStep) s.classList.add('left');
-                else if (i === obStep) s.classList.add('active');
-            });
-            dots.forEach((d, i) => d.classList.toggle('active', i === obStep));
-            if (obStep === 2) document.getElementById('obBtn').textContent = '¡Empezar!';
-        };
-        window.obClose = function() {
-            localStorage.setItem('onboarding_done', '1');
-            const el = document.getElementById('onboarding');
-            el.style.opacity = '0'; el.style.transition = 'opacity .3s';
-            setTimeout(() => el.remove(), 300);
-        };
-    })();
+function irASolicitar() {
+    window.location.href = '/cliente/solicitar_servicio' + (idCliente ? '?id_cliente='+idCliente : '');
+}
 
-    const CATEGORIAS_POPULARES = [
-        {emoji:'🔧', nombre:'Plomería'},
-        {emoji:'⚡', nombre:'Electricidad'},
-        {emoji:'🧹', nombre:'Limpieza'},
-        {emoji:'🎨', nombre:'Pintura'},
-        {emoji:'🪚', nombre:'Carpintería'},
-        {emoji:'🌱', nombre:'Jardinería'},
-        {emoji:'💻', nombre:'Tecnología'},
-        {emoji:'🏗️', nombre:'Construcción'},
-        {emoji:'🔩', nombre:'Mecánica'},
-        {emoji:'💇', nombre:'Belleza'},
-    ];
+function irACat(e, cat) {
+    e.stopPropagation();
+    window.location.href = '/cliente/solicitar_servicio?categoria=' + encodeURIComponent(cat) + (idCliente ? '&id_cliente='+idCliente : '');
+}
 
-    const ESTADO_LABEL = {
-        pendiente: 'Buscando profesional',
-        aceptada: 'Profesional asignado',
-        en_proceso: 'En proceso 🔧'
-    };
+// Cargar perfil
+async function cargarPerfil() {
+    const params = new URLSearchParams(window.location.search);
+    const nombre = params.get('nombre');
+    const id     = params.get('id');
 
-    // ── Notificación sonora (cliente) ──
-    function sonarNotificacionCliente() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            // Melodía Do-Mi-Sol (más suave que la del trabajador)
-            [523, 659, 784].forEach((f, i) => {
-                const osc = ctx.createOscillator(), gain = ctx.createGain();
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.frequency.value = f; osc.type = 'sine';
-                gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.18);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.4);
-                osc.start(ctx.currentTime + i * 0.18);
-                osc.stop(ctx.currentTime + i * 0.18 + 0.4);
-            });
-        } catch(e) {}
-    }
+    if (nombre) setNombre(decodeURIComponent(nombre));
+    else if (localStorage.getItem('nombre_cliente')) setNombre(localStorage.getItem('nombre_cliente'));
 
-    // ── Banner de cambio de estado ──
-    function mostrarBannerCliente(estado, nombreTrab) {
-        const msgs = {
-            aceptada:   `✅ ¡${nombreTrab || 'Un profesional'} aceptó tu solicitud!`,
-            en_proceso: `🔧 El profesional está trabajando ahora`,
-            completada: `🎉 ¡Tu servicio fue completado!`,
-            rechazada:  `🔄 El profesional rechazó — buscando otro automáticamente...`
-        };
-        const msg = msgs[estado];
-        if (!msg) return;
-        let b = document.getElementById('clienteBanner');
-        if (!b) {
-            b = document.createElement('div');
-            b.id = 'clienteBanner';
-            b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;' +
-                'background:linear-gradient(135deg,#059669,#0891b2);color:white;' +
-                'padding:14px 20px;display:flex;align-items:center;justify-content:space-between;' +
-                'font-weight:700;font-size:0.9rem;box-shadow:0 4px 20px rgba(16,185,129,.4);' +
-                'animation:slideDown .4s ease;';
-            b.innerHTML = '<style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style>' +
-                '<span id="clienteBannerTxt"></span>' +
-                '<button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,.2);border:none;' +
-                'color:white;border-radius:8px;padding:4px 10px;font-weight:700;cursor:pointer">✕</button>';
-            document.body.prepend(b);
-            setTimeout(() => { if (b && b.parentElement) b.remove(); }, 8000);
-        }
-        document.getElementById('clienteBannerTxt').textContent = msg;
-    }
+    if (id) { idCliente = parseInt(id); localStorage.setItem('id_cliente', idCliente); }
 
-    async function cargarPerfil() {
-        const params = new URLSearchParams(window.location.search);
-        const nombre = params.get('nombre');
-        const id     = params.get('id');
-
-        // Mostrar nombre inmediatamente si viene en la URL
-        if (nombre) setNombre(decodeURIComponent(nombre));
-        // Fallback: nombre guardado en localStorage
-        else if (localStorage.getItem('nombre_cliente') || localStorage.getItem('cliente_nombre')) {
-            setNombre(localStorage.getItem('nombre_cliente') || localStorage.getItem('cliente_nombre'));
-        }
-
-        // Prioridad 1: id de la URL
-        if (id) {
-            idCliente = parseInt(id);
-            localStorage.setItem('id_cliente', idCliente);
-        }
-
-        // Prioridad 2: sesión del servidor (más confiable que localStorage)
-        try {
-            const res = await fetch('/cliente/mi-perfil', { credentials: 'include' });
-            if (res.status === 401) {
-                // Sesión expirada — solo redirigir si tampoco tenemos id en URL ni localStorage
-                if (!id && !localStorage.getItem('id_cliente')) {
-                    window.location.href = '/cliente/login?expired=1';
-                    return;
-                }
-            } else if (res.ok) {
-                const data = await res.json();
-                if (!data.error && data.id_cliente) {
-                    idCliente = data.id_cliente;
-                    localStorage.setItem('id_cliente', idCliente);
-                    if (data.nombre_completo) {
-                        setNombre(data.nombre_completo);
-                        localStorage.setItem('nombre_cliente', data.nombre_completo);
-                        localStorage.setItem('cliente_nombre', data.nombre_completo);
-                    }
-                    if (data.correo) document.getElementById('correoCliente').textContent = data.correo;
-                }
-            }
-            // Si cualquier otro error, continuar sin sesión
-        } catch(e) {}
-
-        // Prioridad 3: localStorage (solo si la sesión falló)
-        if (!idCliente) {
-            const stored = localStorage.getItem('id_cliente');
-            idCliente = stored ? parseInt(stored) : null;
-        }
-
-        // Actualizar todos los links con el id correcto
-        if (idCliente) {
-            document.getElementById('link-solicitudes-cliente').href = '/cliente/mis_solicitudes?id_cliente=' + idCliente;
-            document.getElementById('link-mapa').href               = '/cliente/mapa?id_cliente=' + idCliente;
-            document.getElementById('link-solicitar').href          = '/cliente/solicitar_servicio?id_cliente=' + idCliente;
-            cargarStats();
-            cargarActivas();
-            cargarFavoritos();
-        }
-
-        llenarCategorias();
-    }
-
-    function setNombre(nombre) {
-        document.getElementById('nombreCliente').textContent = nombre;
-        document.getElementById('bienvenida').textContent = 'Hola, ' + nombre.split(' ')[0] + ' 👋';
-        // Avatar con iniciales
-        const partes = nombre.split(' ');
-        const iniciales = partes.slice(0,2).map(p => p[0]).join('').toUpperCase();
-        const av = document.getElementById('avatarInicial');
-        av.textContent = iniciales || '👤';
-        av.style.fontSize = '1rem';
-        av.style.fontWeight = '800';
-    }
-
-    async function cargarStats() {
-        try {
-            const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
+    try {
+        const res = await fetch('/cliente/mi-perfil', { credentials:'include' });
+        if (res.ok) {
             const data = await res.json();
-            const todas = data.solicitudes || [];
-            const activas    = todas.filter(s => ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado));
-            const completadas = todas.filter(s => s.estado === 'completada');
-
-            document.getElementById('statTotal').textContent      = todas.length;
-            document.getElementById('statActivas').textContent    = activas.length;
-            document.getElementById('statCompletadas').textContent = completadas.length;
-
-            if (activas.length > 0) {
-                const badge = document.getElementById('badgeSolicitudes');
-                badge.textContent = activas.length + ' activa' + (activas.length > 1 ? 's' : '');
-                badge.style.display = 'inline-flex';
-            }
-        } catch(e) {}
-    }
-
-    async function cargarActivas() {
-        const container = document.getElementById('activasContainer');
-        try {
-            const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
-            const data = await res.json();
-            const activas = (data.solicitudes || []).filter(s =>
-                ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado)
-            ).slice(0, 4);
-
-            // ── Detectar cambios de estado ──
-            activas.forEach(s => {
-                const estadoPrev = estadosAnteriores[s.id_solicitud];
-                const estadoNow  = s.estado;
-                if (estadoPrev && estadoPrev !== estadoNow) {
-                    sonarNotificacionCliente();
-                    // Mensaje según el nuevo estado
-                    if (estadoNow === 'pendiente' && estadoPrev === 'aceptada') {
-                        // El trabajador rechazó → volvió a pendiente
-                        mostrarBannerCliente('rechazada', '');
-                    } else {
-                        mostrarBannerCliente(estadoNow, s.nombre_trabajador);
-                    }
+            if (!data.error && data.id_cliente) {
+                idCliente = data.id_cliente;
+                localStorage.setItem('id_cliente', idCliente);
+                if (data.nombre_completo) {
+                    setNombre(data.nombre_completo);
+                    localStorage.setItem('nombre_cliente', data.nombre_completo);
                 }
-                estadosAnteriores[s.id_solicitud] = estadoNow;
-            });
-            // Inicializar estados en la primera carga (sin notificar)
-            if (Object.keys(estadosAnteriores).length === 0) {
-                activas.forEach(s => { estadosAnteriores[s.id_solicitud] = s.estado; });
             }
-
-            if (activas.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-activas">
-                        <div style="font-size:2rem;margin-bottom:8px">📭</div>
-                        <div>No tienes solicitudes activas</div>
-                        <a href="/cliente/solicitar_servicio${idCliente ? '?id_cliente='+idCliente : ''}"
-                           style="color:#6366f1;font-weight:700;text-decoration:none;display:inline-block;margin-top:8px">
-                            + Solicitar un servicio
-                        </a>
-                    </div>`;
-                return;
-            }
-
-            container.innerHTML = activas.map(s => {
-                const estadoLabel = {
-                    pendiente: 'Buscando profesional',
-                    aceptada: 'Asignado',
-                    en_proceso: 'En proceso',
-                    cotizacion_enviada: '💰 Cotización recibida'
-                }[s.estado] || s.estado;
-                const badgeClass  = 'badge-' + (s.estado === 'cotizacion_enviada' ? 'pendiente' : s.estado);
-                const trab = s.estado === 'cotizacion_enviada'
-                    ? `<span style="color:#d97706">💰 ${s.nombre_trabajador || 'Profesional'} envió cotización</span>`
-                    : s.nombre_trabajador
-                        ? `<span style="color:#6366f1">👷 ${s.nombre_trabajador}</span>`
-                        : `<span>Sin asignar aún</span>`;
-                const destino = s.estado === 'cotizacion_enviada'
-                    ? `/cliente/mis_solicitudes?id_cliente=${idCliente}`
-                    : `/cliente/seguimiento?id=${s.id_solicitud}`;
-                return `
-                <div class="activa-card" onclick="window.location.href='${destino}'">
-                    <span class="activa-dot ${s.estado === 'cotizacion_enviada' ? 'pendiente' : s.estado}"></span>
-                    <div class="activa-info">
-                        <div class="activa-titulo">${s.nombre_categoria || s.titulo || 'Servicio'}</div>
-                        <div class="activa-meta">${trab} · ${s.fecha_solicitud ? s.fecha_solicitud.slice(5,16) : ''}</div>
-                    </div>
-                    <span class="activa-badge ${badgeClass}" style="${s.estado === 'cotizacion_enviada' ? 'background:#fef3c7;color:#d97706' : ''}">${estadoLabel}</span>
-                </div>`;
-            }).join('');
-        } catch(e) {
-            container.innerHTML = '<div class="empty-activas">Error cargando solicitudes</div>';
         }
-    }
+    } catch(e) {}
 
-    function irASolicitud(idSolicitud) {
-        window.location.href = '/cliente/mis_solicitudes?id_cliente=' + idCliente + '#sol-' + idSolicitud;
-    }
+    if (!idCliente) idCliente = parseInt(localStorage.getItem('id_cliente')) || null;
 
-    async function irASeguimiento(e) {
-        e.preventDefault();
-        // Buscar la solicitud activa más reciente
-        if (!idCliente) {
-            window.location.href = '/cliente/seguimiento';
+    if (idCliente) {
+        document.getElementById('link-solicitudes-cliente').href = '/cliente/mis_solicitudes?id_cliente=' + idCliente;
+        document.getElementById('link-solicitar').href           = '/cliente/solicitar_servicio?id_cliente=' + idCliente;
+        document.getElementById('link-mapa').href                = '/cliente/mapa?id_cliente=' + idCliente;
+        document.getElementById('link-historial').href           = '/cliente/mis_solicitudes?id_cliente=' + idCliente;
+        cargarActivos();
+        cargarFavoritos();
+    }
+}
+
+// Cargar servicios activos
+async function cargarActivos() {
+    try {
+        const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
+        const data = await res.json();
+        const todas = data.solicitudes || [];
+
+        const activas = todas.filter(s =>
+            ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado)
+        );
+
+        const sec = document.getElementById('activosSection');
+
+        if (activas.length === 0) {
+            sec.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-emoji">🔍</div>
+                <div class="empty-title">Sin servicios activos</div>
+                <div class="empty-sub">Cuando pidas un servicio aparecerá aquí con el estado en tiempo real</div>
+                <a href="/cliente/solicitar_servicio${idCliente?'?id_cliente='+idCliente:''}" class="empty-btn">
+                    <i class="bi bi-plus-circle-fill"></i> Pedir mi primer servicio
+                </a>
+            </div>`;
             return;
         }
-        try {
-            const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
-            const data = await res.json();
-            const activas = (data.solicitudes || []).filter(s =>
-                ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado)
-            );
-            if (activas.length > 0) {
-                // Ir a la más reciente
-                window.location.href = '/cliente/seguimiento?id=' + activas[0].id_solicitud;
-            } else {
-                // Sin activas — ir a mis solicitudes
-                window.location.href = '/cliente/mis_solicitudes?id_cliente=' + idCliente;
-            }
-        } catch(e) {
-            window.location.href = '/cliente/seguimiento';
+
+        // Badge en el botón de notificaciones
+        document.getElementById('badgeActivas').style.display = 'block';
+
+        if (activas.length === 1) {
+            const s = activas[0];
+            renderActivoPrincipal(sec, s);
+        } else {
+            // Múltiples activos
+            let html = `<div class="sec-title"><i class="bi bi-activity" style="color:#4f46e5"></i> ${activas.length} servicios en curso</div><div class="multi-activas">`;
+            activas.forEach(s => {
+                const colorDot = {pendiente:'#f59e0b',aceptada:'#3b82f6',en_proceso:'#10b981',cotizacion_enviada:'#8b5cf6'}[s.estado] || '#9ca3af';
+                const labelEstado = {pendiente:'Buscando profesional',aceptada:'Asignado',en_proceso:'En proceso',cotizacion_enviada:'Cotización recibida'}[s.estado] || s.estado;
+                html += `<div class="mini-activa" onclick="window.location='/cliente/seguimiento?id=${s.id_solicitud}'">
+                    <div class="mini-dot" style="background:${colorDot};box-shadow:0 0 6px ${colorDot}88"></div>
+                    <div class="mini-info">
+                        <div class="mini-titulo">${s.titulo||s.nombre_categoria||'Servicio'}</div>
+                        <div class="mini-meta">${labelEstado}${s.nombre_trabajador?' · '+s.nombre_trabajador:''}</div>
+                    </div>
+                    <i class="bi bi-chevron-right" style="color:#d1d5db;font-size:0.85rem"></i>
+                </div>`;
+            });
+            html += '</div>';
+            sec.innerHTML = html;
         }
+    } catch(e) {
+        document.getElementById('activosSection').innerHTML = '';
     }
+}
 
-    function llenarCategorias() {
-        const scroll = document.getElementById('catScroll');
-        const base   = '/cliente/solicitar_servicio' + (idCliente ? '?id_cliente=' + idCliente + '&' : '?');
-        scroll.innerHTML = CATEGORIAS_POPULARES.map(c =>
-            `<a href="${base}categoria=${encodeURIComponent(c.nombre)}" class="cat-chip">
-                ${c.emoji} ${c.nombre}
-            </a>`
-        ).join('');
-    }
+function renderActivoPrincipal(sec, s) {
+    const labelEstado = {
+        pendiente:'Buscando profesional...',
+        aceptada:'Profesional asignado ✓',
+        en_proceso:'En proceso ahora mismo 🔧',
+        cotizacion_enviada:'Cotización recibida 💰'
+    }[s.estado] || s.estado;
 
-    // ── Favoritos ──────────────────────────────────────────────
-    async function cargarFavoritos() {
-        const container = document.getElementById('favoritosContainer');
-        if (!idCliente) { container.innerHTML = ''; return; }
-        try {
-            const res  = await fetch('/cliente/favoritos?id_cliente=' + idCliente);
-            const data = await res.json();
-            const favs = data.favoritos || [];
+    const emojiEstado = {
+        pendiente:'⏳', aceptada:'✅', en_proceso:'🔧', cotizacion_enviada:'💰'
+    }[s.estado] || '📋';
 
-            if (favs.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center;color:var(--muted);font-size:0.82rem;padding:16px 8px;
-                                background:var(--card);border:1px solid var(--border);border-radius:var(--radius)">
-                        <div style="font-size:1.8rem;margin-bottom:6px">🤍</div>
-                        <div>Aún no tienes favoritos</div>
-                        <div style="font-size:0.75rem;margin-top:4px">Guarda profesionales desde el mapa</div>
-                    </div>`;
-                return;
-            }
+    sec.innerHTML = `
+    <div class="sec-title"><i class="bi bi-activity" style="color:#4f46e5"></i> Servicio activo</div>
+    <div class="servicio-activo">
+        <div class="sa-header">
+            <div class="sa-dot ${s.estado}"></div>
+            <div class="sa-label">${labelEstado}</div>
+        </div>
+        <div class="sa-titulo">${emojiEstado} ${s.titulo || s.nombre_categoria || 'Servicio'}</div>
+        <div class="sa-meta">
+            ${s.nombre_trabajador ? '👷 ' + s.nombre_trabajador : '🔍 Sin profesional asignado aún'}
+            ${s.ciudad ? ' · 📍 ' + s.ciudad : ''}
+        </div>
+        ${s.cotizacion_precio ? `
+        <div style="margin-top:10px;background:#f5f3ff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:0.8rem;color:#6366f1;font-weight:700">💰 Cotización</span>
+            <span style="font-size:1.1rem;font-weight:900;color:#4f46e5">$${Number(s.cotizacion_precio).toLocaleString('es-CO')}</span>
+        </div>` : ''}
+        <div class="sa-actions">
+            <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=cliente&id_usuario=${idCliente}"
+               class="sa-btn sa-btn-primary">
+                <i class="bi bi-chat-dots-fill"></i> Chat
+            </a>
+            <a href="/cliente/seguimiento?id=${s.id_solicitud}"
+               class="sa-btn sa-btn-secondary">
+                <i class="bi bi-geo-alt-fill"></i> Seguimiento
+            </a>
+        </div>
+    </div>`;
+}
 
-            container.innerHTML = `<div class="fav-scroll">${
-                favs.map(f => {
-                    const estrellas = f.calificacion > 0
-                        ? '★'.repeat(Math.round(f.calificacion)) + '☆'.repeat(5 - Math.round(f.calificacion)) + ` ${f.calificacion}`
-                        : 'Sin calificaciones';
-                    const solicitar_url = `/cliente/solicitar_servicio?trabajador_id=${f.id_persona}&id_cliente=${idCliente}`;
-                    return `<div class="fav-card">
-                        <div class="fav-name">${f.nombre_completo}</div>
-                        <div class="fav-cat">🔧 ${f.categorias || 'Servicios'}</div>
-                        <div class="fav-city">📍 ${f.ciudad || 'Sin ciudad'}</div>
-                        <div class="fav-stars">${estrellas}</div>
-                        <div class="fav-btns">
-                            <a href="${solicitar_url}" class="fav-btn-sol">Solicitar</a>
-                            <button class="fav-btn-del" onclick="quitarFavorito(${f.id_persona}, this)" title="Quitar">✕</button>
-                        </div>
-                    </div>`;
-                }).join('')
-            }</div>`;
-        } catch(e) {
-            container.innerHTML = '';
-        }
-    }
+// Cargar favoritos
+async function cargarFavoritos() {
+    try {
+        const res  = await fetch('/cliente/favoritos?id_cliente=' + idCliente);
+        const data = await res.json();
+        const favs = data.favoritos || [];
+        if (!favs.length) return;
 
-    async function quitarFavorito(idTrabajador, btn) {
-        const fd = new FormData();
-        fd.append('id_trabajador', idTrabajador);
-        fd.append('id_cliente', idCliente);
-        try {
-            const res = await fetch('/cliente/favorito/toggle', { method:'POST', body:fd });
-            const data = await res.json();
-            if (data.ok) cargarFavoritos(); // recargar lista
-        } catch(e) {}
-    }
+        document.getElementById('favoritosSection').style.display = 'block';
+        const scroll = document.getElementById('favsScroll');
+        scroll.innerHTML = favs.map(f => {
+            const estrellas = f.calificacion > 0
+                ? '★'.repeat(Math.round(f.calificacion)) + '☆'.repeat(5-Math.round(f.calificacion))
+                : '';
+            return `<div class="fav-card">
+                <div class="fav-nombre">${f.nombre_completo}</div>
+                <div class="fav-cat">🔧 ${f.servicio_tipo||'Profesional'}</div>
+                <div class="fav-city">📍 ${f.ciudad||''}</div>
+                ${estrellas ? `<div class="fav-stars">${estrellas} ${f.calificacion}</div>` : ''}
+                <a href="/cliente/solicitar_servicio?trabajador_id=${f.id_persona}&id_cliente=${idCliente}"
+                   class="fav-btn">Solicitar</a>
+            </div>`;
+        }).join('');
+    } catch(e) {}
+}
 
-    cargarPerfil();
+function mostrarToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+}
 
-    // Refrescar activas cada 30s
-    setInterval(() => { if (idCliente) { cargarActivas(); cargarStats(); } }, 30000);
+// Refrescar activos cada 20s
+setInterval(() => { if (idCliente) cargarActivos(); }, 20000);
 
-    // ── Llenar campos de edición con datos actuales ──
-    async function llenarCamposEdicion() {
-        try {
-            const res = await fetch('/cliente/mi-perfil', { credentials:'include' });
-            if (!res.ok) return;
-            const data = await res.json();
-            if (data.error) return;
-            document.getElementById('editNombre').value   = data.nombre_completo || '';
-            document.getElementById('editTelefono').value = String(data.telefono || '');
-            document.getElementById('editCorreo').value   = data.correo || '';
-        } catch(e) {}
-    }
-    setTimeout(llenarCamposEdicion, 500);
-
-    // ── Guardar datos del cliente ──
-    async function guardarDatosCliente() {
-        const btn = document.getElementById('btnGuardarCliente');
-        const msg = document.getElementById('msgGuardarCliente');
-        btn.disabled = true; btn.textContent = 'Guardando...';
-
-        const fd = new FormData();
-        fd.append('nombre', document.getElementById('editNombre').value);
-        fd.append('telefono', document.getElementById('editTelefono').value);
-        fd.append('correo', document.getElementById('editCorreo').value);
-
-        try {
-            const res = await fetch('/cliente/perfil/editar', { method:'POST', body:fd, credentials:'include' });
-            const data = await res.json();
-            if (res.ok) {
-                msg.style.background = 'rgba(16,185,129,.15)'; msg.style.color = '#059669';
-                msg.textContent = '✅ ' + (data.mensaje || 'Datos actualizados');
-                // Actualizar localStorage
-                localStorage.setItem('cliente_nombre', document.getElementById('editNombre').value);
-                localStorage.setItem('cliente_telefono', document.getElementById('editTelefono').value);
-                localStorage.setItem('cliente_correo', document.getElementById('editCorreo').value);
-            } else {
-                msg.style.background = 'rgba(239,68,68,.15)'; msg.style.color = '#ef4444';
-                msg.textContent = '❌ ' + (data.error || 'Error');
-            }
-            msg.style.display = 'block';
-        } catch(e) {
-            msg.style.background = 'rgba(239,68,68,.15)'; msg.style.color = '#ef4444';
-            msg.textContent = '❌ Error de conexión'; msg.style.display = 'block';
-        } finally {
-            btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle"></i> Guardar cambios';
-            setTimeout(() => { msg.style.display = 'none'; }, 4000);
-        }
-    }
-
-    // ── Darse de baja ──
-    async function darDeBaja() {
-        const ok1 = await thConfirm({ titulo:'¿Darte de baja?', mensaje:'Tu cuenta será desactivada y no podrás solicitar servicios.', btnOk:'Sí, dar de baja', tipo:'danger' });
-        if (!ok1) return;
-        const ok2 = await thConfirm({ titulo:'Confirma tu decisión', mensaje:'Esta acción desactivará tu cuenta definitivamente. ¿Confirmas?', btnOk:'Confirmar baja', tipo:'danger', icono:'⚠️' });
-        if (!ok2) return;
-        try {
-            const fd = new FormData();
-            fd.append('id_cliente', idCliente);
-            const res = await fetch('/cliente/baja', { method:'POST', body:fd, credentials:'include' });
-            const data = await res.json();
-            if (res.ok) {
-                alert('Tu cuenta ha sido desactivada. Lamentamos verte partir.');
-                window.location.href = '/';
-            } else {
-                alert(data.error || 'Error al procesar la baja');
-            }
-        } catch(e) { alert('Error de conexión'); }
-    }
+cargarPerfil();
 </script>
 </body>
 </html>
