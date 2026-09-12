@@ -396,8 +396,11 @@ async function cargarActivos() {
             // Múltiples activos
             let html = `<div class="sec-title"><i class="bi bi-activity" style="color:#4f46e5"></i> ${activas.length} servicios en curso</div><div class="multi-activas">`;
             activas.forEach(s => {
-                const colorDot = {pendiente:'#f59e0b',aceptada:'#3b82f6',en_proceso:'#10b981',cotizacion_enviada:'#8b5cf6'}[s.estado] || '#9ca3af';
-                const labelEstado = {pendiente:'Buscando profesional',aceptada:'Asignado',en_proceso:'En proceso',cotizacion_enviada:'Cotización recibida'}[s.estado] || s.estado;
+                const esProg = s.fecha_programada && s.fecha_programada !== '';
+                const colorDot = esProg ? '#fb923c' : ({pendiente:'#f59e0b',aceptada:'#3b82f6',en_proceso:'#10b981',cotizacion_enviada:'#8b5cf6'}[s.estado] || '#9ca3af');
+                const labelEstado = esProg && s.estado === 'pendiente'
+                    ? '📅 Programado · ' + new Date(s.fecha_programada).toLocaleDateString('es-CO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+                    : {pendiente:'Buscando profesional',aceptada:'Asignado',en_proceso:'En proceso',cotizacion_enviada:'Cotización recibida'}[s.estado] || s.estado;
                 html += `<div class="mini-activa" onclick="window.location='/cliente/seguimiento?id=${s.id_solicitud}'">
                     <div class="mini-dot" style="background:${colorDot};box-shadow:0 0 6px ${colorDot}88"></div>
                     <div class="mini-info">
@@ -416,29 +419,52 @@ async function cargarActivos() {
 }
 
 function renderActivoPrincipal(sec, s) {
+    const esProgramado = s.fecha_programada && s.fecha_programada !== '';
     const labelEstado = {
-        pendiente:'Buscando profesional...',
+        pendiente: esProgramado ? '📅 Programado' : 'Buscando profesional...',
         aceptada:'Profesional asignado ✓',
         en_proceso:'En proceso ahora mismo 🔧',
         cotizacion_enviada:'Cotización recibida 💰'
     }[s.estado] || s.estado;
 
     const emojiEstado = {
-        pendiente:'⏳', aceptada:'✅', en_proceso:'🔧', cotizacion_enviada:'💰'
+        pendiente: esProgramado ? '📅' : '⏳',
+        aceptada:'✅', en_proceso:'🔧', cotizacion_enviada:'💰'
     }[s.estado] || '📋';
 
+    // Color diferente para programados
+    const borderColor = esProgramado ? '#fb923c' : '#e0e7ff';
+    const dotColor    = esProgramado ? '#fb923c' : '';
+    const labelColor  = esProgramado ? '#ea580c' : '#6366f1';
+
+    let fechaHtml = '';
+    if (esProgramado && s.estado === 'pendiente') {
+        const fecha = new Date(s.fecha_programada);
+        const opciones = { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' };
+        const fechaStr = fecha.toLocaleDateString('es-CO', opciones);
+        fechaHtml = `<div style="margin-top:10px;background:#fff7ed;border-radius:12px;padding:10px 14px;
+            display:flex;align-items:center;gap:8px;border:1px solid #fed7aa">
+            <span style="font-size:1.1rem">📅</span>
+            <div>
+                <div style="font-size:0.7rem;font-weight:700;color:#ea580c;text-transform:uppercase;letter-spacing:1px">Programado para</div>
+                <div style="font-size:0.85rem;font-weight:800;color:#c2410c">${fechaStr}</div>
+            </div>
+        </div>`;
+    }
+
     sec.innerHTML = `
-    <div class="sec-title"><i class="bi bi-activity" style="color:#4f46e5"></i> Servicio activo</div>
-    <div class="servicio-activo">
+    <div class="sec-title"><i class="bi bi-activity" style="color:#4f46e5"></i> Servicio ${esProgramado ? 'programado' : 'activo'}</div>
+    <div class="servicio-activo" style="border-color:${borderColor}">
         <div class="sa-header">
-            <div class="sa-dot ${s.estado}"></div>
-            <div class="sa-label">${labelEstado}</div>
+            <div class="sa-dot ${s.estado}" ${dotColor ? 'style="background:'+dotColor+';box-shadow:0 0 8px '+dotColor+'88"' : ''}></div>
+            <div class="sa-label" style="color:${labelColor}">${labelEstado}</div>
         </div>
         <div class="sa-titulo">${emojiEstado} ${s.titulo || s.nombre_categoria || 'Servicio'}</div>
         <div class="sa-meta">
             ${s.nombre_trabajador ? '👷 ' + s.nombre_trabajador : '🔍 Sin profesional asignado aún'}
             ${s.ciudad ? ' · 📍 ' + s.ciudad : ''}
         </div>
+        ${fechaHtml}
         ${s.cotizacion_precio ? `
         <div style="margin-top:10px;background:#f5f3ff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
             <span style="font-size:0.8rem;color:#6366f1;font-weight:700">💰 Cotización</span>
