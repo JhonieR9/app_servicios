@@ -7,6 +7,7 @@
     <link rel="manifest" href="/static/manifest.json">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="/static/js/confirm.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
         html,body { height:100%; background:#f8f9fb; font-family:'Inter',sans-serif; overflow-x:hidden; }
@@ -537,7 +538,14 @@ function mostrarToast(msg) {
 }
 
 async function aceptarCotizacion(idSolicitud, precio) {
-    if (!confirm(`¿Aceptas la cotización de $${Number(precio).toLocaleString('es-CO')}?`)) return;
+    const ok = await thConfirm({
+        titulo:  '¿Aceptar cotización?',
+        mensaje: `El profesional realizará el trabajo por <strong>$${Number(precio).toLocaleString('es-CO')}</strong>.<br><small style="color:#6b7280">Los materiales son adicionales y se acuerdan con el profesional.</small>`,
+        btnOk:   '✅ Sí, aceptar',
+        tipo:    'success',
+        icono:   '💰'
+    });
+    if (!ok) return;
     try {
         const fd = new FormData();
         fd.append('id_solicitud', idSolicitud);
@@ -545,8 +553,8 @@ async function aceptarCotizacion(idSolicitud, precio) {
         const res  = await fetch('/cliente/cotizacion/responder', { method:'POST', body:fd });
         const data = await res.json();
         if (res.ok && data.ok) {
-            mostrarToast('✅ Cotización aceptada');
-            setTimeout(() => cargarActivos(), 500);
+            mostrarToast('✅ Cotización aceptada — el profesional fue notificado');
+            setTimeout(() => cargarActivos(), 800);
         } else {
             mostrarToast('❌ ' + (data.error || 'Error al aceptar'));
         }
