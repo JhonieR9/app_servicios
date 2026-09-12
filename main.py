@@ -57,7 +57,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "worker-src blob:; "
                 "connect-src 'self' https://api.wompi.co https://sandbox.wompi.co https://checkout.wompi.co wss: "
                     "https://api.mapbox.com https://events.mapbox.com "
-                    "https://maps.googleapis.com; "
+                    "https://maps.googleapis.com https://places.googleapis.com; "
                 "frame-src https://checkout.wompi.co; "
                 "object-src 'none'; "
                 "base-uri 'self';"
