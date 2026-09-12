@@ -368,15 +368,6 @@
                         <span>👷 Profesional asignado</span> ${estrellas}
                     </div>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:6px">
-                    <a onclick="abrirChat(${s.id_solicitud}, ${s.id_trabajador || 0}, '${(s.nombre_trabajador||'').replace(/'/g,"\\'")}', idCliente)"
-                       style="display:flex;align-items:center;justify-content:center;
-                              width:34px;height:34px;border-radius:50%;
-                              background:#ede9fe;color:#7c3aed;text-decoration:none;font-size:0.9rem;cursor:pointer"
-                       title="Chat en TalentHub">
-                        <i class="bi bi-chat-dots-fill"></i>
-                    </a>
-                </div>
             </div>`;
         } else if (estado === 'pendiente') {
             const mins = parseInt(s.minutos_pendiente) || 0;
@@ -525,11 +516,17 @@
             </div>` : ''}
 
             <div class="card-activa-btns">
-                <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=cliente&id_usuario=${idCliente}"
-                   class="btn-seguimiento" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)">
-                    <i class="bi bi-chat-dots-fill"></i> Chat
-                    <span id="badge-${s.id_solicitud}" style="background:rgba(255,255,255,0.3);border-radius:99px;padding:1px 7px;font-size:0.7rem;display:none"></span>
-                </a>
+                ${s.id_trabajador
+                    ? `<a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=cliente&id_usuario=${idCliente}"
+                           class="btn-seguimiento" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)">
+                            <i class="bi bi-chat-dots-fill"></i> Chat con profesional
+                            <span id="badge-${s.id_solicitud}" style="background:rgba(255,255,255,0.3);border-radius:99px;padding:1px 7px;font-size:0.7rem;display:none"></span>
+                        </a>`
+                    : `<a href="/cliente/solicitar_servicio${idCliente?'?id_cliente='+idCliente:''}"
+                           class="btn-seguimiento" style="background:linear-gradient(135deg,#6366f1,#7c3aed)">
+                            <i class="bi bi-search"></i> Buscar profesional
+                        </a>`
+                }
                 ${completarBtn || cancelBtn}
             </div>
         </div>`;
@@ -620,25 +617,25 @@
                 return (ahora - d) < 3 * 24 * 60 * 60 * 1000; // 3 días
             }
 
-            const activas   = todas.filter(s => ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado)
-                || (s.estado === 'completada' && s.pago_estado !== 'pagado' && esReciente(s.fecha_solicitud)));
+            const activas   = todas.filter(s => ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado));
+            const pendPago  = todas.filter(s => s.estado === 'completada' && s.pago_estado !== 'pagado' && esReciente(s.fecha_solicitud));
             const historial = todas.filter(s => s.estado === 'cancelada'
                 || (s.estado === 'completada' && (s.pago_estado === 'pagado' || !esReciente(s.fecha_solicitud))));
 
-            // Badges
+            // Badges — contar activas + pendientes de pago
             const ba = document.getElementById('badgeActivas');
-            ba.textContent = activas.length;
-            ba.classList.toggle('show', activas.length > 0);
+            ba.textContent = activas.length + pendPago.length;
+            ba.classList.toggle('show', (activas.length + pendPago.length) > 0);
 
             // Subtitle
             document.getElementById('topSub').textContent =
-                activas.length > 0
-                    ? `${activas.length} servicio${activas.length > 1 ? 's' : ''} en curso`
+                (activas.length + pendPago.length) > 0
+                    ? `${activas.length + pendPago.length} servicio${(activas.length + pendPago.length) > 1 ? 's' : ''} en curso`
                     : `${historial.length} servicio${historial.length !== 1 ? 's' : ''} en historial`;
 
             // Activas
             const caEl = document.getElementById('contenidoActivas');
-            if (!activas.length) {
+            if (!activas.length && !pendPago.length) {
                 caEl.innerHTML = `
                     <div class="empty">
                         <div class="empty-icon">📭</div>
@@ -649,7 +646,18 @@
                         </a>
                     </div>`;
             } else {
-                caEl.innerHTML = `<div class="section-label">En curso</div>` + activas.map(renderActiva).join('');
+                let html = '';
+                // Primero los servicios activos
+                if (activas.length) {
+                    html += `<div class="section-label">En curso</div>` + activas.map(renderActiva).join('');
+                }
+                // Luego los pendientes de pago — sección separada con borde naranja
+                if (pendPago.length) {
+                    html += `<div class="section-label" style="color:#ea580c;margin-top:${activas.length?'16px':'0'}">
+                        💰 Pendientes de pago
+                    </div>` + pendPago.map(renderActiva).join('');
+                }
+                caEl.innerHTML = html;
             }
 
             // Historial
