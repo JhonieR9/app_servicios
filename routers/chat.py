@@ -404,3 +404,70 @@ def listar_fotos(id_solicitud: int):
         return JSONResponse({"fotos": fotos})
     finally:
         conexion.close()
+
+# ── Bloqueo de seguridad: mensaje con datos de contacto ──────────────
+@router.post("/bloqueo-seguridad")
+async def reportar_bloqueo_seguridad(
+    request: Request,
+    id_solicitud:     int = Form(...),
+    tipo_usuario:     str = Form(...),
+    id_usuario:       int = Form(...),
+    mensaje_bloqueado: str = Form(...)
+):
+    """
+    Registra un intento de compartir datos de contacto fuera de la app.
+    Inserta un mensaje de sistema en el chat y notifica al admin.
+    """
+    from datetime import datetime
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+
+        # 1. Insertar mensaje de sistema avisando al chat
+        aviso = (
+            f"⚠️ SEGURIDAD: {tipo_usuario} #{id_usuario} intentó compartir "
+            f"datos de contacto externos. Mensaje bloqueado por la plataforma."
+        )
+        cursor.execute("""
+            INSERT INTO mensajes_chat
+                (id_solicitud, tipo_remitente, id_remitente, mensaje, fecha_envio, leido)
+            VALUES (%s, 'sistema', 0, %s, %s, 0)
+        """, (id_solicitud, aviso, datetime.now()))
+
+        # 2. Registrar en tabla de alertas de seguridad (si existe)
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS alertas_seguridad_chat (
+                    id            INT AUTO_INCREMENT PRIMARY KEY,
+                    id_solicitud  INT NOT NULL,
+                    tipo_usuario  VARCHAR(20),
+                    id_usuario    INT,
+                    mensaje       TEXT,
+                    fecha         DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    revisado      TINYINT(1) DEFAULT 0
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """)
+            cursor.execute("""
+                INSERT INTO alertas_seguridad_chat
+                    (id_solicitud, tipo_usuario, id_usuario, mensaje)
+                VALUES (%s, %s, %s, %s)
+            """, (id_solicitud, tipo_usuario, id_usuario, mensaje_bloqueado[:500]))
+        except Exception:
+            pass  # si la tabla no se puede crear, igual registramos en security log
+
+        conexion.commit()
+
+        # 3. Log en security logger
+        import security
+        security.security_logger.warning(
+            f"CHAT_BLOCK  id_solicitud={id_solicitud} tipo={tipo_usuario!r} "
+            f"id={id_usuario} msg={mensaje_bloqueado[:80]!r}"
+        )
+
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()

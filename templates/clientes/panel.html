@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="/static/js/confirm.js"></script>
+    <script src="/static/js/chat-flotante.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
         html,body { height:100%; background:#f8f9fb; font-family:'Inter',sans-serif; overflow-x:hidden; }
@@ -453,6 +454,11 @@ function renderActivoPrincipal(sec, s) {
         </div>`;
     }
 
+    // Iniciar chat flotante si hay trabajador asignado
+    if (s.id_trabajador) {
+        setTimeout(() => iniciarChatFlotante(s.id_solicitud, s.id_trabajador, s.titulo || s.nombre_categoria), 300);
+    }
+
     sec.innerHTML = `
     <div class="sec-title"><i class="bi bi-activity" style="color:#4f46e5"></i> Servicio ${esProgramado ? 'programado' : 'activo'}</div>
     <div class="servicio-activo" style="border-color:${borderColor}">
@@ -567,6 +573,19 @@ async function aceptarCotizacion(idSolicitud, precio) {
 setInterval(() => { if (idCliente) cargarActivos(); }, 20000);
 
 cargarPerfil();
+
+// ── Chat flotante — se inicializa cuando hay solicitud activa con trabajador ──
+function iniciarChatFlotante(idSolicitud, idTrabajador, titulo) {
+    if (window._chatFlotanteActivo === idSolicitud) return; // ya iniciado
+    window._chatFlotanteActivo = idSolicitud;
+    ChatFlotante.init({
+        idSolicitud:   idSolicitud,
+        tipoUsuario:   'cliente',
+        idUsuario:     idCliente,
+        tituloChat:    titulo || 'Chat con profesional',
+        avatarUrl:     idTrabajador ? '/trabajador/archivo/' + idTrabajador + '/perfil' : '',
+    });
+}
 </script>
 </body>
 </html>

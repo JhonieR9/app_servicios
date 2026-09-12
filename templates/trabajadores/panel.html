@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/talenthub.css">
     <script src="/static/js/confirm.js"></script>
+    <script src="/static/js/chat-flotante.js"></script>
     <style>
         /* ── Stats 2x2 ── */
         .stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:18px; }
@@ -561,6 +562,16 @@
                 </div>`;
             }).join('');
 
+            // Iniciar chat flotante con la primera solicitud aceptada/en_proceso
+            const solConChat = sols.find(s => ['aceptada','en_proceso'].includes(s.estado));
+            if (solConChat && typeof iniciarChatFlotanteTrabajador === 'function') {
+                setTimeout(() => iniciarChatFlotanteTrabajador(
+                    solConChat.id_solicitud,
+                    solConChat.nombre_cliente,
+                    solConChat.nombre_categoria || solConChat.titulo
+                ), 300);
+            }
+
         } catch(e) {
             container.innerHTML = '<div class="empty-sol">Error cargando solicitudes</div>';
         }
@@ -719,6 +730,19 @@
 
     cargarPerfil();
     setInterval(() => { if (idTrabajador) cargarSolicitudesActivas(); }, 20000);
+
+    // ── Chat flotante — se inicializa con la primera solicitud activa con cliente ──
+    function iniciarChatFlotanteTrabajador(idSolicitud, nombreCliente, titulo) {
+        if (window._chatFlotanteActivo === idSolicitud) return;
+        window._chatFlotanteActivo = idSolicitud;
+        ChatFlotante.init({
+            idSolicitud:  idSolicitud,
+            tipoUsuario:  'trabajador',
+            idUsuario:    parseInt(idTrabajador),
+            tituloChat:   titulo || nombreCliente || 'Chat con cliente',
+            avatarUrl:    '',
+        });
+    }
 
     // ── WEB PUSH — suscribirse al cargar el panel ──
     async function suscribirPush() {
