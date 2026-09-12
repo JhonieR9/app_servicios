@@ -466,13 +466,33 @@ function renderActivoPrincipal(sec, s) {
         </div>
         ${fechaHtml}
         ${s.cotizacion_precio ? `
-        <div style="margin-top:10px;background:#f5f3ff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
-            <span style="font-size:0.8rem;color:#6366f1;font-weight:700">💰 Cotización</span>
-            <span style="font-size:1.1rem;font-weight:900;color:#4f46e5">$${Number(s.cotizacion_precio).toLocaleString('es-CO')}</span>
+        <div style="margin-top:10px;background:linear-gradient(135deg,#fffbeb,#fef3c7);
+                    border:2px solid #fbbf24;border-radius:14px;padding:14px;text-align:center">
+            <div style="font-size:0.7rem;font-weight:800;color:#92400e;text-transform:uppercase;
+                        letter-spacing:1.5px;margin-bottom:6px">💰 Cotización recibida</div>
+            <div style="font-size:1.8rem;font-weight:900;color:#78350f;letter-spacing:-1px;margin-bottom:2px">
+                $${Number(s.cotizacion_precio).toLocaleString('es-CO')}
+            </div>
+            ${s.cotizacion_horas ? `<div style="font-size:0.75rem;color:#a16207;margin-bottom:10px">${s.cotizacion_horas}h estimadas · materiales adicionales</div>` : '<div style="margin-bottom:10px"></div>'}
+            <div style="display:flex;gap:8px">
+                <button onclick="aceptarCotizacion(${s.id_solicitud},${s.cotizacion_precio})"
+                    style="flex:1;padding:11px;background:linear-gradient(135deg,#10b981,#059669);
+                           color:white;border:none;border-radius:12px;font-weight:800;
+                           font-size:0.85rem;cursor:pointer;font-family:'Inter',sans-serif">
+                    ✅ Aceptar
+                </button>
+                <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=cliente&id_usuario=${idCliente}"
+                    style="flex:1;padding:11px;background:linear-gradient(135deg,#6366f1,#7c3aed);
+                           color:white;border:none;border-radius:12px;font-weight:800;
+                           font-size:0.85rem;cursor:pointer;font-family:'Inter',sans-serif;
+                           text-decoration:none;display:flex;align-items:center;justify-content:center">
+                    💬 Negociar
+                </a>
+            </div>
         </div>` : ''}
-        <div class="sa-actions">
+        <div class="sa-actions" ${s.cotizacion_precio ? 'style="margin-top:8px"' : ''}>
             <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=cliente&id_usuario=${idCliente}"
-               class="sa-btn sa-btn-primary">
+               class="sa-btn sa-btn-primary" ${s.cotizacion_precio ? 'style="display:none"' : ''}>
                 <i class="bi bi-chat-dots-fill"></i> Chat
             </a>
             <a href="/cliente/seguimiento?id=${s.id_solicitud}"
@@ -514,6 +534,25 @@ function mostrarToast(msg) {
     t.className = 'toast'; t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 2500);
+}
+
+async function aceptarCotizacion(idSolicitud, precio) {
+    if (!confirm(`¿Aceptas la cotización de $${Number(precio).toLocaleString('es-CO')}?`)) return;
+    try {
+        const fd = new FormData();
+        fd.append('id_solicitud', idSolicitud);
+        fd.append('respuesta', 'aceptar');
+        const res  = await fetch('/cliente/cotizacion/responder', { method:'POST', body:fd });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            mostrarToast('✅ Cotización aceptada');
+            setTimeout(() => cargarActivos(), 500);
+        } else {
+            mostrarToast('❌ ' + (data.error || 'Error al aceptar'));
+        }
+    } catch(e) {
+        mostrarToast('❌ Error de conexión');
+    }
 }
 
 // Refrescar activos cada 20s
