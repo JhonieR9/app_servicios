@@ -662,36 +662,66 @@
         <!-- ═══════════════════════════════════════════════════════ -->
         <!-- PASO 4: ELEGIR PROFESIONAL EN MAPA                      -->
         <!-- ═══════════════════════════════════════════════════════ -->
-        <div class="step-panel" id="step4">
-            <div class="card" style="padding:16px 16px 12px">
-                <div id="step4Summary" class="summary-pill" style="display:none">
-                    <i class="bi bi-check-circle-fill"></i>
-                    <span id="step4Title"></span>
-                </div>
-                <div class="card-title">Elige tu profesional</div>
-                <div class="card-sub" id="step4Sub">Toca un marcador para seleccionar al profesional</div>
+        <div class="step-panel" id="step4" style="padding:0;margin:0">
 
-                <!-- Mapa -->
-                <div id="mapaStep4" style="width:100%;height:400px;border-radius:14px;overflow:hidden;margin:12px 0 0;background:#e2e8f0;position:relative">
-                    <div id="mapaLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f1f5f9;z-index:10;border-radius:14px;flex-direction:column;gap:8px;color:#64748b;font-size:0.85rem">
-                        <div style="font-size:2rem">🗺️</div>
-                        Cargando mapa...
+            <!-- Resumen fijo arriba -->
+            <div id="step4TopBar" style="
+                position:sticky;top:0;z-index:20;
+                background:white;padding:10px 16px;
+                border-bottom:1px solid #e2e8f0;
+                display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <div>
+                    <div id="step4Summary" class="summary-pill" style="display:none;margin:0">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span id="step4Title"></span>
                     </div>
+                    <div style="font-size:0.85rem;font-weight:700;color:#111827" id="step4TitleText">Elige tu profesional</div>
+                    <div style="font-size:0.72rem;color:#6b7280" id="step4Sub">Toca un marcador en el mapa</div>
                 </div>
+                <button type="button" id="btnConfirmar" onclick="confirmarSolicitud()" disabled
+                    style="white-space:nowrap;padding:10px 16px;border:none;border-radius:12px;
+                           background:linear-gradient(135deg,#667eea,#764ba2);color:white;
+                           font-size:0.82rem;font-weight:800;cursor:pointer;
+                           font-family:'Inter',sans-serif;opacity:0.4;transition:opacity .2s;flex-shrink:0">
+                    <i class="bi bi-check-circle-fill"></i> Confirmar
+                </button>
+            </div>
+
+            <!-- Mapa a pantalla completa -->
+            <div id="mapaStep4" style="width:100%;height:calc(100vh - 200px);min-height:400px;background:#e2e8f0;position:relative">
+                <div id="mapaLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f1f5f9;z-index:10;flex-direction:column;gap:8px;color:#64748b;font-size:0.85rem">
+                    <div style="font-size:2rem">🗺️</div>
+                    Cargando mapa...
+                </div>
+            </div>
+
+            <!-- Bottom sheet: profesional seleccionado / opción automática -->
+            <div id="step4BottomSheet" style="
+                position:sticky;bottom:0;z-index:20;
+                background:white;padding:12px 16px 16px;
+                border-top:1px solid #e2e8f0;
+                box-shadow:0 -4px 20px rgba(0,0,0,0.08)">
 
                 <!-- Profesional seleccionado -->
-                <div id="profSelCard" style="display:none;margin-top:12px;background:#f5f3ff;border:2px solid #667eea;border-radius:14px;padding:14px 16px;display:none;align-items:center;gap:12px">
-                    <div id="profSelAvatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:white;flex-shrink:0;overflow:hidden"></div>
+                <div id="profSelCard" style="display:none;align-items:center;gap:12px;
+                     background:#f5f3ff;border:2px solid #667eea;border-radius:14px;
+                     padding:12px 14px;margin-bottom:10px">
+                    <div id="profSelAvatar" style="width:44px;height:44px;border-radius:50%;
+                         background:linear-gradient(135deg,#667eea,#764ba2);
+                         display:flex;align-items:center;justify-content:center;
+                         font-size:1rem;font-weight:800;color:white;flex-shrink:0;overflow:hidden"></div>
                     <div style="flex:1;min-width:0">
                         <div id="profSelNombre" style="font-weight:700;font-size:0.92rem;color:#0f172a"></div>
                         <div id="profSelMeta" style="font-size:0.75rem;color:#64748b;margin-top:2px"></div>
                     </div>
-                    <span style="color:#667eea;font-size:1.2rem">✓</span>
+                    <button onclick="selProf(null,'cualquiera')"
+                        style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:4px">✕</button>
                 </div>
 
-                <!-- Opción sin preferencia -->
+                <!-- Opción automática -->
                 <div id="profCualquiera" onclick="selProf(null,'cualquiera')"
-                     style="margin-top:10px;border:2px dashed #cbd5e1;border-radius:14px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .2s">
+                     style="border:2px dashed #cbd5e1;border-radius:14px;padding:12px 16px;
+                            cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .2s">
                     <span style="font-size:1.3rem">🎲</span>
                     <div>
                         <div style="font-size:0.85rem;font-weight:700;color:#374151">El primero disponible</div>
@@ -700,10 +730,7 @@
                 </div>
             </div>
 
-            <button type="button" class="btn-next" id="btnConfirmar" onclick="confirmarSolicitud()" disabled>
-                <i class="bi bi-check-circle-fill"></i> Confirmar Solicitud
-            </button>
-            <button type="button" class="btn-back-step" onclick="goStep(3)">
+            <button type="button" class="btn-back-step" onclick="goStep(3)" style="margin:8px 16px 16px">
                 <i class="bi bi-arrow-left"></i> Volver
             </button>
         </div>
@@ -1775,9 +1802,10 @@ function selProf(id, nombre, estrellas, distancia) {
         card.style.display = 'none';
         cualq.style.borderColor = '#667eea';
         cualq.style.background  = '#f5f3ff';
-        btnConf.innerHTML = `<i class="bi bi-check-circle-fill"></i> Confirmar Solicitud`;
+        btnConf.innerHTML = `<i class="bi bi-check-circle-fill"></i> Confirmar`;
     }
     btnConf.disabled = false;
+    btnConf.style.opacity = '1';
 }
 
 async function confirmarSolicitud() {
