@@ -568,7 +568,8 @@
                 setTimeout(() => iniciarChatFlotanteTrabajador(
                     solConChat.id_solicitud,
                     solConChat.nombre_cliente,
-                    solConChat.nombre_categoria || solConChat.titulo
+                    solConChat.nombre_categoria || solConChat.titulo,
+                    solConChat.id_cliente
                 ), 300);
             }
 
@@ -732,15 +733,18 @@
     setInterval(() => { if (idTrabajador) cargarSolicitudesActivas(); }, 20000);
 
     // ── Chat flotante — se inicializa con la primera solicitud activa con cliente ──
-    function iniciarChatFlotanteTrabajador(idSolicitud, nombreCliente, titulo) {
+    function iniciarChatFlotanteTrabajador(idSolicitud, nombreCliente, titulo, idCliente) {
         if (window._chatFlotanteActivo === idSolicitud) return;
         window._chatFlotanteActivo = idSolicitud;
+        // Generar iniciales del cliente para el avatar
+        const iniciales = (nombreCliente || 'C').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
         ChatFlotante.init({
             idSolicitud:  idSolicitud,
             tipoUsuario:  'trabajador',
             idUsuario:    parseInt(idTrabajador),
             tituloChat:   titulo || nombreCliente || 'Chat con cliente',
             avatarUrl:    '',
+            avatarTexto:  iniciales,
         });
     }
 

@@ -224,6 +224,7 @@
             tituloChat:  'Chat',
             idContraparte: 0,
             avatarUrl:   '',
+            avatarTexto: '💬',
         }, opciones);
 
         // Inyectar estilos
@@ -276,11 +277,15 @@
             </a>`;
         document.body.appendChild(ventana);
 
-        // Cargar avatar
+        // Cargar avatar — foto si hay URL, iniciales si no
+        const avatarEl = document.getElementById('cf-header-avatar');
         if (cfg.avatarUrl) {
             const img = document.createElement('img');
             img.src = cfg.avatarUrl;
-            img.onload = () => { document.getElementById('cf-header-avatar').innerHTML = ''; document.getElementById('cf-header-avatar').appendChild(img); };
+            img.onload = () => { avatarEl.innerHTML = ''; avatarEl.appendChild(img); };
+            img.onerror = () => { avatarEl.textContent = cfg.avatarTexto || '💬'; };
+        } else {
+            avatarEl.textContent = cfg.avatarTexto || '💬';
         }
 
         // Polling de badge (sin abrir el chat)
