@@ -563,7 +563,7 @@
             }).join('');
 
             // Iniciar chat flotante con la primera solicitud aceptada/en_proceso
-            const solConChat = sols.find(s => ['aceptada','en_proceso'].includes(s.estado));
+            const solConChat = sols.find(s => ['aceptada','en_proceso','cotizacion_enviada'].includes(s.estado));
             if (solConChat && typeof iniciarChatFlotanteTrabajador === 'function') {
                 setTimeout(() => iniciarChatFlotanteTrabajador(
                     solConChat.id_solicitud,
