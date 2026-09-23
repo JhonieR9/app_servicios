@@ -545,7 +545,9 @@
                 }
 
                 return `
-                <div class="sol-card ${esNueva ? 'nueva' : s.estado}">
+                <div class="sol-card ${esNueva ? 'nueva' : s.estado}"
+                     style="cursor:pointer"
+                     onclick="window.location='/trabajador/solicitudes_pendientes_panel?id=${idTrabajador}#sol-${s.id_solicitud}'">
                     <div class="sol-header">
                         <div class="sol-titulo">${s.nombre_categoria || s.titulo || 'Servicio'}</div>
                         <span class="sol-badge ${badgeClass}">${estadoLabel}</span>
@@ -558,7 +560,7 @@
                         <span>🕐 ${s.fecha_solicitud ? s.fecha_solicitud.slice(5,16) : ''}</span>
                     </div>
                     ${s.descripcion ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:6px;line-height:1.4">${s.descripcion.slice(0,80)}${s.descripcion.length>80?'...':''}</div>` : ''}
-                    ${acciones}
+                    <div onclick="event.stopPropagation()">${acciones}</div>
                 </div>`;
             }).join('');
 

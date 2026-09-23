@@ -461,7 +461,9 @@ function renderActivoPrincipal(sec, s) {
 
     sec.innerHTML = `
     <div class="sec-title"><i class="bi bi-activity" style="color:#4f46e5"></i> Servicio ${esProgramado ? 'programado' : 'activo'}</div>
-    <div class="servicio-activo" style="border-color:${borderColor}">
+    <div class="servicio-activo" style="border-color:${borderColor};cursor:pointer"
+         onclick="window.location='/cliente/seguimiento?id=${s.id_solicitud}'"
+         title="Ver seguimiento">
         <div class="sa-header">
             <div class="sa-dot ${s.estado}" ${dotColor ? 'style="background:'+dotColor+';box-shadow:0 0 8px '+dotColor+'88"' : ''}></div>
             <div class="sa-label" style="color:${labelColor}">${labelEstado}</div>
@@ -474,7 +476,8 @@ function renderActivoPrincipal(sec, s) {
         ${fechaHtml}
         ${s.cotizacion_precio ? `
         <div style="margin-top:10px;background:linear-gradient(135deg,#fffbeb,#fef3c7);
-                    border:2px solid #fbbf24;border-radius:14px;padding:14px;text-align:center">
+                    border:2px solid #fbbf24;border-radius:14px;padding:14px;text-align:center"
+             onclick="event.stopPropagation()">
             <div style="font-size:0.7rem;font-weight:800;color:#92400e;text-transform:uppercase;
                         letter-spacing:1.5px;margin-bottom:6px">💰 Cotización recibida</div>
             <div style="font-size:1.8rem;font-weight:900;color:#78350f;letter-spacing:-1px;margin-bottom:2px">
@@ -497,7 +500,7 @@ function renderActivoPrincipal(sec, s) {
                 </a>
             </div>
         </div>` : ''}
-        <div class="sa-actions" ${s.cotizacion_precio ? 'style="margin-top:8px"' : ''}>
+        <div class="sa-actions" ${s.cotizacion_precio ? 'style="margin-top:8px"' : ''} onclick="event.stopPropagation()">
             <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=cliente&id_usuario=${idCliente}"
                class="sa-btn sa-btn-primary" ${s.cotizacion_precio ? 'style="display:none"' : ''}>
                 <i class="bi bi-chat-dots-fill"></i> Chat
