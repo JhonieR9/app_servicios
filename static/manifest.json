@@ -1,4 +1,5 @@
 {
+  "id": "com.talenthub.app",
   "name": "TalentHub - Servicios a Domicilio",
   "short_name": "TalentHub",
   "description": "Encuentra profesionales cerca de ti para cualquier servicio a domicilio",
@@ -40,6 +41,14 @@
       "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
     }
   ],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "TalentHub - Panel principal"
+    }
+  ],
   "prefer_related_applications": false
 }
