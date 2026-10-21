@@ -217,6 +217,8 @@
 
     // ── INICIALIZAR ──────────────────────────────────────────────────
     function init(opciones) {
+        // Evitar duplicar la burbuja si ya existe
+        if (document.getElementById('cf-burbuja')) return;
         cfg = Object.assign({
             idSolicitud: 0,
             tipoUsuario: 'cliente',
@@ -436,7 +438,69 @@
             .replace(/"/g,'&quot;');
     }
 
+    // ── AUTO-INICIAR ─────────────────────────────────────────────────
+    // Detecta automáticamente el tipo de usuario, su id y su solicitud activa
+    // para montar la burbuja sin configuración manual en cada página.
+    async function autoIniciar(tipoUsuario) {
+        // Evitar montar dos veces si ya hay una burbuja
+        if (document.getElementById('cf-burbuja')) return;
+        try {
+            // 1. Obtener id del usuario según tipo
+            let idUsuario = null;
+            if (tipoUsuario === 'cliente') {
+                idUsuario = parseInt(localStorage.getItem('id_cliente')) || null;
+                if (!idUsuario) {
+                    const r = await fetch('/cliente/mi-perfil', { credentials: 'include' });
+                    if (r.ok) { const d = await r.json(); idUsuario = d.id_cliente; }
+                }
+            } else {
+                idUsuario = parseInt(localStorage.getItem('id_trabajador')) || null;
+                if (!idUsuario) {
+                    const r = await fetch('/trabajador/mi-perfil', { credentials: 'include' });
+                    if (r.ok) { const d = await r.json(); idUsuario = d.id_persona; }
+                }
+            }
+            if (!idUsuario) return; // sin sesión, no montar
+
+            // 2. Buscar la solicitud activa del usuario
+            const url = tipoUsuario === 'cliente'
+                ? `/cliente/mis_solicitudes_api?id_cliente=${idUsuario}`
+                : `/trabajador/mis_solicitudes_api?id_trabajador=${idUsuario}`;
+            const res  = await fetch(url);
+            const data = await res.json();
+            const sols = data.solicitudes || [];
+
+            // Priorizar: en_proceso > aceptada > cotizacion_enviada > pendiente
+            const prioridad = ['en_proceso','aceptada','cotizacion_enviada','pendiente'];
+            let activa = null;
+            for (const estado of prioridad) {
+                activa = sols.find(s => s.estado === estado &&
+                    (tipoUsuario === 'cliente' ? s.id_trabajador : true));
+                if (activa) break;
+            }
+            if (!activa) return; // sin solicitud activa, no montar
+
+            // 3. Montar la burbuja
+            const titulo = activa.nombre_categoria || activa.titulo || 'Chat';
+            let avatarUrl = '', avatarTexto = '💬';
+            if (tipoUsuario === 'cliente' && activa.id_trabajador) {
+                avatarUrl = '/trabajador/archivo/' + activa.id_trabajador + '/perfil';
+            } else if (tipoUsuario === 'trabajador' && activa.nombre_cliente) {
+                avatarTexto = activa.nombre_cliente.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
+            }
+
+            init({
+                idSolicitud: activa.id_solicitud,
+                tipoUsuario: tipoUsuario,
+                idUsuario:   idUsuario,
+                tituloChat:  titulo,
+                avatarUrl:   avatarUrl,
+                avatarTexto: avatarTexto,
+            });
+        } catch(e) { /* silencioso */ }
+    }
+
     // ── API PÚBLICA ──────────────────────────────────────────────────
-    global.ChatFlotante = { init, _minimizar, _enviar, _tecla, _autoResize };
+    global.ChatFlotante = { init, autoIniciar, _minimizar, _enviar, _tecla, _autoResize };
 
 })(window);
