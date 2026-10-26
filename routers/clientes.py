@@ -215,7 +215,9 @@ def mostrar_seguimiento(request: Request):
     sesion = auth.verificar_sesion(token)
     if not sesion or sesion['tipo_usuario'] != 'cliente':
         return RedirectResponse(url="/cliente/login", status_code=302)
-    return templates.TemplateResponse("clientes/seguimiento.html", {"request": request})
+    import os
+    mapbox_token = os.getenv("MAPBOX_TOKEN", "pk.eyJ1IjoiamhvbmllcmNlc3BlZGVzMTItIiwiYSI6ImNtb25qeGJ1dTBtNGoycnB2NWZtb3V1ZDcifQ.oWycZCkDrln9HOGRaWT8Xg")
+    return templates.TemplateResponse("clientes/seguimiento.html", {"request": request, "mapbox_token": mapbox_token})
 
 @router.get("/seguimiento_api")
 def api_seguimiento(id: int):
@@ -227,6 +229,7 @@ def api_seguimiento(id: int):
             SELECT s.id_solicitud, s.titulo, s.estado, s.ciudad, s.departamento,
                    s.fecha_solicitud, s.fecha_aceptacion, s.fecha_inicio, s.fecha_finalizacion,
                    s.id_trabajador, s.precio_final, s.cotizacion_precio, s.id_categoria, s.codigo_confirmacion, s.codigo_inicio,
+                   s.direccion_servicio,
                    COALESCE(cat.nombre_categoria, s.titulo, CONCAT('Categoría ', s.id_categoria), 'Servicio') as nombre_categoria,
                    TIMESTAMPDIFF(MINUTE, s.fecha_solicitud, NOW()) as minutos_pendiente
             FROM solicitudes_servicio s
@@ -262,16 +265,33 @@ def api_seguimiento(id: int):
 
         if sol.get('id_trabajador'):
             cursor.execute("""
-                SELECT p.nombre_completo, tp.telefono
+                SELECT p.nombre_completo, tp.telefono,
+                       d.latitud, d.longitud, d.ultima_actualizacion
                 FROM personas p
                 LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+                LEFT JOIN disponibilidad d ON p.id_persona = d.id_persona
                 WHERE p.id_persona = %s
+                LIMIT 1
             """, (sol['id_trabajador'],))
             trab = cursor.fetchone()
             if trab:
+                lat = trab.get('latitud')
+                lng = trab.get('longitud')
+                # Minutos desde la última actualización de GPS (para saber si está "en vivo")
+                gps_min = None
+                ua = trab.get('ultima_actualizacion')
+                if ua and hasattr(ua, 'timestamp'):
+                    try:
+                        from datetime import datetime as _dt
+                        gps_min = int((_dt.now() - ua).total_seconds() // 60)
+                    except Exception:
+                        gps_min = None
                 sol['trabajador'] = {
                     'nombre':   trab['nombre_completo'] or '',
-                    'telefono': str(trab['telefono'] or '')
+                    'telefono': str(trab['telefono'] or ''),
+                    'latitud':  float(lat) if lat is not None else None,
+                    'longitud': float(lng) if lng is not None else None,
+                    'gps_hace_min': gps_min,
                 }
 
         return JSONResponse(sol)
@@ -1604,6 +1624,20 @@ def responder_cotizacion(
                         print(f"[WA] Error cotización aceptada: {e}")
                 threading.Thread(target=_wa_cotizacion, daemon=True).start()
             except: pass
+
+            # Notificar al trabajador por push (además de WhatsApp)
+            try:
+                import main as _m
+                precio = sol.get('cotizacion_precio') or 0
+                precio_str = f"${int(precio):,}".replace(",", ".")
+                _m.enviar_push_usuario(
+                    "trabajador", sol['id_trabajador'],
+                    "✅ ¡Cotización aceptada!",
+                    f"El cliente aceptó tu cotización de {precio_str}. Ya puedes iniciar el servicio.",
+                    "/trabajador/mis_solicitudes",
+                )
+            except Exception as e:
+                print(f"[PUSH] cotización aceptada: {e}")
 
             return JSONResponse({
                 "ok": True,

@@ -273,6 +273,29 @@ def enviar_cotizacion(
             conexion.close()
 
 
+def _notificar_cambio_estado_cliente(id_solicitud: int, titulo: str, cuerpo: str):
+    """Resuelve el cliente dueño de la solicitud y le envía un push."""
+    try:
+        conn = conectar_bd()
+        if not conn:
+            return
+        cur = conn.cursor(dictionary=True)
+        cur.execute(
+            "SELECT id_cliente FROM solicitudes_servicio WHERE id_solicitud = %s",
+            (id_solicitud,),
+        )
+        row = cur.fetchone()
+        cur.close(); conn.close()
+        if row and row.get("id_cliente"):
+            import main as _m
+            _m.enviar_push_usuario(
+                "cliente", row["id_cliente"], titulo, cuerpo,
+                f"/cliente/seguimiento?id={id_solicitud}",
+            )
+    except Exception as e:
+        print(f"[PUSH] cambio estado cliente: {e}")
+
+
 @router.post("/solicitud/actualizar")
 def actualizar_estado_solicitud(
     id_solicitud: int = Form(...),
@@ -369,6 +392,12 @@ def actualizar_estado_solicitud(
                 SET estado = %s, fecha_inicio = NOW()
                 WHERE id_solicitud = %s AND estado = 'aceptada'
             """, (estado, id_solicitud))
+            if cursor.rowcount > 0:
+                _notificar_cambio_estado_cliente(
+                    id_solicitud,
+                    "🚀 Tu servicio ha comenzado",
+                    "El profesional ya inició el trabajo. Sigue el avance desde la app.",
+                )
 
         elif estado == 'completada':
             # Registrar fecha de finalización
@@ -377,6 +406,12 @@ def actualizar_estado_solicitud(
                 SET estado = %s, fecha_finalizacion = NOW()
                 WHERE id_solicitud = %s AND estado = 'en_proceso'
             """, (estado, id_solicitud))
+            if cursor.rowcount > 0:
+                _notificar_cambio_estado_cliente(
+                    id_solicitud,
+                    "✅ Servicio finalizado",
+                    "El profesional marcó el servicio como completado. ¡Califica tu experiencia!",
+                )
 
         else:
             cursor.execute("""
@@ -1065,7 +1100,7 @@ def perfil_publico(request: Request, id_persona: int):
 
         # Reseñas (últimas 8)
         cursor.execute("""
-            SELECT cal.puntuacion, cal.comentario, cal.fecha_calificacion,
+            SELECT cal.puntuacion, cal.comentario, cal.fecha_calificacion, cal.tags,
                    COALESCE(c.nombre_completo, 'Cliente') AS nombre_cliente
             FROM calificaciones cal
             LEFT JOIN clientes c ON cal.id_cliente = c.id_cliente
@@ -1080,6 +1115,9 @@ def perfil_publico(request: Request, id_persona: int):
             r['puntuacion'] = int(r['puntuacion']) if r.get('puntuacion') else 0
             if not r.get('comentario'):
                 r['comentario'] = ''
+            # Convertir tags "a,b,c" → lista de chips
+            tags_raw = r.get('tags') or ''
+            r['tags_lista'] = [t.strip() for t in tags_raw.split(',') if t.strip()]
 
         # Tarifa principal (mayor valor_hora)
         tarifa_principal = 0.0

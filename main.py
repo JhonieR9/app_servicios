@@ -1084,6 +1084,80 @@ def enviar_push_trabajadores(id_categoria: int, nombre_categoria: str, titulo_no
     threading.Thread(target=_enviar, daemon=True).start()
 
 
+def enviar_push_usuario(tipo_usuario: str, id_usuario: int, titulo: str, cuerpo: str, url_destino: str = "/"):
+    """
+    Envía una notificación push a TODOS los dispositivos suscritos de UN usuario
+    concreto (cliente o trabajador). Reutilizable en cualquier evento de negocio.
+
+    Se ejecuta en un hilo daemon para no bloquear la respuesta HTTP. Limpia
+    automáticamente las suscripciones expiradas (404/410).
+    """
+    if not id_usuario or tipo_usuario not in ("cliente", "trabajador"):
+        return
+
+    import threading
+
+    def _enviar():
+        try:
+            import json
+            try:
+                from pywebpush import webpush, WebPushException
+            except ImportError:
+                print("[PUSH] pywebpush no instalado — omitiendo push")
+                return
+
+            conn = conectar_bd()
+            if not conn:
+                return
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT endpoint, p256dh, auth
+                FROM push_subscriptions
+                WHERE tipo_usuario = %s AND id_usuario = %s
+            """, (tipo_usuario, id_usuario))
+            suscripciones = cursor.fetchall()
+            cursor.close(); conn.close()
+
+            if not suscripciones:
+                return
+
+            payload = json.dumps({
+                "title": titulo,
+                "body":  cuerpo,
+                "url":   url_destino,
+                "icon":  "/static/icons/icon-192.png",
+                "badge": "/static/icons/icon-192.png",
+            })
+
+            for sub in suscripciones:
+                try:
+                    webpush(
+                        subscription_info={
+                            "endpoint": sub["endpoint"],
+                            "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]},
+                        },
+                        data=payload,
+                        vapid_private_key=VAPID_PRIVATE,
+                        vapid_claims=VAPID_CLAIMS,
+                    )
+                except WebPushException as ex:
+                    if ex.response and ex.response.status_code in (404, 410):
+                        try:
+                            c2 = conectar_bd(); cur2 = c2.cursor()
+                            cur2.execute("DELETE FROM push_subscriptions WHERE endpoint = %s", (sub["endpoint"],))
+                            c2.commit(); cur2.close(); c2.close()
+                        except Exception:
+                            pass
+                    else:
+                        print(f"[PUSH] WebPushException: {ex}")
+                except Exception as ex:
+                    print(f"[PUSH] Error enviando a usuario {id_usuario}: {ex}")
+        except Exception as ex:
+            print(f"[PUSH] Error hilo usuario: {ex}")
+
+    threading.Thread(target=_enviar, daemon=True).start()
+
+
 # ============================================
 # MANEJO DE ERRORES PERSONALIZADOS
 # ============================================

@@ -521,3 +521,79 @@ def marcar_dispersado(id_pago: int = Form(...)):
     finally:
         if conexion and conexion.is_connected():
             conexion.close()
+
+
+# ============================================
+# RECIBO / COMPROBANTE DE PAGO (imprimible → PDF)
+# ============================================
+
+@router.get("/recibo", response_class=HTMLResponse)
+def recibo_pago(request: Request, id_solicitud: int = 0):
+    """Muestra un comprobante imprimible del pago aprobado de una solicitud."""
+    from datetime import timedelta
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT p.referencia_wompi, p.id_transaccion_wompi, p.monto,
+                   p.estado_wompi, p.fecha_actualizacion, p.fecha_creacion,
+                   s.titulo, s.id_cliente, s.id_trabajador,
+                   cat.nombre_categoria,
+                   cl.nombre_completo AS nombre_cliente,
+                   tr.nombre_completo AS nombre_trabajador
+            FROM pagos_solicitud p
+            INNER JOIN solicitudes_servicio s ON p.id_solicitud = s.id_solicitud
+            LEFT JOIN categorias_servicio cat ON s.id_categoria = cat.id_categoria
+            LEFT JOIN clientes cl ON s.id_cliente = cl.id_cliente
+            LEFT JOIN personas tr ON s.id_trabajador = tr.id_persona
+            WHERE p.id_solicitud = %s AND p.estado_wompi = 'APPROVED'
+            ORDER BY p.fecha_actualizacion DESC
+            LIMIT 1
+        """, (id_solicitud,))
+        pago = cursor.fetchone()
+        cursor.close()
+
+        if not pago:
+            return HTMLResponse(
+                "<div style='font-family:sans-serif;text-align:center;padding:60px'>"
+                "<h2>Recibo no disponible</h2>"
+                "<p>No encontramos un pago aprobado para esta solicitud.</p>"
+                "<a href='/cliente/panel'>Volver al panel</a></div>",
+                status_code=404,
+            )
+
+        # Formatear monto a pesos colombianos (1.234.567)
+        try:
+            monto_fmt = f"{int(float(pago['monto'] or 0)):,}".replace(",", ".")
+        except Exception:
+            monto_fmt = "0"
+
+        # Fecha de pago en hora Colombia (UTC-5)
+        fecha_src = pago.get("fecha_actualizacion") or pago.get("fecha_creacion")
+        if fecha_src and hasattr(fecha_src, "strftime"):
+            fecha_pago = (fecha_src - timedelta(hours=5)).strftime("%d/%m/%Y %I:%M %p")
+        else:
+            fecha_pago = ""
+
+        return templates.TemplateResponse("clientes/recibo_pago.html", {
+            "request":           request,
+            "id_solicitud":      id_solicitud,
+            "monto_fmt":         monto_fmt,
+            "titulo":            pago.get("titulo") or "Servicio",
+            "categoria":         pago.get("nombre_categoria") or "",
+            "nombre_trabajador": pago.get("nombre_trabajador") or "",
+            "nombre_cliente":    pago.get("nombre_cliente") or "",
+            "fecha_pago":        fecha_pago,
+            "referencia":        pago.get("referencia_wompi") or "",
+            "id_transaccion":    pago.get("id_transaccion_wompi") or "",
+        })
+    except Exception as e:
+        return HTMLResponse(
+            f"<div style='font-family:sans-serif;text-align:center;padding:60px'>"
+            f"<h2>Error al generar el recibo</h2><p>{e}</p></div>",
+            status_code=500,
+        )
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()

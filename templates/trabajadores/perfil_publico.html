@@ -210,6 +210,11 @@
         .resena-nombre { font-size:0.88rem;font-weight:700;color:#0f172a; }
         .resena-fecha { font-size:0.72rem;color:#64748b;margin-top:1px; }
         .resena-texto { font-size:0.85rem;color:#475569;line-height:1.6; }
+        .resena-tags { display:flex;flex-wrap:wrap;gap:6px;margin-top:8px; }
+        .resena-tag {
+            background:#f0f0ff;color:#4f46e5;font-size:0.7rem;font-weight:700;
+            padding:3px 10px;border-radius:99px;
+        }
 
         .empty-resenas {
             text-align:center;padding:40px 20px;
@@ -439,6 +444,13 @@
                 </div>
                 {% if r.comentario %}
                 <div class="resena-texto">"{{ r.comentario }}"</div>
+                {% endif %}
+                {% if r.tags_lista %}
+                <div class="resena-tags">
+                    {% for t in r.tags_lista %}
+                    <span class="resena-tag">{{ t }}</span>
+                    {% endfor %}
+                </div>
                 {% endif %}
             </div>
             {% endfor %}

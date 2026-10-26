@@ -9,6 +9,8 @@
     <title>Seguimiento - TalentHub</title>
     <script src="/static/js/confirm.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -275,6 +277,18 @@
             </div>
         </div>
 
+        <!-- Mapa: trabajador en camino con ETA (solo cuando hay ubicación GPS) -->
+        <div id="enCaminoWrap" style="display:none;margin-bottom:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div style="font-size:0.68rem;font-weight:700;color:#4f46e5;text-transform:uppercase;letter-spacing:1px">
+                    🚗 Profesional en camino
+                </div>
+                <div id="etaBadge" style="background:#eef2ff;color:#4f46e5;font-size:0.72rem;font-weight:800;padding:3px 10px;border-radius:99px"></div>
+            </div>
+            <div id="mapaSeguimiento" style="width:100%;height:200px;border-radius:14px;overflow:hidden;background:#e2e8f0"></div>
+            <div id="gpsInfo" style="font-size:0.68rem;color:#94a3b8;margin-top:6px;text-align:center"></div>
+        </div>
+
         <div class="trab-btns">
             <button class="btn-trab chat" id="btnChat" onclick="abrirChatSeguimiento()">
                 💬 Abrir chat completo
@@ -330,6 +344,14 @@
     let trabNombreVal = '';
     let estadoActual  = '';
     let trabId        = null;
+
+    // ── Mapa "en camino" ──
+    const MAPBOX_TOKEN = "{{ mapbox_token | trim }}";
+    let _mapaSeg = null;
+    let _markerTrab = null;
+    let _markerDest = null;
+    let _destinoCliente = null;   // {lat, lng} ubicación del cliente (destino)
+    let _destinoPedido  = false;  // ya pedimos geolocalización una vez
 
     // Debug temporal — mostrar qué ID tiene
     console.log('[SEGUIMIENTO] id en URL:', idSolicitud, '| URL completa:', window.location.href);
@@ -488,6 +510,8 @@
                 document.getElementById('trabAvatar').style.fontSize = '1.1rem';
                 // Cargar preview del chat
                 cargarChatPreview();
+                // Mapa "en camino" con ETA (si el trabajador comparte GPS y el servicio está aceptado/en proceso)
+                actualizarMapaEnCamino(data, estado);
             }
 
             // Mostrar códigos al cliente (inicio + confirmación)
@@ -765,6 +789,160 @@
         t.textContent = '✅ Ok, seguimos buscando...';
         document.body.appendChild(t);
         setTimeout(() => t.remove(), 3000);
+    }
+
+    // ── MAPA "EN CAMINO" + ETA ────────────────────────────────────────
+    function _distanciaKm(lat1, lng1, lat2, lng2) {
+        // Haversine
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 +
+                  Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function actualizarMapaEnCamino(data, estado) {
+        const wrap = document.getElementById('enCaminoWrap');
+        const t = data.trabajador || {};
+
+        // Solo mostramos el mapa cuando el servicio está aceptado o en proceso
+        // y el trabajador comparte ubicación GPS válida.
+        const mostrar = (estado === 'aceptada' || estado === 'en_proceso')
+                        && typeof t.latitud === 'number' && typeof t.longitud === 'number';
+
+        if (!mostrar) {
+            wrap.style.display = 'none';
+            return;
+        }
+
+        wrap.style.display = 'block';
+
+        // Pedir la ubicación del cliente (destino) una sola vez
+        if (!_destinoCliente && !_destinoPedido && navigator.geolocation) {
+            _destinoPedido = true;
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    _destinoCliente = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    _renderMapa(t);
+                },
+                () => { _renderMapa(t); },   // sin permiso → solo mostramos al trabajador
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+            );
+        } else {
+            _renderMapa(t);
+        }
+    }
+
+    function _renderMapa(t) {
+        if (!MAPBOX_TOKEN || MAPBOX_TOKEN.indexOf('pk.') !== 0) {
+            document.getElementById('gpsInfo').textContent = 'Mapa no disponible';
+            return;
+        }
+        mapboxgl.accessToken = MAPBOX_TOKEN;
+        const trabLngLat = [t.longitud, t.latitud];
+
+        if (!_mapaSeg) {
+            _mapaSeg = new mapboxgl.Map({
+                container: 'mapaSeguimiento',
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: trabLngLat,
+                zoom: 13,
+            });
+            _mapaSeg.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+
+            // Marcador del trabajador (morado)
+            const el = document.createElement('div');
+            el.innerHTML = '🚗';
+            el.style.fontSize = '26px';
+            _markerTrab = new mapboxgl.Marker({ element: el }).setLngLat(trabLngLat).addTo(_mapaSeg);
+        } else {
+            _markerTrab.setLngLat(trabLngLat);
+        }
+
+        // Marcador del destino (cliente)
+        if (_destinoCliente) {
+            const destLngLat = [_destinoCliente.lng, _destinoCliente.lat];
+            if (!_markerDest) {
+                _markerDest = new mapboxgl.Marker({ color: '#ef4444' })
+                    .setLngLat(destLngLat)
+                    .setPopup(new mapboxgl.Popup().setText('Tu ubicación'))
+                    .addTo(_mapaSeg);
+            } else {
+                _markerDest.setLngLat(destLngLat);
+            }
+            // Ajustar vista para que se vean ambos puntos
+            const b = new mapboxgl.LngLatBounds();
+            b.extend(trabLngLat); b.extend(destLngLat);
+            _mapaSeg.fitBounds(b, { padding: 50, maxZoom: 15, duration: 500 });
+
+            _calcularETA(trabLngLat, destLngLat, t);
+        } else {
+            _mapaSeg.easeTo({ center: trabLngLat, duration: 500 });
+            _etaTexto('', t);
+        }
+    }
+
+    async function _calcularETA(origen, destino, t) {
+        // Intento 1: Mapbox Directions API (ETA real por carretera)
+        try {
+            const url = `https://api.mapbox.com/directions/v5/mapbox/driving/` +
+                `${origen[0]},${origen[1]};${destino[0]},${destino[1]}` +
+                `?access_token=${MAPBOX_TOKEN}&overview=simplified&geometries=geojson`;
+            const res = await fetch(url);
+            const d = await res.json();
+            if (d.routes && d.routes.length) {
+                const r = d.routes[0];
+                const min = Math.max(1, Math.round(r.duration / 60));
+                const km  = (r.distance / 1000).toFixed(1);
+                document.getElementById('etaBadge').textContent = `~${min} min`;
+                document.getElementById('gpsInfo').textContent =
+                    `A ${km} km de ti` + _gpsFresco(t);
+                // Dibujar la ruta
+                _dibujarRuta(r.geometry);
+                return;
+            }
+        } catch(e) { /* cae al fallback */ }
+
+        // Fallback: distancia en línea recta + estimación simple (30 km/h urbano)
+        const km = _distanciaKm(origen[1], origen[0], destino[1], destino[0]);
+        const min = Math.max(1, Math.round((km / 30) * 60));
+        document.getElementById('etaBadge').textContent = `~${min} min`;
+        document.getElementById('gpsInfo').textContent =
+            `A ${km.toFixed(1)} km de ti (aprox.)` + _gpsFresco(t);
+    }
+
+    function _dibujarRuta(geometry) {
+        if (!_mapaSeg) return;
+        const add = () => {
+            if (_mapaSeg.getSource('ruta-seg')) {
+                _mapaSeg.getSource('ruta-seg').setData({ type: 'Feature', geometry });
+            } else {
+                _mapaSeg.addSource('ruta-seg', { type: 'geojson', data: { type: 'Feature', geometry } });
+                _mapaSeg.addLayer({
+                    id: 'ruta-seg', type: 'line', source: 'ruta-seg',
+                    layout: { 'line-join': 'round', 'line-cap': 'round' },
+                    paint: { 'line-color': '#4f46e5', 'line-width': 4, 'line-opacity': 0.8 },
+                });
+            }
+        };
+        if (_mapaSeg.isStyleLoaded()) add();
+        else _mapaSeg.once('load', add);
+    }
+
+    function _etaTexto(txt, t) {
+        document.getElementById('etaBadge').textContent = txt || 'En ruta';
+        document.getElementById('gpsInfo').textContent =
+            'Activa tu ubicación para ver el tiempo estimado' + _gpsFresco(t);
+    }
+
+    function _gpsFresco(t) {
+        if (typeof t.gps_hace_min === 'number') {
+            if (t.gps_hace_min <= 2) return ' · 🟢 ubicación en vivo';
+            if (t.gps_hace_min < 60) return ` · actualizado hace ${t.gps_hace_min} min`;
+            return ' · ubicación no reciente';
+        }
+        return '';
     }
 
     function abrirChatSeguimiento() {
