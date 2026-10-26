@@ -279,6 +279,23 @@
             </a>`;
         document.body.appendChild(ventana);
 
+        // Modo "sin conversación": burbuja visible siempre, pero sin solicitud activa.
+        // Ocultamos el input y el enlace a chat completo, y mostramos un estado vacío amable.
+        if (!cfg.idSolicitud) {
+            const inputArea = document.getElementById('cf-input-area');
+            const verCompleto = document.getElementById('cf-ver-completo');
+            if (inputArea) inputArea.style.display = 'none';
+            if (verCompleto) verCompleto.style.display = 'none';
+            const sub = document.getElementById('cf-subtitulo');
+            if (sub) sub.textContent = 'Soporte';
+            const tit = document.getElementById('cf-titulo');
+            if (tit) tit.textContent = cfg.tituloChat || 'TalentHub';
+            document.getElementById('cf-mensajes').innerHTML =
+                '<div class="cf-empty">Aún no tienes una conversación activa.<br><br>' +
+                'Cuando tengas un servicio en curso, podrás chatear aquí con el ' +
+                (cfg.tipoUsuario === 'cliente' ? 'profesional' : 'cliente') + '.</div>';
+        }
+
         // Cargar avatar — foto si hay URL, iniciales si no
         const avatarEl = document.getElementById('cf-header-avatar');
         if (cfg.avatarUrl) {
@@ -444,6 +461,17 @@
     async function autoIniciar(tipoUsuario) {
         // Evitar montar dos veces si ya hay una burbuja
         if (document.getElementById('cf-burbuja')) return;
+
+        // La burbuja SIEMPRE se monta. Intentamos resolver la conversación activa;
+        // si no hay usuario o no hay solicitud activa, montamos en "modo sin conversación".
+        const montarVacio = () => init({
+            idSolicitud: 0,
+            tipoUsuario: tipoUsuario,
+            idUsuario:   0,
+            tituloChat:  'TalentHub',
+            avatarTexto: '💬',
+        });
+
         try {
             // 1. Obtener id del usuario según tipo
             let idUsuario = null;
@@ -460,7 +488,7 @@
                     if (r.ok) { const d = await r.json(); idUsuario = d.id_persona; }
                 }
             }
-            if (!idUsuario) return; // sin sesión, no montar
+            if (!idUsuario) { montarVacio(); return; } // sin sesión → burbuja vacía
 
             // 2. Buscar la solicitud activa del usuario
             const url = tipoUsuario === 'cliente'
@@ -478,9 +506,9 @@
                     (tipoUsuario === 'cliente' ? s.id_trabajador : true));
                 if (activa) break;
             }
-            if (!activa) return; // sin solicitud activa, no montar
+            if (!activa) { montarVacio(); return; } // sin solicitud activa → burbuja vacía
 
-            // 3. Montar la burbuja
+            // 3. Montar la burbuja con la conversación activa
             const titulo = activa.nombre_categoria || activa.titulo || 'Chat';
             let avatarUrl = '', avatarTexto = '💬';
             if (tipoUsuario === 'cliente' && activa.id_trabajador) {
@@ -497,7 +525,10 @@
                 avatarUrl:   avatarUrl,
                 avatarTexto: avatarTexto,
             });
-        } catch(e) { /* silencioso */ }
+        } catch(e) {
+            // Ante cualquier fallo de red, igual mostramos la burbuja (modo vacío)
+            if (!document.getElementById('cf-burbuja')) montarVacio();
+        }
     }
 
     // ── API PÚBLICA ──────────────────────────────────────────────────
