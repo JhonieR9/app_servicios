@@ -30,22 +30,25 @@ def get_wompi_keys():
 
 # ── Parámetros de la tarifa de servicio TalentHub ──────────────────
 # La empresa quiere quedarse con MARGEN_EMPRESA netos por servicio,
-# después de pagarle a Wompi su comisión. Wompi cobra un % variable
-# sobre el total + un fijo por transacción.
-MARGEN_EMPRESA   = 10000.0   # lo que gana TalentHub, limpio, por servicio
-WOMPI_PORCENTAJE = 0.0265    # 2.65% sobre el total de la transacción
-WOMPI_FIJO       = 700.0     # $700 fijos por transacción
+# después de pagarle a Wompi su comisión. Wompi (plan 2.65% + $700 + IVA)
+# cobra un % variable sobre el total + un fijo por transacción, y sobre esa
+# comisión se aplica el IVA (19%). Por eso usamos las tarifas con IVA incluido.
+MARGEN_EMPRESA   = 10000.0            # lo que gana TalentHub, limpio, por servicio
+IVA              = 0.19              # IVA Colombia sobre la comisión de Wompi
+WOMPI_PORCENTAJE = 0.0265 * (1 + IVA)  # 2.65% + IVA = 3.1535% efectivo sobre el total
+WOMPI_FIJO       = 700.0 * (1 + IVA)   # $700 + IVA = $833 por transacción
 
 
 def calcular_cobro(precio_servicio: float):
     """
     Dado el precio del servicio (lo que recibe el trabajador),
     calcula cuánto debe pagar el cliente para que a TalentHub le queden
-    exactamente MARGEN_EMPRESA netos después de la comisión de Wompi.
+    exactamente MARGEN_EMPRESA netos después de la comisión de Wompi (con IVA).
 
     Fórmula (despejando el total T):
         T - P - (T*%  + fijo) = margen
         T = (P + margen + fijo) / (1 - %)
+    donde % y fijo ya incluyen el IVA de la comisión de Wompi.
 
     Devuelve un dict con el desglose para mostrar al cliente y cobrar.
     """
