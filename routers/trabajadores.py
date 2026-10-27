@@ -3219,6 +3219,48 @@ def obtener_estado_disponibilidad(id_trabajador: int):
         if conexion:
             conexion.close()
 
+@router.post("/ubicacion/actualizar")
+async def actualizar_ubicacion(
+    id_trabajador: int = Form(...),
+    latitud: float = Form(...),
+    longitud: float = Form(...)
+):
+    """
+    Actualiza SOLO la ubicación GPS del trabajador (sin tocar su estado de
+    disponibilidad). Se usa para el seguimiento en vivo 'profesional en camino'
+    mientras hay un servicio aceptado/en proceso.
+    """
+    conexion = conectar_bd()
+    if not conexion:
+        return JSONResponse({"error": "Error de conexión"}, status_code=500)
+    cursor = None
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("SELECT id_disponibilidad FROM disponibilidad WHERE id_persona = %s LIMIT 1", (id_trabajador,))
+        existe = cursor.fetchone()
+        if existe:
+            cursor.execute("""
+                UPDATE disponibilidad
+                SET latitud = %s, longitud = %s, ultima_actualizacion = NOW()
+                WHERE id_persona = %s
+            """, (latitud, longitud, id_trabajador))
+        else:
+            cursor.execute("""
+                INSERT INTO disponibilidad (id_persona, disponible, latitud, longitud, ultima_actualizacion)
+                VALUES (%s, 0, %s, %s, NOW())
+            """, (id_trabajador, latitud, longitud))
+        conexion.commit()
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
 @router.post("/disponibilidad/actualizar")
 async def actualizar_disponibilidad(
     id_trabajador: int = Form(...),

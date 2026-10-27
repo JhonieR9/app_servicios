@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from routers import clientes, trabajadores, chat, pagos, psicologa
 from config import DB_CONFIG, conectar_bd
+import os
 import security   # módulo centralizado de seguridad
 
 app = FastAPI(title="TalentHub API", version="2.0.0")
@@ -947,11 +948,13 @@ async def servir_upload(filename: str):
 # WEB PUSH — VAPID
 # ============================================
 
-# Claves VAPID (generadas una sola vez — NO cambiar en producción)
-# Para regenerar: python -c "from cryptography..."
-VAPID_PUBLIC  = "BM66qRWQGKRktcIccA8tJ3k10D6Bslu8jjQufR89ATky-v9aKXacOD9IHxaxLR9ZdOO6A7wVxudhXCrONhZoOfo"
-VAPID_PRIVATE = "JyFRkexRUVZRSaX93z-_Y5H_OYSVOIGyQ3QrOJ28M9A"
-VAPID_CLAIMS  = {"sub": "mailto:admin@talenthub.app"}
+# Claves VAPID — se leen de variables de entorno (configurar en Railway).
+# El fallback mantiene las claves actuales para no romper producción mientras
+# se configuran las variables. IMPORTANTE: una vez estén en Railway, regenera
+# estas claves y elimina los valores por defecto de aquí.
+VAPID_PUBLIC  = os.getenv("VAPID_PUBLIC",  "BM66qRWQGKRktcIccA8tJ3k10D6Bslu8jjQufR89ATky-v9aKXacOD9IHxaxLR9ZdOO6A7wVxudhXCrONhZoOfo")
+VAPID_PRIVATE = os.getenv("VAPID_PRIVATE", "JyFRkexRUVZRSaX93z-_Y5H_OYSVOIGyQ3QrOJ28M9A")
+VAPID_CLAIMS  = {"sub": os.getenv("VAPID_SUBJECT", "mailto:admin@talenthub.app")}
 
 @app.get("/push/vapid-public")
 def get_vapid_public():

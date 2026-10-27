@@ -575,6 +575,15 @@
                 ), 300);
             }
 
+            // GPS en vivo: si hay un servicio aceptado o en proceso, compartir ubicación
+            // para que el cliente vea "en camino" con ETA en su seguimiento.
+            const servicioEnCurso = sols.some(s => ['aceptada','en_proceso'].includes(s.estado));
+            if (servicioEnCurso) {
+                iniciarGpsEnVivo();
+            } else {
+                detenerGpsEnVivo();
+            }
+
         } catch(e) {
             container.innerHTML = '<div class="empty-sol">Error cargando solicitudes</div>';
         }
@@ -748,6 +757,43 @@
             avatarUrl:    '',
             avatarTexto:  iniciales,
         });
+    }
+
+    // ── GPS EN VIVO — compartir ubicación mientras hay servicio activo ──
+    // El cliente lo ve como "profesional en camino" con ETA en su seguimiento.
+    window._gpsEnVivoInterval = window._gpsEnVivoInterval || null;
+
+    function _enviarUbicacionActual() {
+        if (!navigator.geolocation || !idTrabajador) return;
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                try {
+                    const fd = new FormData();
+                    fd.append('id_trabajador', idTrabajador);
+                    fd.append('latitud',  pos.coords.latitude);
+                    fd.append('longitud', pos.coords.longitude);
+                    // Endpoint que solo actualiza GPS, sin cambiar la disponibilidad
+                    await fetch('/trabajador/ubicacion/actualizar', {
+                        method: 'POST', body: fd, credentials: 'include'
+                    });
+                } catch (e) { /* silencioso */ }
+            },
+            () => { /* sin permiso de ubicación — no hacemos nada */ },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 10000 }
+        );
+    }
+
+    function iniciarGpsEnVivo() {
+        if (window._gpsEnVivoInterval) return;   // ya está corriendo
+        _enviarUbicacionActual();                // enviar una vez de inmediato
+        window._gpsEnVivoInterval = setInterval(_enviarUbicacionActual, 20000); // cada 20s
+    }
+
+    function detenerGpsEnVivo() {
+        if (window._gpsEnVivoInterval) {
+            clearInterval(window._gpsEnVivoInterval);
+            window._gpsEnVivoInterval = null;
+        }
     }
 
     // ── WEB PUSH — suscribirse al cargar el panel ──
