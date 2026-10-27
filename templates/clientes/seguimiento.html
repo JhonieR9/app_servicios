@@ -1053,6 +1053,26 @@
                 return;
             }
 
+            // Mostrar desglose del cobro antes de abrir el widget
+            if (data.desglose && typeof thConfirm === 'function') {
+                const d = data.desglose;
+                const fmt = n => '$' + Number(n).toLocaleString('es-CO');
+                const ok = await thConfirm({
+                    titulo:  'Resumen del pago',
+                    mensaje: `<div style="text-align:left;font-size:0.9rem;line-height:1.9">
+                        <div style="display:flex;justify-content:space-between"><span>Servicio</span><strong>${fmt(d.precio_servicio)}</strong></div>
+                        <div style="display:flex;justify-content:space-between"><span>Tarifa de servicio</span><strong>${fmt(d.tarifa_servicio)}</strong></div>
+                        <div style="height:1px;background:#e2e8f0;margin:8px 0"></div>
+                        <div style="display:flex;justify-content:space-between;font-size:1.05rem"><span><strong>Total a pagar</strong></span><strong style="color:#4f46e5">${fmt(d.total)}</strong></div>
+                        <div style="font-size:0.72rem;color:#94a3b8;margin-top:10px">La tarifa de servicio cubre el funcionamiento de la plataforma y el procesamiento seguro del pago.</div>
+                    </div>`,
+                    btnOk:   'Pagar ' + fmt(d.total),
+                    tipo:    'success',
+                    icono:   '💳'
+                });
+                if (!ok) return;
+            }
+
             // Cargar el widget de Wompi dinámicamente
             if (!document.getElementById('wompi-script')) {
                 const script = document.createElement('script');

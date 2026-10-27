@@ -28,6 +28,46 @@ def get_wompi_keys():
     return pub, priv, evt, base_url, intg
 
 
+# ── Parámetros de la tarifa de servicio TalentHub ──────────────────
+# La empresa quiere quedarse con MARGEN_EMPRESA netos por servicio,
+# después de pagarle a Wompi su comisión. Wompi cobra un % variable
+# sobre el total + un fijo por transacción.
+MARGEN_EMPRESA   = 10000.0   # lo que gana TalentHub, limpio, por servicio
+WOMPI_PORCENTAJE = 0.0265    # 2.65% sobre el total de la transacción
+WOMPI_FIJO       = 700.0     # $700 fijos por transacción
+
+
+def calcular_cobro(precio_servicio: float):
+    """
+    Dado el precio del servicio (lo que recibe el trabajador),
+    calcula cuánto debe pagar el cliente para que a TalentHub le queden
+    exactamente MARGEN_EMPRESA netos después de la comisión de Wompi.
+
+    Fórmula (despejando el total T):
+        T - P - (T*%  + fijo) = margen
+        T = (P + margen + fijo) / (1 - %)
+
+    Devuelve un dict con el desglose para mostrar al cliente y cobrar.
+    """
+    P = float(precio_servicio or 0)
+    total = (P + MARGEN_EMPRESA + WOMPI_FIJO) / (1 - WOMPI_PORCENTAJE)
+
+    # Redondear el total a la centena más cercana (cobro "limpio" al cliente)
+    total = round(total / 100) * 100
+
+    tarifa_servicio = total - P              # lo que ve el cliente como "tarifa de servicio"
+    costo_wompi     = total * WOMPI_PORCENTAJE + WOMPI_FIJO
+    ganancia_neta   = total - P - costo_wompi
+
+    return {
+        "precio_servicio": round(P),
+        "tarifa_servicio": round(tarifa_servicio),
+        "total":           round(total),
+        "costo_wompi":     round(costo_wompi),
+        "ganancia_neta":   round(ganancia_neta),
+    }
+
+
 # ============================================
 # CREAR TRANSACCIÓN — cliente inicia el pago
 # ============================================
@@ -74,10 +114,15 @@ async def crear_pago(
         if not sol:
             return JSONResponse({"error": "Solicitud no encontrada"}, status_code=404)
 
-        # Precio a cobrar: precio_final > cotizacion_precio > 0
-        precio = float(sol.get('precio_final') or sol.get('cotizacion_precio') or 0)
-        if precio <= 0:
+        # Precio del servicio (lo que recibe el trabajador): precio_final > cotizacion_precio > 0
+        precio_servicio = float(sol.get('precio_final') or sol.get('cotizacion_precio') or 0)
+        if precio_servicio <= 0:
             return JSONResponse({"error": "Esta solicitud no tiene un precio acordado"}, status_code=400)
+
+        # Tarifa de servicio = margen TalentHub (10.000) + comisión Wompi.
+        # El cliente paga el TOTAL; el trabajador recibe precio_servicio completo.
+        cobro = calcular_cobro(precio_servicio)
+        precio = float(cobro["total"])   # lo que efectivamente se le cobra al cliente
 
         if sol['estado'] not in ('aceptada', 'en_proceso', 'cotizacion_enviada', 'completada'):
             return JSONResponse(
@@ -128,7 +173,13 @@ async def crear_pago(
             "correo":           sol.get('correo_cliente') or '',
             "nombre":           sol.get('nombre_cliente') or '',
             "redirect_url":     f"{base_url_app}/pago/resultado?id_solicitud={id_solicitud}",
-            "precio_cop":       precio
+            "precio_cop":       precio,
+            # Desglose para mostrar al cliente en el checkout
+            "desglose": {
+                "precio_servicio": cobro["precio_servicio"],
+                "tarifa_servicio": cobro["tarifa_servicio"],
+                "total":           cobro["total"],
+            }
         })
 
     except Exception as e:
@@ -193,18 +244,21 @@ async def wompi_webhook(request: Request):
             WHERE id = %s
         """, (est, txn_id, pago['id']))
 
-        # Si aprobado → actualizar solicitud
+        # Si aprobado → marcar como pagado.
+        # NO sobrescribimos precio_final: ese es el valor del servicio que recibe
+        # el trabajador. El total pagado por el cliente (servicio + tarifa) queda
+        # registrado en pagos_solicitud.monto.
         if est == "APPROVED":
             cursor.execute("""
                 UPDATE solicitudes_servicio
-                SET pago_estado = 'pagado', precio_final = %s
+                SET pago_estado = 'pagado'
                 WHERE id_solicitud = %s
-            """, (monto, pago['id_solicitud']))
+            """, (pago['id_solicitud'],))
 
             # Obtener datos para notificaciones
             cursor.execute("""
                 SELECT
-                    s.id_trabajador, s.titulo,
+                    s.id_trabajador, s.titulo, s.precio_final,
                     c.nombre_completo  AS nombre_cliente,
                     ec.correo          AS correo_cliente,
                     p.nombre_completo  AS nombre_trabajador,
@@ -219,13 +273,16 @@ async def wompi_webhook(request: Request):
             """, (pago['id_solicitud'],))
             datos = cursor.fetchone()
 
-            # Notificar al trabajador por push
+            # Monto que recibe el trabajador = precio del servicio (no el total con tarifa)
+            monto_trabajador = float(datos['precio_final']) if datos and datos.get('precio_final') else monto
+
+            # Notificar al trabajador por push (le mostramos LO QUE RECIBE)
             try:
                 if datos and datos['id_trabajador']:
                     _notificar_pago_push(
                         datos['id_trabajador'],
                         pago['id_solicitud'],
-                        monto
+                        monto_trabajador
                     )
             except: pass
 
@@ -441,7 +498,12 @@ def api_dispersiones(tab: str = "pendientes"):
         # Stats
         cursor.execute("SELECT COUNT(*) as total FROM pagos_solicitud WHERE estado_wompi='APPROVED' AND (dispersado=0 OR dispersado IS NULL)")
         total_pend = cursor.fetchone()['total']
-        cursor.execute("SELECT COALESCE(SUM(monto),0) as total FROM pagos_solicitud WHERE estado_wompi='APPROVED' AND (dispersado=0 OR dispersado IS NULL)")
+        cursor.execute("""
+            SELECT COALESCE(SUM(COALESCE(s.precio_final, ps.monto)),0) as total
+            FROM pagos_solicitud ps
+            INNER JOIN solicitudes_servicio s ON ps.id_solicitud = s.id_solicitud
+            WHERE ps.estado_wompi='APPROVED' AND (ps.dispersado=0 OR ps.dispersado IS NULL)
+        """)
         monto_pend = float(cursor.fetchone()['total'])
         cursor.execute("SELECT COUNT(*) as total FROM pagos_solicitud WHERE estado_wompi='APPROVED' AND dispersado=1")
         total_disp = cursor.fetchone()['total']
@@ -458,6 +520,7 @@ def api_dispersiones(tab: str = "pendientes"):
             SELECT
                 ps.id AS id_pago,
                 ps.monto,
+                s.precio_final AS monto_trabajador,
                 ps.estado_wompi,
                 ps.dispersado,
                 ps.fecha_dispersion,
@@ -539,6 +602,7 @@ def recibo_pago(request: Request, id_solicitud: int = 0):
             SELECT p.referencia_wompi, p.id_transaccion_wompi, p.monto,
                    p.estado_wompi, p.fecha_actualizacion, p.fecha_creacion,
                    s.titulo, s.id_cliente, s.id_trabajador,
+                   s.precio_final, s.cotizacion_precio,
                    cat.nombre_categoria,
                    cl.nombre_completo AS nombre_cliente,
                    tr.nombre_completo AS nombre_trabajador
@@ -563,11 +627,19 @@ def recibo_pago(request: Request, id_solicitud: int = 0):
                 status_code=404,
             )
 
-        # Formatear monto a pesos colombianos (1.234.567)
-        try:
-            monto_fmt = f"{int(float(pago['monto'] or 0)):,}".replace(",", ".")
-        except Exception:
-            monto_fmt = "0"
+        def _fmt(v):
+            try:
+                return f"{int(float(v or 0)):,}".replace(",", ".")
+            except Exception:
+                return "0"
+
+        total_pagado    = float(pago['monto'] or 0)
+        precio_servicio = float(pago.get('precio_final') or pago.get('cotizacion_precio') or 0)
+        tarifa_servicio = max(0, total_pagado - precio_servicio)
+
+        monto_fmt    = _fmt(total_pagado)
+        servicio_fmt = _fmt(precio_servicio)
+        tarifa_fmt   = _fmt(tarifa_servicio)
 
         # Fecha de pago en hora Colombia (UTC-5)
         fecha_src = pago.get("fecha_actualizacion") or pago.get("fecha_creacion")
@@ -580,6 +652,8 @@ def recibo_pago(request: Request, id_solicitud: int = 0):
             "request":           request,
             "id_solicitud":      id_solicitud,
             "monto_fmt":         monto_fmt,
+            "servicio_fmt":      servicio_fmt,
+            "tarifa_fmt":        tarifa_fmt,
             "titulo":            pago.get("titulo") or "Servicio",
             "categoria":         pago.get("nombre_categoria") or "",
             "nombre_trabajador": pago.get("nombre_trabajador") or "",

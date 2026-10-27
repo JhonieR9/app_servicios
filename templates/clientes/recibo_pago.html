@@ -87,6 +87,13 @@
         <div class="fila"><span class="k"># Solicitud</span><span class="v">#{{ id_solicitud }}</span></div>
     </div>
 
+    <!-- Desglose del cobro -->
+    <div class="detalles" style="border-top:1px dashed #e2e8f0">
+        <div class="fila"><span class="k">Valor del servicio</span><span class="v">${{ servicio_fmt }}</span></div>
+        <div class="fila"><span class="k">Tarifa de servicio</span><span class="v">${{ tarifa_fmt }}</span></div>
+        <div class="fila"><span class="k" style="font-weight:800;color:#0f172a">Total pagado</span><span class="v" style="color:#4f46e5">${{ monto_fmt }}</span></div>
+    </div>
+
     <div class="ref">
         Referencia: {{ referencia }}<br>
         {% if id_transaccion %}Transacción: {{ id_transaccion }}{% endif %}

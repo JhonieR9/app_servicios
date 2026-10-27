@@ -105,10 +105,13 @@
                 return `
                 <div class="pago-card ${esPagado ? 'pagado' : ''}">
                     <div class="pago-header">
-                        <div class="pago-monto">$${Number(p.monto).toLocaleString('es-CO')}</div>
+                        <div class="pago-monto">$${Number(p.monto_trabajador || p.monto).toLocaleString('es-CO')}</div>
                         <span class="pago-badge ${esPagado ? 'badge-pagado' : 'badge-pendiente'}">
                             ${esPagado ? '✅ Dispersado' : '⏳ Pendiente'}
                         </span>
+                    </div>
+                    <div class="pago-info" style="font-size:0.72rem;color:#64748b">
+                        A pagar al trabajador · Cliente pagó $${Number(p.monto).toLocaleString('es-CO')} (incl. tarifa)
                     </div>
                     <div class="pago-info">👷 <strong>${p.nombre_trabajador || 'Trabajador'}</strong></div>
                     <div class="pago-info">👤 Cliente: ${p.nombre_cliente || 'N/A'}</div>
