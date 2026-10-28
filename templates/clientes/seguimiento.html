@@ -387,6 +387,7 @@
 
     const ESTADOS = {
         pendiente:  { icono:'⏳', clase:'pendiente',  titulo:'Buscando profesional...', sub:'Tu solicitud fue enviada. Estamos buscando el profesional ideal para ti.' },
+        cotizacion_enviada: { icono:'💰', clase:'aceptada', titulo:'¡Cotización recibida!', sub:'Un profesional te envió una cotización. Revísala y acéptala para continuar.' },
         aceptada:   { icono:'✅', clase:'aceptada',   titulo:'¡Profesional asignado!',  sub:'Un profesional aceptó tu solicitud y se está preparando para atenderte.' },
         en_proceso: { icono:'🔧', clase:'en_proceso', titulo:'En proceso',              sub:'El profesional está trabajando en tu solicitud ahora mismo.' },
         completada: { icono:'🎉', clase:'completada', titulo:'¡Servicio completado!',   sub:'Tu servicio fue completado exitosamente. ¡Gracias por usar TalentHub!' },
@@ -396,6 +397,10 @@
     const ORDEN = ['pendiente','aceptada','en_proceso','completada'];
 
     function actualizarTimeline(estado) {
+        // cotizacion_enviada no es un paso propio del timeline: aún estamos en la
+        // etapa inicial (el cliente debe aceptar la cotización), así que lo tratamos
+        // como 'pendiente' en la barra de progreso.
+        if (estado === 'cotizacion_enviada') estado = 'pendiente';
         const idx = ORDEN.indexOf(estado);
         ORDEN.forEach((e, i) => {
             const item = document.getElementById('tl-' + e);
@@ -608,7 +613,69 @@
                 }
             }
 
+            // ── COTIZACIÓN RECIBIDA (estado cotizacion_enviada) ──
+            let cotizDiv = document.getElementById('cotizDiv');
+            if (estado === 'cotizacion_enviada' && parseFloat(data.cotizacion_precio) > 0) {
+                if (!cotizDiv) {
+                    cotizDiv = document.createElement('div');
+                    cotizDiv.id = 'cotizDiv';
+                    const mainCard = document.querySelector('.main-card');
+                    if (mainCard) mainCard.appendChild(cotizDiv);
+                }
+                const precioCot = parseFloat(data.cotizacion_precio);
+                const horasCot  = parseFloat(data.cotizacion_horas) || 0;
+                cotizDiv.innerHTML = `
+                    <div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #fbbf24;
+                                border-radius:14px;padding:16px;margin-top:14px;text-align:center;">
+                        <div style="font-size:0.72rem;font-weight:800;color:#92400e;text-transform:uppercase;
+                                    letter-spacing:1.5px;margin-bottom:6px">💰 Cotización recibida</div>
+                        <div style="font-size:1.8rem;font-weight:900;color:#78350f;letter-spacing:-1px;margin-bottom:2px">
+                            $${precioCot.toLocaleString('es-CO')} <span style="font-size:0.9rem;font-weight:700">(mano de obra)</span>
+                        </div>
+                        ${horasCot ? `<div style="font-size:0.75rem;color:#a16207;margin-bottom:12px">${horasCot}h estimadas · materiales adicionales</div>` : '<div style="margin-bottom:12px"></div>'}
+                        <div style="display:flex;gap:8px">
+                            <button onclick="aceptarCotizacionSeg(${idSolicitud}, ${precioCot})"
+                                style="flex:1;padding:12px;background:linear-gradient(135deg,#10b981,#059669);
+                                       color:white;border:none;border-radius:12px;font-weight:800;
+                                       font-size:0.85rem;cursor:pointer;">✅ Aceptar</button>
+                            <button onclick="abrirChatSeguimiento()"
+                                style="flex:1;padding:12px;background:linear-gradient(135deg,#6366f1,#7c3aed);
+                                       color:white;border:none;border-radius:12px;font-weight:800;
+                                       font-size:0.85rem;cursor:pointer;">💬 Negociar</button>
+                        </div>
+                    </div>`;
+            } else if (cotizDiv) {
+                // Si ya no está en cotización, quitar el bloque
+                cotizDiv.remove();
+            }
+
         } catch(e) { console.log('Error seguimiento:', e); }
+    }
+
+    // Aceptar la cotización desde el seguimiento
+    async function aceptarCotizacionSeg(idSol, precio) {
+        const ok = await thConfirm({
+            titulo:  '¿Aceptar cotización?',
+            mensaje: `El profesional realizará el trabajo por <strong>$${Number(precio).toLocaleString('es-CO')}</strong>.<br><small style="color:#6b7280">Los materiales son adicionales y se acuerdan con el profesional.</small>`,
+            btnOk:   '✅ Sí, aceptar',
+            tipo:    'success',
+            icono:   '💰'
+        });
+        if (!ok) return;
+        try {
+            const fd = new FormData();
+            fd.append('id_solicitud', idSol);
+            fd.append('respuesta', 'aceptar');
+            const res  = await fetch('/cliente/cotizacion/responder', { method:'POST', body:fd });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                cargarSeguimiento();   // refrescar para mostrar el nuevo estado
+            } else {
+                alert('❌ ' + (data.error || 'No se pudo aceptar'));
+            }
+        } catch(e) {
+            alert('❌ Error de conexión');
+        }
     }
 
     // ── SONIDO CAMBIO ESTADO ──
