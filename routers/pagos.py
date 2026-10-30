@@ -441,7 +441,11 @@ def _notificar_pago_push(id_trabajador: int, id_solicitud: int, monto: float):
 
 @router.get("/admin/dispersiones", response_class=HTMLResponse)
 def admin_dispersiones(request: Request):
-    """Panel admin para gestionar pagos pendientes de dispersar a trabajadores."""
+    """Panel admin para gestionar pagos pendientes de dispersar a trabajadores (solo admin)."""
+    from routers.trabajadores import requiere_admin
+    redir = requiere_admin(request)
+    if redir:
+        return redir
     return templates.TemplateResponse("trabajadores/dispersiones.html", {"request": request})
 
 
@@ -492,24 +496,39 @@ def confirmar_pago_manual(request: Request, id_solicitud: int = Form(...)):
 
 
 @router.get("/admin/dispersiones-api")
-def api_dispersiones(tab: str = "pendientes"):
-    """API: lista pagos aprobados pendientes o ya dispersados."""
+def api_dispersiones(request: Request, tab: str = "pendientes"):
+    """API: lista pagos aprobados pendientes o ya dispersados (solo admin)."""
+    from routers.trabajadores import verificar_admin
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado", "dispersiones": []}, status_code=401)
+
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor(dictionary=True)
 
-        # Stats
-        cursor.execute("SELECT COUNT(*) as total FROM pagos_solicitud WHERE estado_wompi='APPROVED' AND (dispersado=0 OR dispersado IS NULL)")
-        total_pend = cursor.fetchone()['total']
+        # Stats — mismo JOIN que la lista, para que los números coincidan con lo que se ve.
+        # El monto por dispersar es SOLO el valor del servicio (lo del trabajador),
+        # nunca el total que pagó el cliente (que incluye la tarifa de la plataforma).
         cursor.execute("""
-            SELECT COALESCE(SUM(COALESCE(s.precio_final, ps.monto)),0) as total
+            SELECT COUNT(*)                                         AS total,
+                   COALESCE(SUM(COALESCE(s.precio_final, 0)), 0)    AS monto,
+                   COALESCE(SUM(CASE WHEN s.precio_final IS NULL OR s.precio_final <= 0
+                                     THEN 1 ELSE 0 END), 0)         AS sin_precio
             FROM pagos_solicitud ps
             INNER JOIN solicitudes_servicio s ON ps.id_solicitud = s.id_solicitud
-            WHERE ps.estado_wompi='APPROVED' AND (ps.dispersado=0 OR ps.dispersado IS NULL)
+            WHERE ps.estado_wompi = 'APPROVED' AND (ps.dispersado = 0 OR ps.dispersado IS NULL)
         """)
-        monto_pend = float(cursor.fetchone()['total'])
-        cursor.execute("SELECT COUNT(*) as total FROM pagos_solicitud WHERE estado_wompi='APPROVED' AND dispersado=1")
-        total_disp = cursor.fetchone()['total']
+        st = cursor.fetchone()
+        total_pend = int(st['total'] or 0)
+        monto_pend = float(st['monto'] or 0)
+        sin_precio = int(st['sin_precio'] or 0)
+        cursor.execute("""
+            SELECT COUNT(*) AS total
+            FROM pagos_solicitud ps
+            INNER JOIN solicitudes_servicio s ON ps.id_solicitud = s.id_solicitud
+            WHERE ps.estado_wompi = 'APPROVED' AND ps.dispersado = 1
+        """)
+        total_disp = int(cursor.fetchone()['total'] or 0)
 
         # Lista según tab
         if tab == 'pagados':
@@ -519,48 +538,69 @@ def api_dispersiones(tab: str = "pendientes"):
             filtro = "AND (ps.dispersado = 0 OR ps.dispersado IS NULL)"
             orden  = "ps.fecha_creacion DESC"
 
+        # Una sola fila por pago: el teléfono y los datos de cuenta se resumen en
+        # subconsultas agrupadas para que no se dupliquen si el trabajador tiene
+        # varios teléfonos o más de un registro en detalles_persona.
         cursor.execute(f"""
             SELECT
                 ps.id AS id_pago,
+                ps.id_solicitud,
                 ps.monto,
-                s.precio_final AS monto_trabajador,
+                NULLIF(s.precio_final, 0) AS monto_trabajador,
                 ps.estado_wompi,
+                ps.referencia_wompi,
                 ps.dispersado,
                 ps.fecha_dispersion,
                 ps.fecha_creacion,
+                ps.fecha_actualizacion,
                 s.titulo,
                 s.id_trabajador,
                 p.nombre_completo AS nombre_trabajador,
-                tp.telefono AS telefono_trabajador,
-                dp.medio_pago, dp.medio_pago_principal, dp.banco, dp.numero_cuenta,
+                p.numero_documento AS documento_trabajador,
+                (SELECT MIN(tp.telefono) FROM telefono_persona tp
+                  WHERE tp.id_persona = p.id_persona) AS telefono_trabajador,
+                dp.medio_pago, dp.medio_pago_principal, dp.banco,
+                dp.tipo_cuenta, dp.numero_cuenta, dp.titular_cuenta,
                 c.nombre_completo AS nombre_cliente
             FROM pagos_solicitud ps
             INNER JOIN solicitudes_servicio s ON ps.id_solicitud = s.id_solicitud
-            LEFT JOIN personas p   ON s.id_trabajador = p.id_persona
-            LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
-            LEFT JOIN detalles_persona dp ON p.id_persona = dp.id_persona
-            LEFT JOIN clientes c   ON ps.id_cliente = c.id_cliente
+            LEFT JOIN personas p ON s.id_trabajador = p.id_persona
+            LEFT JOIN (
+                SELECT id_persona,
+                       MAX(medio_pago)           AS medio_pago,
+                       MAX(medio_pago_principal) AS medio_pago_principal,
+                       MAX(banco)                AS banco,
+                       MAX(tipo_cuenta)          AS tipo_cuenta,
+                       MAX(numero_cuenta)        AS numero_cuenta,
+                       MAX(titular_cuenta)       AS titular_cuenta
+                FROM detalles_persona
+                GROUP BY id_persona
+            ) dp ON dp.id_persona = p.id_persona
+            LEFT JOIN clientes c ON ps.id_cliente = c.id_cliente
             WHERE ps.estado_wompi = 'APPROVED' {filtro}
             ORDER BY {orden}
-            LIMIT 50
+            LIMIT 300
         """)
         dispersiones = cursor.fetchall()
 
         from datetime import timedelta
+        from decimal import Decimal
         for d in dispersiones:
             for k, v in d.items():
                 if v is None:
                     d[k] = ''
                 elif hasattr(v, 'isoformat'):
                     d[k] = (v - timedelta(hours=5)).strftime('%d/%m/%Y %H:%M')
-                elif hasattr(v, '__float__'):
+                elif isinstance(v, Decimal):
                     d[k] = float(v)
 
         return JSONResponse({
             "dispersiones":      dispersiones,
             "total_pendientes":  total_pend,
             "monto_pendiente":   monto_pend,
-            "total_dispersados": total_disp
+            "total_dispersados": total_disp,
+            "sin_precio":        sin_precio,
+            "mostrando":         len(dispersiones),
         })
     except Exception as e:
         return JSONResponse({"error": str(e), "dispersiones": []}, status_code=500)
@@ -570,16 +610,55 @@ def api_dispersiones(tab: str = "pendientes"):
 
 
 @router.post("/admin/marcar-dispersado")
-def marcar_dispersado(id_pago: int = Form(...)):
-    """Marca un pago como dispersado al trabajador."""
+def marcar_dispersado(request: Request, id_pago: int = Form(...)):
+    """Marca un pago como dispersado al trabajador (solo admin)."""
+    from routers.trabajadores import verificar_admin
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
+
+    conexion = conectar_bd()
+    try:
+        cursor = conexion.cursor()
+        # Solo si todavía no estaba dispersado: evita doble clic / doble registro
+        cursor.execute("""
+            UPDATE pagos_solicitud
+            SET dispersado = 1, fecha_dispersion = NOW()
+            WHERE id = %s AND estado_wompi = 'APPROVED'
+              AND (dispersado = 0 OR dispersado IS NULL)
+        """, (id_pago,))
+        if cursor.rowcount == 0:
+            conexion.rollback()
+            return JSONResponse(
+                {"error": "Este pago ya estaba marcado como dispersado o no está aprobado"},
+                status_code=409
+            )
+        conexion.commit()
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/admin/desmarcar-dispersado")
+def desmarcar_dispersado(request: Request, id_pago: int = Form(...)):
+    """Revierte una dispersión marcada por error (solo admin)."""
+    from routers.trabajadores import verificar_admin
+    if not verificar_admin(request):
+        return JSONResponse({"error": "No autorizado"}, status_code=401)
+
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor()
         cursor.execute("""
             UPDATE pagos_solicitud
-            SET dispersado = 1, fecha_dispersion = NOW()
-            WHERE id = %s AND estado_wompi = 'APPROVED'
+            SET dispersado = 0, fecha_dispersion = NULL
+            WHERE id = %s AND dispersado = 1
         """, (id_pago,))
+        if cursor.rowcount == 0:
+            conexion.rollback()
+            return JSONResponse({"error": "Este pago no estaba marcado como dispersado"}, status_code=409)
         conexion.commit()
         return JSONResponse({"ok": True})
     except Exception as e:

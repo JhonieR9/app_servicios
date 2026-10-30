@@ -10,37 +10,80 @@
     <style>
         body { background:#f8fafc; font-family:'Segoe UI',sans-serif; }
         .main { max-width:900px; margin:0 auto; padding:24px 16px; }
-        .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+        .header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
         .header h2 { font-size:1.4rem; font-weight:800; color:#0f172a; margin:0; }
-        .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
+        .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
         .stat-card { background:white; border-radius:14px; padding:18px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
-        .stat-val { font-size:1.8rem; font-weight:800; color:#4f46e5; }
+        .stat-val { font-size:1.6rem; font-weight:800; color:#4f46e5; }
         .stat-label { font-size:0.75rem; color:#64748b; margin-top:4px; }
+        .aviso {
+            border-radius:12px; padding:12px 16px; margin-bottom:16px;
+            font-size:0.85rem; font-weight:600; display:none;
+        }
+        .aviso.warn { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+        .aviso.info { background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; }
+        .toolbar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+        .tabs { display:flex; gap:8px; }
+        .tab { padding:10px 18px; border-radius:10px; border:none; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all .2s; }
+        .tab.active { background:#4f46e5; color:white; }
+        .tab:not(.active) { background:#e2e8f0; color:#64748b; }
+        .buscar {
+            flex:1; min-width:180px; padding:10px 14px; border:1.5px solid #e2e8f0;
+            border-radius:10px; font-size:0.85rem; outline:none; background:white;
+        }
+        .buscar:focus { border-color:#6366f1; }
         .pago-card {
             background:white; border-radius:16px; padding:18px;
             margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);
             border-left:4px solid #f59e0b;
         }
-        .pago-card.pagado { border-left-color:#10b981; opacity:0.7; }
-        .pago-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-        .pago-monto { font-size:1.3rem; font-weight:800; color:#0f172a; }
-        .pago-badge { padding:4px 10px; border-radius:99px; font-size:0.72rem; font-weight:700; }
+        .pago-card.pagado { border-left-color:#10b981; }
+        .pago-card.alerta { border-left-color:#ef4444; }
+        .pago-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:4px; }
+        .pago-etq { font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.5px; }
+        .pago-monto { font-size:1.5rem; font-weight:800; color:#0f172a; line-height:1.2; }
+        .pago-monto.sin-precio { font-size:1rem; color:#b91c1c; }
+        .pago-badge { padding:4px 10px; border-radius:99px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
         .badge-pendiente { background:#fef3c7; color:#92400e; }
         .badge-pagado { background:#dcfce7; color:#065f46; }
+        .desglose {
+            display:flex; flex-wrap:wrap; gap:6px 16px; font-size:0.75rem; color:#64748b;
+            background:#f8fafc; border-radius:8px; padding:8px 12px; margin:8px 0 10px;
+        }
+        .desglose b { color:#374151; }
         .pago-info { font-size:0.82rem; color:#64748b; margin-bottom:4px; }
         .pago-info strong { color:#374151; }
-        .pago-cuenta { background:#f1f5f9; border-radius:10px; padding:10px 14px; margin:10px 0; font-size:0.82rem; }
+        .pago-cuenta { background:#f1f5f9; border-radius:10px; padding:12px 14px; margin:10px 0; font-size:0.82rem; }
+        .pago-cuenta.vacia { background:#fef2f2; color:#b91c1c; font-weight:600; }
+        .cuenta-fila { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px; }
+        .cuenta-fila .k { color:#64748b; }
+        .cuenta-fila .v { color:#0f172a; font-weight:700; word-break:break-all; text-align:right; }
+        .btn-copy {
+            border:none; background:#e0e7ff; color:#3730a3; border-radius:8px;
+            padding:3px 9px; font-size:0.72rem; font-weight:700; cursor:pointer; margin-left:8px; flex-shrink:0;
+        }
+        .btn-copy:hover { background:#c7d2fe; }
         .btn-dispersar {
             padding:10px 20px; background:linear-gradient(135deg,#10b981,#059669);
             color:white; border:none; border-radius:10px; font-weight:700;
             font-size:0.85rem; cursor:pointer; transition:all .2s;
         }
         .btn-dispersar:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(16,185,129,.3); }
+        .btn-dispersar:disabled { opacity:.5; cursor:default; transform:none; box-shadow:none; }
+        .btn-revertir {
+            border:none; background:none; color:#64748b; font-size:0.75rem;
+            text-decoration:underline; cursor:pointer; padding:0; margin-left:10px;
+        }
         .empty { text-align:center; padding:40px; color:#94a3b8; }
-        .tabs { display:flex; gap:8px; margin-bottom:20px; }
-        .tab { padding:10px 18px; border-radius:10px; border:none; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all .2s; }
-        .tab.active { background:#4f46e5; color:white; }
-        .tab:not(.active) { background:#e2e8f0; color:#64748b; }
+        .toast-msg {
+            position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+            background:#0f172a; color:white; padding:12px 20px; border-radius:12px;
+            font-size:0.85rem; font-weight:600; z-index:9999; max-width:90vw;
+        }
+        @media (max-width:560px) {
+            .stats-row { grid-template-columns:1fr; }
+            .stat-card { padding:12px; }
+        }
     </style>
 </head>
 <body>
@@ -58,7 +101,7 @@
         </div>
         <div class="stat-card">
             <div class="stat-val" id="statMonto">-</div>
-            <div class="stat-label">Monto por dispersar</div>
+            <div class="stat-label">Por pagar a trabajadores</div>
         </div>
         <div class="stat-card">
             <div class="stat-val" id="statDispersados">-</div>
@@ -66,9 +109,16 @@
         </div>
     </div>
 
-    <div class="tabs">
-        <button class="tab active" id="tabPendientes" onclick="cambiarTab('pendientes')">⏳ Pendientes</button>
-        <button class="tab" id="tabPagados" onclick="cambiarTab('pagados')">✅ Ya pagados</button>
+    <div class="aviso warn" id="avisoSinPrecio"></div>
+    <div class="aviso info" id="avisoLimite"></div>
+
+    <div class="toolbar">
+        <div class="tabs">
+            <button class="tab active" id="tabPendientes" onclick="cambiarTab('pendientes')">⏳ Pendientes</button>
+            <button class="tab" id="tabPagados" onclick="cambiarTab('pagados')">✅ Ya pagados</button>
+        </div>
+        <input type="search" class="buscar" id="buscar" placeholder="Buscar por trabajador, cliente, servicio o #solicitud"
+               oninput="renderLista()" aria-label="Buscar dispersiones">
     </div>
 
     <div id="listaDispersiones">
@@ -78,85 +128,231 @@
 
 <script>
     let tabActual = 'pendientes';
+    let datos = [];          // lista cargada del servidor
+    let cargando = false;
+
+    // Escapa HTML: nombres, servicios y cuentas los escriben usuarios, nunca se insertan crudos.
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+            ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    const fmt = n => '$' + Number(n || 0).toLocaleString('es-CO');
+
+    function toast(msg) {
+        const t = document.createElement('div');
+        t.className = 'toast-msg';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3500);
+    }
+
+    // Si la sesión de admin venció, el servidor responde 401: volvemos al login.
+    function sesionVencida(res) {
+        if (res.status === 401) {
+            window.location.href = '/trabajador/admin/login';
+            return true;
+        }
+        return false;
+    }
 
     async function cargarDispersiones() {
+        if (cargando) return;
+        cargando = true;
         try {
-            const res = await fetch('/pago/admin/dispersiones-api?tab=' + tabActual);
+            const res = await fetch('/pago/admin/dispersiones-api?tab=' + tabActual, { credentials: 'include' });
+            if (sesionVencida(res)) return;
             const data = await res.json();
-            const lista = data.dispersiones || [];
+            if (data.error) throw new Error(data.error);
 
-            // Stats
+            datos = data.dispersiones || [];
+
             document.getElementById('statPendientes').textContent = data.total_pendientes || 0;
-            document.getElementById('statMonto').textContent = '$' + (data.monto_pendiente || 0).toLocaleString('es-CO');
+            document.getElementById('statMonto').textContent = fmt(data.monto_pendiente);
             document.getElementById('statDispersados').textContent = data.total_dispersados || 0;
 
-            const container = document.getElementById('listaDispersiones');
-            if (lista.length === 0) {
-                container.innerHTML = `<div class="empty">
-                    <div style="font-size:2.5rem;margin-bottom:12px">${tabActual === 'pendientes' ? '✅' : '📭'}</div>
-                    <div>${tabActual === 'pendientes' ? 'No hay pagos pendientes de dispersar' : 'No hay dispersiones realizadas'}</div>
-                </div>`;
-                return;
+            // Aviso: pagos aprobados cuyo servicio no tiene precio registrado
+            const av = document.getElementById('avisoSinPrecio');
+            if (data.sin_precio > 0) {
+                av.textContent = '⚠️ ' + data.sin_precio + (data.sin_precio === 1 ? ' pago pendiente no tiene' : ' pagos pendientes no tienen') +
+                    ' el valor del servicio registrado. Revísalo antes de transferir (no se muestra monto para evitar pagar de más).';
+                av.style.display = 'block';
+            } else {
+                av.style.display = 'none';
             }
 
-            container.innerHTML = lista.map(p => {
-                const esPagado = p.dispersado == 1;
-                const cuenta = p.medio_pago_principal || p.medio_pago || 'No registrado';
-                return `
-                <div class="pago-card ${esPagado ? 'pagado' : ''}">
-                    <div class="pago-header">
-                        <div class="pago-monto">$${Number(p.monto_trabajador || p.monto).toLocaleString('es-CO')}</div>
-                        <span class="pago-badge ${esPagado ? 'badge-pagado' : 'badge-pendiente'}">
-                            ${esPagado ? '✅ Dispersado' : '⏳ Pendiente'}
-                        </span>
-                    </div>
-                    <div class="pago-info" style="font-size:0.72rem;color:#64748b">
-                        A pagar al trabajador · Cliente pagó $${Number(p.monto).toLocaleString('es-CO')} (incl. tarifa)
-                    </div>
-                    <div class="pago-info">👷 <strong>${p.nombre_trabajador || 'Trabajador'}</strong></div>
-                    <div class="pago-info">👤 Cliente: ${p.nombre_cliente || 'N/A'}</div>
-                    <div class="pago-info">🔧 Servicio: ${p.titulo || 'Servicio'} · ${p.fecha || ''}</div>
-                    <div class="pago-cuenta">
-                        💳 <strong>Pagar a:</strong> ${cuenta}
-                        ${p.numero_cuenta ? ` · Cuenta: ${p.numero_cuenta}` : ''}
-                        ${p.banco ? ` · ${p.banco}` : ''}
-                        ${p.telefono_trabajador ? ` · Tel: ${p.telefono_trabajador}` : ''}
-                    </div>
-                    ${!esPagado ? `
-                    <button class="btn-dispersar" onclick="marcarDispersado(${p.id_pago})">
-                        ✅ Marcar como pagado al trabajador
-                    </button>` : `
-                    <div style="font-size:0.75rem;color:#065f46">Dispersado el ${p.fecha_dispersion || ''}</div>`}
-                </div>`;
-            }).join('');
-        } catch(e) {
-            document.getElementById('listaDispersiones').innerHTML = '<div class="empty">❌ Error cargando</div>';
+            // Aviso: la lista está recortada
+            const total = tabActual === 'pendientes' ? data.total_pendientes : data.total_dispersados;
+            const al = document.getElementById('avisoLimite');
+            if (total > (data.mostrando || 0)) {
+                al.textContent = 'Mostrando los ' + data.mostrando + ' más recientes de ' + total + '. Usa el buscador para encontrar uno específico.';
+                al.style.display = 'block';
+            } else {
+                al.style.display = 'none';
+            }
+
+            renderLista();
+        } catch (e) {
+            document.getElementById('listaDispersiones').innerHTML =
+                '<div class="empty">❌ No se pudo cargar. ' + esc(e.message || '') + '</div>';
+        } finally {
+            cargando = false;
         }
+    }
+
+    function filaCuenta(clave, valor, copiable) {
+        if (!valor) return '';
+        return `<div class="cuenta-fila">
+            <span class="k">${esc(clave)}</span>
+            <span class="v">${esc(valor)}${copiable
+                ? `<button class="btn-copy" data-copy="${esc(valor)}" type="button">Copiar</button>` : ''}</span>
+        </div>`;
+    }
+
+    function renderLista() {
+        const q = (document.getElementById('buscar').value || '').trim().toLowerCase();
+        const lista = !q ? datos : datos.filter(p =>
+            [p.nombre_trabajador, p.nombre_cliente, p.titulo, p.documento_trabajador, p.id_solicitud]
+                .some(v => String(v == null ? '' : v).toLowerCase().includes(q)));
+
+        const container = document.getElementById('listaDispersiones');
+        if (lista.length === 0) {
+            container.innerHTML = `<div class="empty">
+                <div style="font-size:2.5rem;margin-bottom:12px">${q ? '🔍' : (tabActual === 'pendientes' ? '✅' : '📭')}</div>
+                <div>${q ? 'Sin resultados para tu búsqueda'
+                         : (tabActual === 'pendientes' ? 'No hay pagos pendientes de dispersar' : 'No hay dispersiones realizadas')}</div>
+            </div>`;
+            return;
+        }
+
+        container.innerHTML = lista.map(p => {
+            const esPagado = Number(p.dispersado) === 1;
+            const aPagar = Number(p.monto_trabajador) || 0;
+            const total = Number(p.monto) || 0;
+            const retenido = aPagar > 0 ? Math.max(0, total - aPagar) : 0;
+            const sinPrecio = aPagar <= 0;
+
+            const medio = p.medio_pago_principal || p.medio_pago || '';
+            const hayCuenta = !!(medio || p.numero_cuenta || p.banco);
+            const cuentaHtml = hayCuenta
+                ? `<div class="pago-cuenta">
+                       <strong>💳 Pagar a</strong>
+                       ${filaCuenta('Medio', medio, false)}
+                       ${filaCuenta('Banco', p.banco, false)}
+                       ${filaCuenta('Tipo de cuenta', p.tipo_cuenta, false)}
+                       ${filaCuenta('Número', p.numero_cuenta, true)}
+                       ${filaCuenta('Titular', p.titular_cuenta, false)}
+                       ${filaCuenta('Teléfono', p.telefono_trabajador, true)}
+                   </div>`
+                : `<div class="pago-cuenta vacia">⚠️ Este trabajador no tiene medio de pago registrado.
+                       Contáctalo${p.telefono_trabajador ? ' al ' + esc(p.telefono_trabajador) : ''} antes de transferir.</div>`;
+
+            const fechaPago = p.fecha_actualizacion || p.fecha_creacion || '';
+
+            return `
+            <div class="pago-card ${esPagado ? 'pagado' : ''} ${(!esPagado && (sinPrecio || !hayCuenta)) ? 'alerta' : ''}">
+                <div class="pago-header">
+                    <div>
+                        <div class="pago-etq">A pagar al trabajador</div>
+                        ${sinPrecio
+                            ? '<div class="pago-monto sin-precio">⚠️ Sin valor del servicio registrado</div>'
+                            : `<div class="pago-monto">${fmt(aPagar)}</div>`}
+                    </div>
+                    <span class="pago-badge ${esPagado ? 'badge-pagado' : 'badge-pendiente'}">
+                        ${esPagado ? '✅ Dispersado' : '⏳ Pendiente'}
+                    </span>
+                </div>
+                <div class="desglose">
+                    <span>Cliente pagó <b>${fmt(total)}</b></span>
+                    ${retenido > 0 ? `<span>Tarifa de servicio retenida <b>${fmt(retenido)}</b></span>` : ''}
+                    <span>Solicitud <b>#${esc(p.id_solicitud)}</b></span>
+                </div>
+                <div class="pago-info">👷 <strong>${esc(p.nombre_trabajador || 'Trabajador')}</strong>${p.documento_trabajador ? ' · CC ' + esc(p.documento_trabajador) : ''}</div>
+                <div class="pago-info">👤 Cliente: ${esc(p.nombre_cliente || 'N/A')}</div>
+                <div class="pago-info">🔧 ${esc(p.titulo || 'Servicio')} · Pagado el ${esc(fechaPago)}</div>
+                ${cuentaHtml}
+                ${!esPagado ? `
+                <button class="btn-dispersar" id="btn-${esc(p.id_pago)}" onclick="marcarDispersado(${Number(p.id_pago)})"
+                        ${sinPrecio ? 'disabled title="Falta el valor del servicio"' : ''}>
+                    ✅ Marcar como pagado al trabajador
+                </button>` : `
+                <div style="font-size:0.75rem;color:#065f46">Dispersado el ${esc(p.fecha_dispersion || '')}
+                    <button class="btn-revertir" onclick="desmarcarDispersado(${Number(p.id_pago)})">Revertir</button>
+                </div>`}
+            </div>`;
+        }).join('');
     }
 
     function cambiarTab(tab) {
         tabActual = tab;
         document.getElementById('tabPendientes').classList.toggle('active', tab === 'pendientes');
         document.getElementById('tabPagados').classList.toggle('active', tab === 'pagados');
+        datos = [];
+        document.getElementById('listaDispersiones').innerHTML = '<div class="empty">Cargando...</div>';
         cargarDispersiones();
     }
 
+    async function enviarAccion(url, idPago) {
+        const fd = new FormData();
+        fd.append('id_pago', idPago);
+        const res = await fetch(url, { method: 'POST', body: fd, credentials: 'include' });
+        if (sesionVencida(res)) return false;
+        let data = {};
+        try { data = await res.json(); } catch (e) {}
+        if (!res.ok) {
+            toast('❌ ' + (data.error || 'No se pudo completar la acción'));
+            return false;
+        }
+        return true;
+    }
+
     async function marcarDispersado(idPago) {
+        const p = datos.find(x => Number(x.id_pago) === Number(idPago));
+        const detalle = p
+            ? `<div style="text-align:left;line-height:1.7">
+                   Vas a confirmar que ya transferiste <strong>${fmt(p.monto_trabajador)}</strong> a
+                   <strong>${esc(p.nombre_trabajador || 'el trabajador')}</strong>
+                   ${p.numero_cuenta ? '<br><small>Cuenta: ' + esc(p.numero_cuenta) + (p.banco ? ' · ' + esc(p.banco) : '') + '</small>' : ''}
+               </div>`
+            : '¿Ya le transferiste el dinero al trabajador?';
         const ok = await thConfirm({
             titulo: '¿Confirmar dispersión?',
-            mensaje: '¿Ya le transferiste el dinero al trabajador?',
+            mensaje: detalle,
             btnOk: '✅ Sí, ya le pagué',
             tipo: 'success'
         });
         if (!ok) return;
 
-        try {
-            const fd = new FormData();
-            fd.append('id_pago', idPago);
-            const res = await fetch('/pago/admin/marcar-dispersado', { method:'POST', body:fd });
-            if (res.ok) cargarDispersiones();
-        } catch(e) {}
+        const btn = document.getElementById('btn-' + idPago);
+        if (btn) btn.disabled = true;           // evita doble clic
+        const hecho = await enviarAccion('/pago/admin/marcar-dispersado', idPago);
+        if (hecho) { toast('✅ Marcado como pagado'); cargarDispersiones(); }
+        else if (btn) btn.disabled = false;
     }
+
+    async function desmarcarDispersado(idPago) {
+        const ok = await thConfirm({
+            titulo: '¿Revertir dispersión?',
+            mensaje: 'El pago volverá a aparecer como pendiente. Úsalo solo si lo marcaste por error.',
+            btnOk: 'Sí, revertir',
+            tipo: 'warning'
+        });
+        if (!ok) return;
+        const hecho = await enviarAccion('/pago/admin/desmarcar-dispersado', idPago);
+        if (hecho) { toast('↩️ Dispersión revertida'); cargarDispersiones(); }
+    }
+
+    // Botones "Copiar" (delegación de eventos: el valor viaja en data-copy, ya escapado)
+    document.addEventListener('click', async (ev) => {
+        const b = ev.target.closest('.btn-copy');
+        if (!b) return;
+        const valor = b.getAttribute('data-copy') || '';
+        try {
+            await navigator.clipboard.writeText(valor);
+            toast('📋 Copiado: ' + valor);
+        } catch (e) {
+            toast('No se pudo copiar. Selecciona el texto manualmente.');
+        }
+    });
 
     cargarDispersiones();
 </script>
