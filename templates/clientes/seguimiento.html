@@ -633,6 +633,12 @@
                             $${precioCot.toLocaleString('es-CO')} <span style="font-size:0.9rem;font-weight:700">(mano de obra)</span>
                         </div>
                         ${horasCot ? `<div style="font-size:0.75rem;color:#a16207;margin-bottom:12px">${horasCot}h estimadas · materiales adicionales</div>` : '<div style="margin-bottom:12px"></div>'}
+                        ${data.desglose ? `
+                        <div style="text-align:left;margin:0 0 14px;padding-top:10px;border-top:1px dashed #fcd34d;font-size:0.82rem;color:#78350f">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Servicio</span><strong>$${Number(data.desglose.precio_servicio).toLocaleString('es-CO')}</strong></div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Tarifa de servicio</span><strong>$${Number(data.desglose.tarifa_servicio).toLocaleString('es-CO')}</strong></div>
+                            <div style="display:flex;justify-content:space-between;font-size:0.95rem;margin-top:6px;padding-top:6px;border-top:1px solid #fde68a"><span><strong>Total a pagar</strong></span><strong style="color:#4f46e5">$${Number(data.desglose.total).toLocaleString('es-CO')}</strong></div>
+                        </div>` : ''}
                         <div style="display:flex;gap:8px">
                             <button onclick="aceptarCotizacionSeg(${idSolicitud}, ${precioCot})"
                                 style="flex:1;padding:12px;background:linear-gradient(135deg,#10b981,#059669);

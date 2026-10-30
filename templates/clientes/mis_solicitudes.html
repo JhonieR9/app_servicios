@@ -425,6 +425,12 @@
                     </div>
                     <div style="font-size:0.78rem;color:#a16207">${horas}h estimadas de trabajo</div>
                     ${nota}
+                    ${s.desglose ? `
+                    <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #fcd34d;font-size:0.82rem;color:#78350f">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Servicio</span><strong>$${Number(s.desglose.precio_servicio).toLocaleString('es-CO')}</strong></div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Tarifa de servicio</span><strong>$${Number(s.desglose.tarifa_servicio).toLocaleString('es-CO')}</strong></div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.95rem;margin-top:6px;padding-top:6px;border-top:1px solid #fde68a"><span><strong>Total a pagar</strong></span><strong style="color:#4f46e5">$${Number(s.desglose.total).toLocaleString('es-CO')}</strong></div>
+                    </div>` : ''}
                     <div style="font-size:0.72rem;color:#78716c;margin-top:8px">⚠️ Los materiales son adicionales y se acuerdan con el profesional.</div>
                 </div>
                 <div class="card-activa-btns" style="grid-template-columns:1fr 1fr;">

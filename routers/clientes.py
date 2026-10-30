@@ -261,6 +261,14 @@ def api_seguimiento(id: int):
         cot_horas = sol.get('cotizacion_horas')
         sol['cotizacion_horas'] = float(cot_horas) if cot_horas is not None else 0
 
+        # Desglose de cobro de la cotización (mismo cálculo que el checkout)
+        if sol.get('estado') == 'cotizacion_enviada' and sol['cotizacion_precio'] > 0:
+            try:
+                from routers.pagos import calcular_cobro
+                sol['desglose'] = calcular_cobro(sol['cotizacion_precio'])
+            except Exception as e_cobro:
+                print(f"[COBRO] desglose seguimiento: {e_cobro}")
+
         # Garantizar que campos string no sean None
         for k in ['titulo', 'estado', 'ciudad', 'departamento', 'nombre_categoria']:
             if sol.get(k) is None:
@@ -362,6 +370,13 @@ def listar_mis_solicitudes_cliente(request: Request, id_cliente: int = None):
                     s[k] = ''
                 elif hasattr(v, '__float__'):
                     s[k] = float(v)
+            # Desglose de cobro para cotizaciones pendientes (mismo cálculo que el checkout)
+            try:
+                if s.get('estado') == 'cotizacion_enviada' and float(s.get('cotizacion_precio') or 0) > 0:
+                    from routers.pagos import calcular_cobro
+                    s['desglose'] = calcular_cobro(float(s['cotizacion_precio']))
+            except Exception as e_cobro:
+                print(f"[COBRO] desglose solicitud {s.get('id_solicitud')}: {e_cobro}")
         return JSONResponse({"solicitudes": solicitudes})
     except Exception as e:
         return JSONResponse({"error": str(e), "solicitudes": []}, status_code=500)
