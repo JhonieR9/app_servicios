@@ -375,6 +375,8 @@
     }
 
     const NOMBRES_VEHICULO = { moto:'Moto', carro:'Carro', camioneta:'Camioneta', camion:'Camión' };
+    const PESOS_PAQUETE = { hasta2:'Hasta 2 kg', '2a5':'2 a 5 kg', '5a10':'5 a 10 kg', '10a20':'10 a 20 kg', mas20:'Más de 20 kg' };
+    function textoPiso(n) { n = Number(n) || 0; return n ? ('piso ' + n) : 'casa o 1er piso'; }
 
     // Enlace a Google Maps con la ruta recogida → destino (asume la misma ciudad)
     function urlRutaViaje(s) {
@@ -400,9 +402,22 @@
                 <div class="info-row">
                     📦 <strong>Se transporta:</strong> ${escTrab(det.carga)}
                 </div>
+                ${det.subtipo === 'mensajeria' ? `
+                <div class="info-row">
+                    ⚖️ <strong>Peso aprox.:</strong> ${escTrab(PESOS_PAQUETE[det.peso] || det.peso || '')}
+                </div>` : `
                 <div class="info-row">
                     👷 <strong>Ayudantes:</strong> ${det.ayudantes ? 'Sí, los necesita' : 'No'}
-                </div>
+                </div>`}
+                ${det.subtipo === 'mudanza' ? `
+                <div class="info-row">
+                    🏢 <strong>Pisos:</strong> recogida ${textoPiso(det.piso_origen)} · destino ${textoPiso(det.piso_destino)} · ascensor: ${det.ascensor ? 'sí' : 'no'}
+                </div>` : ''}
+                ${det.distancia_km ? `
+                <div class="info-row">
+                    📏 <strong>Distancia aprox.:</strong> ${escTrab(det.distancia_km)} km · ~${escTrab(det.duracion_min)} min
+                    <span style="color:#94a3b8">(verifícala en el mapa)</span>
+                </div>` : ''}
                 <div class="info-row">
                     <a href="${urlRutaViaje(s)}" target="_blank" rel="noopener noreferrer"
                        style="color:#2563eb;font-weight:600;text-decoration:none">🗺️ Ver ruta en el mapa</a>
@@ -710,6 +725,9 @@
                 <div>📍 <strong>Recogida:</strong> ${escTrab(s.direccion_servicio || '')}${s.ciudad ? ', ' + escTrab(s.ciudad) : ''}</div>
                 <div>🏁 <strong>Destino:</strong> ${escTrab(d.destino)}</div>
                 <div>🚗 ${escTrab(NOMBRES_VEHICULO[d.vehiculo] || d.vehiculo || '')} · 📦 ${escTrab(d.carga || '')}${d.ayudantes ? ' · 👷 con ayudantes' : ''}</div>
+                ${d.subtipo === 'mensajeria' ? `<div>⚖️ ${escTrab(PESOS_PAQUETE[d.peso] || d.peso || '')}</div>` : ''}
+                ${d.subtipo === 'mudanza' ? `<div>🏢 Recogida ${textoPiso(d.piso_origen)} · destino ${textoPiso(d.piso_destino)} · ascensor ${d.ascensor ? 'sí' : 'no'}</div>` : ''}
+                ${d.distancia_km ? `<div>📏 ~${escTrab(d.distancia_km)} km · ~${escTrab(d.duracion_min)} min (aprox.)</div>` : ''}
                 <div style="margin-top:4px"><a href="${urlRutaViaje(s)}" target="_blank" rel="noopener noreferrer"
                     style="color:#2563eb;font-weight:600;text-decoration:none">🗺️ Ver ruta y distancia</a></div>
             </div>` : '';

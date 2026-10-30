@@ -628,30 +628,77 @@
                 <div class="form-group">
                     <label>Tipo de vehículo *</label>
                     <div id="viajeVehiculos" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
-                        <div class="chip" onclick="selVehiculo(this,'moto')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
+                        <div class="chip" data-v="moto" onclick="selVehiculo(this,'moto')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
                             <span style="font-size:1.3rem">🏍️</span><span style="font-size:0.78rem;font-weight:700">Moto</span>
                         </div>
-                        <div class="chip" onclick="selVehiculo(this,'carro')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
+                        <div class="chip" data-v="carro" onclick="selVehiculo(this,'carro')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
                             <span style="font-size:1.3rem">🚗</span><span style="font-size:0.78rem;font-weight:700">Carro</span>
                         </div>
-                        <div class="chip" onclick="selVehiculo(this,'camioneta')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
+                        <div class="chip" data-v="camioneta" onclick="selVehiculo(this,'camioneta')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
                             <span style="font-size:1.3rem">🛻</span><span style="font-size:0.78rem;font-weight:700">Camioneta</span>
                         </div>
-                        <div class="chip" onclick="selVehiculo(this,'camion')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
+                        <div class="chip" data-v="camion" onclick="selVehiculo(this,'camion')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
                             <span style="font-size:1.3rem">🚚</span><span style="font-size:0.78rem;font-weight:700">Camión</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>¿Qué se va a transportar? *</label>
+                    <label id="viajeCargaLabel">¿Qué se va a transportar? *</label>
                     <input type="text" id="viajeCarga" maxlength="300" autocomplete="off"
                            placeholder="Ej: nevera y lavadora, 10 cajas, 2 personas, un paquete"
                            style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.88rem;outline:none"
                            onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
                 </div>
 
-                <label style="display:flex;align-items:center;gap:10px;font-size:0.85rem;color:#374151;cursor:pointer">
+                <!-- Mudanza: pisos y ascensor -->
+                <div id="viajeMudanza" style="display:none">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div class="form-group">
+                            <label>Piso de recogida</label>
+                            <select id="viajePisoOrigen" style="width:100%;padding:12px 10px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.85rem;background:white">
+                                <option value="0">Casa o 1er piso</option>
+                                <option value="2">Piso 2</option><option value="3">Piso 3</option>
+                                <option value="4">Piso 4</option><option value="5">Piso 5</option>
+                                <option value="6">Piso 6</option><option value="7">Piso 7</option>
+                                <option value="8">Piso 8</option><option value="9">Piso 9</option>
+                                <option value="10">Piso 10 o más</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Piso de destino</label>
+                            <select id="viajePisoDestino" style="width:100%;padding:12px 10px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.85rem;background:white">
+                                <option value="0">Casa o 1er piso</option>
+                                <option value="2">Piso 2</option><option value="3">Piso 3</option>
+                                <option value="4">Piso 4</option><option value="5">Piso 5</option>
+                                <option value="6">Piso 6</option><option value="7">Piso 7</option>
+                                <option value="8">Piso 8</option><option value="9">Piso 9</option>
+                                <option value="10">Piso 10 o más</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:10px;font-size:0.85rem;color:#374151;cursor:pointer;margin-bottom:12px">
+                        <input type="checkbox" id="viajeAscensor" style="width:18px;height:18px;accent-color:#667eea">
+                        Hay ascensor disponible para subir y bajar
+                    </label>
+                </div>
+
+                <!-- Mensajería: peso del paquete -->
+                <div id="viajeMensajeria" style="display:none">
+                    <div class="form-group">
+                        <label>Peso aproximado del paquete *</label>
+                        <select id="viajePeso" style="width:100%;padding:12px 10px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.88rem;background:white">
+                            <option value="">Selecciona...</option>
+                            <option value="hasta2">Hasta 2 kg</option>
+                            <option value="2a5">2 a 5 kg</option>
+                            <option value="5a10">5 a 10 kg</option>
+                            <option value="10a20">10 a 20 kg</option>
+                            <option value="mas20">Más de 20 kg</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label id="viajeAyudantesWrap" style="display:flex;align-items:center;gap:10px;font-size:0.85rem;color:#374151;cursor:pointer">
                     <input type="checkbox" id="viajeAyudantes" style="width:18px;height:18px;accent-color:#667eea">
                     Necesito ayudantes para cargar y descargar
                 </label>
@@ -1120,9 +1167,49 @@ function esCategoriaViaje(nombre) {
     return CATEGORIAS_VIAJE.includes(limpio);
 }
 
+// Qué pide cada categoría de viaje: vehículos disponibles, texto de "qué se lleva" y bloques extra
+const CONFIG_VIAJE = {
+    transporte: { vehiculos: ['moto', 'carro', 'camioneta', 'camion'],
+                  etiqueta: '¿Qué se va a transportar? *',
+                  ejemplo:  'Ej: 2 personas con maletas, una nevera, un paquete grande',
+                  ayudantes: true,  mudanza: false, mensajeria: false },
+    mudanza:    { vehiculos: ['carro', 'camioneta', 'camion'],
+                  etiqueta: '¿Qué vas a trasladar? *',
+                  ejemplo:  'Ej: apartamento de 2 alcobas: cama, nevera, lavadora, 15 cajas',
+                  ayudantes: true,  mudanza: true,  mensajeria: false },
+    mensajeria: { vehiculos: ['moto', 'carro', 'camioneta'],
+                  etiqueta: '¿Qué se envía? *',
+                  ejemplo:  'Ej: documentos, una caja pequeña, un regalo',
+                  ayudantes: false, mudanza: false, mensajeria: true }
+};
+
+function tipoViajeActual() {
+    const limpio = String(selectedCatName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    return CONFIG_VIAJE[limpio] ? limpio : null;
+}
+
 function actualizarViajeUI() {
     const card = document.getElementById('viajeCard');
-    if (card) card.style.display = esCategoriaViaje(selectedCatName) ? 'block' : 'none';
+    if (!card) return;
+    const tipo = tipoViajeActual();
+    card.style.display = tipo ? 'block' : 'none';
+    if (!tipo) return;
+    const cfg = CONFIG_VIAJE[tipo];
+
+    // Solo se ofrecen los vehículos que tienen sentido para la categoría
+    document.querySelectorAll('#viajeVehiculos .chip').forEach(chip => {
+        chip.style.display = cfg.vehiculos.includes(chip.dataset.v) ? 'flex' : 'none';
+    });
+    if (viajeVehiculo && !cfg.vehiculos.includes(viajeVehiculo)) {
+        viajeVehiculo = '';
+        document.querySelectorAll('#viajeVehiculos .chip').forEach(c => c.classList.remove('selected'));
+    }
+
+    document.getElementById('viajeCargaLabel').textContent = cfg.etiqueta;
+    document.getElementById('viajeCarga').placeholder = cfg.ejemplo;
+    document.getElementById('viajeAyudantesWrap').style.display = cfg.ayudantes ? 'flex' : 'none';
+    document.getElementById('viajeMudanza').style.display      = cfg.mudanza ? 'block' : 'none';
+    document.getElementById('viajeMensajeria').style.display   = cfg.mensajeria ? 'block' : 'none';
 }
 
 function selVehiculo(el, vehiculo) {
@@ -1136,16 +1223,30 @@ function validarViaje() {
     if (document.getElementById('viajeDestino').value.trim().length < 5) return 'Escribe la dirección de destino';
     if (!viajeVehiculo) return 'Elige el tipo de vehículo';
     if (document.getElementById('viajeCarga').value.trim().length < 3) return 'Cuéntanos qué se va a transportar';
+    if (tipoViajeActual() === 'mensajeria' && !document.getElementById('viajePeso').value) {
+        return 'Indica el peso aproximado del paquete';
+    }
     return '';
 }
 
 function datosViaje() {
-    return {
-        destino:   document.getElementById('viajeDestino').value.trim(),
-        vehiculo:  viajeVehiculo,
-        carga:     document.getElementById('viajeCarga').value.trim(),
-        ayudantes: document.getElementById('viajeAyudantes').checked
+    const tipo = tipoViajeActual();
+    const datos = {
+        destino:  document.getElementById('viajeDestino').value.trim(),
+        vehiculo: viajeVehiculo,
+        carga:    document.getElementById('viajeCarga').value.trim()
     };
+    if (tipo === 'transporte') {
+        datos.ayudantes = document.getElementById('viajeAyudantes').checked;
+    } else if (tipo === 'mudanza') {
+        datos.ayudantes    = document.getElementById('viajeAyudantes').checked;
+        datos.piso_origen  = parseInt(document.getElementById('viajePisoOrigen').value, 10) || 0;
+        datos.piso_destino = parseInt(document.getElementById('viajePisoDestino').value, 10) || 0;
+        datos.ascensor     = document.getElementById('viajeAscensor').checked;
+    } else if (tipo === 'mensajeria') {
+        datos.peso = document.getElementById('viajePeso').value;
+    }
+    return datos;
 }
 
 // STEP 2: SELECT CHIP

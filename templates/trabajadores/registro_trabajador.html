@@ -1190,7 +1190,7 @@
         var tarifaLabel = tarifaCol.querySelector('label');
         var tarifaSmall = tarifaCol.querySelector('small');
         var cat = selectEl.value;
-        if (cat === 'Transporte' || cat === 'Mensajería') {
+        if (cat === 'Transporte' || cat === 'Mensajería' || cat === 'Mudanza') {
             if (tarifaLabel) tarifaLabel.innerHTML = 'Tarifa por Servicio (COP) <span style="color:#667eea;font-size:0.85em;font-weight:normal"><i class="bi bi-info-circle"></i> Por carrera/envío</span>';
             if (tarifaSmall) tarifaSmall.innerHTML = '<i class="bi bi-exclamation-circle"></i> <strong>Importante:</strong> Ingrese el costo base por carrera o envío';
         } else {

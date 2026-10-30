@@ -6,10 +6,25 @@ import math
 import auth      # Módulo de autenticación
 import security  # Rate limiting, MIME validation y logging
 from config import DB_CONFIG, conectar_bd
-from viajes import es_categoria_viaje, normalizar_detalles_viaje, resumen_texto_viaje
+from viajes import (es_categoria_viaje, normalizar_detalles_viaje, resumen_texto_viaje,
+                    completar_distancia_viaje)
 
 router = APIRouter(prefix="/cliente", tags=["clientes"])
 templates = Jinja2Templates(directory="templates")
+
+
+def _mapbox_token(servidor: bool = False) -> str:
+    """Token de Mapbox.
+    - Para el navegador (servidor=False): MAPBOX_TOKEN, o el token público por defecto.
+    - Para llamadas desde el servidor (servidor=True, p. ej. distancia de viajes): MAPBOX_SERVER_TOKEN
+      si existe. Sirve cuando el token del navegador se restringe por dominio, porque las llamadas del
+      servidor no vienen de ningún dominio. Nunca se envía al navegador."""
+    import os
+    publico = (os.getenv("MAPBOX_TOKEN")
+               or "pk.eyJ1IjoiamhvbmllcmNlc3BlZGVzMTItIiwiYSI6ImNtb25qeGJ1dTBtNGoycnB2NWZtb3V1ZDcifQ.oWycZCkDrln9HOGRaWT8Xg")
+    if servidor:
+        return os.getenv("MAPBOX_SERVER_TOKEN") or publico
+    return publico
 
 def calcular_distancia(lat1, lon1, lat2, lon2):
     """
@@ -216,8 +231,7 @@ def mostrar_seguimiento(request: Request):
     sesion = auth.verificar_sesion(token)
     if not sesion or sesion['tipo_usuario'] != 'cliente':
         return RedirectResponse(url="/cliente/login", status_code=302)
-    import os
-    mapbox_token = os.getenv("MAPBOX_TOKEN", "pk.eyJ1IjoiamhvbmllcmNlc3BlZGVzMTItIiwiYSI6ImNtb25qeGJ1dTBtNGoycnB2NWZtb3V1ZDcifQ.oWycZCkDrln9HOGRaWT8Xg")
+    mapbox_token = _mapbox_token()
     return templates.TemplateResponse("clientes/seguimiento.html", {"request": request, "mapbox_token": mapbox_token})
 
 @router.get("/seguimiento_api")
@@ -536,7 +550,7 @@ def crear_solicitud(
         # Se valida ANTES de crear nada para no dejar una solicitud incompleta.
         detalles_json = None
         if es_categoria_viaje(nombre_cat):
-            detalles_json, error_detalles = normalizar_detalles_viaje(detalles)
+            detalles_json, error_detalles = normalizar_detalles_viaje(detalles, nombre_cat)
             if error_detalles:
                 return JSONResponse({"error": error_detalles}, status_code=400)
 
@@ -577,6 +591,7 @@ def crear_solicitud(
 
         # Guardar los datos del viaje. Va aparte del INSERT principal a propósito: si algo falla
         # aquí, la solicitud igual se crea, y la info se agrega a la descripción como respaldo.
+        detalles_guardados = False
         if detalles_json:
             try:
                 cursor.execute(
@@ -584,6 +599,7 @@ def crear_solicitud(
                     (detalles_json, id_solicitud)
                 )
                 conexion.commit()
+                detalles_guardados = True
             except Exception as e_det:
                 print(f"[VIAJE] No se guardó detalles_servicio de #{id_solicitud}: {e_det}")
                 try:
@@ -596,6 +612,19 @@ def crear_solicitud(
                     conexion.commit()
                 except Exception as e_resp:
                     print(f"[VIAJE] Tampoco se pudo agregar a la descripción #{id_solicitud}: {e_resp}")
+
+        # Distancia y tiempo del viaje con Mapbox, en segundo plano: el cliente no espera y,
+        # si Mapbox falla, la solicitud queda igual (el trabajador usa el enlace al mapa).
+        if detalles_guardados:
+            try:
+                import threading
+                threading.Thread(
+                    target=completar_distancia_viaje,
+                    args=(id_solicitud, direccion_servicio, ciudad, departamento, _mapbox_token(servidor=True)),
+                    daemon=True
+                ).start()
+            except Exception as e_dist:
+                print(f"[VIAJE] No se pudo iniciar el cálculo de distancia #{id_solicitud}: {e_dist}")
 
         # Ya NO se acepta automáticamente — el trabajador decide
         # Obtener nombre real del cliente para la notificación
@@ -866,8 +895,7 @@ def mostrar_mapa(request: Request):
     sesion = auth.verificar_sesion(token)
     if not sesion or sesion['tipo_usuario'] != 'cliente':
         return RedirectResponse(url="/cliente/login", status_code=302)
-    import os
-    mapbox_token = os.getenv("MAPBOX_TOKEN", "pk.eyJ1IjoiamhvbmllcmNlc3BlZGVzMTItIiwiYSI6ImNtb25qeGJ1dTBtNGoycnB2NWZtb3V1ZDcifQ.oWycZCkDrln9HOGRaWT8Xg")
+    mapbox_token = _mapbox_token()
     return templates.TemplateResponse("clientes/mapa_simple.html", {"request": request, "mapbox_token": mapbox_token})
 
 @router.get("/trabajadores-cercanos")
