@@ -220,17 +220,23 @@ def mostrar_seguimiento(request: Request):
     return templates.TemplateResponse("clientes/seguimiento.html", {"request": request, "mapbox_token": mapbox_token})
 
 @router.get("/seguimiento_api")
-def api_seguimiento(id: int):
-    """Retorna el estado actual de una solicitud con datos del trabajador"""
+def api_seguimiento(request: Request, id: int):
+    """Retorna el estado actual de una solicitud con datos del trabajador.
+    Solo lo ve el cliente dueño de la solicitud o el trabajador asignado: incluye la
+    ubicación GPS del trabajador y los códigos de inicio/finalización."""
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    sesion = auth.verificar_sesion(token) if token else None
+    if not sesion:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor(dictionary=True)
         cursor.execute("""
             SELECT s.id_solicitud, s.titulo, s.estado, s.ciudad, s.departamento,
                    s.fecha_solicitud, s.fecha_aceptacion, s.fecha_inicio, s.fecha_finalizacion,
-                   s.id_trabajador, s.precio_final, s.cotizacion_precio, s.cotizacion_horas,
+                   s.id_cliente, s.id_trabajador, s.precio_final, s.cotizacion_precio, s.cotizacion_horas,
                    s.id_categoria, s.codigo_confirmacion, s.codigo_inicio,
-                   s.direccion_servicio,
                    COALESCE(cat.nombre_categoria, s.titulo, CONCAT('Categoría ', s.id_categoria), 'Servicio') as nombre_categoria,
                    TIMESTAMPDIFF(MINUTE, s.fecha_solicitud, NOW()) as minutos_pendiente
             FROM solicitudes_servicio s
@@ -240,6 +246,17 @@ def api_seguimiento(id: int):
         sol = cursor.fetchone()
         if not sol:
             return JSONResponse({"error": "No encontrada"}, status_code=404)
+
+        # Autorización: dueño de la solicitud (cliente) o trabajador asignado.
+        # Si no lo es, respondemos igual que si no existiera (no revelamos que existe).
+        tipo = sesion.get('tipo_usuario')
+        uid = sesion.get('id_usuario')
+        es_dueno = (tipo == 'cliente' and sol.get('id_cliente') == uid) or \
+                   (tipo == 'trabajador' and sol.get('id_trabajador') == uid)
+        if not es_dueno:
+            return JSONResponse({"error": "No encontrada"}, status_code=404)
+        # id_cliente no hace falta en la respuesta
+        sol.pop('id_cliente', None)
 
         # Guardar minutos_pendiente antes de serializar fechas
         minutos_pendiente = int(sol.get('minutos_pendiente') or 0)
@@ -1580,6 +1597,7 @@ def buscar_cliente(nombre: str = "", correo: str = ""):
 
 @router.post("/cotizacion/responder")
 def responder_cotizacion(
+    request: Request,
     id_solicitud: int = Form(...),
     respuesta:    str = Form(...),   # 'aceptar' o 'rechazar'
     metodo_pago:  str = Form("nequi")
@@ -1588,6 +1606,12 @@ def responder_cotizacion(
     if respuesta not in ('aceptar', 'rechazar'):
         return JSONResponse({"error": "Respuesta inválida"}, status_code=400)
 
+    # Solo el cliente dueño de la solicitud puede aceptar o rechazar la cotización
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    sesion = auth.verificar_sesion(token) if token else None
+    if not sesion or sesion.get('tipo_usuario') != 'cliente':
+        return JSONResponse({"error": "Inicia sesión para responder la cotización"}, status_code=401)
+
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor(dictionary=True)
@@ -1595,8 +1619,8 @@ def responder_cotizacion(
         cursor.execute("""
             SELECT id_solicitud, id_trabajador, cotizacion_precio, estado
             FROM solicitudes_servicio
-            WHERE id_solicitud = %s AND estado = 'cotizacion_enviada'
-        """, (id_solicitud,))
+            WHERE id_solicitud = %s AND estado = 'cotizacion_enviada' AND id_cliente = %s
+        """, (id_solicitud, sesion['id_usuario']))
         sol = cursor.fetchone()
 
         if not sol:

@@ -55,8 +55,10 @@ def calcular_cobro(precio_servicio: float):
     P = float(precio_servicio or 0)
     total = (P + MARGEN_EMPRESA + WOMPI_FIJO) / (1 - WOMPI_PORCENTAJE)
 
-    # Redondear el total a la centena más cercana (cobro "limpio" al cliente)
-    total = round(total / 100) * 100
+    # Redondear el total HACIA ARRIBA a la centena (cobro "limpio" al cliente).
+    # Hacia arriba y no al más cercano: así el margen nunca queda por debajo de MARGEN_EMPRESA.
+    import math
+    total = math.ceil(round(total, 6) / 100) * 100
 
     tarifa_servicio = total - P              # lo que ve el cliente como "tarifa de servicio"
     costo_wompi     = total * WOMPI_PORCENTAJE + WOMPI_FIJO
@@ -157,12 +159,24 @@ async def crear_pago(
         cadena = f"{referencia}{monto_cents}COP{intg_key}"
         firma_integridad = hashlib.sha256(cadena.encode()).hexdigest() if intg_key else ""
 
-        # Registrar intención de pago en BD
-        cursor.execute("""
-            INSERT INTO pagos_solicitud
-            (id_solicitud, id_cliente, referencia_wompi, monto, estado_wompi, fecha_creacion)
-            VALUES (%s, %s, %s, %s, 'PENDING', NOW())
-        """, (id_solicitud, id_cliente, referencia, precio))
+        # Registrar intención de pago en BD.
+        # monto_trabajador = snapshot de lo que se le debe al trabajador. Se fija ahora, junto
+        # con el cobro, para que no cambie si después se modifica el precio de la solicitud.
+        try:
+            cursor.execute("""
+                INSERT INTO pagos_solicitud
+                (id_solicitud, id_cliente, referencia_wompi, monto, monto_trabajador, estado_wompi, fecha_creacion)
+                VALUES (%s, %s, %s, %s, %s, 'PENDING', NOW())
+            """, (id_solicitud, id_cliente, referencia, precio, precio_servicio))
+        except Exception as e_col:
+            # Si la columna aún no existe (migración pendiente), cae al insert anterior
+            print(f"[PAGO] insert sin monto_trabajador ({e_col})")
+            conexion.rollback()
+            cursor.execute("""
+                INSERT INTO pagos_solicitud
+                (id_solicitud, id_cliente, referencia_wompi, monto, estado_wompi, fecha_creacion)
+                VALUES (%s, %s, %s, %s, 'PENDING', NOW())
+            """, (id_solicitud, id_cliente, referencia, precio))
         conexion.commit()
 
         # Datos para el widget de Wompi (frontend)
@@ -252,9 +266,23 @@ async def wompi_webhook(request: Request):
         # el trabajador. El total pagado por el cliente (servicio + tarifa) queda
         # registrado en pagos_solicitud.monto.
         if est == "APPROVED":
+            # Si la solicitud ya tenía OTRO pago aprobado, este es un cobro duplicado:
+            # hay que reembolsarlo (el panel de dispersiones solo muestra el primero).
+            cursor.execute("""
+                SELECT COUNT(*) AS n FROM pagos_solicitud
+                WHERE id_solicitud = %s AND estado_wompi = 'APPROVED' AND id <> %s
+            """, (pago['id_solicitud'], pago['id']))
+            otros = cursor.fetchone()
+            if otros and otros['n'] > 0:
+                print(f"[PAGO] ⚠️ COBRO DUPLICADO solicitud #{pago['id_solicitud']} ref={ref} "
+                      f"monto={monto} — reembolsar al cliente")
+
+            # precio_final: si por algún motivo seguía vacío (pago hecho durante la cotización),
+            # se toma de la cotización para que el trabajador no quede en $0.
             cursor.execute("""
                 UPDATE solicitudes_servicio
-                SET pago_estado = 'pagado'
+                SET pago_estado = 'pagado',
+                    precio_final = COALESCE(NULLIF(precio_final, 0), cotizacion_precio, precio_final)
                 WHERE id_solicitud = %s
             """, (pago['id_solicitud'],))
 
@@ -506,27 +534,38 @@ def api_dispersiones(request: Request, tab: str = "pendientes"):
     try:
         cursor = conexion.cursor(dictionary=True)
 
-        # Stats — mismo JOIN que la lista, para que los números coincidan con lo que se ve.
+        # Solo el PRIMER pago aprobado de cada solicitud es dispersable. Si el cliente pagó dos
+        # veces (doble pestaña, reintento), el segundo es un cobro duplicado a reembolsar, no
+        # algo que se le deba pagar otra vez al trabajador.
+        unico = ("AND ps.id = (SELECT MIN(p2.id) FROM pagos_solicitud p2 "
+                 "WHERE p2.id_solicitud = ps.id_solicitud AND p2.estado_wompi = 'APPROVED')")
+        # Lo que se le debe al trabajador: el valor fijado al crear el pago (snapshot);
+        # para pagos anteriores a ese cambio, el precio de la solicitud.
+        a_pagar = "COALESCE(NULLIF(ps.monto_trabajador, 0), NULLIF(s.precio_final, 0))"
+
+        # Stats — mismo JOIN y filtro que la lista, para que los números coincidan con lo que se ve.
         # El monto por dispersar es SOLO el valor del servicio (lo del trabajador),
         # nunca el total que pagó el cliente (que incluye la tarifa de la plataforma).
-        cursor.execute("""
-            SELECT COUNT(*)                                         AS total,
-                   COALESCE(SUM(COALESCE(s.precio_final, 0)), 0)    AS monto,
-                   COALESCE(SUM(CASE WHEN s.precio_final IS NULL OR s.precio_final <= 0
-                                     THEN 1 ELSE 0 END), 0)         AS sin_precio
+        cursor.execute(f"""
+            SELECT COUNT(*)                                          AS total,
+                   COALESCE(SUM(COALESCE({a_pagar}, 0)), 0)          AS monto,
+                   COALESCE(SUM(CASE WHEN {a_pagar} IS NULL
+                                     THEN 1 ELSE 0 END), 0)          AS sin_precio
             FROM pagos_solicitud ps
             INNER JOIN solicitudes_servicio s ON ps.id_solicitud = s.id_solicitud
             WHERE ps.estado_wompi = 'APPROVED' AND (ps.dispersado = 0 OR ps.dispersado IS NULL)
+              {unico}
         """)
         st = cursor.fetchone()
         total_pend = int(st['total'] or 0)
         monto_pend = float(st['monto'] or 0)
         sin_precio = int(st['sin_precio'] or 0)
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT COUNT(*) AS total
             FROM pagos_solicitud ps
             INNER JOIN solicitudes_servicio s ON ps.id_solicitud = s.id_solicitud
             WHERE ps.estado_wompi = 'APPROVED' AND ps.dispersado = 1
+              {unico}
         """)
         total_disp = int(cursor.fetchone()['total'] or 0)
 
@@ -546,7 +585,7 @@ def api_dispersiones(request: Request, tab: str = "pendientes"):
                 ps.id AS id_pago,
                 ps.id_solicitud,
                 ps.monto,
-                NULLIF(s.precio_final, 0) AS monto_trabajador,
+                {a_pagar} AS monto_trabajador,
                 ps.estado_wompi,
                 ps.referencia_wompi,
                 ps.dispersado,
@@ -578,6 +617,7 @@ def api_dispersiones(request: Request, tab: str = "pendientes"):
             ) dp ON dp.id_persona = p.id_persona
             LEFT JOIN clientes c ON ps.id_cliente = c.id_cliente
             WHERE ps.estado_wompi = 'APPROVED' {filtro}
+              {unico}
             ORDER BY {orden}
             LIMIT 300
         """)
@@ -674,14 +714,24 @@ def desmarcar_dispersado(request: Request, id_pago: int = Form(...)):
 
 @router.get("/recibo", response_class=HTMLResponse)
 def recibo_pago(request: Request, id_solicitud: int = 0):
-    """Muestra un comprobante imprimible del pago aprobado de una solicitud."""
+    """Muestra un comprobante imprimible del pago aprobado (solo el cliente dueño o un admin)."""
     from datetime import timedelta
+    import auth as _auth
+    from routers.trabajadores import verificar_admin
+
+    # Quién pide el recibo: el cliente logueado o un administrador
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    sesion = _auth.verificar_sesion(token) if token else None
+    id_cliente_sesion = sesion['id_usuario'] if (sesion and sesion.get('tipo_usuario') == 'cliente') else None
+    es_admin = verificar_admin(request)
+    if not id_cliente_sesion and not es_admin:
+        return RedirectResponse(url="/cliente/login", status_code=302)
 
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor(dictionary=True)
         cursor.execute("""
-            SELECT p.referencia_wompi, p.id_transaccion_wompi, p.monto,
+            SELECT p.referencia_wompi, p.id_transaccion_wompi, p.monto, p.monto_trabajador,
                    p.estado_wompi, p.fecha_actualizacion, p.fecha_creacion,
                    s.titulo, s.id_cliente, s.id_trabajador,
                    s.precio_final, s.cotizacion_precio,
@@ -694,11 +744,15 @@ def recibo_pago(request: Request, id_solicitud: int = 0):
             LEFT JOIN clientes cl ON s.id_cliente = cl.id_cliente
             LEFT JOIN personas tr ON s.id_trabajador = tr.id_persona
             WHERE p.id_solicitud = %s AND p.estado_wompi = 'APPROVED'
-            ORDER BY p.fecha_actualizacion DESC
+            ORDER BY p.id ASC
             LIMIT 1
         """, (id_solicitud,))
         pago = cursor.fetchone()
         cursor.close()
+
+        # Un cliente solo ve SUS recibos; si no es suyo respondemos igual que si no existiera
+        if pago and not es_admin and pago.get('id_cliente') != id_cliente_sesion:
+            pago = None
 
         if not pago:
             return HTMLResponse(
@@ -716,7 +770,8 @@ def recibo_pago(request: Request, id_solicitud: int = 0):
                 return "0"
 
         total_pagado    = float(pago['monto'] or 0)
-        precio_servicio = float(pago.get('precio_final') or pago.get('cotizacion_precio') or 0)
+        # Valor del servicio: el fijado al crear el pago; para pagos anteriores, el de la solicitud
+        precio_servicio = float(pago.get('monto_trabajador') or pago.get('precio_final') or pago.get('cotizacion_precio') or 0)
         tarifa_servicio = max(0, total_pagado - precio_servicio)
 
         monto_fmt    = _fmt(total_pagado)
@@ -745,9 +800,10 @@ def recibo_pago(request: Request, id_solicitud: int = 0):
             "id_transaccion":    pago.get("id_transaccion_wompi") or "",
         })
     except Exception as e:
+        print(f"[RECIBO] Error solicitud #{id_solicitud}: {e}")
         return HTMLResponse(
-            f"<div style='font-family:sans-serif;text-align:center;padding:60px'>"
-            f"<h2>Error al generar el recibo</h2><p>{e}</p></div>",
+            "<div style='font-family:sans-serif;text-align:center;padding:60px'>"
+            "<h2>No pudimos generar el recibo</h2><p>Intenta de nuevo en unos minutos.</p></div>",
             status_code=500,
         )
     finally:

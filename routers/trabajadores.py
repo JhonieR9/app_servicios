@@ -477,8 +477,11 @@ def mostrar_mi_perfil(request: Request):
     return templates.TemplateResponse("trabajadores/mi_perfil.html", {"request": request})
 
 @router.post("/reenviar-revision")
-def reenviar_a_revision(id_persona: int = Form(...)):
-    """El trabajador rechazado corrigió su perfil y lo reenvía a revisión"""
+def reenviar_a_revision(request: Request, id_persona: int = Form(...)):
+    """El trabajador rechazado corrigió su perfil y lo reenvía a revisión (solo el suyo)"""
+    no_autorizado = _verificar_dueno(request, id_persona)
+    if no_autorizado:
+        return no_autorizado
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor()
@@ -500,6 +503,7 @@ def reenviar_a_revision(id_persona: int = Form(...)):
 
 @router.post("/perfil/editar")
 def editar_perfil_trabajador(
+    request: Request,
     id_persona:    int = Form(...),
     ciudad:        str = Form(None),
     departamento:  str = Form(None),
@@ -507,7 +511,11 @@ def editar_perfil_trabajador(
     telefono:      str = Form(None),
     correo:        str = Form(None)
 ):
-    """Permite al trabajador actualizar sus datos básicos"""
+    """Permite al trabajador actualizar sus datos básicos (solo los suyos)"""
+    # Sin esto cualquiera podía cambiar el correo de otro trabajador y luego recuperar su contraseña
+    no_autorizado = _verificar_dueno(request, id_persona)
+    if no_autorizado:
+        return no_autorizado
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor()
@@ -550,10 +558,14 @@ def editar_perfil_trabajador(
 
 @router.post("/perfil/nivel-estudio")
 def actualizar_nivel_estudio(
+    request: Request,
     id_persona:    int = Form(...),
     nivel_estudio: str = Form(...)
 ):
-    """Permite al trabajador actualizar su nivel de estudio."""
+    """Permite al trabajador actualizar su nivel de estudio (solo el suyo)."""
+    no_autorizado = _verificar_dueno(request, id_persona)
+    if no_autorizado:
+        return no_autorizado
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor()
@@ -1454,6 +1466,19 @@ def _sesion_trabajador(request: Request):
     return sesion
 
 
+def _verificar_dueno(request: Request, id_persona: int):
+    """
+    Comprueba que quien hace la petición es el trabajador `id_persona`.
+    Devuelve None si es el dueño, o una JSONResponse de error si no.
+    """
+    sesion = _sesion_trabajador(request)
+    if not sesion:
+        return JSONResponse({"error": "Tu sesión venció. Inicia sesión de nuevo."}, status_code=401)
+    if int(sesion['id_usuario']) != int(id_persona):
+        return JSONResponse({"error": "No autorizado"}, status_code=403)
+    return None
+
+
 def _mascara_cuenta(valor) -> str:
     """Oculta casi todo el número de cuenta, deja los últimos 4 caracteres."""
     v = str(valor or '')
@@ -2046,7 +2071,8 @@ def completar_servicio(
     try:
         cursor = conexion.cursor(dictionary=True)
         cursor.execute("""
-            SELECT id_solicitud, estado, codigo_confirmacion, cotizacion_precio, precio_final AS precio_existente
+            SELECT id_solicitud, estado, codigo_confirmacion, cotizacion_precio, pago_estado,
+                   precio_final AS precio_existente
             FROM solicitudes_servicio
             WHERE id_solicitud = %s AND estado IN ('aceptada','en_proceso')
         """, (id_solicitud,))
@@ -2057,8 +2083,14 @@ def completar_servicio(
         if sol['codigo_confirmacion'] != codigo.strip():
             return JSONResponse({"error": "Código incorrecto. Pídele el código al cliente."}, status_code=400)
 
-        # Usar precio_final existente o cotizacion_precio como fallback
-        precio = precio_final if precio_final > 0 else float(sol.get('precio_existente') or sol.get('cotizacion_precio') or 0)
+        # Usar precio_final existente o cotizacion_precio como fallback.
+        # Si el cliente YA pagó, el precio queda fijo: no se puede cambiar desde este formulario
+        # (cambiarlo alteraría lo que se le debe pagar al trabajador).
+        ya_pagado = (sol.get('pago_estado') == 'pagado')
+        if ya_pagado:
+            precio = float(sol.get('precio_existente') or sol.get('cotizacion_precio') or 0)
+        else:
+            precio = precio_final if precio_final > 0 else float(sol.get('precio_existente') or sol.get('cotizacion_precio') or 0)
 
         cursor.execute("""
             UPDATE solicitudes_servicio
@@ -3481,22 +3513,35 @@ def obtener_estado_disponibilidad(id_trabajador: int):
 
 @router.post("/ubicacion/actualizar")
 async def actualizar_ubicacion(
-    id_trabajador: int = Form(...),
+    request: Request,
     latitud: float = Form(...),
-    longitud: float = Form(...)
+    longitud: float = Form(...),
+    id_trabajador: int = Form(None)   # se ignora: la identidad sale de la sesión
 ):
     """
     Actualiza SOLO la ubicación GPS del trabajador (sin tocar su estado de
     disponibilidad). Se usa para el seguimiento en vivo 'profesional en camino'
     mientras hay un servicio aceptado/en proceso.
     """
+    import math
+    sesion = _sesion_trabajador(request)
+    if not sesion:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    id_trabajador = sesion['id_usuario']
+
+    # Coordenadas válidas (descarta NaN/inf y valores fuera de rango)
+    if not (math.isfinite(latitud) and math.isfinite(longitud)
+            and -90 <= latitud <= 90 and -180 <= longitud <= 180):
+        return JSONResponse({"error": "Coordenadas inválidas"}, status_code=400)
+
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión"}, status_code=500)
     cursor = None
     try:
         cursor = conexion.cursor()
-        cursor.execute("SELECT id_disponibilidad FROM disponibilidad WHERE id_persona = %s LIMIT 1", (id_trabajador,))
+        # SELECT 1 (y no la clave primaria): no depende de cómo se llame la PK en la tabla real
+        cursor.execute("SELECT 1 FROM disponibilidad WHERE id_persona = %s LIMIT 1", (id_trabajador,))
         existe = cursor.fetchone()
         if existe:
             cursor.execute("""
@@ -3523,12 +3568,20 @@ async def actualizar_ubicacion(
 
 @router.post("/disponibilidad/actualizar")
 async def actualizar_disponibilidad(
+    request: Request,
     id_trabajador: int = Form(...),
     disponible: bool = Form(...),
     latitud: float = Form(None),
     longitud: float = Form(None)
 ):
-    """Actualiza la disponibilidad y ubicación del trabajador"""
+    """Actualiza la disponibilidad y ubicación del trabajador (solo el propio trabajador)"""
+    # Solo el dueño de la sesión puede cambiar su disponibilidad/ubicación
+    sesion = _sesion_trabajador(request)
+    if not sesion:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+    if int(sesion['id_usuario']) != int(id_trabajador):
+        return JSONResponse({"error": "No autorizado"}, status_code=403)
+
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión"}, status_code=500)
@@ -3536,9 +3589,9 @@ async def actualizar_disponibilidad(
     try:
         cursor = conexion.cursor()
         
-        # Verificar si ya existe registro
+        # Verificar si ya existe registro (SELECT 1: no depende del nombre de la PK)
         cursor.execute("""
-            SELECT id_disponibilidad FROM disponibilidad
+            SELECT 1 FROM disponibilidad
             WHERE id_persona = %s
             LIMIT 1
         """, (id_trabajador,))

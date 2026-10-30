@@ -509,6 +509,8 @@
             if (pend > 0) { bp.textContent = pend + ' pendiente' + (pend > 1 ? 's' : ''); bp.style.display = 'inline-flex'; }
 
             if (sols.length === 0) {
+                // Sin servicios activos: dejar de compartir la ubicación (privacidad)
+                if (typeof detenerGpsEnVivo === 'function') detenerGpsEnVivo();
                 container.innerHTML = `
                     <div class="empty-sol">
                         <div style="font-size:2rem;margin-bottom:8px">📭</div>

@@ -423,6 +423,8 @@ def crear_tablas():
         for col, definition in [
             ('dispersado',       "tinyint(1) DEFAULT 0"),
             ('fecha_dispersion', "datetime DEFAULT NULL"),
+            # Valor del servicio que se le debe al trabajador, fijado al crear el pago
+            ('monto_trabajador', "decimal(10,2) DEFAULT NULL"),
         ]:
             try:
                 cursor.execute(f"ALTER TABLE pagos_solicitud ADD COLUMN {col} {definition}")
@@ -976,6 +978,16 @@ async def push_subscribe(request: Request):
 
         if not endpoint or not p256dh or not auth or not id_usuario:
             return _JSON({"error": "Datos incompletos"}, status_code=400)
+
+        # Solo se puede suscribir a notificaciones la persona dueña de la sesión:
+        # si no, cualquiera podría registrar su dispositivo con el id de otro y leer sus avisos.
+        import auth as _auth
+        token = request.cookies.get("session_token_cliente") if tipo_usuario == "cliente" else None
+        token = token or request.cookies.get("session_token")
+        sesion = _auth.verificar_sesion(token) if token else None
+        if (not sesion or sesion.get("tipo_usuario") != tipo_usuario
+                or int(sesion.get("id_usuario") or 0) != id_usuario):
+            return _JSON({"error": "No autorizado"}, status_code=403)
 
         conn   = conectar_bd()
         cursor = conn.cursor()

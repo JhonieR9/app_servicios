@@ -352,6 +352,8 @@
     let _markerDest = null;
     let _destinoCliente = null;   // {lat, lng} ubicación del cliente (destino)
     let _destinoPedido  = false;  // ya pedimos geolocalización una vez
+    let _mapaAjustado   = false;  // ya se encuadraron trabajador y destino (solo la primera vez)
+    let _ultimoETA      = null;   // {lat, lng, t} de la última vez que se calculó el ETA
 
     // Debug temporal — mostrar qué ID tiene
     console.log('[SEGUIMIENTO] id en URL:', idSolicitud, '| URL completa:', window.location.href);
@@ -516,7 +518,11 @@
                 // Cargar preview del chat
                 cargarChatPreview();
                 // Mapa "en camino" con ETA (si el trabajador comparte GPS y el servicio está aceptado/en proceso)
-                actualizarMapaEnCamino(data, estado);
+                // En su propio try/catch: si Mapbox no carga (sin internet, sin WebGL) el resto
+                // del seguimiento (códigos, cotización, botones de pago) debe seguir funcionando.
+                try {
+                    if (typeof mapboxgl !== 'undefined') actualizarMapaEnCamino(data, estado);
+                } catch (eMapa) { console.log('Mapa no disponible:', eMapa); }
             }
 
             // Mostrar códigos al cliente (inicio + confirmación)
@@ -944,12 +950,24 @@
             } else {
                 _markerDest.setLngLat(destLngLat);
             }
-            // Ajustar vista para que se vean ambos puntos
-            const b = new mapboxgl.LngLatBounds();
-            b.extend(trabLngLat); b.extend(destLngLat);
-            _mapaSeg.fitBounds(b, { padding: 50, maxZoom: 15, duration: 500 });
+            // Ajustar la vista solo la primera vez: si se hace en cada actualización,
+            // el cliente no puede mover ni hacer zoom en el mapa.
+            if (!_mapaAjustado) {
+                const b = new mapboxgl.LngLatBounds();
+                b.extend(trabLngLat); b.extend(destLngLat);
+                _mapaSeg.fitBounds(b, { padding: 50, maxZoom: 15, duration: 500 });
+                _mapaAjustado = true;
+            }
 
-            _calcularETA(trabLngLat, destLngLat, t);
+            // Recalcular el ETA solo si el profesional se movió más de ~50 m o pasaron 45 s
+            // (el seguimiento se actualiza cada pocos segundos; cada cálculo consume cuota de Mapbox).
+            const ahora = Date.now();
+            const seMovio = !_ultimoETA ||
+                _distanciaKm(_ultimoETA.lat, _ultimoETA.lng, t.latitud, t.longitud) > 0.05;
+            if (seMovio || (ahora - _ultimoETA.t) > 45000) {
+                _ultimoETA = { lat: t.latitud, lng: t.longitud, t: ahora };
+                _calcularETA(trabLngLat, destLngLat, t);
+            }
         } else {
             _mapaSeg.easeTo({ center: trabLngLat, duration: 500 });
             _etaTexto('', t);
