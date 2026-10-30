@@ -65,6 +65,24 @@ def _a_bool(valor) -> bool:
     return str(valor).strip().lower() in ("1", "true", "si", "sí", "yes", "on")
 
 
+# Rango aproximado de Colombia (con islas): descarta coordenadas absurdas o manipuladas
+LAT_MIN, LAT_MAX = -5.0, 14.0
+LNG_MIN, LNG_MAX = -83.0, -66.0
+
+
+def _par_coordenadas(lat, lng):
+    """(lat, lng) como floats si ambos son válidos y caen en Colombia; si no, None."""
+    try:
+        la, lo = float(lat), float(lng)
+    except (ValueError, TypeError):
+        return None
+    if la != la or lo != lo:          # NaN
+        return None
+    if LAT_MIN <= la <= LAT_MAX and LNG_MIN <= lo <= LNG_MAX:
+        return (round(la, 6), round(lo, 6))
+    return None
+
+
 def _a_piso(valor) -> int:
     """Piso entre 0 y PISO_MAX. Si no viene o no es válido, 0 (casa / primer piso)."""
     try:
@@ -132,6 +150,15 @@ def normalizar_detalles_viaje(crudo, categoria=None):
         limpio["peso"] = peso
     else:  # transporte
         limpio["ayudantes"] = _a_bool(datos.get("ayudantes"))
+
+    # Coordenadas opcionales (cuando el cliente eligió una sugerencia del autocompletado o usó su GPS).
+    # Hacen la distancia más exacta; si no vienen o no son válidas, simplemente no se guardan.
+    destino_xy = _par_coordenadas(datos.get("destino_lat"), datos.get("destino_lng"))
+    if destino_xy:
+        limpio["destino_lat"], limpio["destino_lng"] = destino_xy
+    origen_xy = _par_coordenadas(datos.get("origen_lat"), datos.get("origen_lng"))
+    if origen_xy:
+        limpio["origen_lat"], limpio["origen_lng"] = origen_xy
 
     return json.dumps(limpio, ensure_ascii=False), None
 
@@ -215,9 +242,12 @@ def _geocodificar(requests, texto, token, timeout, cerca=None):
     return (lng, lat)
 
 
-def calcular_distancia_mapbox(origen, destino, token, contexto_origen="", timeout=6, requests_mod=None):
+def calcular_distancia_mapbox(origen, destino, token, contexto_origen="", timeout=6, requests_mod=None,
+                              origen_xy=None, destino_xy=None):
     """
-    Distancia y tiempo por carretera entre dos direcciones escritas en texto.
+    Distancia y tiempo por carretera entre dos puntos.
+    Cada punto puede venir como coordenadas (origen_xy / destino_xy, en (lat, lng)) o como texto,
+    que se ubica con Mapbox. Las coordenadas, cuando existen, son más exactas que el texto.
     Devuelve {"distancia_km": 12.4, "duracion_min": 25} o None si no se pudo calcular.
     Nunca lanza: el cálculo es un extra y no debe romper nada.
     """
@@ -227,16 +257,23 @@ def calcular_distancia_mapbox(origen, destino, token, contexto_origen="", timeou
         if not token:
             return None
 
-        # Origen: coordenadas del GPS tal cual, o dirección + ciudad
-        o = _coordenadas_en_texto(origen)
-        if not o:
-            consulta = ", ".join(x for x in (str(origen or "").strip(), contexto_origen) if x)
-            o = _geocodificar(requests_mod, consulta, token, timeout)
+        # Origen: coordenadas conocidas, o las del GPS escritas en el texto, o dirección + ciudad
+        if origen_xy:
+            o = (origen_xy[1], origen_xy[0])            # Mapbox usa (lng, lat)
+        else:
+            o = _coordenadas_en_texto(origen)
+            if not o:
+                consulta = ", ".join(x for x in (str(origen or "").strip(), contexto_origen) if x)
+                o = _geocodificar(requests_mod, consulta, token, timeout)
         if not o:
             return None
 
-        # Destino: se busca cerca del origen (si dice otra ciudad, el cliente la escribe en el texto)
-        d = _geocodificar(requests_mod, destino, token, timeout, cerca=o)
+        # Destino: coordenadas de la sugerencia elegida, o el texto buscado cerca del origen
+        # (si es otra ciudad, el cliente la escribe en el texto)
+        if destino_xy:
+            d = (destino_xy[1], destino_xy[0])
+        else:
+            d = _geocodificar(requests_mod, destino, token, timeout, cerca=o)
         if not d:
             return None
 
@@ -278,7 +315,11 @@ def completar_distancia_viaje(id_solicitud, direccion_origen, ciudad, departamen
             return
 
         contexto = ", ".join(x for x in (ciudad, departamento) if x)
-        res = calcular_distancia_mapbox(direccion_origen, datos["destino"], token, contexto_origen=contexto)
+        res = calcular_distancia_mapbox(
+            direccion_origen, datos["destino"], token, contexto_origen=contexto,
+            origen_xy=_par_coordenadas(datos.get("origen_lat"), datos.get("origen_lng")),
+            destino_xy=_par_coordenadas(datos.get("destino_lat"), datos.get("destino_lng")),
+        )
         if not res:
             return
 

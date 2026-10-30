@@ -381,8 +381,14 @@
     // Enlace a Google Maps con la ruta recogida → destino (asume la misma ciudad)
     function urlRutaViaje(s) {
         const d = s.detalles || {};
-        const origen  = [s.direccion_servicio, s.ciudad].filter(Boolean).join(', ');
-        const destino = [d.destino, s.ciudad].filter(Boolean).join(', ');
+        // Con coordenadas la ruta apunta al punto exacto; sin ellas se usa la dirección escrita
+        // (y la ciudad de la solicitud, salvo que el destino ya traiga la suya).
+        const origen  = (d.origen_lat != null && d.origen_lng != null)
+            ? d.origen_lat + ',' + d.origen_lng
+            : [s.direccion_servicio, s.ciudad].filter(Boolean).join(', ');
+        const destino = (d.destino_lat != null && d.destino_lng != null)
+            ? d.destino_lat + ',' + d.destino_lng
+            : [d.destino, s.ciudad].filter(Boolean).join(', ');
         return 'https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(origen) +
                '&destination=' + encodeURIComponent(destino);
     }

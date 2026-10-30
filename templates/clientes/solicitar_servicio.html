@@ -617,12 +617,25 @@
                 <div class="card-title" style="font-size:1.1rem; margin-bottom:4px;">Datos del viaje</div>
                 <div class="card-sub">La dirección de arriba es el punto de recogida. Cuéntanos a dónde va y qué se lleva.</div>
 
-                <div class="form-group">
+                <div class="form-group" style="position:relative">
                     <label>Dirección de destino *</label>
-                    <input type="text" id="viajeDestino" maxlength="200" autocomplete="off"
-                           placeholder="Barrio, calle o punto de referencia de llegada"
-                           style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.88rem;outline:none"
-                           onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
+                    <div style="position:relative">
+                        <i class="bi bi-geo-alt-fill" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#667eea;font-size:1.1rem;z-index:1"></i>
+                        <input type="text" id="viajeDestino" maxlength="200" autocomplete="off"
+                               placeholder="Carrera 5 # 10-20, barrio o punto de llegada"
+                               oninput="buscarDestino(this.value)"
+                               style="width:100%;padding:12px 14px 12px 40px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.88rem;outline:none"
+                               onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
+                    </div>
+                    <div id="destinoDropdown" style="
+                        display:none; position:absolute; z-index:1000; width:100%;
+                        background:white; border:1px solid #e2e8f0; border-radius:10px;
+                        max-height:220px; overflow-y:auto; top:100%;
+                        box-shadow:0 8px 24px rgba(0,0,0,0.12);
+                    "></div>
+                    <input type="hidden" id="destinoLat" value="">
+                    <input type="hidden" id="destinoLng" value="">
+                    <small style="color:#94a3b8;font-size:0.72rem">Escribe y elige una sugerencia. Si el destino es en otro municipio, inclúyelo (Ej: Carrera 5 # 10-20, Jamundí)</small>
                 </div>
 
                 <div class="form-group">
@@ -1229,6 +1242,104 @@ function validarViaje() {
     return '';
 }
 
+// ── AUTOCOMPLETADO DEL DESTINO ──
+// Usa el mismo servicio (Google Places) que la dirección de recogida de "Para otra persona".
+let _destinoTimer = null;
+let _destinoPeticion = 0;
+window._sugerenciasDestino = [];
+
+function escDestino(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function buscarDestino(q) {
+    clearTimeout(_destinoTimer);
+    // Si el cliente cambia el texto, las coordenadas de la sugerencia anterior ya no valen
+    document.getElementById('destinoLat').value = '';
+    document.getElementById('destinoLng').value = '';
+
+    const dd = document.getElementById('destinoDropdown');
+    if (!dd) return;
+    if (!q || q.trim().length < 3) { dd.style.display = 'none'; return; }
+
+    _destinoTimer = setTimeout(() => {
+        const miPeticion = ++_destinoPeticion;
+        cargarGoogleMaps(async () => {
+            try {
+                const peticion = { includedRegionCodes: ['co'], language: 'es' };
+                const lat = parseFloat(document.getElementById('direccionLat').value);
+                const lng = parseFloat(document.getElementById('direccionLng').value);
+                if (isFinite(lat) && isFinite(lng)) {
+                    // Prioriza lo cercano a la recogida sin forzar su ciudad: el destino puede ser otro municipio
+                    peticion.input        = q;
+                    peticion.origin       = { lat, lng };
+                    peticion.locationBias = { center: { lat, lng }, radius: 50000 };
+                } else {
+                    const ciudad = document.getElementById('ciudadHidden')?.value || '';
+                    peticion.input = ciudad ? `${q}, ${ciudad}, Colombia` : `${q}, Colombia`;
+                }
+                const { AutocompleteSuggestion } = await google.maps.importLibrary('places');
+                const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(peticion);
+
+                // Si mientras tanto el cliente siguió escribiendo, esta respuesta ya quedó vieja
+                if (miPeticion !== _destinoPeticion) return;
+
+                if (!suggestions || suggestions.length === 0) {
+                    dd.innerHTML = `<div style="padding:12px 14px;font-size:0.83rem;color:#94a3b8">No se encontraron resultados — prueba con el barrio, el municipio o un punto de referencia</div>`;
+                    dd.style.display = 'block';
+                    return;
+                }
+                window._sugerenciasDestino = suggestions;
+                dd.innerHTML = suggestions.map((s, idx) => {
+                    const pred   = s.placePrediction;
+                    const main   = pred.mainText?.toString() || pred.text?.toString() || '';
+                    const second = pred.secondaryText?.toString() || '';
+                    const tipos  = pred.types || [];
+                    const icono  = tipos.includes('establishment') ? '📍' : (tipos.includes('sublocality') || tipos.includes('neighborhood')) ? '🏘️' : '🏠';
+                    return `<div onclick="selDestinoGoogle(${idx})" style="padding:12px 14px;cursor:pointer;border-bottom:1px solid #f8fafc;display:flex;align-items:flex-start;gap:10px" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='white'">
+                        <span style="font-size:1.1rem;flex-shrink:0;margin-top:1px">${icono}</span>
+                        <div><div style="font-weight:700;font-size:0.87rem;color:#0f172a">${escDestino(main)}</div><div style="font-size:0.73rem;color:#64748b;margin-top:2px">${escDestino(second)}</div></div>
+                    </div>`;
+                }).join('') + `<div style="padding:8px 14px;display:flex;justify-content:flex-end;border-top:1px solid #f1f5f9"><img src="https://maps.gstatic.com/mapfiles/api-3/images/powered-by-google-on-white3.png" style="height:14px" alt="Powered by Google"></div>`;
+                dd.style.display = 'block';
+            } catch (e) {
+                console.error('[Places destino]', e);
+                dd.style.display = 'none';
+            }
+        });
+    }, 350);
+}
+
+async function selDestinoGoogle(idx) {
+    const sugg = window._sugerenciasDestino?.[idx];
+    if (!sugg) return;
+    document.getElementById('destinoDropdown').style.display = 'none';
+    const campo = document.getElementById('viajeDestino');
+    // Se muestra de una vez el texto elegido; las coordenadas llegan en un momento
+    const pred = sugg.placePrediction;
+    campo.value = (pred.text?.toString() || campo.value).replace(', Colombia', '');
+    cargarGoogleMaps(async () => {
+        try {
+            const place = pred.toPlace();
+            await place.fetchFields({ fields: ['location', 'formattedAddress'] });
+            if (place.formattedAddress) campo.value = place.formattedAddress.replace(', Colombia', '');
+            document.getElementById('destinoLat').value = place.location.lat();
+            document.getElementById('destinoLng').value = place.location.lng();
+        } catch (e) {
+            // Sin coordenadas el viaje igual se puede pedir: el servidor ubica el destino por su texto
+            console.error('[PlaceDetails destino]', e);
+        }
+    });
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#viajeDestino') && !e.target.closest('#destinoDropdown')) {
+        const dd = document.getElementById('destinoDropdown');
+        if (dd) dd.style.display = 'none';
+    }
+});
+
 function datosViaje() {
     const tipo = tipoViajeActual();
     const datos = {
@@ -1236,6 +1347,19 @@ function datosViaje() {
         vehiculo: viajeVehiculo,
         carga:    document.getElementById('viajeCarga').value.trim()
     };
+
+    // Coordenadas del destino (si eligió una sugerencia): hacen la distancia más exacta
+    const dLat = parseFloat(document.getElementById('destinoLat').value);
+    const dLng = parseFloat(document.getElementById('destinoLng').value);
+    if (isFinite(dLat) && isFinite(dLng)) { datos.destino_lat = dLat; datos.destino_lng = dLng; }
+
+    // Coordenadas de la recogida: solo cuando salen del GPS ("Para mí"), que son exactas.
+    // Si el cliente escribió la dirección, el servidor la ubica por su texto.
+    if (typeof paraQuien !== 'undefined' && paraQuien === 'yo') {
+        const oLat = parseFloat(document.getElementById('direccionLat').value);
+        const oLng = parseFloat(document.getElementById('direccionLng').value);
+        if (isFinite(oLat) && isFinite(oLng)) { datos.origen_lat = oLat; datos.origen_lng = oLng; }
+    }
     if (tipo === 'transporte') {
         datos.ayudantes = document.getElementById('viajeAyudantes').checked;
     } else if (tipo === 'mudanza') {
