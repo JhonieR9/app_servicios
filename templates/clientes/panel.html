@@ -364,18 +364,30 @@ async function cargarPerfil() {
 
 // Cargar servicios activos
 async function cargarActivos() {
+    // Evita dos consultas a la vez (p. ej. el temporizador y "volver a la app" al mismo tiempo)
+    if (window._cargandoActivos) return;
+    window._cargandoActivos = true;
     try {
         const res  = await fetch('/cliente/mis_solicitudes_api?id_cliente=' + idCliente);
         const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Error al cargar');
         const todas = data.solicitudes || [];
 
         const activas = todas.filter(s =>
             ['pendiente','aceptada','en_proceso','cotizacion_enviada'].includes(s.estado)
         );
 
+        // Si nada cambió desde la última vez, no se vuelve a dibujar: evita parpadeos y que se
+        // pierda un toque (p. ej. en "Aceptar") justo cuando la pantalla se redibuja sola.
+        const firma = JSON.stringify(activas);
+        if (firma === window._firmaActivos) return;
+        window._firmaActivos = firma;
+
         const sec = document.getElementById('activosSection');
 
         if (activas.length === 0) {
+            // Sin servicios activos: apagar el puntito rojo del ícono (antes se quedaba encendido)
+            document.getElementById('badgeActivas').style.display = 'none';
             sec.innerHTML = `
             <div class="empty-state">
                 <div class="empty-emoji">🔍</div>
@@ -416,7 +428,12 @@ async function cargarActivos() {
             sec.innerHTML = html;
         }
     } catch(e) {
-        document.getElementById('activosSection').innerHTML = '';
+        // Fallo de conexión o del servidor: se deja lo que ya se ve en pantalla (antes se borraba el
+        // servicio activo) y se olvida la firma para volver a dibujar en el próximo intento.
+        window._firmaActivos = null;
+        console.log('[PANEL] No se pudieron actualizar los servicios activos:', e);
+    } finally {
+        window._cargandoActivos = false;
     }
 }
 
@@ -578,8 +595,11 @@ async function aceptarCotizacion(idSolicitud, precio) {
     }
 }
 
-// Refrescar activos cada 20s
-setInterval(() => { if (idCliente) cargarActivos(); }, 20000);
+// Refrescar los servicios activos cada 15 s, solo mientras la pantalla se está viendo,
+// y de inmediato cuando el cliente vuelve a la app (cambia de pestaña o desbloquea el celular).
+setInterval(() => { if (idCliente && !document.hidden) cargarActivos(); }, 15000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && idCliente) cargarActivos(); });
+window.addEventListener('focus', () => { if (idCliente) cargarActivos(); });
 
 cargarPerfil();
 
