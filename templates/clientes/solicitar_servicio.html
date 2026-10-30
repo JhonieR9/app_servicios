@@ -611,6 +611,52 @@
                 </div>
             </div>
 
+            <!-- Datos del viaje (solo Transporte, Mudanza y Mensajería) -->
+            <div class="card" id="viajeCard" style="display:none">
+                <input type="hidden" name="detalles" id="detallesInput" value="">
+                <div class="card-title" style="font-size:1.1rem; margin-bottom:4px;">Datos del viaje</div>
+                <div class="card-sub">La dirección de arriba es el punto de recogida. Cuéntanos a dónde va y qué se lleva.</div>
+
+                <div class="form-group">
+                    <label>Dirección de destino *</label>
+                    <input type="text" id="viajeDestino" maxlength="200" autocomplete="off"
+                           placeholder="Barrio, calle o punto de referencia de llegada"
+                           style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.88rem;outline:none"
+                           onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de vehículo *</label>
+                    <div id="viajeVehiculos" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+                        <div class="chip" onclick="selVehiculo(this,'moto')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
+                            <span style="font-size:1.3rem">🏍️</span><span style="font-size:0.78rem;font-weight:700">Moto</span>
+                        </div>
+                        <div class="chip" onclick="selVehiculo(this,'carro')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
+                            <span style="font-size:1.3rem">🚗</span><span style="font-size:0.78rem;font-weight:700">Carro</span>
+                        </div>
+                        <div class="chip" onclick="selVehiculo(this,'camioneta')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
+                            <span style="font-size:1.3rem">🛻</span><span style="font-size:0.78rem;font-weight:700">Camioneta</span>
+                        </div>
+                        <div class="chip" onclick="selVehiculo(this,'camion')" style="text-align:center;padding:12px 8px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:4px">
+                            <span style="font-size:1.3rem">🚚</span><span style="font-size:0.78rem;font-weight:700">Camión</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>¿Qué se va a transportar? *</label>
+                    <input type="text" id="viajeCarga" maxlength="300" autocomplete="off"
+                           placeholder="Ej: nevera y lavadora, 10 cajas, 2 personas, un paquete"
+                           style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:0.88rem;outline:none"
+                           onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
+                </div>
+
+                <label style="display:flex;align-items:center;gap:10px;font-size:0.85rem;color:#374151;cursor:pointer">
+                    <input type="checkbox" id="viajeAyudantes" style="width:18px;height:18px;accent-color:#667eea">
+                    Necesito ayudantes para cargar y descargar
+                </label>
+            </div>
+
             <!-- Contacto -->
             <div class="card">
                 <div class="card-title" style="font-size:1.1rem; margin-bottom:4px;">Tus datos</div>
@@ -1060,6 +1106,46 @@ function selCat(el, id, nombre) {
     document.getElementById('btnStep2').disabled = true;
     document.getElementById('step2CatName').textContent = nombre;
     document.getElementById('step2Summary').style.display = 'inline-flex';
+    actualizarViajeUI();
+}
+
+// ── SERVICIOS DE VIAJE (Transporte, Mudanza, Mensajería) ──
+// Piden origen (la dirección del paso 3) + destino + vehículo + qué se lleva,
+// y el profesional los cotiza con un precio fijo por viaje.
+const CATEGORIAS_VIAJE = ['transporte', 'mudanza', 'mensajeria'];
+let viajeVehiculo = '';
+
+function esCategoriaViaje(nombre) {
+    const limpio = String(nombre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    return CATEGORIAS_VIAJE.includes(limpio);
+}
+
+function actualizarViajeUI() {
+    const card = document.getElementById('viajeCard');
+    if (card) card.style.display = esCategoriaViaje(selectedCatName) ? 'block' : 'none';
+}
+
+function selVehiculo(el, vehiculo) {
+    document.querySelectorAll('#viajeVehiculos .chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    viajeVehiculo = vehiculo;
+}
+
+// Devuelve el mensaje de error, o '' si los datos del viaje están completos
+function validarViaje() {
+    if (document.getElementById('viajeDestino').value.trim().length < 5) return 'Escribe la dirección de destino';
+    if (!viajeVehiculo) return 'Elige el tipo de vehículo';
+    if (document.getElementById('viajeCarga').value.trim().length < 3) return 'Cuéntanos qué se va a transportar';
+    return '';
+}
+
+function datosViaje() {
+    return {
+        destino:   document.getElementById('viajeDestino').value.trim(),
+        vehiculo:  viajeVehiculo,
+        carga:     document.getElementById('viajeCarga').value.trim(),
+        ayudantes: document.getElementById('viajeAyudantes').checked
+    };
 }
 
 // STEP 2: SELECT CHIP
@@ -1509,6 +1595,17 @@ async function irAPaso4() {
         alertEl.className = 'alert error'; alertEl.style.display = 'block';
         alertEl.textContent = 'Por favor ingresa tu nombre'; return;
     }
+    // Transporte / Mudanza / Mensajería: destino, vehículo y carga son obligatorios
+    if (esCategoriaViaje(selectedCatName)) {
+        const errorViaje = validarViaje();
+        if (errorViaje) {
+            alertEl.className = 'alert error'; alertEl.style.display = 'block';
+            alertEl.textContent = errorViaje;
+            document.getElementById('viajeCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+    }
+
     alertEl.style.display = 'none';
     goStep(4);
     document.getElementById('step4Title').textContent = selectedCatName + ' - ' + selectedProblem;
@@ -1827,6 +1924,10 @@ async function confirmarSolicitud() {
             }
         } catch(e) {}
     }
+
+    // Datos del viaje (solo categorías de viaje); en las demás va vacío
+    document.getElementById('detallesInput').value =
+        esCategoriaViaje(selectedCatName) ? JSON.stringify(datosViaje()) : '';
 
     const formData = new FormData(document.getElementById('formSolicitud'));
 

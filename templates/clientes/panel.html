@@ -483,7 +483,7 @@ function renderActivoPrincipal(sec, s) {
             <div style="font-size:1.8rem;font-weight:900;color:#78350f;letter-spacing:-1px;margin-bottom:2px">
                 $${Number(s.cotizacion_precio).toLocaleString('es-CO')}
             </div>
-            ${s.cotizacion_horas ? `<div style="font-size:0.75rem;color:#a16207;margin-bottom:10px">${s.cotizacion_horas}h estimadas · materiales adicionales</div>` : '<div style="margin-bottom:10px"></div>'}
+            ${s.cotizacion_horas ? `<div style="font-size:0.75rem;color:#a16207;margin-bottom:10px">${s.cotizacion_horas}h estimadas · materiales adicionales</div>` : '<div style="font-size:0.75rem;color:#a16207;margin-bottom:10px">Precio del viaje completo</div>'}
             ${s.desglose ? `
             <div style="text-align:left;margin:0 0 12px;padding-top:10px;border-top:1px dashed #fcd34d;font-size:0.8rem;color:#78350f">
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Servicio</span><strong>$${Number(s.desglose.precio_servicio).toLocaleString('es-CO')}</strong></div>

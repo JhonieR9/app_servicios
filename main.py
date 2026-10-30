@@ -244,6 +244,8 @@ def crear_tablas():
             ('cotizacion_precio',  "decimal(10,2) DEFAULT NULL"),
             ('cotizacion_nota',    "text DEFAULT NULL"),
             ('cotizacion_fecha',   "datetime DEFAULT NULL"),
+            # Datos propios de la categoría (JSON): destino, vehículo, carga... en Transporte/Mudanza/Mensajería
+            ('detalles_servicio',  "text DEFAULT NULL"),
         ]:
             try:
                 cursor.execute(f"ALTER TABLE solicitudes_servicio ADD COLUMN {col} {definition}")

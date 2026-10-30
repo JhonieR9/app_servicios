@@ -6,6 +6,7 @@ import bcrypt
 import auth      # Módulo de autenticación
 import security  # Rate limiting, MIME validation y logging
 from config import DB_CONFIG, conectar_bd
+from viajes import es_categoria_viaje, leer_detalles, PRECIO_VIAJE_MIN, PRECIO_VIAJE_MAX
 
 router = APIRouter(prefix="/trabajador", tags=["trabajadores"])
 templates = Jinja2Templates(directory="templates")
@@ -72,8 +73,17 @@ def mostrar_mis_solicitudes_panel(request: Request):
     return templates.TemplateResponse("trabajadores/mis_solicitudes.html", {"request": request})
 
 @router.get("/mis_solicitudes_api")
-def listar_mis_solicitudes(id_trabajador: int = None):
-    """Solicitudes asignadas o pendientes para un trabajador, filtradas por sus categorías"""
+def listar_mis_solicitudes(request: Request, id_trabajador: int = None):
+    """Solicitudes asignadas o pendientes para un trabajador, filtradas por sus categorías.
+    Devuelve nombre, teléfono y dirección de clientes, así que solo lo ve el propio trabajador."""
+    sesion = _sesion_trabajador(request)
+    if not sesion:
+        return JSONResponse({"error": "No autenticado", "solicitudes": []}, status_code=401)
+    if id_trabajador and int(sesion['id_usuario']) != int(id_trabajador):
+        return JSONResponse({"error": "No autorizado", "solicitudes": []}, status_code=403)
+    if not id_trabajador:
+        id_trabajador = sesion['id_usuario']
+
     conexion = conectar_bd()
     if not conexion:
         return JSONResponse({"error": "Error de conexión", "solicitudes": []}, status_code=500)
@@ -154,6 +164,28 @@ def listar_mis_solicitudes(id_trabajador: int = None):
                     s[k] = ''
                 elif hasattr(v, '__float__'):
                     s[k] = float(v)
+
+        # Datos de viaje (destino, vehículo, carga) y tipo de cotización. Va en una consulta aparte
+        # y con try/except a propósito: si falla, la lista de solicitudes sigue funcionando igual.
+        try:
+            ids = [s['id_solicitud'] for s in solicitudes]
+            mapa_detalles = {}
+            if ids:
+                marcas = ','.join(['%s'] * len(ids))
+                cursor.execute(
+                    f"SELECT id_solicitud, detalles_servicio FROM solicitudes_servicio WHERE id_solicitud IN ({marcas})",
+                    tuple(ids)
+                )
+                mapa_detalles = {r['id_solicitud']: r['detalles_servicio'] for r in cursor.fetchall()}
+            for s in solicitudes:
+                s['detalles'] = leer_detalles(mapa_detalles.get(s['id_solicitud']))
+                s['es_viaje'] = es_categoria_viaje(s.get('nombre_categoria'))
+        except Exception as e_det:
+            print(f"[VIAJE] No se pudieron leer detalles_servicio: {e_det}")
+            for s in solicitudes:
+                s['detalles'] = None
+                s['es_viaje'] = es_categoria_viaje(s.get('nombre_categoria'))
+
         return JSONResponse({"solicitudes": solicitudes})
     except Exception as e:
         return JSONResponse({"error": str(e), "solicitudes": []}, status_code=500)
@@ -164,13 +196,22 @@ def listar_mis_solicitudes(id_trabajador: int = None):
 
 @router.post("/solicitud/cotizar")
 def enviar_cotizacion(
+    request: Request,
     id_solicitud:  int   = Form(...),
     id_trabajador: int   = Form(...),
-    horas_estimadas: float = Form(...),
+    horas_estimadas: float = Form(None),
     materiales:    float = Form(0),
-    nota:          str   = Form(None)
+    nota:          str   = Form(None),
+    precio_fijo:   float = Form(None)   # precio por viaje (Transporte, Mudanza, Mensajería)
 ):
-    """El trabajador envía una cotización con horas estimadas. El precio se calcula automáticamente."""
+    """El trabajador envía una cotización.
+    - Servicios normales: horas estimadas × su tarifa por hora (+ materiales).
+    - Servicios de viaje (Transporte, Mudanza, Mensajería): un precio fijo por el viaje."""
+    # Solo el propio trabajador puede cotizar a su nombre
+    no_autorizado = _verificar_dueno(request, id_trabajador)
+    if no_autorizado:
+        return no_autorizado
+
     conexion = conectar_bd()
     try:
         cursor = conexion.cursor(dictionary=True)
@@ -178,9 +219,10 @@ def enviar_cotizacion(
         # Verificar que la solicitud sigue pendiente o tiene cotización activa
         cursor.execute("""
             SELECT ss.id_solicitud, ss.estado, ss.id_cliente,
-                   sp.valor_hora
+                   sp.valor_hora, cat.nombre_categoria
             FROM solicitudes_servicio ss
             LEFT JOIN servicios_persona sp ON sp.id_persona = %s
+            LEFT JOIN categorias_servicio cat ON ss.id_categoria = cat.id_categoria
             WHERE ss.id_solicitud = %s AND ss.estado IN ('pendiente', 'cotizacion_enviada')
             LIMIT 1
         """, (id_trabajador, id_solicitud))
@@ -189,17 +231,38 @@ def enviar_cotizacion(
         if not sol:
             return JSONResponse({"error": "La solicitud ya no está disponible"}, status_code=400)
 
-        valor_hora = float(sol['valor_hora'] or 0)
-        if valor_hora <= 0:
-            # Si no tiene tarifa registrada, usar un valor por defecto
-            cursor.execute("""
-                SELECT valor_hora FROM servicios_persona
-                WHERE id_persona = %s ORDER BY valor_hora DESC LIMIT 1
-            """, (id_trabajador,))
-            row = cursor.fetchone()
-            valor_hora = float(row['valor_hora']) if row and row['valor_hora'] else 50000
+        es_viaje = es_categoria_viaje(sol.get('nombre_categoria'))
 
-        precio_cotizado = round(horas_estimadas * valor_hora + materiales, 2)
+        if es_viaje:
+            # Viaje: el trabajador pone el precio total del trayecto; no hay horas ni materiales
+            if not precio_fijo or precio_fijo <= 0:
+                return JSONResponse({"error": "Indica el precio del viaje"}, status_code=400)
+            if not (PRECIO_VIAJE_MIN <= precio_fijo <= PRECIO_VIAJE_MAX):
+                return JSONResponse(
+                    {"error": f"El precio del viaje debe estar entre ${PRECIO_VIAJE_MIN:,.0f} y ${PRECIO_VIAJE_MAX:,.0f}"},
+                    status_code=400
+                )
+            precio_cotizado = round(precio_fijo, 2)
+            horas_estimadas = 0          # 0 horas = cotización por viaje
+            mensaje_ok = f"Cotización enviada: viaje por ${precio_cotizado:,.0f}"
+        else:
+            if precio_fijo:
+                return JSONResponse({"error": "Este servicio se cotiza por horas"}, status_code=400)
+            if not horas_estimadas or horas_estimadas <= 0:
+                return JSONResponse({"error": "Indica las horas estimadas"}, status_code=400)
+
+            valor_hora = float(sol['valor_hora'] or 0)
+            if valor_hora <= 0:
+                # Si no tiene tarifa registrada, usar un valor por defecto
+                cursor.execute("""
+                    SELECT valor_hora FROM servicios_persona
+                    WHERE id_persona = %s ORDER BY valor_hora DESC LIMIT 1
+                """, (id_trabajador,))
+                row = cursor.fetchone()
+                valor_hora = float(row['valor_hora']) if row and row['valor_hora'] else 50000
+
+            precio_cotizado = round(horas_estimadas * valor_hora + materiales, 2)
+            mensaje_ok = f"Cotización enviada: {horas_estimadas}h × ${valor_hora:,.0f}/h = ${precio_cotizado:,.0f}"
 
         # Guardar cotización y asignar trabajador (estado: cotizacion_enviada)
         cursor.execute("""
@@ -260,7 +323,7 @@ def enviar_cotizacion(
 
         return JSONResponse({
             "ok": True,
-            "mensaje": f"Cotización enviada: {horas_estimadas}h × ${valor_hora:,.0f}/h = ${precio_cotizado:,.0f}",
+            "mensaje": mensaje_ok,
             "precio": precio_cotizado,
             "horas": horas_estimadas
         })

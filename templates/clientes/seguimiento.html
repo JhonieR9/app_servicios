@@ -636,7 +636,7 @@
                         <div style="font-size:0.72rem;font-weight:800;color:#92400e;text-transform:uppercase;
                                     letter-spacing:1.5px;margin-bottom:6px">💰 Cotización recibida</div>
                         <div style="font-size:1.8rem;font-weight:900;color:#78350f;letter-spacing:-1px;margin-bottom:2px">
-                            $${precioCot.toLocaleString('es-CO')} <span style="font-size:0.9rem;font-weight:700">(mano de obra)</span>
+                            $${precioCot.toLocaleString('es-CO')} <span style="font-size:0.9rem;font-weight:700">(${horasCot ? 'mano de obra' : 'precio del viaje'})</span>
                         </div>
                         ${horasCot ? `<div style="font-size:0.75rem;color:#a16207;margin-bottom:12px">${horasCot}h estimadas · materiales adicionales</div>` : '<div style="margin-bottom:12px"></div>'}
                         ${data.desglose ? `

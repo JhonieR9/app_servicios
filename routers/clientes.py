@@ -6,6 +6,7 @@ import math
 import auth      # Módulo de autenticación
 import security  # Rate limiting, MIME validation y logging
 from config import DB_CONFIG, conectar_bd
+from viajes import es_categoria_viaje, normalizar_detalles_viaje, resumen_texto_viaje
 
 router = APIRouter(prefix="/cliente", tags=["clientes"])
 templates = Jinja2Templates(directory="templates")
@@ -488,7 +489,8 @@ def crear_solicitud(
     departamento: str = Form(...),
     fecha_programada: str = Form(None),
     id_trabajador: str = Form(None),   # string para manejar '' sin error
-    metodo_pago: str = Form("nequi")
+    metodo_pago: str = Form("nequi"),
+    detalles: str = Form(None)         # JSON con los datos del viaje (Transporte/Mudanza/Mensajería)
 ):
     # Convertir id_trabajador a int si viene con valor
     id_trab = None
@@ -530,6 +532,14 @@ def crear_solicitud(
             nombre_cat = cat_row['nombre_categoria']
         cursor2.close()
 
+        # Transporte, Mudanza y Mensajería exigen destino, vehículo y qué se transporta.
+        # Se valida ANTES de crear nada para no dejar una solicitud incompleta.
+        detalles_json = None
+        if es_categoria_viaje(nombre_cat):
+            detalles_json, error_detalles = normalizar_detalles_viaje(detalles)
+            if error_detalles:
+                return JSONResponse({"error": error_detalles}, status_code=400)
+
         cursor.execute("""
             INSERT IGNORE INTO categorias_servicio (id_categoria, nombre_categoria, estado)
             VALUES (%s, %s, 'activo')
@@ -564,6 +574,28 @@ def crear_solicitud(
             ))
         conexion.commit()
         id_solicitud = cursor.lastrowid
+
+        # Guardar los datos del viaje. Va aparte del INSERT principal a propósito: si algo falla
+        # aquí, la solicitud igual se crea, y la info se agrega a la descripción como respaldo.
+        if detalles_json:
+            try:
+                cursor.execute(
+                    "UPDATE solicitudes_servicio SET detalles_servicio = %s WHERE id_solicitud = %s",
+                    (detalles_json, id_solicitud)
+                )
+                conexion.commit()
+            except Exception as e_det:
+                print(f"[VIAJE] No se guardó detalles_servicio de #{id_solicitud}: {e_det}")
+                try:
+                    conexion.rollback()
+                    cursor.execute(
+                        "UPDATE solicitudes_servicio SET descripcion = CONCAT(COALESCE(descripcion, ''), %s) "
+                        "WHERE id_solicitud = %s",
+                        (resumen_texto_viaje(detalles_json), id_solicitud)
+                    )
+                    conexion.commit()
+                except Exception as e_resp:
+                    print(f"[VIAJE] Tampoco se pudo agregar a la descripción #{id_solicitud}: {e_resp}")
 
         # Ya NO se acepta automáticamente — el trabajador decide
         # Obtener nombre real del cliente para la notificación
