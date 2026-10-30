@@ -1349,6 +1349,253 @@ def obtener_stats_trabajador(id_trabajador: int):
         if conexion and conexion.is_connected():
             conexion.close()
 
+# ============================================
+# MEDIOS DE PAGO DEL TRABAJADOR
+# ============================================
+
+BILLETERAS_PAGO = ('nequi', 'daviplata', 'bre_b')
+METODOS_PAGO_VALIDOS = BILLETERAS_PAGO + ('cuenta_bancaria',)
+ETIQUETAS_PAGO = {
+    'nequi': 'Nequi',
+    'daviplata': 'Daviplata',
+    'bre_b': 'Bre-B',
+    'cuenta_bancaria': 'Cuenta bancaria',
+}
+
+
+def extraer_datos_pago(form):
+    """
+    Valida y normaliza los datos de cobro de un trabajador a partir de un formulario.
+    Devuelve (datos, None) si todo está bien o (None, "mensaje de error").
+
+    Se usa tanto en el registro como al cambiar la cuenta desde "Mi Perfil", para que
+    las reglas sean siempre las mismas:
+      - Nequi / Daviplata: celular de 10 dígitos que empieza por 3 + titular.
+      - Bre-B: llave (3 a 30 caracteres) + titular.
+      - Cuenta bancaria: banco, tipo (Ahorros/Corriente), número (6 a 20 dígitos) + titular.
+
+    Nota: el formulario de registro antiguo enviaba dos campos llamados `numero_cuenta`
+    y `titular_cuenta` (uno de billetera y otro de banco); aquí se elige el que
+    corresponde al método principal en vez de quedarse con el último, que llegaba vacío.
+    """
+    import re
+
+    def _vals(nombre):
+        return [str(v).strip() for v in form.getlist(nombre) if v is not None and str(v).strip()]
+
+    metodos = [m.strip() for m in str(form.get('medio_pago') or '').split(',') if m.strip()]
+    principal = str(form.get('medio_pago_principal') or '').strip()
+
+    if not metodos and principal:
+        metodos = [principal]
+    if not metodos:
+        return None, "Debes seleccionar al menos un método de pago"
+    if any(m not in METODOS_PAGO_VALIDOS for m in metodos):
+        return None, "Método de pago no válido"
+    if not principal:
+        if len(metodos) == 1:
+            principal = metodos[0]
+        else:
+            return None, "Debes seleccionar tu método de pago principal"
+    if principal not in metodos:
+        return None, "El método principal debe estar entre los métodos que aceptas"
+
+    if principal in BILLETERAS_PAGO:
+        numeros = _vals('numero_billetera') + _vals('numero_cuenta')
+        titulares = _vals('titular_billetera') + _vals('titular_cuenta')
+        numero = numeros[0] if numeros else ''
+        titular = titulares[0] if titulares else ''
+        etiqueta = ETIQUETAS_PAGO[principal]
+        if principal == 'bre_b':
+            if not (3 <= len(numero) <= 30):
+                return None, "La llave Bre-B debe tener entre 3 y 30 caracteres"
+        else:
+            digitos = re.sub(r'\D', '', numero)
+            if not re.fullmatch(r'3\d{9}', digitos):
+                return None, f"El número de {etiqueta} debe tener 10 dígitos y empezar por 3"
+            numero = digitos
+        banco = ''
+        tipo_cuenta = ''
+    else:
+        numeros = _vals('numero_cuenta')
+        titulares = _vals('titular_cuenta')
+        numero = re.sub(r'\D', '', numeros[-1]) if numeros else ''
+        titular = titulares[-1] if titulares else ''
+        banco = str(form.get('banco') or '').strip()
+        tipo_cuenta = str(form.get('tipo_cuenta') or '').strip().capitalize()
+        if not banco:
+            return None, "Selecciona el banco de tu cuenta"
+        if tipo_cuenta not in ('Ahorros', 'Corriente'):
+            return None, "Selecciona el tipo de cuenta (Ahorros o Corriente)"
+        if not (6 <= len(numero) <= 20):
+            return None, "El número de cuenta debe tener entre 6 y 20 dígitos"
+
+    if len(titular) < 3:
+        return None, "Escribe el nombre completo del titular de la cuenta"
+
+    return {
+        'medio_pago': ','.join(metodos),
+        'medio_pago_principal': principal,
+        'banco': banco,
+        'tipo_cuenta': tipo_cuenta,
+        'numero_cuenta': numero,
+        'titular_cuenta': titular,
+    }, None
+
+
+def _sesion_trabajador(request: Request):
+    """Devuelve la sesión del trabajador logueado o None."""
+    token = request.cookies.get("session_token")
+    if not token:
+        return None
+    sesion = auth.verificar_sesion(token)
+    if not sesion or sesion.get('tipo_usuario') != 'trabajador':
+        return None
+    return sesion
+
+
+def _mascara_cuenta(valor) -> str:
+    """Oculta casi todo el número de cuenta, deja los últimos 4 caracteres."""
+    v = str(valor or '')
+    if len(v) <= 4:
+        return v
+    return '•' * min(len(v) - 4, 8) + v[-4:]
+
+
+@router.get("/mi-pago")
+def obtener_mi_pago(request: Request):
+    """Medio de pago actual del trabajador logueado (con el número enmascarado)."""
+    sesion = _sesion_trabajador(request)
+    if not sesion:
+        return JSONResponse({"error": "No autenticado"}, status_code=401)
+
+    conexion = conectar_bd()
+    cursor = None
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT medio_pago, medio_pago_principal, banco, tipo_cuenta, numero_cuenta, titular_cuenta
+            FROM detalles_persona
+            WHERE id_persona = %s
+            LIMIT 1
+        """, (sesion['id_usuario'],))
+        d = cursor.fetchone() or {}
+
+        principal = str(d.get('medio_pago_principal') or '').strip()
+        if not principal:
+            # Registros antiguos: medio_pago puede traer un único método
+            principal = str(d.get('medio_pago') or '').split(',')[0].strip()
+        numero = str(d.get('numero_cuenta') or '')
+        titular = str(d.get('titular_cuenta') or '')
+
+        return JSONResponse({
+            "principal":      principal,
+            "etiqueta":       ETIQUETAS_PAGO.get(principal, principal),
+            "banco":          d.get('banco') or '',
+            "tipo_cuenta":    d.get('tipo_cuenta') or '',
+            "numero_mascara": _mascara_cuenta(numero),
+            "titular":        titular,
+            # Incompleto = falta método, número o titular (p. ej. registros antiguos)
+            "completo":       bool(principal and numero and titular),
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
+@router.post("/mi-pago/actualizar")
+async def actualizar_mi_pago(request: Request):
+    """
+    El trabajador cambia su medio de pago.
+    - La identidad sale de la SESIÓN (nunca de un id enviado por el navegador).
+    - Pide la contraseña: este dato redirige dinero, así que no basta con tener la sesión abierta.
+    """
+    sesion = _sesion_trabajador(request)
+    if not sesion:
+        return JSONResponse({"error": "Tu sesión venció. Inicia sesión de nuevo."}, status_code=401)
+
+    ip = security._get_ip(request)
+    if security.esta_bloqueado(ip, "normal"):
+        security.log_rate_blocked(ip, "/trabajador/mi-pago/actualizar")
+        return security.respuesta_bloqueado()
+
+    form = await request.form()
+    password = str(form.get('password') or '')
+    if not password:
+        return JSONResponse({"error": "Escribe tu contraseña para confirmar el cambio"}, status_code=400)
+
+    datos, error = extraer_datos_pago(form)
+    if error:
+        return JSONResponse({"error": error}, status_code=400)
+
+    id_persona = sesion['id_usuario']
+    conexion = conectar_bd()
+    cursor = None
+    try:
+        cursor = conexion.cursor(dictionary=True)
+
+        cursor.execute("SELECT password_hash FROM personas WHERE id_persona = %s LIMIT 1", (id_persona,))
+        fila = cursor.fetchone()
+        if not fila or not fila.get('password_hash'):
+            return JSONResponse({"error": "Primero debes crear tu contraseña"}, status_code=400)
+        if not auth.verificar_password(password, fila['password_hash']):
+            security.registrar_fallo(ip, "normal")
+            return JSONResponse({"error": "Contraseña incorrecta"}, status_code=403)
+
+        # Conserva los otros métodos que ya aceptaba y asegura que el nuevo principal esté en la lista
+        cursor.execute("SELECT medio_pago FROM detalles_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
+        existente = cursor.fetchone()
+        previos = [
+            m.strip() for m in str((existente or {}).get('medio_pago') or '').split(',')
+            if m.strip() in METODOS_PAGO_VALIDOS
+        ]
+        if datos['medio_pago_principal'] not in previos:
+            previos.append(datos['medio_pago_principal'])
+        datos['medio_pago'] = ','.join(previos)
+
+        valores = (datos['medio_pago'], datos['medio_pago_principal'], datos['banco'],
+                   datos['tipo_cuenta'], datos['numero_cuenta'], datos['titular_cuenta'])
+        if existente:
+            cursor.execute("""
+                UPDATE detalles_persona
+                SET medio_pago = %s, medio_pago_principal = %s, banco = %s,
+                    tipo_cuenta = %s, numero_cuenta = %s, titular_cuenta = %s
+                WHERE id_persona = %s
+            """, valores + (id_persona,))
+        else:
+            cursor.execute("""
+                INSERT INTO detalles_persona
+                (id_persona, medio_pago, medio_pago_principal, banco, tipo_cuenta, numero_cuenta, titular_cuenta)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (id_persona,) + valores)
+        conexion.commit()
+
+        # Registro de auditoría (sin el número de cuenta)
+        security.security_logger.info(
+            f"MEDIO_PAGO_CAMBIADO id_persona={id_persona} metodo={datos['medio_pago_principal']} ip={ip}"
+        )
+
+        return JSONResponse({
+            "ok": True,
+            "mensaje": "Medio de pago actualizado",
+            "etiqueta": ETIQUETAS_PAGO.get(datos['medio_pago_principal'], ''),
+            "numero_mascara": _mascara_cuenta(datos['numero_cuenta']),
+        })
+    except Exception as e:
+        if conexion:
+            conexion.rollback()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
+
+
 @router.get("/registro", response_class=HTMLResponse)
 def mostrar_registro_trabajador(request: Request):
     return templates.TemplateResponse("trabajadores/registro_trabajador.html", {"request": request})
@@ -1399,6 +1646,19 @@ async def crear_trabajador(
     if not correo or not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', correo.strip()):
         return JSONResponse({"error": "El correo electrónico es obligatorio y debe tener un formato válido"}, status_code=400)
     correo = correo.strip().lower()
+
+    # Validar medio de pago en el servidor (antes el formulario solo lo exigía en el navegador).
+    # Además corrige que el número/titular de billeteras (Nequi, Daviplata, Bre-B) se guardara vacío.
+    form_pago = await request.form()
+    datos_pago, error_pago = extraer_datos_pago(form_pago)
+    if error_pago:
+        return JSONResponse({"error": error_pago}, status_code=400)
+    medio_pago           = datos_pago['medio_pago']
+    medio_pago_principal = datos_pago['medio_pago_principal']
+    banco                = datos_pago['banco']
+    tipo_cuenta          = datos_pago['tipo_cuenta']
+    numero_cuenta        = datos_pago['numero_cuenta']
+    titular_cuenta       = datos_pago['titular_cuenta']
 
     # ── Mapear valores de texto a IDs numéricos ──────────────────
     TIPO_DOC_MAP = {

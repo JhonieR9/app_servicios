@@ -366,6 +366,7 @@
             const data = await res.json();
             if (data.error) throw new Error(data.error);
             renderPerfil(data);
+            cargarMiPago();   // la tarjeta se vuelve a dibujar con cada renderPerfil
             setTimeout(() => {
                 const sel = document.getElementById('nivelEstudioSelect');
                 if (sel && data.nivel_estudio) sel.value = data.nivel_estudio;
@@ -561,6 +562,67 @@
                         Actualizar
                         <input type="file" accept="image/*,.pdf" style="display:none" onchange="actualizarDocumento('recomendaciones_archivo', this)">
                     </label>
+                </div>
+            </div>
+
+            <!-- Medio de pago -->
+            <div class="card" id="seccionPago">
+                <div class="card-title"><i class="bi bi-wallet2"></i> Medio de pago</div>
+                <div id="resumenPago" style="margin-bottom:14px"><span style="color:#64748b;font-size:0.82rem">Cargando...</span></div>
+                <button type="button" onclick="togglePagoForm()" class="btn-amber" style="width:100%;padding:12px;font-size:0.85rem">
+                    <i class="bi bi-pencil-square"></i> Cambiar medio de pago
+                </button>
+                <div id="formPago" style="display:none;margin-top:14px;background:#f8fafc;border-radius:14px;padding:16px;border:1px solid #f1f5f9">
+                    <div style="display:grid;gap:8px">
+                        <select id="pagoMetodo" class="select-light" onchange="cambiarMetodoPago()">
+                            <option value="">¿Cómo quieres que te paguemos?</option>
+                            <option value="nequi">Nequi</option>
+                            <option value="daviplata">Daviplata</option>
+                            <option value="bre_b">Bre-B</option>
+                            <option value="cuenta_bancaria">Cuenta bancaria</option>
+                        </select>
+
+                        <div id="pagoBilletera" style="display:none;gap:8px">
+                            <input id="pagoNumero" type="tel" maxlength="10" class="input-light" placeholder="Celular (10 dígitos)" autocomplete="off">
+                            <input id="pagoTitular" type="text" class="input-light" placeholder="Titular (nombre completo)" autocomplete="off">
+                        </div>
+
+                        <div id="pagoBanco" style="display:none;gap:8px">
+                            <select id="pagoBancoNombre" class="select-light">
+                                <option value="">Seleccionar banco...</option>
+                                <option value="Bancolombia">Bancolombia</option>
+                                <option value="Davivienda">Davivienda</option>
+                                <option value="BBVA">BBVA</option>
+                                <option value="Banco de Bogotá">Banco de Bogotá</option>
+                                <option value="Banco de Occidente">Banco de Occidente</option>
+                                <option value="Banco Popular">Banco Popular</option>
+                                <option value="Banco Agrario">Banco Agrario</option>
+                                <option value="Scotiabank Colpatria">Scotiabank Colpatria</option>
+                                <option value="Banco AV Villas">Banco AV Villas</option>
+                                <option value="Banco Caja Social">Banco Caja Social</option>
+                                <option value="Banco Falabella">Banco Falabella</option>
+                                <option value="Banco Pichincha">Banco Pichincha</option>
+                                <option value="Nequi">Nequi</option>
+                                <option value="Daviplata">Daviplata</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                            <select id="pagoTipoCuenta" class="select-light">
+                                <option value="">Tipo de cuenta...</option>
+                                <option value="Ahorros">Ahorros</option>
+                                <option value="Corriente">Corriente</option>
+                            </select>
+                            <input id="pagoNumeroBanco" type="text" inputmode="numeric" maxlength="20" class="input-light" placeholder="Número de cuenta (solo números)" autocomplete="off">
+                            <input id="pagoTitularBanco" type="text" class="input-light" placeholder="Titular como aparece en el banco" autocomplete="off">
+                        </div>
+
+                        <input id="pagoPassword" type="password" class="input-light" placeholder="Tu contraseña para confirmar" autocomplete="current-password">
+                        <button type="button" id="btnGuardarPago" onclick="guardarMedioPago()" class="btn-success" style="width:100%;padding:12px;font-size:0.85rem">
+                            <i class="bi bi-check-circle"></i> Guardar medio de pago
+                        </button>
+                        <div style="font-size:0.72rem;color:#64748b;line-height:1.5">
+                            Revisa bien el número: es donde recibirás tus pagos. Por seguridad te pedimos la contraseña.
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -951,6 +1013,103 @@
 
     cargarPerfil();
     setTimeout(() => { cargarEspecialidades(); cargarCategorias(); cargarCiudadesServicio(); cargarReferencias(); }, 500);
+
+    // ── MEDIO DE PAGO ────────────────────────────────────────
+    // Escapa HTML antes de pintar datos que escribió el usuario
+    function escPago(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+            ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    async function cargarMiPago() {
+        const cont = document.getElementById('resumenPago');
+        if (!cont) return;
+        try {
+            const res = await fetch('/trabajador/mi-pago', { credentials: 'include' });
+            const d = await res.json();
+            if (!res.ok || d.error) throw new Error(d.error || 'Error');
+
+            if (!d.principal) {
+                cont.innerHTML = '<div style="background:#fef2f2;color:#b91c1c;border-radius:12px;padding:12px 14px;font-size:0.82rem;font-weight:600">' +
+                    '⚠️ Aún no tienes un medio de pago registrado. Agrégalo para poder recibir tus pagos.</div>';
+                return;
+            }
+            const partes = [d.etiqueta, (d.banco && d.banco !== d.etiqueta) ? d.banco : '', d.tipo_cuenta, d.numero_mascara].filter(Boolean);
+            cont.innerHTML =
+                '<div style="background:#f8fafc;border:1px solid #e8ecf2;border-radius:12px;padding:12px 14px;font-size:0.85rem">' +
+                    '<div style="font-weight:700;color:#0f172a">' + escPago(partes.join(' · ')) + '</div>' +
+                    (d.titular ? '<div style="color:#64748b;margin-top:2px">Titular: ' + escPago(d.titular) + '</div>' : '') +
+                '</div>' +
+                (d.completo ? '' :
+                    '<div style="margin-top:8px;background:#fef3c7;color:#92400e;border-radius:12px;padding:10px 14px;font-size:0.8rem;font-weight:600">' +
+                    '⚠️ Tu medio de pago está incompleto (falta el número o el titular). Actualízalo para poder recibir tus pagos.</div>');
+        } catch (e) {
+            cont.innerHTML = '<span style="color:#64748b;font-size:0.82rem">No se pudo cargar tu medio de pago</span>';
+        }
+    }
+
+    function togglePagoForm() {
+        const f = document.getElementById('formPago');
+        f.style.display = (f.style.display === 'none') ? 'block' : 'none';
+    }
+
+    function cambiarMetodoPago() {
+        const m = document.getElementById('pagoMetodo').value;
+        const esBilletera = ['nequi', 'daviplata', 'bre_b'].includes(m);
+        document.getElementById('pagoBilletera').style.display = esBilletera ? 'grid' : 'none';
+        document.getElementById('pagoBanco').style.display = (m === 'cuenta_bancaria') ? 'grid' : 'none';
+        const n = document.getElementById('pagoNumero');
+        if (m === 'bre_b') {
+            n.type = 'text'; n.maxLength = 30; n.placeholder = 'Tu llave Bre-B';
+        } else {
+            n.type = 'tel'; n.maxLength = 10;
+            n.placeholder = 'Celular de ' + (m === 'daviplata' ? 'Daviplata' : 'Nequi') + ' (10 dígitos)';
+        }
+    }
+
+    async function guardarMedioPago() {
+        const m = document.getElementById('pagoMetodo').value;
+        const password = document.getElementById('pagoPassword').value;
+        if (!m) { mostrarToastPerfil('❌ Elige cómo quieres recibir tus pagos', false); return; }
+        if (!password) { mostrarToastPerfil('❌ Escribe tu contraseña para confirmar', false); return; }
+
+        const fd = new FormData();
+        fd.append('medio_pago_principal', m);
+        if (m === 'cuenta_bancaria') {
+            fd.append('banco', document.getElementById('pagoBancoNombre').value);
+            fd.append('tipo_cuenta', document.getElementById('pagoTipoCuenta').value);
+            fd.append('numero_cuenta', document.getElementById('pagoNumeroBanco').value);
+            fd.append('titular_cuenta', document.getElementById('pagoTitularBanco').value);
+        } else {
+            fd.append('numero_billetera', document.getElementById('pagoNumero').value);
+            fd.append('titular_billetera', document.getElementById('pagoTitular').value);
+        }
+        fd.append('password', password);
+
+        const btn = document.getElementById('btnGuardarPago');
+        btn.disabled = true;
+        try {
+            const res = await fetch('/trabajador/mi-pago/actualizar', { method: 'POST', body: fd, credentials: 'include' });
+            let data = {};
+            try { data = await res.json(); } catch (e) {}
+            if (res.ok && data.ok) {
+                mostrarToastPerfil('✅ ' + data.mensaje, true);
+                ['pagoNumero','pagoTitular','pagoNumeroBanco','pagoTitularBanco','pagoPassword'].forEach(id => {
+                    const el = document.getElementById(id); if (el) el.value = '';
+                });
+                document.getElementById('pagoMetodo').value = '';
+                cambiarMetodoPago();
+                document.getElementById('formPago').style.display = 'none';
+                cargarMiPago();
+            } else {
+                mostrarToastPerfil('❌ ' + (data.error || 'No se pudo guardar'), false);
+            }
+        } catch (e) {
+            mostrarToastPerfil('❌ Error de conexión', false);
+        } finally {
+            btn.disabled = false;
+        }
+    }
 
     // ── REFERENCIAS PERSONALES ────────────────────────────────
     async function cargarReferencias() {
