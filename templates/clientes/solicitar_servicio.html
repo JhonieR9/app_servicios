@@ -1041,7 +1041,9 @@ const CHIPS = {
     'Salud':                 ['Enfermería','Fisioterapia','Cuidado adulto mayor','Primeros auxilios','Otro'],
     'Belleza':               ['Corte de cabello','Manicure','Maquillaje','Depilación','Otro'],
     'Gastronomia':           ['Almuerzo','Cena especial','Domicilio','Catering','Otro'],
-    'Transporte':            ['Carga y muebles','Entrega a domicilio','Traslado al aeropuerto','Mandados y trámites','Otro'],
+    // Transporte = llevar personas o carga. Los paquetes, documentos y mandados son de Mensajería,
+    // y los trasteos de casa o apartamento son de Mudanza.
+    'Transporte':            ['Traslado de personas','Traslado al aeropuerto','Viaje a otro municipio','Carga o mercancía','Otro'],
     'Cerrajeria':            ['Puerta bloqueada','Cambio de chapa','Copia de llave','Caja fuerte','Otro'],
     'Mudanza':               ['Apartamento','Casa','Solo muebles grandes','Embalaje','Otro'],
     'Vidrieria':             ['Vidrio roto','Ventana nueva','Espejo','Vitrina','Otro'],
@@ -1162,6 +1164,13 @@ function selCat(el, id, nombre) {
     container.innerHTML = chips.map(c =>
         '<div class="chip" onclick="selChip(this,\'' + c.replace(/'/g,"\\'") + '\')">' + c + '</div>'
     ).join('');
+    // Transporte, Mensajería y Mudanza se parecen: se orienta al cliente para que pida en la correcta
+    if (key === 'Transporte') {
+        container.insertAdjacentHTML('beforeend',
+            '<div style="flex-basis:100%;width:100%;margin-top:6px;padding:10px 12px;background:#f8fafc;border-radius:10px;font-size:0.78rem;color:#64748b;line-height:1.5">' +
+            '💡 ¿Vas a enviar un paquete o documentos? Elige <strong>Mensajería</strong>. ' +
+            '¿Te vas a trastear? Elige <strong>Mudanza</strong>.</div>');
+    }
     selectedProblem = '';
     document.getElementById('btnStep2').disabled = true;
     document.getElementById('step2CatName').textContent = nombre;
@@ -1184,7 +1193,7 @@ function esCategoriaViaje(nombre) {
 const CONFIG_VIAJE = {
     transporte: { vehiculos: ['moto', 'carro', 'camioneta', 'camion'],
                   etiqueta: '¿Qué se va a transportar? *',
-                  ejemplo:  'Ej: 2 personas con maletas, una nevera, un paquete grande',
+                  ejemplo:  'Ej: 3 personas con maletas, 20 bultos de cemento, mercancía de un local',
                   ayudantes: true,  mudanza: false, mensajeria: false },
     mudanza:    { vehiculos: ['carro', 'camioneta', 'camion'],
                   etiqueta: '¿Qué vas a trasladar? *',
