@@ -286,19 +286,22 @@ async def wompi_webhook(request: Request):
                 WHERE id_solicitud = %s
             """, (pago['id_solicitud'],))
 
-            # Obtener datos para notificaciones
+            # Obtener datos para notificaciones (incluye la cuenta del trabajador para el aviso al admin)
             cursor.execute("""
                 SELECT
                     s.id_trabajador, s.titulo, s.precio_final,
                     c.nombre_completo  AS nombre_cliente,
                     ec.correo          AS correo_cliente,
                     p.nombre_completo  AS nombre_trabajador,
-                    ep.correo          AS correo_trabajador
+                    ep.correo          AS correo_trabajador,
+                    (SELECT MIN(tp.telefono) FROM telefono_persona tp WHERE tp.id_persona = p.id_persona) AS telefono_trabajador,
+                    dp.medio_pago_principal, dp.medio_pago, dp.banco, dp.numero_cuenta
                 FROM solicitudes_servicio s
                 LEFT JOIN clientes c    ON s.id_cliente   = c.id_cliente
                 LEFT JOIN correo_cliente ec ON c.id_cliente = ec.id_cliente AND ec.principal = 1
                 LEFT JOIN personas p    ON s.id_trabajador = p.id_persona
                 LEFT JOIN correo_persona ep ON p.id_persona = ep.id_persona AND ep.principal = 1
+                LEFT JOIN detalles_persona dp ON p.id_persona = dp.id_persona
                 WHERE s.id_solicitud = %s
                 LIMIT 1
             """, (pago['id_solicitud'],))
@@ -306,6 +309,28 @@ async def wompi_webhook(request: Request):
 
             # Monto que recibe el trabajador = precio del servicio (no el total con tarifa)
             monto_trabajador = float(datos['precio_final']) if datos and datos.get('precio_final') else monto
+
+            # Aviso al ADMIN por WhatsApp con los datos para transferir desde la caja Nequi.
+            # Solo cuando Wompi confirma APPROVED (este bloque). En hilo para no frenar la respuesta.
+            try:
+                if datos:
+                    import threading
+                    from whatsapp import notificar_admin_pago
+                    aviso = {
+                        "id_solicitud":       pago['id_solicitud'],
+                        "titulo":             datos.get('titulo'),
+                        "cliente_pago":       monto,
+                        "a_pagar":            monto_trabajador,
+                        "nombre_trabajador":  datos.get('nombre_trabajador'),
+                        "medio_pago":         datos.get('medio_pago_principal') or datos.get('medio_pago'),
+                        "numero_cuenta":      datos.get('numero_cuenta'),
+                        "banco":              datos.get('banco'),
+                        "telefono_trabajador": datos.get('telefono_trabajador'),
+                        "referencia":         ref,
+                    }
+                    threading.Thread(target=notificar_admin_pago, args=(aviso,), daemon=True).start()
+            except Exception as e_adm:
+                print(f"[PAGO] aviso admin WhatsApp: {e_adm}")
 
             # Notificar al trabajador por push (le mostramos LO QUE RECIBE)
             try:

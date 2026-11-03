@@ -14,6 +14,10 @@ WA_TOKEN = os.getenv("WA_TOKEN", "")
 WA_PHONE_ID = os.getenv("WA_PHONE_ID", "")
 WA_API_URL = f"https://graph.facebook.com/v20.0/{WA_PHONE_ID}/messages"
 
+# Número(s) del admin que reciben el aviso de pago para dispersar desde la caja Nequi.
+# Se configura en Railway (WA_ADMIN). Si hay varios, se separan con coma.
+WA_ADMIN = os.getenv("WA_ADMIN", "")
+
 
 def _formatear_telefono(telefono: str) -> str:
     """Convierte un teléfono colombiano al formato internacional (57XXXXXXXXXX)"""
@@ -196,3 +200,46 @@ def notificar_pago_recibido(telefono: str, nombre_trabajador: str, monto: str, t
         f"¡Gracias por tu trabajo! 🙌"
     )
     return enviar_whatsapp(telefono, mensaje)
+
+
+def notificar_admin_pago(datos: dict) -> list:
+    """
+    Avisa al/los admin (número en WA_ADMIN) que Wompi confirmó un pago, con los datos listos
+    para transferirle al trabajador desde la caja menor Nequi.
+
+    `datos` espera: id_solicitud, titulo, cliente_pago, a_pagar, nombre_trabajador,
+    medio_pago, numero_cuenta, banco, telefono_trabajador, referencia.
+    Devuelve la lista de respuestas de WhatsApp (una por cada número admin).
+    """
+    if not WA_ADMIN:
+        print("[WA] WA_ADMIN no configurado — no se envía aviso de pago al admin")
+        return []
+
+    def _money(v):
+        try:
+            return "$" + f"{int(float(v or 0)):,}".replace(",", ".")
+        except Exception:
+            return "$0"
+
+    # Cuenta de destino: el medio de pago principal + número; teléfono como respaldo
+    cuenta = datos.get("numero_cuenta") or datos.get("telefono_trabajador") or "sin registrar"
+    linea_cuenta = f"{datos.get('medio_pago') or 'Cuenta'}: {cuenta}"
+    if datos.get("banco"):
+        linea_cuenta += f" · {datos['banco']}"
+
+    mensaje = (
+        f"✅ *Pago confirmado por Wompi*\n\n"
+        f"📋 {datos.get('titulo') or ('Servicio #' + str(datos.get('id_solicitud')))}\n"
+        f"🧾 Solicitud #{datos.get('id_solicitud')}\n"
+        f"👤 Cliente pagó: {_money(datos.get('cliente_pago'))}\n\n"
+        f"➡️ *Transfiere al trabajador: {_money(datos.get('a_pagar'))}*\n"
+        f"👷 {datos.get('nombre_trabajador') or 'Trabajador'}\n"
+        f"💳 {linea_cuenta}\n\n"
+        f"Luego marca el pago en el panel de dispersiones.\n"
+        f"https://talenthubcol.com/pago/admin/dispersiones"
+    )
+
+    respuestas = []
+    for numero in [n.strip() for n in WA_ADMIN.split(",") if n.strip()]:
+        respuestas.append(enviar_whatsapp(numero, mensaje))
+    return respuestas
