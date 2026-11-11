@@ -1798,6 +1798,33 @@ function obtenerGPS() {
     );
 }
 
+async function completarCiudadDesdeCoordenadas() {
+    const lat = document.getElementById('direccionLat').value;
+    const lng = document.getElementById('direccionLng').value;
+    if (!lat || !lng) return;
+    try {
+        const r = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=es&types=place,locality,region&limit=3`
+        );
+        const d = await r.json();
+        const feats = d.features || [];
+        const lugar = feats.find(f => /^(place|locality)/.test(f.id));
+        const region = feats.find(f => /^region/.test(f.id));
+        let ciudad = lugar ? lugar.text : '';
+        let depto = region ? region.text : '';
+        if (!ciudad && feats[0]) {
+            // Último recurso: "Ciudad, Departamento, Colombia" dentro del nombre completo
+            const p = (feats[0].place_name || '').split(',').map(s => s.trim());
+            if (p.length >= 3) { ciudad = p[p.length - 3]; depto = depto || p[p.length - 2]; }
+            else if (p.length === 2) { ciudad = p[0]; }
+        }
+        if (ciudad) {
+            document.getElementById('ciudadHidden').value = ciudad.toUpperCase();
+            document.getElementById('departamentoHidden').value = (depto || ciudad).toUpperCase();
+        }
+    } catch (e) { /* si falla, irAPaso4 avisa al usuario */ }
+}
+
 async function irAPaso4() {
     const alertEl = document.getElementById('alertBox');
 
@@ -1823,6 +1850,16 @@ async function irAPaso4() {
     if (paraQuien === 'yo' && !document.getElementById('direccionLat').value) {
         alertEl.className = 'alert error'; alertEl.style.display = 'block';
         alertEl.textContent = 'Esperando tu ubicación GPS... intenta de nuevo'; return;
+    }
+
+    // Con GPS la ciudad puede quedar vacía si Mapbox no la devolvió: se completa aquí
+    if (paraQuien === 'yo' && !document.getElementById('ciudadHidden').value) {
+        await completarCiudadDesdeCoordenadas();
+        if (!document.getElementById('ciudadHidden').value) {
+            alertEl.className = 'alert error'; alertEl.style.display = 'block';
+            alertEl.textContent = 'No pudimos detectar tu ciudad. Elige "Otra persona" y escribe la dirección y la ciudad.';
+            return;
+        }
     }
 
     if (!document.getElementById('inputNombre').value.trim()) {
@@ -2191,7 +2228,12 @@ async function confirmarSolicitud() {
             }, 1500);
         } else {
             alertEl.className = 'alert error'; alertEl.style.display = 'block';
-            alertEl.textContent = data.error || 'No se pudo enviar la solicitud';
+            let msg = data.error;
+            if (!msg && Array.isArray(data.detail)) {
+                // Error de validación de FastAPI: indica qué campo falló
+                msg = 'Falta información: ' + data.detail.map(d => (d.loc || []).slice(-1)[0]).filter(Boolean).join(', ');
+            }
+            alertEl.textContent = msg || 'No se pudo enviar la solicitud (código ' + response.status + ')';
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Confirmar Solicitud';
         }

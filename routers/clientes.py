@@ -497,16 +497,26 @@ def crear_solicitud(
     request: Request,
     id_cliente: int = Form(None),
     id_categoria: int = Form(...),
-    titulo: str = Form(...),
-    descripcion: str = Form(...),
-    direccion_servicio: str = Form(...),
-    ciudad: str = Form(...),
-    departamento: str = Form(...),
+    titulo: str = Form(""),
+    descripcion: str = Form(""),
+    direccion_servicio: str = Form(""),
+    ciudad: str = Form(""),
+    departamento: str = Form(""),
     fecha_programada: str = Form(None),
     id_trabajador: str = Form(None),   # string para manejar '' sin error
     metodo_pago: str = Form("nequi"),
     detalles: str = Form(None)         # JSON con los datos del viaje (Transporte/Mudanza/Mensajería)
 ):
+    # Antes eran Form(...): un campo vacío daba un 422 genérico y el cliente solo veía
+    # "No se pudo enviar la solicitud". Ahora se valida a mano y se dice qué falta.
+    faltan = [n for n, v in (("el título", titulo), ("la descripción", descripcion),
+                             ("la dirección", direccion_servicio), ("la ciudad", ciudad))
+              if not (v or "").strip()]
+    if faltan:
+        return JSONResponse({"error": "Falta " + ", ".join(faltan) + ". Revisa los pasos anteriores."},
+                            status_code=400)
+    ciudad = ciudad.strip()
+    departamento = (departamento or "").strip() or ciudad
     # Convertir id_trabajador a int si viene con valor
     id_trab = None
     if id_trabajador and str(id_trabajador).strip():
