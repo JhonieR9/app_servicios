@@ -1263,15 +1263,24 @@ def cargar_cliente_login(id_cliente: int):
 
 @router.post("/verificar-sms")
 async def verificar_sms_cliente(
+    request: Request,
     response: Response,
     id_cliente: int = Form(...),
     codigo: str = Form(...)
 ):
     """Verifica el código SMS y crea la sesión"""
+    ip = security._get_ip(request)
+    if security.esta_bloqueado(ip, "normal"):
+        security.log_rate_blocked(ip, "/cliente/verificar-sms")
+        return security.respuesta_bloqueado()
+    # Este camino crea sesión sin contraseña: no puede saltarse la verificación en dos pasos
+    if mfa.mfa_activo("cliente", id_cliente):
+        return JSONResponse({"error": "Inicia sesión con tu correo y contraseña."}, status_code=403)
     try:
         valido, mensaje = auth.verificar_codigo_sms('cliente', id_cliente, codigo)
         
         if not valido:
+            security.registrar_fallo(ip, "normal")
             return JSONResponse(
                 {"error": mensaje},
                 status_code=400

@@ -1,6 +1,6 @@
-// Service Worker - TalentHub PWA v5
-const CACHE_NAME   = 'talenthub-v5';
-const STATIC_CACHE = 'talenthub-static-v5';
+// Service Worker - TalentHub PWA v6
+const CACHE_NAME   = 'talenthub-v6';
+const STATIC_CACHE = 'talenthub-static-v6';
 
 const STATIC_ASSETS = [
   '/static/css/talenthub.css',
@@ -59,6 +59,21 @@ self.addEventListener('fetch', event => {
     url.hostname.includes('fonts.gstatic.com') ||
     url.hostname.includes('api.mapbox.com')
   );
+  // Nuestros JS y CSS cambian seguido: red primero (si no hay conexión, usa lo guardado).
+  // Con "cache primero" los usuarios se quedaban con versiones viejas de chat-flotante.js, etc.
+  if (url.pathname.startsWith('/static/js/') || url.pathname.startsWith('/static/css/')) {
+    event.respondWith(
+      fetch(event.request).then(resp => {
+        if (resp && resp.status === 200) {
+          const clone = resp.clone();
+          caches.open(STATIC_CACHE).then(c => c.put(event.request, clone));
+        }
+        return resp;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   if (isStatic) {
     event.respondWith(
       caches.match(event.request).then(cached => {
