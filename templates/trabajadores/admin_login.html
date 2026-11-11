@@ -262,6 +262,7 @@
         </a>
     </div>
 
+    <script src="/static/js/mfa-login.js"></script>
     <script>
         function togglePassword() {
             const passwordInput = document.getElementById('password');
@@ -298,9 +299,11 @@
                     body: formData
                 });
                 
-                const data = await response.json();
+                let data = await response.json();
+                let ok = response.ok;
+                if (data.mfa_requerido) { const r = await MFA.resolver(data); ok = r.ok; data = r.data; }
                 
-                if (response.ok && data.success) {
+                if (ok && data.success) {
                     alertContainer.innerHTML = `
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle"></i>

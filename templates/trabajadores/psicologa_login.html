@@ -103,6 +103,7 @@
         <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
     </div>
 
+    <script src="/static/js/mfa-login.js"></script>
     <script>
     async function login(e) {
         e.preventDefault();
@@ -116,7 +117,8 @@
 
         try {
             const res = await fetch('/psicologa/login', { method: 'POST', body: fd });
-            const data = await res.json();
+            let data = await res.json();
+            if (data.mfa_requerido) { const r = await MFA.resolver(data); data = r.ok ? r.data : { success: false, error: r.data.error }; }
             if (data.success) {
                 window.location.href = '/psicologa/panel';
             } else {

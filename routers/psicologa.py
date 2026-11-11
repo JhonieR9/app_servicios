@@ -3,6 +3,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from config import conectar_bd
 import security  # Rate limiting y logging
+import mfa       # Verificación en dos pasos
+import hmac
 import os
 
 router = APIRouter(prefix="/psicologa", tags=["psicologa"])
@@ -10,13 +12,18 @@ templates = Jinja2Templates(directory="templates")
 
 # Credenciales de la psicóloga (configurables por env vars)
 PSICO_PASSWORD = os.getenv("PSICO_PASSWORD", "psico2026")
-PSICO_TOKEN = os.getenv("PSICO_TOKEN", "talenthub_psico_2026_secret")
 
 
 def verificar_psicologa(request: Request) -> bool:
-    """Verifica si la request tiene sesión de psicóloga válida"""
-    token = request.cookies.get("psico_session")
-    return token == PSICO_TOKEN
+    """Verifica si la request tiene sesión de psicóloga válida (cookie firmada y con vencimiento)"""
+    return mfa.cookie_rol_valida(request.cookies.get("psico_session"), "psicologa")
+
+
+def finalizar_login_psicologa(request: Request):
+    """Crea la cookie firmada (tras contraseña o tras el segundo paso MFA)."""
+    resp = JSONResponse({"success": True, "mensaje": "Inicio de sesión exitoso"})
+    mfa.poner_cookie_rol(resp, request, "psico_session", "psicologa")
+    return resp
 
 
 # ============================================
@@ -38,18 +45,16 @@ async def login_psicologa(request: Request, password: str = Form(...)):
         security.log_rate_blocked(ip, "/psicologa/login")
         return security.respuesta_bloqueado()
 
-    if password == PSICO_PASSWORD:
+    if hmac.compare_digest(password.encode("utf-8"), PSICO_PASSWORD.encode("utf-8")):
         security.limpiar_bloqueo(ip, "admin")
         security.log_login_ok(ip, "psicologa", "psicologa")
-        resp = JSONResponse({"success": True, "mensaje": "Inicio de sesión exitoso"})
-        resp.set_cookie(
-            key="psico_session",
-            value=PSICO_TOKEN,
-            httponly=True,
-            max_age=86400 * 7,
-            samesite="lax"
-        )
-        return resp
+        if mfa.mfa_activo("psicologa", 0):
+            return JSONResponse({
+                "success": False,
+                "mfa_requerido": True,
+                "mfa_token": mfa.crear_token_pendiente("psicologa", 0),
+            })
+        return finalizar_login_psicologa(request)
 
     bloqueado = security.registrar_fallo(ip, "admin")
     security.log_login_fail(ip, "psicologa", "psicologa", "contraseña incorrecta")

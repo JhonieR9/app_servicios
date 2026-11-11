@@ -144,6 +144,7 @@
     <a href="/" class="back">← Volver al inicio</a>
 </div>
 
+<script src="/static/js/mfa-login.js"></script>
 <script>
     function togglePw() {
         const input = document.getElementById('password');
@@ -169,8 +170,10 @@
         const fd = new FormData(e.target);
         try {
             const res = await fetch('/trabajador/login', { method: 'POST', body: fd });
-            const data = await res.json();
-            if (res.ok) {
+            let data = await res.json();
+            let ok = res.ok;
+            if (data.mfa_requerido) { const r = await MFA.resolver(data); ok = r.ok; data = r.data; }
+            if (ok) {
                 alertEl.className = 'alert success';
                 alertEl.textContent = '✅ ' + data.mensaje;
                 alertEl.style.display = 'block';

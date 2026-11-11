@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Seguridad de la cuenta - TalentHub</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 20px; min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #1e293b; display: flex; justify-content: center; align-items: flex-start;
+        }
+        .card {
+            background: #fff; width: 100%; max-width: 480px; border-radius: 18px;
+            padding: 28px 24px; box-shadow: 0 20px 45px rgba(0,0,0,.18);
+        }
+        h1 { font-size: 1.4rem; margin: 0 0 4px; }
+        .sub { color: #64748b; margin: 0 0 18px; font-size: .95rem; }
+        p { line-height: 1.45; font-size: .95rem; }
+        .peq { font-size: .85rem; color: #64748b; }
+        .campo { margin: 12px 0; }
+        .campo label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: 6px; }
+        .campo input {
+            width: 100%; padding: 12px; font-size: 1rem; border: 2px solid #e2e8f0;
+            border-radius: 10px; background: #f8fafc;
+        }
+        .campo input:focus { outline: 3px solid rgba(67,97,238,.3); border-color: #4361ee; background: #fff; }
+        .btn {
+            display: block; width: 100%; padding: 12px; margin: 10px 0 0; border: 2px solid #cbd5e1;
+            background: #fff; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; color: #1e293b;
+        }
+        .btn:disabled { opacity: .6; cursor: wait; }
+        .btn.primario { background: #4361ee; border-color: #4361ee; color: #fff; }
+        .btn.peligro { background: #fff; border-color: #dc2626; color: #b91c1c; }
+        .estado { padding: 10px 14px; border-radius: 10px; font-weight: 700; margin: 14px 0 10px; font-size: .95rem; }
+        .estado.on { background: #dcfce7; color: #166534; }
+        .estado.off { background: #fef3c7; color: #92400e; }
+        .estado.pend { background: #e0e7ff; color: #3730a3; }
+        .msg { padding: 10px 14px; border-radius: 10px; margin-bottom: 12px; font-size: .92rem; }
+        .msg.error { background: #fee2e2; color: #991b1b; }
+        .msg.ok { background: #dcfce7; color: #166534; }
+        .qr { display: flex; justify-content: center; margin: 12px 0; }
+        .qr svg { width: 220px; height: 220px; }
+        .clave { display: block; padding: 10px; background: #f1f5f9; border-radius: 8px; word-break: break-all; text-align: center; font-size: 1.05rem; letter-spacing: 1px; }
+        .codigos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+        .codigos code { background: #f1f5f9; padding: 8px; border-radius: 8px; text-align: center; font-size: 1rem; }
+        .aviso { background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 10px 14px; border-radius: 10px; margin-bottom: 12px; font-size: .88rem; }
+        .volver { display: inline-block; margin-top: 18px; color: #4361ee; text-decoration: none; font-weight: 600; }
+        .volver:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <h1>Seguridad de la cuenta</h1>
+        <p class="sub">Verificación en dos pasos</p>
+
+        {% for a in avisos %}
+        <div class="aviso" role="note">{{ a }}</div>
+        {% endfor %}
+
+        <div id="mfaAjustes" data-rol="{{ rol }}" aria-live="polite"></div>
+
+        <a class="volver" href="{{ volver_url }}" onclick="if (history.length > 1) { history.back(); return false; }">&larr; {{ volver_txt }}</a>
+    </main>
+    <script src="/static/js/mfa-ajustes.js"></script>
+</body>
+</html>

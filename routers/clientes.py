@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from datetime import datetime
 import math
 import auth      # Módulo de autenticación
+import mfa       # Verificación en dos pasos
 import security  # Rate limiting, MIME validation y logging
 from config import DB_CONFIG, conectar_bd
 from viajes import (es_categoria_viaje, normalizar_detalles_viaje, resumen_texto_viaje,
@@ -1161,6 +1162,13 @@ async def login_cliente(
         security.limpiar_bloqueo(ip, "normal")
         security.log_login_ok(ip, "cliente", correo)
 
+        # Con MFA activo no se crea sesión todavía: se pide el segundo paso
+        if mfa.mfa_activo("cliente", cliente['id_cliente']):
+            return JSONResponse({
+                "mfa_requerido": True,
+                "mfa_token": mfa.crear_token_pendiente("cliente", cliente['id_cliente']),
+            })
+
         # Verificar si requiere verificación SMS (tabla puede no existir)
         requiere_sms = False
         try:
@@ -1193,32 +1201,55 @@ async def login_cliente(
                 "mensaje": "Código enviado a tu teléfono"
             })
         else:
-            token = auth.crear_sesion('cliente', cliente['id_cliente'])
-            
-            nombre = cliente.get('nombre_completo', 'Cliente')
-            resp = JSONResponse({
-                "requiere_verificacion_sms": False,
-                "id_cliente": cliente['id_cliente'],
-                "nombre": nombre,
-                "telefono": str(cliente.get('telefono') or ''),
-                "correo": cliente.get('correo', ''),
-                "mensaje": "Login exitoso",
-                "redirect": f"/cliente/panel?nombre={nombre}&id={cliente['id_cliente']}"
-            })
-            resp.set_cookie(
-                key="session_token_cliente",
-                value=token,
-                httponly=False,
-                max_age=86400,
-                samesite="lax"
-            )
-            return resp
+            return finalizar_login_cliente(cliente)
             
     except Exception as e:
         return JSONResponse(
             {"error": f"Error en el servidor: {str(e)}"},
             status_code=500
         )
+
+
+def finalizar_login_cliente(cliente: dict):
+    """Crea la sesión y arma la respuesta de login (tras contraseña o tras el segundo paso MFA)."""
+    token = auth.crear_sesion('cliente', cliente['id_cliente'])
+
+    nombre = cliente.get('nombre_completo', 'Cliente')
+    resp = JSONResponse({
+        "requiere_verificacion_sms": False,
+        "id_cliente": cliente['id_cliente'],
+        "nombre": nombre,
+        "telefono": str(cliente.get('telefono') or ''),
+        "correo": cliente.get('correo', ''),
+        "mensaje": "Login exitoso",
+        "redirect": f"/cliente/panel?nombre={nombre}&id={cliente['id_cliente']}"
+    })
+    resp.set_cookie(
+        key="session_token_cliente",
+        value=token,
+        httponly=False,
+        max_age=86400,
+        samesite="lax"
+    )
+    return resp
+
+
+def cargar_cliente_login(id_cliente: int):
+    """Carga el cliente activo con correo y teléfono (para el segundo paso MFA)."""
+    conexion = conectar_bd()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT c.*, e.correo, t.telefono
+        FROM clientes c
+        INNER JOIN correo_cliente e ON c.id_cliente = e.id_cliente
+        LEFT JOIN telefono_cliente t ON c.id_cliente = t.id_cliente
+        WHERE c.id_cliente = %s AND c.estado = 'activo'
+        LIMIT 1
+    """, (id_cliente,))
+    fila = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+    return fila
 
 @router.post("/verificar-sms")
 async def verificar_sms_cliente(

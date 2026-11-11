@@ -616,6 +616,7 @@
                         </div>
 
                         <input id="pagoPassword" type="password" class="input-light" placeholder="Tu contraseña para confirmar" autocomplete="current-password">
+                        <input id="pagoCodigoMfa" type="text" inputmode="numeric" maxlength="14" class="input-light" style="display:none" placeholder="Código de tu app autenticadora" autocomplete="one-time-code">
                         <button type="button" id="btnGuardarPago" onclick="guardarMedioPago()" class="btn-success" style="width:100%;padding:12px;font-size:0.85rem">
                             <i class="bi bi-check-circle"></i> Guardar medio de pago
                         </button>
@@ -624,6 +625,15 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Seguridad de la cuenta -->
+            <div class="card">
+                <div class="card-title"><i class="bi bi-shield-lock-fill"></i> Seguridad de la cuenta</div>
+                <div style="font-size:0.85rem;color:#475569;margin-bottom:10px">Protege tu cuenta con un código extra de tu celular al iniciar sesión.</div>
+                <a href="/mfa/seguridad/trabajador" class="btn-success" style="display:block;text-align:center;text-decoration:none;padding:12px;font-size:0.85rem">
+                    <i class="bi bi-shield-check"></i> Verificación en dos pasos
+                </a>
             </div>
 
             <!-- Referencias Personales -->
@@ -1085,6 +1095,7 @@
             fd.append('titular_billetera', document.getElementById('pagoTitular').value);
         }
         fd.append('password', password);
+        fd.append('codigo_mfa', document.getElementById('pagoCodigoMfa').value);
 
         const btn = document.getElementById('btnGuardarPago');
         btn.disabled = true;
@@ -1094,7 +1105,8 @@
             try { data = await res.json(); } catch (e) {}
             if (res.ok && data.ok) {
                 mostrarToastPerfil('✅ ' + data.mensaje, true);
-                ['pagoNumero','pagoTitular','pagoNumeroBanco','pagoTitularBanco','pagoPassword'].forEach(id => {
+                document.getElementById('pagoCodigoMfa').style.display = 'none';
+                ['pagoNumero','pagoTitular','pagoNumeroBanco','pagoTitularBanco','pagoPassword','pagoCodigoMfa'].forEach(id => {
                     const el = document.getElementById(id); if (el) el.value = '';
                 });
                 document.getElementById('pagoMetodo').value = '';
@@ -1102,6 +1114,11 @@
                 document.getElementById('formPago').style.display = 'none';
                 cargarMiPago();
             } else {
+                if (data.mfa_requerido) {
+                    const c = document.getElementById('pagoCodigoMfa');
+                    c.style.display = 'block';
+                    c.focus();
+                }
                 mostrarToastPerfil('❌ ' + (data.error || 'No se pudo guardar'), false);
             }
         } catch (e) {

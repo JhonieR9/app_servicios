@@ -3,7 +3,9 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, timedelta
 import bcrypt
+import hmac
 import auth      # Módulo de autenticación
+import mfa       # Verificación en dos pasos
 import security  # Rate limiting, MIME validation y logging
 from config import DB_CONFIG, conectar_bd
 from viajes import es_categoria_viaje, leer_detalles, PRECIO_VIAJE_MIN, PRECIO_VIAJE_MAX
@@ -1634,6 +1636,17 @@ async def actualizar_mi_pago(request: Request):
             security.registrar_fallo(ip, "normal")
             return JSONResponse({"error": "Contraseña incorrecta"}, status_code=403)
 
+        # Con MFA activo, cambiar la cuenta de cobro también exige el código de la app
+        if mfa.mfa_activo("trabajador", id_persona):
+            codigo_mfa = str(form.get('codigo_mfa') or '').strip()
+            if not codigo_mfa:
+                return JSONResponse({"error": "Escribe el código de tu app autenticadora", "mfa_requerido": True},
+                                    status_code=403)
+            if not mfa.verificar("trabajador", id_persona, codigo_mfa):
+                security.registrar_fallo(ip, "normal")
+                return JSONResponse({"error": "Código de verificación incorrecto", "mfa_requerido": True},
+                                    status_code=403)
+
         # Conserva los otros métodos que ya aceptaba y asegura que el nuevo principal esté en la lista
         cursor.execute("SELECT medio_pago FROM detalles_persona WHERE id_persona = %s LIMIT 1", (id_persona,))
         existente = cursor.fetchone()
@@ -2297,12 +2310,16 @@ def trabajadores_disponibles(id_categoria: int):
 # Contraseña de administrador - se lee desde variable de entorno en Railway
 import os
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
-ADMIN_TOKEN_SECRET = os.getenv("ADMIN_TOKEN", "talenthub_admin_2026_secret")
 
 def verificar_admin(request: Request) -> bool:
     """Verifica si la request tiene sesión admin válida"""
-    token = request.cookies.get("admin_session")
-    return token == ADMIN_TOKEN_SECRET
+    return mfa.cookie_rol_valida(request.cookies.get("admin_session"), "admin")
+
+def finalizar_login_admin(request: Request):
+    """Crea la cookie firmada de admin (se usa tras contraseña o tras el segundo paso MFA)."""
+    resp = JSONResponse({"success": True, "mensaje": "Inicio de sesión exitoso"})
+    mfa.poner_cookie_rol(resp, request, "admin_session", "admin")
+    return resp
 
 def requiere_admin(request: Request):
     """Redirige a login si no es admin"""
@@ -2325,21 +2342,17 @@ async def admin_login(request: Request, response: Response, password: str = Form
         return security.respuesta_bloqueado()
 
     try:
-        if password == ADMIN_PASSWORD:
+        if hmac.compare_digest(password.encode("utf-8"), ADMIN_PASSWORD.encode("utf-8")):
             security.limpiar_bloqueo(ip, "admin")
             security.log_login_ok(ip, "admin", "admin")
-            resp = JSONResponse({
-                "success": True,
-                "mensaje": "Inicio de sesión exitoso"
-            })
-            resp.set_cookie(
-                key="admin_session",
-                value=ADMIN_TOKEN_SECRET,
-                httponly=True,
-                max_age=86400 * 7,  # 7 días
-                samesite="lax"
-            )
-            return resp
+            # Con MFA activo no se crea sesión todavía: se pide el segundo paso
+            if mfa.mfa_activo("admin", 0):
+                return JSONResponse({
+                    "success": False,
+                    "mfa_requerido": True,
+                    "mfa_token": mfa.crear_token_pendiente("admin", 0),
+                })
+            return finalizar_login_admin(request)
         else:
             bloqueado = security.registrar_fallo(ip, "admin")
             security.log_login_fail(ip, "admin", "admin", "contraseña incorrecta")
@@ -3905,35 +3918,64 @@ async def login_trabajador(
                 "error": "Tu hoja de vida está siendo revisada por nuestro equipo. Te notificaremos cuando sea aprobada. ¡Gracias por tu paciencia! 🙏"
             }, status_code=403)
 
-        # Si fue rechazado, permitir acceso a Mi Perfil para corregir
-        if trabajador.get('estado') == 'rechazado':
-            token = auth.crear_sesion('trabajador', trabajador['id_persona'])
-            resp = JSONResponse({
-                "mensaje": "Tu hoja de vida fue rechazada. Puedes corregirla.",
-                "rechazado": True,
-                "motivo_rechazo": trabajador.get('motivo_rechazo', ''),
-                "redirect": f"/trabajador/mi_perfil_page?id={trabajador['id_persona']}&rechazado=1"
+        # Con MFA activo no se crea sesión todavía: se pide el segundo paso
+        if mfa.mfa_activo("trabajador", trabajador['id_persona']):
+            return JSONResponse({
+                "mfa_requerido": True,
+                "mfa_token": mfa.crear_token_pendiente("trabajador", trabajador['id_persona']),
             })
-            resp.set_cookie(key="session_token", value=token, httponly=False, max_age=86400, samesite="lax")
-            return resp
 
-        token = auth.crear_sesion('trabajador', trabajador['id_persona'])
-        nombre = trabajador['nombre_completo'].split()[0] if trabajador.get('nombre_completo') else 'Trabajador'
-        resp = JSONResponse({
-            "mensaje": f"Bienvenido, {nombre}",
-            "redirect": f"/trabajador/panel?nombre={trabajador['nombre_completo']}&doc={trabajador['numero_documento']}&id={trabajador['id_persona']}"
-        })
-        resp.set_cookie(
-            key="session_token",
-            value=token,
-            httponly=False,
-            max_age=86400,
-            samesite="lax"
-        )
-        return resp
+        return finalizar_login_trabajador(trabajador)
 
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+def finalizar_login_trabajador(trabajador: dict):
+    """Crea la sesión y arma la respuesta de login (tras contraseña o tras el segundo paso MFA)."""
+    # Si fue rechazado, permitir acceso a Mi Perfil para corregir
+    if trabajador.get('estado') == 'rechazado':
+        token = auth.crear_sesion('trabajador', trabajador['id_persona'])
+        resp = JSONResponse({
+            "mensaje": "Tu hoja de vida fue rechazada. Puedes corregirla.",
+            "rechazado": True,
+            "motivo_rechazo": trabajador.get('motivo_rechazo', ''),
+            "redirect": f"/trabajador/mi_perfil_page?id={trabajador['id_persona']}&rechazado=1"
+        })
+        resp.set_cookie(key="session_token", value=token, httponly=False, max_age=86400, samesite="lax")
+        return resp
+
+    token = auth.crear_sesion('trabajador', trabajador['id_persona'])
+    nombre = trabajador['nombre_completo'].split()[0] if trabajador.get('nombre_completo') else 'Trabajador'
+    resp = JSONResponse({
+        "mensaje": f"Bienvenido, {nombre}",
+        "redirect": f"/trabajador/panel?nombre={trabajador['nombre_completo']}&doc={trabajador['numero_documento']}&id={trabajador['id_persona']}"
+    })
+    resp.set_cookie(
+        key="session_token",
+        value=token,
+        httponly=False,
+        max_age=86400,
+        samesite="lax"
+    )
+    return resp
+
+
+def cargar_trabajador_login(id_persona: int):
+    """Carga la fila de la persona con los mismos filtros del login (para el segundo paso MFA)."""
+    conexion = conectar_bd()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT p.*, tp.telefono
+        FROM personas p
+        LEFT JOIN telefono_persona tp ON p.id_persona = tp.id_persona
+        WHERE p.id_persona = %s AND (p.estado = 'activo' OR p.estado IS NULL OR p.estado = 'rechazado')
+        LIMIT 1
+    """, (id_persona,))
+    fila = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+    return fila
 
 
 @router.post("/verificar-sms")

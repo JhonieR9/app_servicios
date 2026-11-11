@@ -4,7 +4,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from routers import clientes, trabajadores, chat, pagos, psicologa
+from routers import clientes, trabajadores, chat, pagos, psicologa, mfa_api
+import mfa
 from config import DB_CONFIG, conectar_bd
 import os
 import security   # módulo centralizado de seguridad
@@ -113,6 +114,16 @@ app.include_router(trabajadores.router)
 app.include_router(chat.router)
 app.include_router(pagos.router)
 app.include_router(psicologa.router)
+app.include_router(mfa_api.router)
+
+
+@app.on_event("startup")
+def crear_tablas_mfa():
+    """Tablas de verificación en dos pasos (no debe impedir el arranque si falla)."""
+    try:
+        mfa.ensure_tablas()
+    except Exception as e:
+        print(f"[MFA] No se pudieron crear las tablas: {e}")
 
 # ============================================
 # CREAR TABLAS AL ARRANCAR (si no existen)
@@ -830,9 +841,7 @@ def test_email(request: Request):
     import requests as _req
 
     # Verificar admin
-    token = request.cookies.get("admin_session")
-    admin_secret = os.getenv("ADMIN_TOKEN", "talenthub_admin_2026_secret")
-    if token != admin_secret:
+    if not trabajadores.verificar_admin(request):
         return {"error": "No autorizado"}
 
     resend_key = os.getenv("RESEND_API_KEY", "")
