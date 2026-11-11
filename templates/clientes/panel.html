@@ -246,6 +246,9 @@
             <i class="bi bi-list-check"></i>
             <span id="badgeActivas" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid white"></span>
         </a>
+        <a href="/mfa/seguridad/cliente" class="btn-notif" title="Seguridad de la cuenta" aria-label="Seguridad de la cuenta">
+            <i class="bi bi-shield-lock"></i>
+        </a>
         <a href="/cliente/logout" class="btn-salir" title="Salir">
             <i class="bi bi-box-arrow-left"></i>
         </a>
@@ -619,5 +622,6 @@ function iniciarChatFlotante(idSolicitud, idTrabajador, titulo) {
 <!-- Suscripción a notificaciones push del cliente -->
 <script src="/static/js/push-cliente.js"></script>
 <script>setTimeout(() => PushCliente.activar(), 2000);</script>
+<script>window.addEventListener('load', function () { setTimeout(function () { ChatFlotante.autoIniciar('cliente'); }, 1500); });</script>
 </body>
 </html>

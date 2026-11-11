@@ -214,11 +214,28 @@
     let abierto = false;
     let ultimoId = 0;
     let pollingInterval = null;
+    let badgeInterval = null;
 
     // ── INICIALIZAR ──────────────────────────────────────────────────
+    function desmontar() {
+        ['cf-burbuja', 'cf-ventana', 'cf-estilos'].forEach(id => {
+            const e = document.getElementById(id);
+            if (e) e.remove();
+        });
+        if (badgeInterval) { clearInterval(badgeInterval); badgeInterval = null; }
+        if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+        abierto = false;
+        ultimoId = 0;
+    }
+
     function init(opciones) {
-        // Evitar duplicar la burbuja si ya existe
-        if (document.getElementById('cf-burbuja')) return;
+        // Si ya hay burbuja: no duplicar. Solo se reemplaza cuando la que está montada
+        // es la "vacía" (sin solicitud) y llega una conversación real.
+        if (document.getElementById('cf-burbuja')) {
+            const nueva = opciones && opciones.idSolicitud;
+            if (!nueva || nueva === cfg.idSolicitud) return;
+            desmontar();
+        }
         cfg = Object.assign({
             idSolicitud: 0,
             tipoUsuario: 'cliente',
@@ -231,6 +248,7 @@
 
         // Inyectar estilos
         const style = document.createElement('style');
+        style.id = 'cf-estilos';
         style.textContent = CSS;
         document.head.appendChild(style);
 
@@ -309,7 +327,7 @@
 
         // Polling de badge (sin abrir el chat)
         actualizarBadge();
-        setInterval(actualizarBadge, 10000);
+        badgeInterval = setInterval(actualizarBadge, 10000);
     }
 
     function toggleVentana() {
