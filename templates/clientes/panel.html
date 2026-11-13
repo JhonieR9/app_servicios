@@ -6,12 +6,12 @@
     <title>TalentHub</title>
     <link rel="manifest" href="/static/manifest.json">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="/static/js/confirm.js"></script>
     <script src="/static/js/chat-flotante.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-        html,body { height:100%; background:#f8f9fb; font-family:'Inter',sans-serif; overflow-x:hidden; }
+        html,body { height:100%; background:#f8f9fb; font-family:'Lato',sans-serif; overflow-x:hidden; }
 
         /* ── HEADER ── */
         .header {
@@ -36,11 +36,24 @@
             border:none; display:flex; align-items:center; justify-content:center;
             font-size:1.1rem; cursor:pointer; position:relative; text-decoration:none; color:#374151;
         }
-        .btn-salir {
-            width:40px; height:40px; border-radius:50%; background:#fee2e2;
-            border:none; display:flex; align-items:center; justify-content:center;
-            font-size:1rem; cursor:pointer; color:#ef4444; text-decoration:none;
+        .menu-wrap { position:relative; }
+        .menu-pop {
+            position:absolute; right:0; top:48px; min-width:230px;
+            background:white; border:1px solid #e5e7eb; border-radius:14px;
+            box-shadow:0 12px 32px rgba(0,0,0,0.14); padding:6px; display:none; z-index:60;
         }
+        .menu-pop.open { display:block; }
+        .menu-pop a, .menu-pop button {
+            display:flex; align-items:center; gap:10px; width:100%;
+            padding:12px; border:none; background:none; border-radius:10px;
+            font-family:'Lato',sans-serif; font-size:0.9rem; font-weight:700;
+            color:#374151; text-decoration:none; cursor:pointer; text-align:left;
+        }
+        .menu-pop a:hover, .menu-pop button:hover { background:#f3f4f6; }
+        .menu-pop i { font-size:1.05rem; color:#6b7280; }
+        .menu-pop .danger { color:#dc2626; margin-top:4px; border-top:1px solid #f1f3f5; border-radius:0 0 10px 10px; }
+        .menu-pop .danger i { color:#dc2626; }
+        .btn-notif:focus-visible, .menu-pop a:focus-visible, .menu-pop button:focus-visible { outline:3px solid rgba(99,102,241,0.5); outline-offset:2px; }
 
         /* ── CONTENIDO ── */
         .content { padding:20px 16px 100px; max-width:600px; margin:0 auto; }
@@ -75,7 +88,7 @@
             text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;
         }
         .action-question {
-            font-size:1.35rem; font-weight:900; color:white; line-height:1.2;
+            font-family:'Playfair Display',serif; font-size:1.45rem; font-weight:700; color:white; line-height:1.2;
             margin-bottom:16px; position:relative; z-index:1;
         }
         .action-cats {
@@ -85,7 +98,7 @@
             background:rgba(255,255,255,0.2);
             color:white; font-size:0.75rem; font-weight:700;
             padding:6px 12px; border-radius:99px;
-            cursor:pointer; border:none; font-family:'Inter',sans-serif;
+            cursor:pointer; border:none; font-family:'Lato',sans-serif;
             transition:background .15s;
         }
         .action-cat:hover { background:rgba(255,255,255,0.35); }
@@ -134,7 +147,7 @@
         .sa-btn {
             flex:1; padding:11px; border-radius:12px; border:none;
             font-size:0.82rem; font-weight:700; cursor:pointer;
-            font-family:'Inter',sans-serif; text-decoration:none;
+            font-family:'Lato',sans-serif; text-decoration:none;
             display:flex; align-items:center; justify-content:center; gap:6px;
             transition:transform .15s;
         }
@@ -161,7 +174,7 @@
             text-align:center; padding:28px 20px; margin-bottom:24px;
             background:white; border-radius:20px; border:2px dashed #e5e7eb;
         }
-        .empty-emoji { font-size:2.5rem; margin-bottom:10px; }
+        .empty-emoji { font-size:2.5rem; margin-bottom:10px; color:#818cf8; }
         .empty-title { font-size:1rem; font-weight:800; color:#111827; margin-bottom:6px; }
         .empty-sub   { font-size:0.82rem; color:#9ca3af; margin-bottom:16px; }
         .empty-btn {
@@ -198,7 +211,7 @@
             margin-top:10px; padding:9px; border:none; border-radius:10px;
             background:linear-gradient(135deg,#4f46e5,#7c3aed);
             color:white; font-size:0.78rem; font-weight:700;
-            cursor:pointer; font-family:'Inter',sans-serif;
+            cursor:pointer; font-family:'Lato',sans-serif;
             text-decoration:none; text-align:center; display:block;
         }
 
@@ -212,7 +225,7 @@
         .nav-item {
             flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
             padding:6px 4px; cursor:pointer; text-decoration:none;
-            border:none; background:none; font-family:'Inter',sans-serif;
+            border:none; background:none; font-family:'Lato',sans-serif;
             transition:color .15s;
         }
         .nav-item i { font-size:1.25rem; color:#9ca3af; transition:color .15s; }
@@ -235,23 +248,31 @@
 <!-- HEADER -->
 <div class="header">
     <div class="header-left">
-        <div class="avatar" id="avatarInicial">👤</div>
+        <div class="avatar" id="avatarInicial"><i class="bi bi-person-fill"></i></div>
         <div>
             <div class="greeting-sub" id="greetingSub">Buenos días</div>
             <div class="greeting-name" id="greeting">Cargando...</div>
         </div>
     </div>
     <div class="header-right">
-        <a href="/cliente/mis_solicitudes" class="btn-notif" id="link-solicitudes-cliente" title="Mis solicitudes">
-            <i class="bi bi-list-check"></i>
-            <span id="badgeActivas" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid white"></span>
-        </a>
-        <a href="/mfa/seguridad/cliente" class="btn-notif" title="Seguridad de la cuenta" aria-label="Seguridad de la cuenta">
-            <i class="bi bi-shield-lock"></i>
-        </a>
-        <a href="/cliente/logout" class="btn-salir" title="Salir">
-            <i class="bi bi-box-arrow-left"></i>
-        </a>
+        <div class="menu-wrap">
+            <button type="button" class="btn-notif" id="btnMenu" aria-label="Menú de la cuenta"
+                    aria-haspopup="true" aria-expanded="false" onclick="toggleMenu(event)">
+                <i class="bi bi-three-dots"></i>
+                <span id="badgeActivas" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid white"></span>
+            </button>
+            <div class="menu-pop" id="menuPop" role="menu">
+                <a href="/cliente/mis_solicitudes" id="link-solicitudes-cliente" role="menuitem">
+                    <i class="bi bi-list-check"></i> Mis solicitudes
+                </a>
+                <a href="/mfa/seguridad/cliente" role="menuitem">
+                    <i class="bi bi-shield-lock"></i> Seguridad de la cuenta
+                </a>
+                <button type="button" class="danger" role="menuitem" onclick="cerrarSesion()">
+                    <i class="bi bi-box-arrow-left"></i> Cerrar sesión
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -262,11 +283,11 @@
         <div class="action-label">TalentHub</div>
         <div class="action-question">¿Qué servicio<br>necesitas hoy?</div>
         <div class="action-cats" id="actionCats">
-            <button class="action-cat" onclick="irACat(event,'Plomería')">🔧 Plomería</button>
-            <button class="action-cat" onclick="irACat(event,'Electricidad')">⚡ Electricidad</button>
-            <button class="action-cat" onclick="irACat(event,'Limpieza')">🧹 Limpieza</button>
-            <button class="action-cat" onclick="irACat(event,'Carpintería')">🪚 Carpintería</button>
-            <button class="action-cat" onclick="irACat(event,'Pintura')">🎨 Pintura</button>
+            <button class="action-cat" onclick="irACat(event,'Plomería')"><i class="bi bi-wrench-adjustable"></i> Plomería</button>
+            <button class="action-cat" onclick="irACat(event,'Electricidad')"><i class="bi bi-lightning-charge-fill"></i> Electricidad</button>
+            <button class="action-cat" onclick="irACat(event,'Limpieza')"><i class="bi bi-stars"></i> Limpieza</button>
+            <button class="action-cat" onclick="irACat(event,'Carpintería')"><i class="bi bi-hammer"></i> Carpintería</button>
+            <button class="action-cat" onclick="irACat(event,'Pintura')"><i class="bi bi-palette-fill"></i> Pintura</button>
         </div>
     </div>
 
@@ -311,11 +332,36 @@ document.getElementById('greetingSub').textContent = saludo;
 
 function setNombre(nombre) {
     const primerNombre = nombre.split(' ')[0];
-    document.getElementById('greeting').textContent = 'Hola, ' + primerNombre + ' 👋';
+    document.getElementById('greeting').textContent = 'Hola, ' + primerNombre;
     const iniciales = nombre.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
     const av = document.getElementById('avatarInicial');
-    av.textContent = iniciales || '👤';
+    av.textContent = iniciales || 'TH';
     av.style.fontSize = '0.95rem';
+}
+
+function toggleMenu(e) {
+    e.stopPropagation();
+    const pop = document.getElementById('menuPop');
+    const abierto = pop.classList.toggle('open');
+    document.getElementById('btnMenu').setAttribute('aria-expanded', abierto ? 'true' : 'false');
+}
+function cerrarMenu() {
+    document.getElementById('menuPop').classList.remove('open');
+    document.getElementById('btnMenu').setAttribute('aria-expanded', 'false');
+}
+document.addEventListener('click', (e) => { if (!e.target.closest('.menu-wrap')) cerrarMenu(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarMenu(); });
+
+async function cerrarSesion() {
+    cerrarMenu();
+    const ok = await thConfirm({
+        titulo: '¿Cerrar sesión?',
+        mensaje: 'Tendrás que volver a ingresar con tu correo y contraseña.',
+        btnOk: 'Cerrar sesión',
+        tipo: 'warning',
+        icono: '👋'
+    });
+    if (ok) window.location.href = '/cliente/logout';
 }
 
 function irASolicitar() {
@@ -393,7 +439,7 @@ async function cargarActivos() {
             document.getElementById('badgeActivas').style.display = 'none';
             sec.innerHTML = `
             <div class="empty-state">
-                <div class="empty-emoji">🔍</div>
+                <div class="empty-emoji"><i class="bi bi-search"></i></div>
                 <div class="empty-title">Sin servicios activos</div>
                 <div class="empty-sub">Cuando pidas un servicio aparecerá aquí con el estado en tiempo real</div>
                 <a href="/cliente/solicitar_servicio${idCliente?'?id_cliente='+idCliente:''}" class="empty-btn">
@@ -416,7 +462,7 @@ async function cargarActivos() {
                 const esProg = s.fecha_programada && s.fecha_programada !== '';
                 const colorDot = esProg ? '#fb923c' : ({pendiente:'#f59e0b',aceptada:'#3b82f6',en_proceso:'#10b981',cotizacion_enviada:'#8b5cf6'}[s.estado] || '#9ca3af');
                 const labelEstado = esProg && s.estado === 'pendiente'
-                    ? '📅 Programado · ' + new Date(s.fecha_programada).toLocaleDateString('es-CO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+                    ? 'Programado · ' + new Date(s.fecha_programada).toLocaleDateString('es-CO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
                     : {pendiente:'Buscando profesional',aceptada:'Asignado',en_proceso:'En proceso',cotizacion_enviada:'Cotización recibida'}[s.estado] || s.estado;
                 html += `<div class="mini-activa" onclick="window.location='/cliente/seguimiento?id=${s.id_solicitud}'">
                     <div class="mini-dot" style="background:${colorDot};box-shadow:0 0 6px ${colorDot}88"></div>
@@ -443,16 +489,16 @@ async function cargarActivos() {
 function renderActivoPrincipal(sec, s) {
     const esProgramado = s.fecha_programada && s.fecha_programada !== '';
     const labelEstado = {
-        pendiente: esProgramado ? '📅 Programado' : 'Buscando profesional...',
-        aceptada:'Profesional asignado ✓',
-        en_proceso:'En proceso ahora mismo 🔧',
-        cotizacion_enviada:'Cotización recibida 💰'
+        pendiente: esProgramado ? 'Programado' : 'Buscando profesional...',
+        aceptada:'Profesional asignado',
+        en_proceso:'En proceso ahora mismo',
+        cotizacion_enviada:'Cotización recibida'
     }[s.estado] || s.estado;
 
     const emojiEstado = {
-        pendiente: esProgramado ? '📅' : '⏳',
-        aceptada:'✅', en_proceso:'🔧', cotizacion_enviada:'💰'
-    }[s.estado] || '📋';
+        pendiente: esProgramado ? 'bi-calendar-event' : 'bi-hourglass-split',
+        aceptada:'bi-check-circle-fill', en_proceso:'bi-tools', cotizacion_enviada:'bi-cash-coin'
+    }[s.estado] || 'bi-card-list';
 
     // Color diferente para programados
     const borderColor = esProgramado ? '#fb923c' : '#e0e7ff';
@@ -466,7 +512,7 @@ function renderActivoPrincipal(sec, s) {
         const fechaStr = fecha.toLocaleDateString('es-CO', opciones);
         fechaHtml = `<div style="margin-top:10px;background:#fff7ed;border-radius:12px;padding:10px 14px;
             display:flex;align-items:center;gap:8px;border:1px solid #fed7aa">
-            <span style="font-size:1.1rem">📅</span>
+            <i class="bi bi-calendar-event" style="font-size:1.1rem;color:#ea580c"></i>
             <div>
                 <div style="font-size:0.7rem;font-weight:700;color:#ea580c;text-transform:uppercase;letter-spacing:1px">Programado para</div>
                 <div style="font-size:0.85rem;font-weight:800;color:#c2410c">${fechaStr}</div>
@@ -488,10 +534,10 @@ function renderActivoPrincipal(sec, s) {
             <div class="sa-dot ${s.estado}" ${dotColor ? 'style="background:'+dotColor+';box-shadow:0 0 8px '+dotColor+'88"' : ''}></div>
             <div class="sa-label" style="color:${labelColor}">${labelEstado}</div>
         </div>
-        <div class="sa-titulo">${emojiEstado} ${s.titulo || s.nombre_categoria || 'Servicio'}</div>
+        <div class="sa-titulo"><i class="bi ${emojiEstado}" style="color:#6366f1"></i> ${s.titulo || s.nombre_categoria || 'Servicio'}</div>
         <div class="sa-meta">
-            ${s.nombre_trabajador ? '👷 ' + s.nombre_trabajador : '🔍 Sin profesional asignado aún'}
-            ${s.ciudad ? ' · 📍 ' + s.ciudad : ''}
+            ${s.nombre_trabajador ? '<i class="bi bi-person-fill"></i> ' + s.nombre_trabajador : '<i class="bi bi-search"></i> Sin profesional asignado aún'}
+            ${s.ciudad ? ' · <i class="bi bi-geo-alt-fill"></i> ' + s.ciudad : ''}
         </div>
         ${fechaHtml}
         ${s.cotizacion_precio ? `
@@ -499,7 +545,7 @@ function renderActivoPrincipal(sec, s) {
                     border:2px solid #fbbf24;border-radius:14px;padding:14px;text-align:center"
              onclick="event.stopPropagation()">
             <div style="font-size:0.7rem;font-weight:800;color:#92400e;text-transform:uppercase;
-                        letter-spacing:1.5px;margin-bottom:6px">💰 Cotización recibida</div>
+                        letter-spacing:1.5px;margin-bottom:6px"><i class="bi bi-cash-coin"></i> Cotización recibida</div>
             <div style="font-size:1.8rem;font-weight:900;color:#78350f;letter-spacing:-1px;margin-bottom:2px">
                 $${Number(s.cotizacion_precio).toLocaleString('es-CO')}
             </div>
@@ -514,15 +560,15 @@ function renderActivoPrincipal(sec, s) {
                 <button onclick="aceptarCotizacion(${s.id_solicitud},${s.cotizacion_precio})"
                     style="flex:1;padding:11px;background:linear-gradient(135deg,#10b981,#059669);
                            color:white;border:none;border-radius:12px;font-weight:800;
-                           font-size:0.85rem;cursor:pointer;font-family:'Inter',sans-serif">
-                    ✅ Aceptar
+                           font-size:0.85rem;cursor:pointer;font-family:'Lato',sans-serif">
+                    <i class="bi bi-check-circle-fill"></i> Aceptar
                 </button>
                 <a href="/chat/?id_solicitud=${s.id_solicitud}&tipo=cliente&id_usuario=${idCliente}"
                     style="flex:1;padding:11px;background:linear-gradient(135deg,#6366f1,#7c3aed);
                            color:white;border:none;border-radius:12px;font-weight:800;
-                           font-size:0.85rem;cursor:pointer;font-family:'Inter',sans-serif;
+                           font-size:0.85rem;cursor:pointer;font-family:'Lato',sans-serif;
                            text-decoration:none;display:flex;align-items:center;justify-content:center">
-                    💬 Negociar
+                    <i class="bi bi-chat-dots-fill" style="margin-right:6px"></i> Negociar
                 </a>
             </div>
         </div>` : ''}
@@ -555,8 +601,8 @@ async function cargarFavoritos() {
                 : '';
             return `<div class="fav-card">
                 <div class="fav-nombre">${f.nombre_completo}</div>
-                <div class="fav-cat">🔧 ${f.servicio_tipo||'Profesional'}</div>
-                <div class="fav-city">📍 ${f.ciudad||''}</div>
+                <div class="fav-cat"><i class="bi bi-wrench-adjustable"></i> ${f.servicio_tipo||'Profesional'}</div>
+                <div class="fav-city"><i class="bi bi-geo-alt-fill"></i> ${f.ciudad||''}</div>
                 ${estrellas ? `<div class="fav-stars">${estrellas} ${f.calificacion}</div>` : ''}
                 <a href="/cliente/solicitar_servicio?trabajador_id=${f.id_persona}&id_cliente=${idCliente}"
                    class="fav-btn">Solicitar</a>

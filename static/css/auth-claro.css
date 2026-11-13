@@ -1,0 +1,146 @@
+/* TalentHub - pantallas de acceso (login) con el mismo estilo claro del resto de la app.
+   Tipografías: Playfair Display (títulos) y Lato (texto). Mismo morado que el flujo de solicitud. */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Lato', sans-serif;
+    background: #f8fafc;
+    color: #0f172a;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+
+.bg {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+        radial-gradient(ellipse 70% 50% at 10% 15%, rgba(102,126,234,0.14) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 85%, rgba(118,75,162,0.10) 0%, transparent 60%);
+}
+
+.card {
+    position: relative; z-index: 1;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    padding: 36px 28px;
+    width: 100%; max-width: 400px;
+    box-shadow: 0 16px 48px rgba(102,126,234,0.16);
+    animation: fadeUp .4s ease;
+}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Logo y título */
+.logo-wrap { text-align: center; margin-bottom: 26px; }
+.logo-icon {
+    width: 56px; height: 56px; border-radius: 16px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #ffffff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin: 0 auto 14px;
+    box-shadow: 0 8px 24px rgba(102,126,234,0.35);
+}
+.logo-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #0f172a; }
+.logo-sub { font-size: 0.88rem; color: #64748b; margin-top: 4px; }
+
+/* Formulario */
+.form-group { margin-bottom: 14px; }
+.form-label {
+    display: block; font-size: 0.72rem; font-weight: 700;
+    color: #374151; margin-bottom: 7px;
+    text-transform: uppercase; letter-spacing: 0.8px;
+}
+.input-wrap { position: relative; }
+.input-icon {
+    position: absolute; left: 14px; top: 50%;
+    transform: translateY(-50%); color: #94a3b8; font-size: 1rem; pointer-events: none;
+}
+input {
+    width: 100%;
+    padding: 13px 14px 13px 42px;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    color: #0f172a; font-size: 0.95rem;
+    font-family: 'Lato', sans-serif;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.15); }
+input::placeholder { color: #cbd5e1; }
+/* El autocompletado del navegador ya no pinta el campo de azul */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+    -webkit-text-fill-color: #0f172a;
+    caret-color: #0f172a;
+    transition: background-color 9999s ease-out 0s;
+}
+.toggle-pw {
+    position: absolute; right: 8px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none; color: #94a3b8;
+    cursor: pointer; font-size: 1.05rem; padding: 8px; border-radius: 8px;
+}
+.toggle-pw:hover { color: #667eea; }
+
+/* Avisos */
+.alert {
+    padding: 12px 14px; border-radius: 12px;
+    font-size: 0.85rem; margin-bottom: 14px; display: none;
+}
+.alert.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.alert.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.alert-expired {
+    display: none; align-items: center; gap: 8px;
+    background: #fffbeb; color: #b45309; border: 1px solid #fde68a;
+    border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.85rem;
+}
+
+/* Botones */
+.btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #ffffff; border: none; border-radius: 12px;
+    font-size: 0.95rem; font-weight: 700;
+    font-family: 'Lato', sans-serif;
+    cursor: pointer; margin-top: 6px;
+    transition: transform .2s, box-shadow .2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 16px rgba(102,126,234,0.35);
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,0.45); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.link-olvido {
+    display: block; text-align: center; margin-top: 16px;
+    font-size: 0.85rem; color: #667eea; text-decoration: none; font-weight: 700;
+}
+.link-olvido:hover { color: #764ba2; text-decoration: underline; }
+
+.divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 20px 0; color: #94a3b8; font-size: 0.78rem;
+}
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+
+.btn-register {
+    width: 100%; padding: 13px;
+    background: #f1f5f9;
+    border: 2px solid #e2e8f0;
+    color: #374151; border-radius: 12px;
+    font-size: 0.9rem; font-weight: 700;
+    font-family: 'Lato', sans-serif;
+    cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background .2s, border-color .2s;
+}
+.btn-register:hover { background: #ede9fe; border-color: #c7d2fe; color: #4338ca; }
+
+.back { display: block; text-align: center; margin-top: 18px; color: #94a3b8; font-size: 0.82rem; text-decoration: none; }
+.back:hover { color: #667eea; }
+
+/* Foco visible para teclado */
+a:focus-visible, button:focus-visible { outline: 3px solid rgba(102,126,234,0.5); outline-offset: 2px; }
