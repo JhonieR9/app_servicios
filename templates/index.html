@@ -3,473 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TalentHub</title>
+    <title>TalentHub | Servicios a domicilio con profesionales verificados</title>
+    <meta name="description" content="Pide plomería, electricidad, limpieza, transporte y más. Profesionales con hoja de vida revisada, seguimiento del servicio y pago seguro.">
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#6366f1">
+    <meta name="theme-color" content="#667eea">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="TalentHub">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Fuente no bloqueante: carga después del render -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"></noscript>
+    <!-- Fuentes: Playfair (títulos) y Lato (texto). Carga sin bloquear el primer pintado -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700;900&display=swap" rel="stylesheet"></noscript>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
 
         :root {
-            --purple: #6366f1;
-            --purple-dark: #4f46e5;
-            --cyan: #06b6d4;
-            --green: #10b981;
-            --dark: #0a0a0f;
-            --dark2: #111118;
-            --card: #16161f;
-            --border: rgba(255,255,255,0.08);
-            --text: #f1f5f9;
+            --purple: #667eea;
+            --purple-dark: #764ba2;
+            --ink: #0f172a;
+            --text: #334155;
             --muted: #64748b;
+            --line: #e2e8f0;
+            --bg: #f8fafc;
+            --card: #ffffff;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--dark);
+            font-family: 'Lato', system-ui, sans-serif;
+            background: var(--bg);
             color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
+        h1, h2, .brand { font-family: 'Playfair Display', Georgia, serif; color: var(--ink); }
+        svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        a:focus-visible, button:focus-visible { outline: 3px solid rgba(102,126,234,0.55); outline-offset: 2px; }
 
-        /* ── SPLASH ── */
+        /* ── SPLASH (una vez por visita) ── */
         #splash {
-            position: fixed; inset: 0;
-            background: var(--dark);
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            z-index: 999;
-            transition: opacity 0.7s ease, transform 0.7s ease;
+            position: fixed; inset: 0; z-index: 999;
+            background: linear-gradient(160deg, #eef2ff 0%, #f8fafc 60%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity .5s ease, transform .5s ease;
         }
-        #splash.hide {
-            opacity: 0;
-            transform: scale(0.94);
-            pointer-events: none;
+        #splash.hide { opacity: 0; transform: scale(0.97); pointer-events: none; }
+        .mark {
+            width: 84px; height: 84px; border-radius: 24px;
+            background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-family: 'Playfair Display', Georgia, serif; font-size: 2.6rem; font-weight: 700;
+            box-shadow: 0 14px 36px rgba(102,126,234,0.4);
+            animation: pop .55s cubic-bezier(.34,1.56,.64,1) both;
         }
+        @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .splash-name { font-size: 2rem; margin-top: 18px; animation: fade .5s ease .3s both; }
+        .splash-tag { font-size: .72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-top: 8px; animation: fade .5s ease .5s both; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Ícono central */
-        .splash-icon-wrap {
-            position: relative;
-            margin-bottom: 28px;
-        }
-        .splash-icon {
-            width: 88px; height: 88px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            border-radius: 24px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2.6rem;
-            box-shadow: 0 0 0 0 rgba(99,102,241,0.6);
-            animation: iconIn 0.6s cubic-bezier(.34,1.56,.64,1) forwards,
-                       iconPulse 2s ease 0.8s infinite;
-            transform: scale(0); opacity: 0;
-        }
-        @keyframes iconIn {
-            to { transform: scale(1); opacity: 1; }
-        }
-        @keyframes iconPulse {
-            0%   { box-shadow: 0 0 0 0 rgba(99,102,241,0.5); }
-            70%  { box-shadow: 0 0 0 18px rgba(99,102,241,0); }
-            100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
-        }
-        /* Anillo giratorio alrededor del ícono */
-        .splash-ring {
-            position: absolute; inset: -10px;
-            border-radius: 34px;
-            border: 2px solid transparent;
-            border-top-color: rgba(99,102,241,0.6);
-            border-right-color: rgba(139,92,246,0.3);
-            animation: ringIn 0.4s ease 0.3s both, spin 2s linear 0.7s infinite;
-        }
-        @keyframes ringIn { from{opacity:0} to{opacity:1} }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Texto letra por letra */
-        .splash-logo {
-            font-size: 2.6rem; font-weight: 900;
-            letter-spacing: 6px;
-            text-transform: uppercase;
-            background: linear-gradient(135deg, #fff 0%, #a5b4fc 50%, #67e8f9 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 8px;
-            overflow: hidden;
-        }
-        .splash-logo .letter {
-            display: inline-block;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: letterIn 0.4s ease forwards;
-        }
-
-        @keyframes letterIn {
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .splash-tagline {
-            font-size: 0.72rem; letter-spacing: 3px;
-            text-transform: uppercase; color: var(--muted);
-            margin-bottom: 44px;
-            opacity: 0;
-            animation: fadeIn 0.4s ease 0.8s forwards;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-
-        /* Tres puntos rebotando */
-        .splash-dots {
-            display: flex; gap: 10px;
-            opacity: 0;
-            animation: fadeIn 0.3s ease 1.4s forwards;
-        }
-        .splash-dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--purple), var(--cyan));
-        }
-        .splash-dot:nth-child(1) { animation: bounce 0.9s ease 1.5s infinite; }
-        .splash-dot:nth-child(2) { animation: bounce 0.9s ease 1.65s infinite; }
-        .splash-dot:nth-child(3) { animation: bounce 0.9s ease 1.8s infinite; }
-        @keyframes bounce {
-            0%,100% { transform: translateY(0); opacity: 0.4; }
-            50%      { transform: translateY(-10px); opacity: 1; }
-        }
-
-        /* ── MAIN ── */
-        #main { display: none; min-height: 100vh; }
-        #main.show { display: block; animation: fadeUp .6s ease; }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-
-        /* Fondo con mesh gradient */
-        .bg-mesh {
+        /* ── PÁGINA ── */
+        #main { display: none; }
+        #main.show { display: block; animation: fade .5s ease both; }
+        .bg-soft {
             position: fixed; inset: 0; z-index: 0; pointer-events: none;
             background:
-                radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99,102,241,0.15) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 50% at 80% 80%, rgba(6,182,212,0.1) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 40% at 50% 50%, rgba(16,185,129,0.05) 0%, transparent 60%);
+                radial-gradient(ellipse 80% 50% at 15% 0%, rgba(102,126,234,0.16) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 95% 90%, rgba(118,75,162,0.10) 0%, transparent 60%);
         }
+        .wrap { position: relative; z-index: 1; max-width: 460px; margin: 0 auto; padding: 0 20px; }
 
-        /* ── HERO ── */
-        .hero {
-            position: relative; z-index: 1;
-            padding: 60px 24px 40px;
-            text-align: center;
-            max-width: 480px; margin: 0 auto;
-        }
-
+        /* Hero */
+        .hero { text-align: center; padding: 44px 0 26px; }
+        .logo-row { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+        .logo-row .mark { width: 40px; height: 40px; border-radius: 12px; font-size: 1.35rem; box-shadow: 0 6px 16px rgba(102,126,234,0.35); animation: none; }
+        .logo-row .brand { font-size: 1.35rem; font-weight: 700; }
         .badge {
             display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(99,102,241,0.15);
-            border: 1px solid rgba(99,102,241,0.3);
-            color: #a5b4fc;
-            padding: 6px 14px; border-radius: 99px;
-            font-size: 0.72rem; font-weight: 600;
-            letter-spacing: 1px; text-transform: uppercase;
-            margin-bottom: 24px;
+            background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe;
+            padding: 6px 14px; border-radius: 99px; margin-bottom: 18px;
+            font-size: .72rem; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
         }
-        .badge-dot {
-            width: 6px; height: 6px; border-radius: 50%;
-            background: #6366f1;
-            animation: blink 2s infinite;
+        .hero h1 { font-size: clamp(2.1rem, 8.5vw, 2.9rem); line-height: 1.12; letter-spacing: -0.5px; margin-bottom: 14px; }
+        .hero h1 .grad {
+            background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .hero p { font-size: 1rem; line-height: 1.6; color: var(--text); }
 
-        .hero-title {
-            font-size: clamp(2.2rem, 8vw, 3.2rem);
-            font-weight: 900;
-            line-height: 1.1;
-            letter-spacing: -2px;
-            margin-bottom: 16px;
+        /* Tarjetas de acceso */
+        .roles { display: flex; flex-direction: column; gap: 14px; padding-bottom: 8px; }
+        .role {
+            background: var(--card); border: 1px solid var(--line); border-radius: 22px;
+            padding: 20px; box-shadow: 0 6px 24px rgba(102,126,234,0.10);
         }
-        .hero-title .gradient {
-            background: linear-gradient(135deg, #a5b4fc 0%, #67e8f9 50%, #6ee7b7 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        .role.main { border-color: #c7d2fe; box-shadow: 0 10px 32px rgba(102,126,234,0.20); }
+        .role-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .role-ico {
+            width: 52px; height: 52px; border-radius: 15px; color: #fff; font-size: 1.5rem;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--purple), var(--purple-dark));
         }
+        .role.other .role-ico { background: linear-gradient(135deg, #0ea5a4, #059669); }
+        .role h2 { font-size: 1.15rem; margin-bottom: 2px; }
+        .role-desc { font-size: .88rem; color: var(--muted); line-height: 1.4; }
+        .btn-main {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 14px; border-radius: 14px; text-decoration: none;
+            background: linear-gradient(135deg, var(--purple), var(--purple-dark)); color: #fff;
+            font-weight: 700; font-size: .98rem; box-shadow: 0 6px 18px rgba(102,126,234,0.38);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .role.other .btn-main { background: #fff; color: #4338ca; border: 2px solid #c7d2fe; box-shadow: none; }
+        .btn-main:hover { transform: translateY(-2px); }
+        .has-account { text-align: center; margin-top: 12px; font-size: .88rem; color: var(--muted); }
+        .has-account a { color: #4f46e5; font-weight: 700; text-decoration: none; }
+        .has-account a:hover { text-decoration: underline; }
 
-        .hero-sub {
-            font-size: 1rem; color: var(--muted);
-            line-height: 1.6; margin-bottom: 48px;
-            font-weight: 400;
-        }
+        /* Secciones */
+        section { padding: 30px 0 4px; }
+        .sec-title { font-size: 1.35rem; text-align: center; margin-bottom: 18px; }
+        .steps { display: flex; flex-direction: column; gap: 12px; list-style: none; }
+        .step { display: flex; align-items: flex-start; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+        .step-ico { width: 40px; height: 40px; border-radius: 12px; background: #eef2ff; color: #4f46e5; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .step b { display: block; color: var(--ink); font-size: .96rem; margin-bottom: 2px; }
+        .step span.t { font-size: .86rem; color: var(--muted); line-height: 1.45; }
+        .trust { display: grid; grid-template-columns: 1fr; gap: 12px; list-style: none; }
+        .trust li { display: flex; align-items: flex-start; gap: 12px; padding: 4px 2px; }
+        .trust .ti { width: 36px; height: 36px; border-radius: 10px; background: #ecfdf5; color: #059669; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .trust b { display: block; color: var(--ink); font-size: .94rem; }
+        .trust span.t { font-size: .84rem; color: var(--muted); line-height: 1.4; }
+        .note { margin-top: 14px; text-align: center; font-size: .84rem; color: var(--muted); }
 
-        /* ── CARDS ── */
-        .cards {
-            position: relative; z-index: 1;
-            display: flex; flex-direction: column; gap: 14px;
-            max-width: 420px; margin: 0 auto;
-            padding: 0 20px 40px;
-        }
+        /* Pie */
+        footer { position: relative; z-index: 1; text-align: center; padding: 34px 20px 40px; font-size: .84rem; color: var(--muted); }
+        footer a { color: #4f46e5; text-decoration: none; font-weight: 700; margin: 0 8px; }
+        footer a:hover { text-decoration: underline; }
 
-        .role-card {
-            position: relative; overflow: hidden;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 24px;
-            text-decoration: none; color: var(--text);
-            display: flex; align-items: center; gap: 18px;
-            transition: all 0.3s cubic-bezier(.4,0,.2,1);
-            cursor: pointer;
+        /* Cartel de instalación */
+        .install {
+            position: fixed; left: 16px; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 900;
+            max-width: 460px; margin: 0 auto; background: #fff; border: 1px solid var(--line); border-radius: 16px;
+            padding: 14px 14px 14px 16px; box-shadow: 0 10px 36px rgba(15,23,42,0.22);
+            display: flex; align-items: center; gap: 12px; animation: slideUp .4s ease both;
         }
-        .role-card::before {
-            content: '';
-            position: absolute; inset: 0;
-            opacity: 0;
-            transition: opacity 0.3s;
-            border-radius: 20px;
-        }
-        .role-card.worker::before {
-            background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08));
-        }
-        .role-card.client::before {
-            background: linear-gradient(135deg, rgba(6,182,212,0.12), rgba(16,185,129,0.08));
-        }
-        .role-card:hover {
-            transform: translateY(-4px) scale(1.01);
-            border-color: rgba(255,255,255,0.15);
-            box-shadow: 0 24px 48px rgba(0,0,0,0.4);
-        }
-        .role-card.worker:hover { border-color: rgba(99,102,241,0.4); box-shadow: 0 24px 48px rgba(99,102,241,0.2); }
-        .role-card.client:hover  { border-color: rgba(6,182,212,0.4);  box-shadow: 0 24px 48px rgba(6,182,212,0.2); }
-        .role-card:hover::before { opacity: 1; }
+        @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .install .ii { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--purple), var(--purple-dark)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .install .it { flex: 1; min-width: 0; }
+        .install .it b { display: block; color: var(--ink); font-size: .92rem; }
+        .install .it span { color: var(--muted); font-size: .78rem; }
+        .install .go { background: linear-gradient(135deg, var(--purple), var(--purple-dark)); color: #fff; border: none; border-radius: 10px; padding: 10px 14px; font-weight: 700; font-size: .85rem; cursor: pointer; }
+        .install .x { background: none; border: none; color: #64748b; cursor: pointer; font-size: 1.3rem; width: 36px; height: 36px; line-height: 1; border-radius: 8px; }
+        .install .x:hover { background: #f1f5f9; }
 
-        .card-icon {
-            width: 56px; height: 56px; border-radius: 16px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.6rem; flex-shrink: 0;
-            position: relative; z-index: 1;
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
         }
-        .worker .card-icon { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
-        .client  .card-icon { background: linear-gradient(135deg, #0891b2, #059669); }
-
-        .card-text { flex: 1; position: relative; z-index: 1; }
-        .card-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 3px; }
-        .card-desc  { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
-
-        .card-arrow {
-            position: relative; z-index: 1;
-            width: 32px; height: 32px; border-radius: 50%;
-            background: rgba(255,255,255,0.06);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.9rem; color: var(--muted);
-            transition: all 0.3s;
-        }
-        .role-card:hover .card-arrow {
-            background: rgba(255,255,255,0.12);
-            color: white; transform: translateX(3px);
-        }
-
-        /* Stats */
-        .stats {
-            position: relative; z-index: 1;
-            display: flex; justify-content: center; gap: 32px;
-            padding: 0 24px 20px;
-            max-width: 420px; margin: 0 auto;
-        }
-        .stat { text-align: center; }
-        .stat-num {
-            font-size: 1.4rem; font-weight: 800;
-            background: linear-gradient(135deg, #a5b4fc, #67e8f9);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .stat-label { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
-
-        /* Admin link */
-        .admin-link {
-            position: relative; z-index: 1;
-            display: block; text-align: center;
-            padding: 20px;
-            color: rgba(255,255,255,0.2);
-            text-decoration: none; font-size: 0.75rem;
-            transition: color 0.2s;
-        }
-        .admin-link:hover { color: rgba(255,255,255,0.4); }
-
-        /* Línea divisora con glow */
-        .divider {
-            position: relative; z-index: 1;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(99,102,241,0.3), transparent);
-            margin: 0 24px 24px;
-        }
-
-        /* Servicios populares */
-        .services-section {
-            position: relative; z-index: 1;
-            padding: 0 20px 32px;
-            max-width: 420px; margin: 0 auto;
-        }
-        .services-title {
-            font-size: 0.72rem; font-weight: 600;
-            color: var(--muted); letter-spacing: 2px;
-            text-transform: uppercase; margin-bottom: 14px;
-            text-align: center;
-        }
-        .services-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-        }
-        .service-chip {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px; padding: 12px 6px;
-            text-align: center; cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        .service-chip:hover {
-            border-color: rgba(99,102,241,0.4);
-            background: rgba(99,102,241,0.08);
-            transform: translateY(-2px);
-        }
-        .service-chip .s-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
-        .service-chip .s-name { font-size: 0.62rem; color: var(--muted); font-weight: 500; }
     </style>
 </head>
 <body>
 
-<!-- Splash -->
-<div id="splash">
-    <div class="splash-icon-wrap">
-        <div class="splash-ring"></div>
-        <div class="splash-icon">🏆</div>
-    </div>
-    <div class="splash-logo" id="splashLogo"></div>
-    <div class="splash-tagline">Conecta · Trabaja · Crece</div>
-    <div class="splash-dots">
-        <div class="splash-dot"></div>
-        <div class="splash-dot"></div>
-        <div class="splash-dot"></div>
-    </div>
+<!-- Pantalla de carga (solo la primera vez de cada visita) -->
+<div id="splash" aria-hidden="true">
+    <div class="mark">T</div>
+    <div class="splash-name brand">TalentHub</div>
+    <div class="splash-tag">Conecta · Trabaja · Crece</div>
 </div>
 
-<!-- Main -->
-<div class="bg-mesh"></div>
+<div class="bg-soft"></div>
+
 <div id="main">
+<main class="wrap">
 
-    <!-- Hero -->
-    <div class="hero">
-        <div class="badge"><span class="badge-dot"></span> Disponible ahora</div>
-        <h1 class="hero-title">
-            Tu servicio,<br>
-            <span class="gradient">a un toque</span>
-        </h1>
-        <p class="hero-sub">
-            Conectamos clientes con profesionales verificados cerca de ti. Rápido, seguro y confiable.
-        </p>
-    </div>
+    <header class="hero">
+        <div class="logo-row">
+            <div class="mark" aria-hidden="true">T</div>
+            <span class="brand">TalentHub</span>
+        </div>
+        <div><span class="badge">Servicios a domicilio en Colombia</span></div>
+        <h1>Tu servicio,<br><span class="grad">a un toque</span></h1>
+        <p>Conectamos clientes con profesionales cuya hoja de vida revisamos antes de activarlos. Pide, sigue el servicio y paga de forma segura.</p>
+    </header>
 
-    <!-- Stats -->
-    <div class="stats">
-        <div class="stat">
-            <div class="stat-num">350+</div>
-            <div class="stat-label">Municipios</div>
-        </div>
-        <div class="stat">
-            <div class="stat-num">15+</div>
-            <div class="stat-label">Servicios</div>
-        </div>
-        <div class="stat">
-            <div class="stat-num">24/7</div>
-            <div class="stat-label">Disponible</div>
-        </div>
-    </div>
-
-    <!-- Cards -->
-    <div class="cards">
-        <a href="/trabajador/login" class="role-card worker">
-            <div class="card-icon">💼</div>
-            <div class="card-text">
-                <div class="card-title">Soy Trabajador</div>
-                <div class="card-desc">Registra tu hoja de vida y tus habilidades</div>
+    <div class="roles">
+        <!-- Cliente (principal) -->
+        <div class="role main">
+            <div class="role-head">
+                <div class="role-ico" aria-hidden="true">
+                    <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                </div>
+                <div>
+                    <h2>Necesito un servicio</h2>
+                    <div class="role-desc">Encuentra un profesional cerca de ti</div>
+                </div>
             </div>
-            <div class="card-arrow">→</div>
-        </a>
-        <a href="/cliente/login" class="role-card client">
-            <div class="card-icon">🔍</div>
-            <div class="card-text">
-                <div class="card-title">Soy Cliente</div>
-                <div class="card-desc">Encuentra profesionales cerca de ti</div>
-            </div>
-            <div class="card-arrow">→</div>
-        </a>
-    </div>
+            <a class="btn-main" href="/cliente/registro">
+                Crear mi cuenta
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            <div class="has-account">¿Ya tienes cuenta? <a href="/cliente/login">Ingresar</a></div>
+        </div>
 
-    <!-- Servicios populares — oculto hasta que se active clientes -->
-    <div class="divider"></div>
-    <div class="services-section" style="display:none">
-        <div class="services-title">Servicios populares</div>
-        <div class="services-grid">
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">🔧</span><span class="s-name">Plomería</span>
+        <!-- Trabajador -->
+        <div class="role other">
+            <div class="role-head">
+                <div class="role-ico" aria-hidden="true">
+                    <svg class="i" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M3 13h18"/></svg>
+                </div>
+                <div>
+                    <h2>Soy profesional</h2>
+                    <div class="role-desc">Registra tu hoja de vida y recibe trabajos</div>
+                </div>
+            </div>
+            <a class="btn-main" href="/trabajador/registro">
+                Registrarme como profesional
+                <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">⚡</span><span class="s-name">Electricidad</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">🧹</span><span class="s-name">Limpieza</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">🎨</span><span class="s-name">Pintura</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">🪚</span><span class="s-name">Carpintería</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">🏗️</span><span class="s-name">Construcción</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">🌱</span><span class="s-name">Jardinería</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">🔩</span><span class="s-name">Mecánica</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">💻</span><span class="s-name">Tecnología</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">📚</span><span class="s-name">Educación</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">💊</span><span class="s-name">Salud</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">💇</span><span class="s-name">Belleza</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">🍳</span><span class="s-name">Gastronomía</span>
-            </a>
-            <a href="/cliente/solicitar_servicio" class="service-chip">
-                <span class="s-icon">🚚</span><span class="s-name">Transporte</span>
-            </a>
+            <div class="has-account">¿Ya estás registrado? <a href="/trabajador/login">Ingresar</a></div>
         </div>
     </div>
 
-    <a href="/trabajador/admin/login" class="admin-link">⚙ Acceso Administrador</a>
+    <section aria-labelledby="como">
+        <h2 class="sec-title" id="como">Cómo funciona</h2>
+        <ol class="steps">
+            <li class="step">
+                <div class="step-ico" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></div>
+                <div><b>1. Cuéntanos qué necesitas</b><span class="t">Elige el servicio, tu ubicación y si lo quieres ahora o programado.</span></div>
+            </li>
+            <li class="step">
+                <div class="step-ico" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 11l2 2 4-4"/></svg></div>
+                <div><b>2. Un profesional acepta</b><span class="t">Puedes elegir a quien prefieras o dejar que te asignemos el primero disponible.</span></div>
+            </li>
+            <li class="step">
+                <div class="step-ico" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+                <div><b>3. Sigue el servicio y paga</b><span class="t">Ves el avance en tiempo real y pagas con Nequi, Daviplata u otros medios.</span></div>
+            </li>
+        </ol>
+    </section>
+
+    <section aria-labelledby="confianza">
+        <h2 class="sec-title" id="confianza">Pensado para tu tranquilidad</h2>
+        <ul class="trust">
+            <li>
+                <div class="ti" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+                <div><b>Profesionales revisados</b><span class="t">Revisamos la hoja de vida de cada profesional antes de activarlo.</span></div>
+            </li>
+            <li>
+                <div class="ti" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+                <div><b>Pago seguro</b><span class="t">Los pagos se procesan con Wompi, sin que compartas datos con el profesional.</span></div>
+            </li>
+            <li>
+                <div class="ti" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5l-5.4 3 1.2-6L3.3 9.3l6.1-.7z"/></svg></div>
+                <div><b>Calificaciones de clientes</b><span class="t">Cada servicio terminado se califica, para que elijas con información.</span></div>
+            </li>
+        </ul>
+        <p class="note">Antes de pagar ves el precio del servicio y la tarifa de servicio por separado. Sin sorpresas.</p>
+    </section>
+
+</main>
+
+<footer>
+    <a href="/terminos">Términos</a> · <a href="/privacidad">Privacidad</a> · <a href="/instalar">Instalar la app</a>
+    <div style="margin-top:14px">© TalentHub</div>
+</footer>
 </div>
 
 <script>
-    // Escribir letras una por una
-    const texto = 'TalentHub';
-    const logo = document.getElementById('splashLogo');
-    texto.split('').forEach((letra, i) => {
-        const span = document.createElement('span');
-        span.className = 'letter';
-        span.textContent = letra;
-        span.style.animationDelay = (0.5 + i * 0.07) + 's';
-        logo.appendChild(span);
-    });
+    // La pantalla de carga solo se muestra una vez por visita y se omite si el usuario pidió menos animaciones
+    (function () {
+        const main = document.getElementById('main');
+        const splash = document.getElementById('splash');
+        const reducido = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let visto = false;
+        try { visto = sessionStorage.getItem('th_splash') === '1'; } catch (e) {}
 
-    // Ocultar splash después de la animación
-    setTimeout(() => {
-        document.getElementById('splash').classList.add('hide');
+        function mostrar() {
+            splash.style.display = 'none';
+            main.classList.add('show');
+        }
+        if (visto || reducido) { mostrar(); return; }
+        try { sessionStorage.setItem('th_splash', '1'); } catch (e) {}
         setTimeout(() => {
-            document.getElementById('splash').style.display = 'none';
-            document.getElementById('main').classList.add('show');
-        }, 400);
-    }, 1400);
+            splash.classList.add('hide');
+            setTimeout(mostrar, 450);
+        }, 1100);
+    })();
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/static/sw.js').catch(() => {});
@@ -477,56 +295,48 @@
 </script>
 
 <script>
-// Mostrar banner de instalación en Android
+// Cartel de instalación (Android/Chrome). Si se cierra, no vuelve a salir por 7 días.
 let deferredPrompt;
+const OCULTO_KEY = 'th_instalar_oculto';
+function instalarOculto() {
+    try {
+        const t = parseInt(localStorage.getItem(OCULTO_KEY) || '0', 10);
+        return t && (Date.now() - t) < 7 * 24 * 3600 * 1000;
+    } catch (e) { return false; }
+}
+function cerrarCartel(recordar) {
+    const b = document.getElementById('installBanner');
+    if (b) b.remove();
+    if (recordar) { try { localStorage.setItem(OCULTO_KEY, String(Date.now())); } catch (e) {} }
+}
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
+    if (instalarOculto()) return;
 
-    // Mostrar banner personalizado después de 3 segundos
     setTimeout(() => {
+        if (document.getElementById('installBanner')) return;
         const banner = document.createElement('div');
         banner.id = 'installBanner';
-        banner.innerHTML = `
-            <div style="position:fixed;bottom:20px;left:16px;right:16px;z-index:9999;
-                        background:white;border-radius:16px;padding:16px 20px;
-                        box-shadow:0 8px 32px rgba(0,0,0,0.2);
-                        display:flex;align-items:center;gap:12px;
-                        animation:slideUp 0.4s ease;">
-                <style>@keyframes slideUp{from{transform:translateY(100px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
-                <div style="font-size:2rem">📱</div>
-                <div style="flex:1">
-                    <div style="font-weight:700;color:#1e293b;font-size:0.95rem">Instalar TalentHub</div>
-                    <div style="color:#64748b;font-size:0.8rem">Agregar a tu pantalla de inicio</div>
-                </div>
-                <button onclick="instalarApp()" 
-                    style="background:linear-gradient(135deg,#2563eb,#8b5cf6);color:white;
-                           border:none;border-radius:10px;padding:10px 16px;
-                           font-weight:700;cursor:pointer;font-size:0.85rem">
-                    Instalar
-                </button>
-                <button onclick="document.getElementById('installBanner').remove()"
-                    style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:1.2rem;padding:4px">
-                    ✕
-                </button>
-            </div>
-        `;
+        banner.className = 'install';
+        banner.setAttribute('role', 'dialog');
+        banner.setAttribute('aria-label', 'Instalar TalentHub');
+        banner.innerHTML =
+            '<div class="ii" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>' +
+            '<div class="it"><b>Instalar TalentHub</b><span>Ábrela como una app desde tu pantalla de inicio</span></div>' +
+            '<button type="button" class="go" onclick="instalarApp()">Instalar</button>' +
+            '<button type="button" class="x" aria-label="Cerrar" onclick="cerrarCartel(true)">&times;</button>';
         document.body.appendChild(banner);
     }, 3000);
 });
 
 function instalarApp() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(result => {
-            if (result.outcome === 'accepted') {
-                console.log('App instalada');
-            }
-            deferredPrompt = null;
-            const banner = document.getElementById('installBanner');
-            if (banner) banner.remove();
-        });
-    }
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+        deferredPrompt = null;
+        cerrarCartel(false);
+    });
 }
 </script>
 </body>
