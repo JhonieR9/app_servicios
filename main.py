@@ -814,6 +814,10 @@ async def favicon():
     from fastapi.responses import FileResponse
     return FileResponse("static/icons/icon-192.png", media_type="image/png")
 
+@app.get("/como-funciona", response_class=HTMLResponse)
+def como_funciona(request: Request):
+    return templates.TemplateResponse("como_funciona.html", {"request": request})
+
 @app.get("/privacidad", response_class=HTMLResponse)
 def privacidad(request: Request):
     return templates.TemplateResponse("privacidad.html", {"request": request})

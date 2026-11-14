@@ -135,6 +135,13 @@
         .trust span.t { font-size: .84rem; color: var(--muted); line-height: 1.4; }
         .note { margin-top: 14px; text-align: center; font-size: .84rem; color: var(--muted); }
 
+        /* Resumen corto bajo las tarjetas */
+        .chips { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; }
+        .chips li { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); color: #475569; font-size: .78rem; font-weight: 700; padding: 7px 12px; border-radius: 99px; }
+        .chips svg { color: #059669; }
+        .how-link { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 18px; color: #4f46e5; font-weight: 700; font-size: .95rem; text-decoration: none; }
+        .how-link:hover { text-decoration: underline; }
+
         /* Pie */
         footer { position: relative; z-index: 1; text-align: center; padding: 34px 20px 40px; font-size: .84rem; color: var(--muted); }
         footer a { color: #4f46e5; text-decoration: none; font-weight: 700; margin: 0 8px; }
@@ -223,42 +230,12 @@
         </div>
     </div>
 
-    <section aria-labelledby="como">
-        <h2 class="sec-title" id="como">Cómo funciona</h2>
-        <ol class="steps">
-            <li class="step">
-                <div class="step-ico" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></div>
-                <div><b>1. Cuéntanos qué necesitas</b><span class="t">Elige el servicio, tu ubicación y si lo quieres ahora o programado.</span></div>
-            </li>
-            <li class="step">
-                <div class="step-ico" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 11l2 2 4-4"/></svg></div>
-                <div><b>2. Un profesional acepta</b><span class="t">Puedes elegir a quien prefieras o dejar que te asignemos el primero disponible.</span></div>
-            </li>
-            <li class="step">
-                <div class="step-ico" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
-                <div><b>3. Sigue el servicio y paga</b><span class="t">Ves el avance en tiempo real y pagas con Nequi, Daviplata u otros medios.</span></div>
-            </li>
-        </ol>
-    </section>
-
-    <section aria-labelledby="confianza">
-        <h2 class="sec-title" id="confianza">Pensado para tu tranquilidad</h2>
-        <ul class="trust">
-            <li>
-                <div class="ti" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
-                <div><b>Profesionales revisados</b><span class="t">Revisamos la hoja de vida de cada profesional antes de activarlo.</span></div>
-            </li>
-            <li>
-                <div class="ti" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-                <div><b>Pago seguro</b><span class="t">Los pagos se procesan con Wompi, sin que compartas datos con el profesional.</span></div>
-            </li>
-            <li>
-                <div class="ti" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5l-5.4 3 1.2-6L3.3 9.3l6.1-.7z"/></svg></div>
-                <div><b>Calificaciones de clientes</b><span class="t">Cada servicio terminado se califica, para que elijas con información.</span></div>
-            </li>
-        </ul>
-        <p class="note">Antes de pagar ves el precio del servicio y la tarifa de servicio por separado. Sin sorpresas.</p>
-    </section>
+    <ul class="chips" aria-label="Por qué TalentHub">
+        <li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg> Profesionales revisados</li>
+        <li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Pago seguro</li>
+        <li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5l-5.4 3 1.2-6L3.3 9.3l6.1-.7z"/></svg> Calificaciones</li>
+    </ul>
+    <a class="how-link" href="/como-funciona">¿Cómo funciona? <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
 
 </main>
 
