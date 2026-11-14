@@ -1748,6 +1748,12 @@ async def crear_trabajador(
         return JSONResponse({"error": "El correo electrónico es obligatorio y debe tener un formato válido"}, status_code=400)
     correo = correo.strip().lower()
 
+    # La aceptación de términos y política de privacidad se exige también en el servidor
+    # (en el navegador solo la protegía el atributo "required" del formulario).
+    if acepta_terminos != 'on':
+        return JSONResponse({"error": "Debes aceptar los Términos y Condiciones y la Política de Privacidad para registrarte"},
+                            status_code=400)
+
     # Validar medio de pago en el servidor (antes el formulario solo lo exigía en el navegador).
     # Además corrige que el número/titular de billeteras (Nequi, Daviplata, Bre-B) se guardara vacío.
     form_pago = await request.form()
