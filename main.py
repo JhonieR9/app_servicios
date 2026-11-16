@@ -4,8 +4,9 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from routers import clientes, trabajadores, chat, pagos, psicologa, mfa_api
+from routers import clientes, trabajadores, chat, pagos, psicologa, mfa_api, pqrs
 import mfa
+import legal
 from config import DB_CONFIG, conectar_bd
 import os
 import security   # módulo centralizado de seguridad
@@ -115,6 +116,17 @@ app.include_router(chat.router)
 app.include_router(pagos.router)
 app.include_router(psicologa.router)
 app.include_router(mfa_api.router)
+app.include_router(pqrs.router)
+
+
+@app.on_event("startup")
+def crear_tablas_legales():
+    """Tablas de aceptaciones legales y PQRS (no debe impedir el arranque si falla)."""
+    try:
+        legal.ensure_tablas()
+    except Exception as e:
+        print(f"[LEGAL] No se pudieron crear las tablas: {e}")
+
 
 
 @app.on_event("startup")
@@ -820,11 +832,11 @@ def como_funciona(request: Request):
 
 @app.get("/privacidad", response_class=HTMLResponse)
 def privacidad(request: Request):
-    return templates.TemplateResponse("privacidad.html", {"request": request})
+    return templates.TemplateResponse("privacidad.html", {"request": request, "legal": legal.datos_legales()})
 
 @app.get("/terminos", response_class=HTMLResponse)
 def terminos(request: Request):
-    return templates.TemplateResponse("terminos.html", {"request": request})
+    return templates.TemplateResponse("terminos.html", {"request": request, "legal": legal.datos_legales()})
 
 @app.get("/inicio", response_class=HTMLResponse)
 def mostrar_solo_formulario(request: Request):

@@ -6,6 +6,7 @@ import bcrypt
 import hmac
 import auth      # Módulo de autenticación
 import mfa       # Verificación en dos pasos
+import legal     # Aceptaciones legales (evidencia) y PQRS
 import security  # Rate limiting, MIME validation y logging
 from config import DB_CONFIG, conectar_bd
 from viajes import es_categoria_viaje, leer_detalles, PRECIO_VIAJE_MIN, PRECIO_VIAJE_MAX
@@ -1750,9 +1751,15 @@ async def crear_trabajador(
 
     # La aceptación de términos y política de privacidad se exige también en el servidor
     # (en el navegador solo la protegía el atributo "required" del formulario).
+    form_aceptaciones = await request.form()
     if acepta_terminos != 'on':
-        return JSONResponse({"error": "Debes aceptar los Términos y Condiciones y la Política de Privacidad para registrarte"},
+        return JSONResponse({"error": "Debes aceptar los Términos y Condiciones para registrarte"}, status_code=400)
+    if form_aceptaciones.get('acepta_datos') != 'on':
+        return JSONResponse({"error": "Debes autorizar el tratamiento de tus datos personales para registrarte"},
                             status_code=400)
+    if form_aceptaciones.get('acepta_sensibles') != 'on':
+        return JSONResponse({"error": "Debes autorizar el tratamiento de tus datos sensibles (foto, documento y antecedentes): "
+                                      "sin ellos no podemos verificarte"}, status_code=400)
 
     # Validar medio de pago en el servidor (antes el formulario solo lo exigía en el navegador).
     # Además corrige que el número/titular de billeteras (Nequi, Daviplata, Bre-B) se guardara vacío.
@@ -2039,6 +2046,13 @@ async def crear_trabajador(
             print(f"[WARN] Error guardando referencias personales id={id_persona}: {e_ref}")
 
         conexion.commit()
+
+        # Evidencia de lo que aceptó (versión, fecha, IP): se exige poder probar la autorización
+        docs = ['terminos', 'privacidad', 'datos_sensibles']
+        if permisos_ubicacion == 'on':
+            docs.append('ubicacion')
+        legal.registrar_aceptacion('trabajador', id_persona, docs,
+                                   ip=security._get_ip(request), user_agent=request.headers.get('user-agent', ''))
 
         return {
             "mensaje": f"✅ Registro exitoso: {nombre_completo}. Tu hoja de vida será revisada por nuestro equipo antes de activar tu cuenta.",

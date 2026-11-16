@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peticiones, quejas y reclamos - TalentHub</title>
+    <meta name="theme-color" content="#667eea">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/legal.css">
+</head>
+<body>
+<main class="container">
+    <h1>Peticiones, quejas y reclamos</h1>
+    <p class="subtitle">Canal de atención con número de radicado y seguimiento</p>
+
+    <div id="formWrap">
+        <p>Cuéntanos tu caso. Al enviarlo recibirás un <strong>número de radicado</strong> con la fecha y la hora de recepción, y te respondemos al correo dentro de los quince (15) días hábiles siguientes.</p>
+        <p class="aviso">Para ejercer tus derechos sobre datos personales (conocer, actualizar, rectificar, suprimir o revocar) elige el tipo "Datos personales". Para pedir el retracto o la devolución de un pago, elige "Retracto o devolución". Si es una emergencia, llama al 123.</p>
+
+        <div id="msg" class="msg error" role="alert"></div>
+
+        <form id="f" novalidate>
+            <div class="field">
+                <label for="tipo">Tipo de solicitud *</label>
+                <select id="tipo" name="tipo" required>
+                    <option value="">Elige una opción</option>
+                    {% for clave, nombre in tipos.items() %}
+                    <option value="{{ clave }}" {% if clave == tipo_inicial %}selected{% endif %}>{{ nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="nombre">Nombre completo *</label>
+                <input id="nombre" name="nombre" type="text" maxlength="150" autocomplete="name" required>
+            </div>
+            <div class="field">
+                <label for="correo">Correo para la respuesta *</label>
+                <input id="correo" name="correo" type="email" maxlength="150" autocomplete="email" required>
+            </div>
+            <div class="field">
+                <label for="telefono">Teléfono (opcional)</label>
+                <input id="telefono" name="telefono" type="tel" maxlength="30" autocomplete="tel">
+            </div>
+            <div class="field">
+                <label for="id_solicitud">Número de la solicitud de servicio (si aplica)</label>
+                <input id="id_solicitud" name="id_solicitud" type="text" inputmode="numeric" maxlength="10" placeholder="Ej: 125">
+            </div>
+            <div class="field">
+                <label for="mensaje">Cuéntanos qué pasó o qué necesitas *</label>
+                <textarea id="mensaje" name="mensaje" maxlength="4000" required></textarea>
+            </div>
+            <p class="subtitle" style="border:none;padding:0;margin-bottom:14px">Tus datos se usan solo para atender esta solicitud, según la <a href="/privacidad">Política de Tratamiento de Datos Personales</a>.</p>
+            <button class="btn" id="btn" type="submit">Enviar solicitud</button>
+        </form>
+    </div>
+
+    <div id="okWrap" style="display:none">
+        <div class="msg ok" style="display:block" role="status">Recibimos tu solicitud.</div>
+        <p>Tu número de radicado es:</p>
+        <p class="radicado" id="rad"></p>
+        <p>Fecha y hora de recepción: <strong id="fec"></strong></p>
+        <p>Te enviamos el radicado al correo. Guárdalo para consultar el estado.</p>
+        <a class="btn sec" href="/pqrs/consulta" style="text-decoration:none">Consultar el estado</a>
+    </div>
+
+    <div class="links-legal">
+        <a href="/pqrs/consulta">Consultar una solicitud</a>
+        <a href="/terminos">Términos y Condiciones</a>
+        <a href="/privacidad">Privacidad</a>
+        <a href="{{ legal.sic_url }}" target="_blank" rel="noopener">Superintendencia de Industria y Comercio</a>
+    </div>
+    <a href="/" class="back-link">&larr; Volver al inicio</a>
+</main>
+
+<script>
+    const f = document.getElementById('f');
+    const msg = document.getElementById('msg');
+    function error(t) { msg.textContent = t; msg.style.display = 'block'; msg.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+
+    f.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        msg.style.display = 'none';
+        const btn = document.getElementById('btn');
+        btn.disabled = true; btn.textContent = 'Enviando...';
+        try {
+            const res = await fetch('/pqrs', { method: 'POST', body: new FormData(f) });
+            const d = await res.json();
+            if (res.ok && d.ok) {
+                document.getElementById('rad').textContent = d.radicado;
+                document.getElementById('fec').textContent = d.fecha;
+                document.getElementById('formWrap').style.display = 'none';
+                document.getElementById('okWrap').style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                error(d.error || 'No pudimos registrar tu solicitud.');
+            }
+        } catch (err) {
+            error('Error de conexión. Inténtalo de nuevo.');
+        }
+        btn.disabled = false; btn.textContent = 'Enviar solicitud';
+    });
+</script>
+</body>
+</html>

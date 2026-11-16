@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar solicitud - TalentHub</title>
+    <meta name="theme-color" content="#667eea">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/legal.css">
+</head>
+<body>
+<main class="container">
+    <h1>Consultar mi solicitud</h1>
+    <p class="subtitle">Escribe el radicado que recibiste y el correo con el que hiciste la solicitud</p>
+
+    <div id="msg" class="msg error" role="alert"></div>
+
+    <form id="f" novalidate>
+        <div class="field">
+            <label for="radicado">Número de radicado *</label>
+            <input id="radicado" name="radicado" type="text" placeholder="PQRS-2026-000123" autocapitalize="characters" required>
+        </div>
+        <div class="field">
+            <label for="correo">Correo *</label>
+            <input id="correo" name="correo" type="email" autocomplete="email" required>
+        </div>
+        <button class="btn" id="btn" type="submit">Consultar</button>
+    </form>
+
+    <div id="res" style="display:none;margin-top:22px">
+        <div class="idbox">
+            <p><strong>Radicado:</strong> <span id="r_rad"></span></p>
+            <p><strong>Tipo:</strong> <span id="r_tipo"></span></p>
+            <p><strong>Recibida:</strong> <span id="r_fec"></span></p>
+            <p><strong>Estado:</strong> <span id="r_est"></span></p>
+        </div>
+        <div id="r_respWrap" style="display:none">
+            <h3>Respuesta<span id="r_fres"></span></h3>
+            <p id="r_resp" style="white-space:pre-wrap"></p>
+        </div>
+        <p id="r_pend" class="aviso" style="display:none">Aún estamos revisando tu solicitud. Te responderemos al correo dentro de los quince (15) días hábiles siguientes a la fecha de recepción.</p>
+    </div>
+
+    <div class="links-legal">
+        <a href="/pqrs">Nueva solicitud</a>
+        <a href="/terminos">Términos y Condiciones</a>
+        <a href="/privacidad">Privacidad</a>
+        <a href="{{ legal.sic_url }}" target="_blank" rel="noopener">Superintendencia de Industria y Comercio</a>
+    </div>
+    <a href="/" class="back-link">&larr; Volver al inicio</a>
+</main>
+<script>
+    const f = document.getElementById('f'), msg = document.getElementById('msg');
+    f.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        msg.style.display = 'none'; document.getElementById('res').style.display = 'none';
+        const btn = document.getElementById('btn'); btn.disabled = true; btn.textContent = 'Consultando...';
+        try {
+            const res = await fetch('/pqrs/consulta', { method: 'POST', body: new FormData(f) });
+            const d = await res.json();
+            if (!res.ok) { msg.textContent = d.error || 'No se pudo consultar.'; msg.style.display = 'block'; }
+            else {
+                document.getElementById('r_rad').textContent = d.radicado;
+                document.getElementById('r_tipo').textContent = d.tipo;
+                document.getElementById('r_fec').textContent = d.fecha;
+                document.getElementById('r_est').textContent = d.estado;
+                const tiene = !!d.respuesta;
+                document.getElementById('r_respWrap').style.display = tiene ? 'block' : 'none';
+                document.getElementById('r_pend').style.display = tiene ? 'none' : 'block';
+                document.getElementById('r_resp').textContent = d.respuesta;
+                document.getElementById('r_fres').textContent = d.fecha_respuesta ? ' (' + d.fecha_respuesta + ')' : '';
+                document.getElementById('res').style.display = 'block';
+            }
+        } catch (err) { msg.textContent = 'Error de conexión.'; msg.style.display = 'block'; }
+        btn.disabled = false; btn.textContent = 'Consultar';
+    });
+</script>
+</body>
+</html>

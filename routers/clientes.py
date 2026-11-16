@@ -5,6 +5,7 @@ from datetime import datetime
 import math
 import auth      # Módulo de autenticación
 import mfa       # Verificación en dos pasos
+import legal     # Aceptaciones legales (evidencia) y PQRS
 import security  # Rate limiting, MIME validation y logging
 from config import DB_CONFIG, conectar_bd
 from viajes import (es_categoria_viaje, normalizar_detalles_viaje, resumen_texto_viaje,
@@ -107,14 +108,21 @@ def mostrar_formulario(request: Request):
 
 @router.post("/registro")
 async def registrar_cliente(
+    request: Request,
     response: Response,
     nombre_completo: str = Form(...),
     correo: str = Form(...),
     telefono: str = Form(...),
     password: str = Form(...),
-    confirmar_password: str = Form(...)
+    confirmar_password: str = Form(...),
+    acepta_terminos: str = Form(None),
+    acepta_datos: str = Form(None)
 ):
     """Registro de cliente con contraseña y login automático"""
+    # La autorización debe ser previa y expresa: se exige en el servidor, no solo en el formulario
+    if acepta_terminos != 'on' or acepta_datos != 'on':
+        return JSONResponse({"error": "Debes aceptar los Términos y Condiciones y autorizar el tratamiento de tus datos personales para crear la cuenta"},
+                            status_code=400)
     if password != confirmar_password:
         return JSONResponse({"error": "Las contraseñas no coinciden"}, status_code=400)
     if len(password) < 6:
@@ -141,6 +149,10 @@ async def registrar_cliente(
         cursor.execute("INSERT INTO correo_cliente (id_cliente, correo, verificado, principal) VALUES (%s, %s, 0, 1)", (id_cliente, correo))
         cursor.execute("INSERT INTO telefono_cliente (id_cliente, telefono, tipo_telefono, principal) VALUES (%s, %s, 'celular', 1)", (id_cliente, telefono))
         conexion.commit()
+
+        # Evidencia de lo que aceptó (versión, fecha, IP)
+        legal.registrar_aceptacion('cliente', id_cliente, ['terminos', 'privacidad'],
+                                   ip=security._get_ip(request), user_agent=request.headers.get('user-agent', ''))
 
         # Login automático — crear sesión
         token = auth.crear_sesion('cliente', id_cliente)

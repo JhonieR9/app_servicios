@@ -3,144 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Política de Privacidad - TalentHub</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
-            line-height: 1.7;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            padding: 40px 32px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-        }
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #0f172a;
-            margin-bottom: 8px;
-        }
-        .subtitle {
-            color: #64748b;
-            font-size: 0.9rem;
-            margin-bottom: 32px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        h2 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #334155;
-            margin: 28px 0 12px;
-        }
-        p, li {
-            font-size: 0.92rem;
-            color: #475569;
-            margin-bottom: 10px;
-        }
-        ul { padding-left: 20px; margin-bottom: 16px; }
-        li { margin-bottom: 6px; }
-        .back-link {
-            display: inline-block;
-            margin-top: 32px;
-            color: #6366f1;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .back-link:hover { text-decoration: underline; }
-        @media (max-width: 600px) {
-            .container { padding: 24px 18px; }
-            h1 { font-size: 1.4rem; }
-        }
-    </style>
+    <title>Política de Tratamiento de Datos Personales - TalentHub</title>
+    <meta name="theme-color" content="#667eea">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/legal.css">
 </head>
 <body>
-<div class="container">
-    <h1>Política de Privacidad</h1>
-    <p class="subtitle">Última actualización: Junio 2026 · TalentHub Colombia</p>
+<main class="container">
+    <h1>Política de Tratamiento de Datos Personales</h1>
+    <p class="subtitle">Versión {{ legal.version_privacidad }} · Vigente desde {{ legal.fecha_vigencia }}</p>
 
-    <h2>1. Información que recopilamos</h2>
-    <p>Al usar TalentHub, recopilamos la siguiente información:</p>
+    <p class="aviso">Esta política explica qué datos tuyos tratamos, para qué, con quién los compartimos y cómo puedes ejercer tus derechos de habeas data. Se expide en cumplimiento de los artículos 15 y 20 de la Constitución Política, la Ley Estatutaria 1581 de 2012 y sus normas reglamentarias (Decreto 1377 de 2013, compilado en el Decreto Único 1074 de 2015).</p>
+
+    <details class="toc">
+        <summary>Contenido</summary>
+        <ol>
+            <li><a href="#p1">Responsable del tratamiento</a></li>
+            <li><a href="#p2">Definiciones</a></li>
+            <li><a href="#p3">Principios</a></li>
+            <li><a href="#p4">Datos que tratamos</a></li>
+            <li><a href="#p5">Finalidades</a></li>
+            <li><a href="#p6">Datos sensibles</a></li>
+            <li><a href="#p7">Menores de edad</a></li>
+            <li><a href="#p8">Autorización</a></li>
+            <li><a href="#p9">Con quién compartimos los datos</a></li>
+            <li><a href="#p10">Transferencias internacionales</a></li>
+            <li><a href="#p11">Tus derechos</a></li>
+            <li><a href="#p12">Cómo ejercer tus derechos</a></li>
+            <li><a href="#p13">Seguridad</a></li>
+            <li><a href="#p14">Conservación</a></li>
+            <li><a href="#p15">Cookies y almacenamiento local</a></li>
+            <li><a href="#p16">Registro Nacional de Bases de Datos</a></li>
+            <li><a href="#p17">Cambios a esta política</a></li>
+        </ol>
+    </details>
+
+    <h2 id="p1">1. Responsable del tratamiento</h2>
+    <div class="idbox">
+        <p><strong>Responsable:</strong> {{ legal.razon_social }}{% if legal.nit %} · NIT / documento {{ legal.nit }}{% endif %}</p>
+        {% if legal.direccion %}<p><strong>Domicilio:</strong> {{ legal.direccion }}{% if legal.ciudad %}, {{ legal.ciudad }}{% endif %}</p>{% endif %}
+        <p><strong>Correo para asuntos de datos personales:</strong> {{ legal.email }}</p>
+        {% if legal.telefono %}<p><strong>Teléfono:</strong> {{ legal.telefono }}</p>{% endif %}
+        <p><strong>Canal en la plataforma:</strong> <a href="/pqrs">Peticiones, quejas y reclamos</a> (elige "Datos personales")</p>
+    </div>
+    <p>Esta política aplica a los datos de clientes, profesionales y visitantes de TalentHub, un portal que conecta personas que necesitan servicios a domicilio con profesionales independientes.</p>
+
+    <h2 id="p2">2. Definiciones</h2>
     <ul>
-        <li><strong>Datos de registro:</strong> nombre completo, correo electrónico, número de teléfono, documento de identidad (trabajadores).</li>
-        <li><strong>Ubicación geográfica:</strong> coordenadas GPS cuando el trabajador activa su disponibilidad, para conectarlo con clientes cercanos.</li>
-        <li><strong>Datos del servicio:</strong> dirección de servicio, categoría solicitada, descripción del trabajo, método de pago preferido.</li>
-        <li><strong>Comunicaciones:</strong> mensajes intercambiados en el chat entre cliente y trabajador.</li>
-        <li><strong>Calificaciones y reseñas:</strong> puntuaciones y comentarios dejados por ambas partes.</li>
-        <li><strong>Documentos (trabajadores):</strong> foto de identificación, antecedentes disciplinarios, cartas de recomendación.</li>
+        <li><strong>Dato personal:</strong> información vinculada a una persona natural determinada o determinable.</li>
+        <li><strong>Dato sensible:</strong> el que afecta tu intimidad o cuyo uso indebido puede generar discriminación (por ejemplo salud, origen racial, datos biométricos).</li>
+        <li><strong>Titular:</strong> la persona a quien pertenecen los datos (tú).</li>
+        <li><strong>Responsable:</strong> quien decide sobre la base de datos y el tratamiento. <strong>Encargado:</strong> quien trata datos por cuenta del responsable.</li>
+        <li><strong>Tratamiento:</strong> cualquier operación sobre los datos: recolección, almacenamiento, uso, circulación o supresión.</li>
+        <li><strong>Transferencia:</strong> envío de datos a un responsable ubicado dentro o fuera del país. <strong>Transmisión:</strong> comunicación de datos a un encargado, dentro o fuera del país, para que los trate por cuenta nuestra.</li>
     </ul>
 
-    <h2>2. Cómo usamos la información</h2>
+    <h2 id="p3">3. Principios</h2>
+    <p>Tratamos tus datos respetando los principios de la Ley 1581 de 2012: <strong>legalidad</strong>, <strong>finalidad</strong> (solo para los fines que te informamos), <strong>libertad</strong> (con tu autorización previa, expresa e informada), <strong>veracidad o calidad</strong>, <strong>transparencia</strong> (puedes saber en cualquier momento qué datos tenemos), <strong>acceso y circulación restringida</strong>, <strong>seguridad</strong> y <strong>confidencialidad</strong>.</p>
+
+    <h2 id="p4">4. Datos que tratamos</h2>
+    <h3>De todos los usuarios</h3>
     <ul>
-        <li>Conectar clientes con trabajadores disponibles en su zona.</li>
-        <li>Facilitar la comunicación entre las partes (chat, notificaciones).</li>
-        <li>Verificar la identidad de los trabajadores registrados.</li>
-        <li>Enviar notificaciones sobre solicitudes, cambios de estado y mensajes.</li>
-        <li>Mejorar la calidad del servicio mediante calificaciones.</li>
-        <li>Enviar correos de recuperación de contraseña y verificación de cuenta.</li>
+        <li>Identificación y contacto: nombre completo, correo electrónico, número de celular.</li>
+        <li>Datos de la cuenta: contraseña (guardada cifrada de forma irreversible), configuración de seguridad (incluida la verificación en dos pasos), fecha de registro y último ingreso.</li>
+        <li>Datos de uso y técnicos: dirección IP, tipo de dispositivo y navegador, registros de ingreso y de seguridad.</li>
+        <li>Comunicaciones: mensajes del chat, y las peticiones, quejas y reclamos que nos envíes.</li>
+        <li>Registro de aceptaciones: qué documentos aceptaste, con qué versión, cuándo y desde qué IP.</li>
+    </ul>
+    <h3>De los clientes</h3>
+    <ul>
+        <li>Datos de cada solicitud: tipo de servicio, descripción, dirección y ciudad del servicio, fecha programada, y para viajes, el origen, el destino y lo que se transporta.</li>
+        <li>Ubicación: la dirección que escribes o las coordenadas del GPS cuando eliges "Para mí".</li>
+        <li>Datos del pago: medio elegido y estado de la transacción. <strong>No guardamos números de tarjeta ni claves bancarias</strong>: se ingresan directamente en la pasarela de pagos.</li>
+        <li>Calificaciones y comentarios que dejas.</li>
+    </ul>
+    <h3>De los profesionales</h3>
+    <ul>
+        <li>Datos de identificación: tipo y número de documento, género, fecha y ciudad de nacimiento, nacionalidad, ciudad de residencia y de servicio.</li>
+        <li>Hoja de vida y perfil: servicios que ofreces, nivel de estudio y certificados, referencias personales y cartas de recomendación, experiencia, disponibilidad, foto de perfil.</li>
+        <li>Documentos: imagen del documento de identidad y certificado de antecedentes.</li>
+        <li>Afiliación a seguridad social: información de EPS y ARL que nos indiques.</li>
+        <li>Datos de cobro: método de pago, número de cuenta o billetera (Nequi, Daviplata, Bre-B u otra) y titular.</li>
+        <li>Ubicación en tiempo real: solo mientras tengas activada tu disponibilidad o un servicio en curso, para mostrarte a clientes cercanos, calcular distancias y permitir el seguimiento del servicio.</li>
+        <li>Calificaciones recibidas y datos de desempeño en la plataforma.</li>
     </ul>
 
-    <h2>3. Ubicación geográfica</h2>
-    <p>Solicitamos acceso a la ubicación del dispositivo únicamente cuando el trabajador activa su disponibilidad. Esta información se usa para:</p>
-    <ul>
-        <li>Mostrar trabajadores disponibles cerca del cliente en el mapa.</li>
-        <li>Calcular distancias para la asignación de servicios.</li>
-    </ul>
-    <p>El trabajador puede desactivar el compartir ubicación en cualquier momento desde su panel.</p>
+    <h2 id="p5">5. Finalidades</h2>
+    <p>Usamos tus datos para estas finalidades, y solo para ellas:</p>
+    <ol>
+        <li>Crear y administrar tu cuenta, autenticarte y proteger su seguridad.</li>
+        <li>Conectar clientes con profesionales, asignar y gestionar solicitudes, cotizaciones y servicios.</li>
+        <li>Mostrar profesionales disponibles cerca del cliente y permitir el seguimiento del servicio.</li>
+        <li>Compartir entre cliente y profesional asignado los datos necesarios para coordinar el servicio (ver sección 9).</li>
+        <li>Verificar y aprobar a los profesionales, y mantener la seguridad de la comunidad.</li>
+        <li>Procesar pagos, recaudar el precio del servicio, transferirlo al profesional y emitir los comprobantes que correspondan.</li>
+        <li>Enviarte avisos del servicio: estado de solicitudes, mensajes del chat, códigos de verificación, recuperación de contraseña y avisos legales, por correo, notificaciones del navegador y mensajes de WhatsApp.</li>
+        <li>Atender peticiones, quejas, reclamos, retractos y solicitudes de habeas data, y llevar su trazabilidad.</li>
+        <li>Prevenir, detectar e investigar fraude, suplantación, evasión de la plataforma y usos indebidos, y conservar evidencia para defendernos de reclamaciones.</li>
+        <li>Calcular métricas internas y mejorar la plataforma, preferiblemente con datos agregados o anonimizados.</li>
+        <li>Cumplir obligaciones legales, contables y tributarias y atender requerimientos de autoridades competentes.</li>
+    </ol>
+    <p>No vendemos tus datos. No te enviamos publicidad de terceros. Si en el futuro queremos enviarte comunicaciones comerciales, te pediremos una autorización aparte, que podrás negar sin que eso afecte tu uso de la plataforma.</p>
 
-    <h2>4. Notificaciones push</h2>
-    <p>Enviamos notificaciones push para informar sobre nuevas solicitudes de servicio y mensajes de chat. El usuario puede desactivar las notificaciones desde la configuración de su navegador o dispositivo.</p>
-
-    <h2>5. Almacenamiento y seguridad</h2>
+    <h2 id="p6">6. Datos sensibles</h2>
     <ul>
-        <li>Los datos se almacenan en servidores seguros con cifrado en tránsito (HTTPS/TLS).</li>
-        <li>Las contraseñas se almacenan cifradas con bcrypt (no guardamos contraseñas en texto plano).</li>
-        <li>Los documentos de los trabajadores se almacenan de forma segura y solo son accesibles por el equipo administrativo.</li>
-    </ul>
-
-    <h2>6. Compartir información</h2>
-    <p>No vendemos ni compartimos información personal con terceros, excepto:</p>
-    <ul>
-        <li>Entre cliente y trabajador asignado: nombre, teléfono y ubicación general para coordinar el servicio.</li>
-        <li>Cuando sea requerido por ley o autoridades competentes.</li>
-    </ul>
-
-    <h2>7. Derechos del usuario</h2>
-    <p>Tienes derecho a:</p>
-    <ul>
-        <li>Acceder a tus datos personales desde tu perfil.</li>
-        <li>Modificar o actualizar tu información en cualquier momento.</li>
-        <li>Solicitar la eliminación de tu cuenta ("Darme de baja" desde el panel).</li>
-        <li>Revocar el permiso de ubicación y notificaciones.</li>
+        <li>La <strong>fotografía de perfil y la imagen del documento de identidad</strong> pueden considerarse datos biométricos o sensibles porque permiten identificarte por rasgos físicos. Aunque no usamos reconocimiento facial automatizado, las tratamos con las garantías reforzadas de los datos sensibles. Los <strong>certificados de antecedentes</strong> los tratamos también con especial cuidado y acceso restringido.</li>
+        <li>Tu respuesta a preguntas sobre datos sensibles es <strong>facultativa</strong>: no estás obligado a darlos. Pero para registrarte como profesional necesitamos tu documento, tu foto y tus antecedentes porque es la forma de verificarte; sin ellos no podemos activar tu cuenta.</li>
+        <li>Los usamos únicamente para verificar tu identidad y tu idoneidad, para la seguridad de la comunidad y para atender reclamaciones o requerimientos legales. Solo acceden a ellos el personal autorizado.</li>
+        <li>Te los pedimos con una autorización explícita, separada de los términos y condiciones.</li>
     </ul>
 
-    <h2>8. Cookies y almacenamiento local</h2>
-    <p>Usamos cookies de sesión para mantener tu login activo y localStorage para mejorar la experiencia (pre-llenar formularios). No usamos cookies de rastreo publicitario.</p>
+    <h2 id="p7">7. Menores de edad</h2>
+    <p>La plataforma es solo para mayores de 18 años. No recolectamos intencionalmente datos de menores. Si descubrimos que una cuenta pertenece a un menor, la cerraremos y suprimiremos sus datos. Si crees que un menor se registró, avísanos por el canal de la sección 12.</p>
 
-    <h2>9. Correos electrónicos</h2>
-    <p>Enviamos correos desde <strong>noreply@talenthubcol.com</strong> para:</p>
+    <h2 id="p8">8. Autorización</h2>
     <ul>
-        <li>Verificación de cuenta al registrarse.</li>
-        <li>Recuperación de contraseña.</li>
-        <li>Notificaciones de nuevas solicitudes (trabajadores).</li>
+        <li>Tratamos tus datos con tu autorización previa, expresa e informada, que nos das marcando la casilla correspondiente al registrarte. Guardamos la prueba: fecha, hora, versión de la política e IP.</li>
+        <li>Para los profesionales pedimos además una autorización específica para los datos sensibles (sección 6) y para el uso de la ubicación.</li>
+        <li>Puedes <strong>revocar</strong> la autorización o pedir la <strong>supresión</strong> de tus datos en cualquier momento, salvo cuando exista un deber legal o contractual de conservarlos (por ejemplo, un servicio en curso, una reclamación abierta u obligaciones contables). Si revocas la autorización necesaria para operar, cerraremos tu cuenta.</li>
+        <li>Podemos tratar sin autorización los datos que la ley permite (por ejemplo, para cumplir una orden de una autoridad o los datos de naturaleza pública).</li>
     </ul>
 
-    <h2>10. Cambios a esta política</h2>
-    <p>Podemos actualizar esta política ocasionalmente. Los cambios se publicarán en esta misma página con la fecha de actualización.</p>
+    <h2 id="p9">9. Con quién compartimos los datos</h2>
+    <p>No vendemos ni alquilamos datos personales. Los compartimos así:</p>
+    <h3>Entre cliente y profesional</h3>
+    <ul>
+        <li>Con el profesional asignado: tu nombre, tu número de teléfono, la dirección y ciudad del servicio, la descripción de la solicitud y, durante el servicio, tu ubicación en el seguimiento.</li>
+        <li>Con el cliente: el nombre, el número de teléfono, la foto, la calificación y la ubicación aproximada o en vivo del profesional durante el servicio.</li>
+        <li>Solo se comparten con la otra parte de un servicio que ya tienes con ella, para coordinarlo. Úsalos únicamente para ese fin. El chat de la plataforma bloquea el intercambio de teléfonos, correos y enlaces en los mensajes.</li>
+    </ul>
+    <h3>Proveedores que nos ayudan a operar (encargados)</h3>
+    <table>
+        <thead><tr><th>Proveedor</th><th>Para qué</th><th>Datos</th></tr></thead>
+        <tbody>
+            <tr><td>Wompi (pasarela de pagos)</td><td>Procesar pagos</td><td>Datos de la transacción y del pago; los datos de tarjeta o cuenta los ingresas directamente allí</td></tr>
+            <tr><td>Railway (alojamiento)</td><td>Servidores y base de datos</td><td>Toda la información de la plataforma</td></tr>
+            <tr><td>Mapbox y Google (mapas y direcciones)</td><td>Mapas, autocompletado, cálculo de distancias</td><td>Direcciones y coordenadas</td></tr>
+            <tr><td>Resend / servicio de correo</td><td>Enviar correos del servicio</td><td>Correo y contenido del mensaje</td></tr>
+            <tr><td>WhatsApp (Meta)</td><td>Avisos por WhatsApp</td><td>Número de celular y contenido del aviso</td></tr>
+            <tr><td>Servicios de notificaciones push de tu navegador</td><td>Notificaciones en tu dispositivo</td><td>Identificador de suscripción del dispositivo</td></tr>
+        </tbody>
+    </table>
+    <p>Con estos proveedores tenemos o aceptamos las condiciones necesarias para que traten los datos solo para el fin indicado y con medidas de seguridad.</p>
+    <h3>Autoridades y otros</h3>
+    <ul>
+        <li>Con autoridades judiciales o administrativas cuando lo exijan la ley o una orden válida.</li>
+        <li>Con asesores legales, contables o aseguradores, sujetos a confidencialidad, cuando sea necesario.</li>
+        <li>Con quien continúe la operación de la plataforma, si cambiara su titularidad, con el mismo nivel de protección y avisándote.</li>
+    </ul>
 
-    <h2>11. Contacto</h2>
-    <p>Si tienes preguntas sobre esta política, escríbenos a:</p>
-    <p><strong>Email:</strong> jhoniercespedes32@gmail.com</p>
+    <h2 id="p10">10. Transferencias y transmisiones internacionales</h2>
+    <p>Algunos de nuestros proveedores (por ejemplo, servidores, mapas, correo y mensajería) pueden tratar datos en servidores fuera de Colombia. Cuando eso ocurra, lo haremos hacia países con un nivel adecuado de protección según la Superintendencia de Industria y Comercio o, en los demás casos, contando con tu autorización expresa, que nos das al aceptar esta política, y con las garantías contractuales que correspondan (artículo 26 de la Ley 1581 de 2012).</p>
 
-    <a href="/" class="back-link">← Volver al inicio</a>
-</div>
+    <h2 id="p11">11. Tus derechos como titular</h2>
+    <p>Según el artículo 8 de la Ley 1581 de 2012, puedes:</p>
+    <ul>
+        <li>Conocer, actualizar y rectificar tus datos.</li>
+        <li>Solicitar prueba de la autorización que nos diste.</li>
+        <li>Ser informado, previa solicitud, del uso que le hemos dado a tus datos.</li>
+        <li>Presentar quejas ante la Superintendencia de Industria y Comercio por infracciones a la ley.</li>
+        <li>Revocar la autorización y/o solicitar la supresión de tus datos, cuando no se respeten los principios, derechos y garantías o cuando no exista un deber legal o contractual de conservarlos.</li>
+        <li>Acceder de forma gratuita a tus datos personales que hayan sido objeto de tratamiento.</li>
+    </ul>
+    <p>Puedes ver y actualizar buena parte de tus datos desde tu perfil, y cerrar tu cuenta con "Darme de baja".</p>
+
+    <h2 id="p12">12. Cómo ejercer tus derechos</h2>
+    <ul>
+        <li><strong>Canal:</strong> <a href="/pqrs">Peticiones, quejas y reclamos</a> (tipo "Datos personales"), o el correo {{ legal.email }}. Recibirás un número de radicado.</li>
+        <li><strong>Qué incluir:</strong> tu nombre y documento, descripción de lo que pides o del hecho que da lugar al reclamo, tu dirección o correo para responderte, y los documentos que quieras aportar. Podemos pedirte confirmar tu identidad.</li>
+        <li><strong>Consultas</strong> (conocer tus datos): las respondemos en máximo diez (10) días hábiles. Si no podemos, te avisamos el motivo y la nueva fecha, que no superará cinco (5) días hábiles adicionales.</li>
+        <li><strong>Reclamos</strong> (corrección, actualización, supresión, revocatoria o presunto incumplimiento): si falta información, te pedimos completarla dentro de los cinco (5) días siguientes; si no lo haces en dos (2) meses, entendemos que desististe. Los resolvemos en máximo quince (15) días hábiles, prorrogables por hasta ocho (8) días hábiles más, informándote los motivos.</li>
+        <li>Mientras se resuelve un reclamo, marcaremos tu dato con la leyenda "reclamo en trámite".</li>
+        <li>Antes de acudir a la Superintendencia de Industria y Comercio debes haber agotado este trámite con nosotros (artículo 16 de la Ley 1581 de 2012). SIC: <a href="{{ legal.sic_url }}" target="_blank" rel="noopener">{{ legal.sic_url }}</a>.</li>
+        <li>El ejercicio de tus derechos es gratuito.</li>
+    </ul>
+
+    <h2 id="p13">13. Seguridad</h2>
+    <p>Aplicamos medidas técnicas y organizativas razonables para proteger tus datos, entre ellas:</p>
+    <ul>
+        <li>Conexión cifrada (HTTPS/TLS) y cabeceras de seguridad en la plataforma.</li>
+        <li>Contraseñas guardadas con cifrado irreversible (bcrypt); nunca en texto plano.</li>
+        <li>Verificación en dos pasos opcional, con secretos cifrados, y obligación de confirmar tu contraseña (y el código si lo activaste) antes de cambiar datos de cobro.</li>
+        <li>Control de acceso por rol: solo personal autorizado ve documentos y datos sensibles.</li>
+        <li>Límites de intentos de ingreso, registro de eventos de seguridad y sesiones con vencimiento.</li>
+    </ul>
+    <p>Ningún sistema es infalible. Si ocurre un incidente de seguridad que afecte tus datos, lo investigaremos y lo informaremos a los titulares y a la Superintendencia de Industria y Comercio cuando la ley lo exija. Protege tu cuenta con una contraseña única y no compartas tus códigos.</p>
+
+    <h2 id="p14">14. Conservación</h2>
+    <p>Conservamos tus datos mientras tu cuenta esté activa y el tiempo adicional necesario para cumplir las finalidades de esta política, atender reclamaciones, defendernos en procesos y cumplir obligaciones legales (por ejemplo contables y tributarias). Cuando ya no sean necesarios, los suprimimos o anonimizamos. Si pides la supresión, la atenderemos salvo lo que debamos conservar por ley o por una reclamación abierta.</p>
+
+    <h2 id="p15">15. Cookies y almacenamiento local</h2>
+    <ul>
+        <li>Usamos <strong>cookies de sesión</strong> para mantenerte conectado y proteger tu cuenta, y almacenamiento local del navegador para recordar datos (por ejemplo, para prellenar formularios).</li>
+        <li>La aplicación instalable guarda archivos en la memoria de tu dispositivo (caché) para cargar más rápido.</li>
+        <li>No usamos cookies de publicidad ni de rastreo entre sitios. Los servicios de mapas y de pagos que cargamos pueden usar sus propias cookies, regidas por sus políticas.</li>
+        <li>Puedes borrar cookies y datos del sitio desde tu navegador; si lo haces, tendrás que iniciar sesión de nuevo.</li>
+    </ul>
+
+    <h2 id="p16">16. Registro Nacional de Bases de Datos</h2>
+    <p>Cuando la ley nos lo exija, inscribiremos nuestras bases de datos en el Registro Nacional de Bases de Datos que administra la Superintendencia de Industria y Comercio.</p>
+
+    <h2 id="p17">17. Cambios a esta política</h2>
+    <p>Podemos actualizar esta política. Cada versión tiene un identificador y una fecha de vigencia. Los cambios sustanciales se informarán por la plataforma o por correo, y si cambian las finalidades para las que nos autorizaste, te pediremos una nueva autorización. Esta versión reemplaza a las anteriores.</p>
+
+    <div class="links-legal">
+        <a href="/terminos">Términos y Condiciones</a>
+        <a href="/pqrs">Peticiones, quejas y reclamos</a>
+        <a href="{{ legal.sic_url }}" target="_blank" rel="noopener">Superintendencia de Industria y Comercio</a>
+    </div>
+    <a href="/" class="back-link">&larr; Volver al inicio</a>
+</main>
 </body>
 </html>

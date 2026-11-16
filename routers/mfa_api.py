@@ -260,6 +260,14 @@ def _avisos_configuracion():
         avisos.append("ADMIN_PASSWORD está con el valor por defecto público. Cámbialo en las variables de entorno.")
     if os.getenv("PSICO_PASSWORD", "psico2026") == "psico2026":
         avisos.append("PSICO_PASSWORD está con el valor por defecto público. Cámbialo en las variables de entorno.")
+    try:
+        import legal
+        faltan = legal.datos_legales_faltantes()
+        if faltan:
+            avisos.append("Los Términos y la Política de Privacidad muestran los datos del responsable. Faltan estas variables: "
+                          + ", ".join(faltan) + ". La ley exige identificar al responsable del tratamiento.")
+    except Exception:
+        pass
     return avisos
 
 

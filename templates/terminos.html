@@ -3,162 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Términos y Condiciones - TalentHub</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
-            line-height: 1.7;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            padding: 40px 32px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-        }
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #0f172a;
-            margin-bottom: 8px;
-        }
-        .subtitle {
-            color: #64748b;
-            font-size: 0.9rem;
-            margin-bottom: 32px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        h2 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #334155;
-            margin: 28px 0 12px;
-        }
-        p, li {
-            font-size: 0.92rem;
-            color: #475569;
-            margin-bottom: 10px;
-        }
-        ul { padding-left: 20px; margin-bottom: 16px; }
-        li { margin-bottom: 6px; }
-        .back-link {
-            display: inline-block;
-            margin-top: 32px;
-            color: #6366f1;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .back-link:hover { text-decoration: underline; }
-        @media (max-width: 600px) {
-            .container { padding: 24px 18px; }
-            h1 { font-size: 1.4rem; }
-        }
-    </style>
+    <title>Términos y Condiciones de Uso - TalentHub</title>
+    <meta name="theme-color" content="#667eea">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/legal.css">
 </head>
 <body>
-<div class="container">
-    <h1>Términos y Condiciones</h1>
-    <p class="subtitle">Última actualización: Junio 2026 · TalentHub Colombia</p>
+<main class="container">
+    <h1>Términos y Condiciones de Uso</h1>
+    <p class="subtitle">Versión {{ legal.version_terminos }} · Vigente desde {{ legal.fecha_vigencia }}</p>
 
-    <h2>1. Descripción del servicio</h2>
-    <p>TalentHub es una plataforma tecnológica que conecta personas que necesitan servicios a domicilio (clientes) con profesionales independientes (trabajadores) que ofrecen dichos servicios. TalentHub actúa únicamente como intermediario tecnológico.</p>
+    <p class="aviso">Lee estos términos con atención. Al marcar la casilla de aceptación al registrarte, o al usar la plataforma, declaras que los leíste, que los entiendes y que los aceptas. Si no estás de acuerdo, no uses TalentHub.</p>
 
-    <h2>2. Relación entre las partes</h2>
+    <details class="toc">
+        <summary>Contenido</summary>
+        <ol>
+            <li><a href="#c1">Quiénes somos y definiciones</a></li>
+            <li><a href="#c2">Aceptación y capacidad</a></li>
+            <li><a href="#c3">Qué es TalentHub y qué no es</a></li>
+            <li><a href="#c4">Registro, cuenta y seguridad</a></li>
+            <li><a href="#c5">Verificación de los profesionales</a></li>
+            <li><a href="#c6">Obligaciones de los profesionales</a></li>
+            <li><a href="#c7">Obligaciones de los clientes</a></li>
+            <li><a href="#c8">Cómo funciona una solicitud</a></li>
+            <li><a href="#c9">Precio, tarifa de servicio y pagos</a></li>
+            <li><a href="#c10">Cancelaciones y reembolsos</a></li>
+            <li><a href="#c11">Derecho de retracto</a></li>
+            <li><a href="#c12">Garantía y calidad del servicio</a></li>
+            <li><a href="#c13">Calificaciones, chat y contenido</a></li>
+            <li><a href="#c14">Conducta prohibida</a></li>
+            <li><a href="#c15">Seguridad personal y emergencias</a></li>
+            <li><a href="#c16">Peticiones, quejas y reclamos</a></li>
+            <li><a href="#c17">Responsabilidad</a></li>
+            <li><a href="#c18">Suspensión y terminación</a></li>
+            <li><a href="#c19">Propiedad intelectual</a></li>
+            <li><a href="#c20">Datos personales</a></li>
+            <li><a href="#c21">Cambios a estos términos</a></li>
+            <li><a href="#c22">Ley aplicable y controversias</a></li>
+            <li><a href="#c23">Disposiciones generales</a></li>
+        </ol>
+    </details>
+
+    <h2 id="c1">1. Quiénes somos y definiciones</h2>
+    <div class="idbox">
+        <p><strong>Operador de la plataforma:</strong> {{ legal.razon_social }}{% if legal.nit %} · NIT / documento {{ legal.nit }}{% endif %}</p>
+        {% if legal.direccion %}<p><strong>Domicilio:</strong> {{ legal.direccion }}{% if legal.ciudad %}, {{ legal.ciudad }}{% endif %}</p>{% endif %}
+        <p><strong>Correo:</strong> {{ legal.email }}{% if legal.telefono %} · <strong>Teléfono:</strong> {{ legal.telefono }}{% endif %}</p>
+    </div>
+    <p>En estos términos, "<strong>TalentHub</strong>", "nosotros" y "la plataforma" se refieren al operador indicado y al sitio web y aplicación web instalable que administra. Además:</p>
     <ul>
-        <li>TalentHub <strong>no es empleador</strong> de los trabajadores registrados en la plataforma.</li>
-        <li>Los trabajadores son profesionales independientes responsables de la calidad de su trabajo.</li>
-        <li>TalentHub no garantiza la disponibilidad de trabajadores en todo momento ni en todas las zonas.</li>
-        <li>La relación contractual del servicio es directamente entre el cliente y el trabajador.</li>
+        <li><strong>Usuario:</strong> toda persona que se registra o usa la plataforma.</li>
+        <li><strong>Cliente:</strong> usuario que solicita un servicio.</li>
+        <li><strong>Profesional:</strong> usuario que ofrece y presta servicios a los clientes. En la plataforma también se le llama "trabajador".</li>
+        <li><strong>Servicio:</strong> la labor que el Profesional presta al Cliente (por ejemplo plomería, electricidad, limpieza, transporte, mudanza o mensajería).</li>
+        <li><strong>Solicitud:</strong> el pedido que hace el Cliente a través de la plataforma.</li>
+        <li><strong>Cotización:</strong> el precio que propone el Profesional para una Solicitud.</li>
+        <li><strong>Precio del Servicio:</strong> el valor que el Cliente paga por el Servicio, fijado por el Profesional (o acordado entre las partes en la plataforma).</li>
+        <li><strong>Tarifa de Servicio:</strong> el valor que TalentHub cobra al Cliente por el uso de la plataforma y el procesamiento del pago, que se muestra por separado antes de pagar.</li>
     </ul>
 
-    <h2>3. Registro y cuenta</h2>
+    <h2 id="c2">2. Aceptación y capacidad</h2>
     <ul>
-        <li>Para usar la plataforma es necesario crear una cuenta con información veraz.</li>
-        <li>Los trabajadores deben proporcionar documentos de identificación, antecedentes y referencias verificables.</li>
-        <li>El usuario es responsable de mantener la confidencialidad de su contraseña.</li>
-        <li>TalentHub se reserva el derecho de desactivar cuentas que incumplan estos términos.</li>
+        <li>Debes ser mayor de 18 años y tener capacidad legal para obligarte. La plataforma no está dirigida a menores de edad.</li>
+        <li>La aceptación se hace marcando la casilla correspondiente al registrarte. Guardamos la evidencia de esa aceptación: fecha, hora, versión del documento y dirección IP.</li>
+        <li>Si actúas en nombre de una empresa, declaras tener facultades para representarla.</li>
+        <li>Aceptar estos términos no te obliga a aceptar la <a href="/privacidad">Política de Tratamiento de Datos Personales</a>, que se autoriza por separado, pero sin ella no podemos prestarte el servicio, porque necesitamos tus datos para operar.</li>
     </ul>
 
-    <h2>4. Obligaciones del cliente</h2>
+    <h2 id="c3">3. Qué es TalentHub y qué no es</h2>
     <ul>
-        <li>Proporcionar información precisa sobre el servicio que necesita (dirección, descripción, urgencia).</li>
-        <li>Estar presente o disponible en el lugar y hora acordados.</li>
-        <li>Realizar el pago por el medio acordado una vez completado el servicio.</li>
-        <li>Tratar al trabajador con respeto.</li>
-        <li>Calificar honestamente el servicio recibido.</li>
+        <li>TalentHub es un <strong>portal de contacto</strong>, en los términos del numeral 18 del artículo 5 de la Ley 1480 de 2011 (Estatuto del Consumidor), adicionado por la Ley 2439 de 2024: una plataforma electrónica que pone en contacto a Clientes y Profesionales, quienes concretan la relación de consumo directamente entre ellos.</li>
+        <li>El contrato de prestación del Servicio se celebra <strong>entre el Cliente y el Profesional</strong>. El Profesional es el proveedor del Servicio. TalentHub no presta el Servicio, no lo supervisa ni garantiza su resultado.</li>
+        <li>TalentHub ofrece herramientas: solicitud y cotización, mapa y asignación, chat, seguimiento, calificaciones, recaudo del pago y atención de reclamaciones.</li>
+        <li>TalentHub tiene, además, las obligaciones propias de un portal de contacto: informar de forma clara, atender y dar trazabilidad a las reclamaciones, y avisar de inmediato cuando un servicio no esté disponible.</li>
+        <li><strong>Independencia.</strong> Los Profesionales son trabajadores independientes. No existe contrato de trabajo, sociedad, agencia ni representación entre TalentHub y el Profesional. El Profesional decide si acepta o no cada Solicitud, su horario, sus herramientas y la forma de ejecutar el Servicio, y puede trabajar con otras plataformas.</li>
+        <li><strong>Normas especiales.</strong> Si por la naturaleza de un servicio (por ejemplo mensajería o reparto) la ley impone obligaciones especiales a las plataformas respecto de quienes lo prestan, TalentHub las cumplirá en lo que le corresponda.</li>
+        <li>TalentHub no garantiza que haya Profesionales disponibles en todas las zonas, horarios o categorías.</li>
     </ul>
 
-    <h2>5. Obligaciones del trabajador</h2>
+    <h2 id="c4">4. Registro, cuenta y seguridad</h2>
     <ul>
-        <li>Mantener actualizada su información personal, disponibilidad y ubicación.</li>
-        <li>Responder a las solicitudes de servicio en tiempo razonable.</li>
-        <li>Cumplir con el servicio acordado en la calidad y tiempo pactados.</li>
-        <li>Cobrar únicamente la tarifa publicada en su perfil.</li>
-        <li>Tratar al cliente con respeto y profesionalismo.</li>
-        <li>Contar con las herramientas necesarias para realizar su trabajo.</li>
+        <li>Debes dar información veraz, completa y actualizada, y mantenerla al día. Dar datos falsos es causa de suspensión.</li>
+        <li>La cuenta es personal e intransferible. Cada persona puede tener una sola cuenta por rol.</li>
+        <li>Eres responsable de tu contraseña y de lo que se haga con tu cuenta. Avísanos de inmediato si sospechas un acceso no autorizado.</li>
+        <li>Puedes activar la verificación en dos pasos (código de una aplicación autenticadora) desde la sección de seguridad de tu cuenta. Te recomendamos activarla, sobre todo si eres Profesional, porque protege los datos de cobro.</li>
+        <li>Podemos pedirte confirmar tu identidad, tu correo o tu teléfono antes de permitirte ciertas operaciones.</li>
     </ul>
 
-    <h2>6. Pagos</h2>
+    <h2 id="c5">5. Verificación de los profesionales</h2>
     <ul>
-        <li>Los métodos de pago disponibles son: Nequi, Daviplata y transferencia bancaria.</li>
-        <li>El precio del servicio es el publicado por el trabajador en su perfil (tarifa por hora).</li>
-        <li>TalentHub podrá cobrar una comisión por el uso de la plataforma, la cual será informada previamente.</li>
-        <li>Los pagos se realizan directamente entre cliente y trabajador a menos que se use la pasarela de pagos integrada.</li>
+        <li>Antes de activar a un Profesional revisamos la documentación que aporta: hoja de vida, documento de identidad, fotografía, antecedentes y referencias.</li>
+        <li>Esa revisión es un filtro de ingreso. <strong>No es una certificación</strong> de idoneidad, experiencia ni conducta futura, ni reemplaza tu propio criterio. Te recomendamos revisar el perfil y las calificaciones antes de aceptar a un Profesional.</li>
+        <li>El Profesional autoriza que usemos y conservemos esa documentación para verificarlo y para atender reclamaciones o requerimientos de autoridades, según la <a href="/privacidad">Política de Tratamiento de Datos Personales</a>.</li>
+        <li>Podemos repetir la verificación, pedir documentos actualizados o retirar a un Profesional cuando haya motivos razonables.</li>
     </ul>
 
-    <h2>7. Cancelaciones</h2>
+    <h2 id="c6">6. Obligaciones de los profesionales</h2>
     <ul>
-        <li>El cliente puede cancelar una solicitud en estado "pendiente" sin penalización.</li>
-        <li>Si el trabajador ya aceptó y está en camino, la cancelación puede generar un cargo.</li>
-        <li>El trabajador puede rechazar una solicitud sin penalización. La solicitud quedará disponible para otros profesionales.</li>
+        <li>Prestar el Servicio con la diligencia, calidad, seguridad y puntualidad acordadas, y contar con los conocimientos, permisos y herramientas que el Servicio requiera.</li>
+        <li>Cobrar solo el precio acordado en la plataforma. Cualquier cobro adicional (por ejemplo materiales) debe ser informado y aceptado por el Cliente antes de ejecutarse.</li>
+        <li><strong>Seguridad social.</strong> Como trabajador independiente, afiliarte y cotizar al Sistema de Seguridad Social Integral (salud, pensión y riesgos laborales) según la ley.</li>
+        <li><strong>Impuestos.</strong> Cumplir tus obligaciones tributarias, incluida la facturación o el documento que corresponda a tus ingresos. TalentHub no asume tus obligaciones fiscales.</li>
+        <li>Tratar al Cliente con respeto, respetar su domicilio y sus bienes, y no llevar personas ajenas al Servicio sin su autorización.</li>
+        <li>Mantener actualizados tus datos de contacto, disponibilidad, ubicación (si la compartes) y medio de pago.</li>
+        <li>No ceder tu cuenta ni dejar que otra persona preste el Servicio en tu nombre.</li>
+        <li>Guardar reserva de la información del Cliente y usarla solo para prestar el Servicio.</li>
     </ul>
 
-    <h2>8. Conducta prohibida</h2>
-    <p>Está prohibido para ambas partes:</p>
+    <h2 id="c7">7. Obligaciones de los clientes</h2>
     <ul>
-        <li>Proporcionar información falsa en el registro o durante el servicio.</li>
-        <li>Acoso, discriminación o violencia de cualquier tipo.</li>
-        <li>Solicitar o realizar servicios ilegales.</li>
-        <li>Intentar evadir la plataforma para evitar comisiones después de conectarse por TalentHub.</li>
-        <li>Crear múltiples cuentas para manipular calificaciones.</li>
+        <li>Dar información exacta sobre el Servicio (descripción, dirección, ciudad, urgencia) y sobre ti.</li>
+        <li>Estar disponible en el lugar y la hora acordados, y permitir un acceso seguro para trabajar.</li>
+        <li>Pagar el valor acordado por los medios habilitados en la plataforma.</li>
+        <li>Tratar al Profesional con respeto y no pedirle servicios ilegales ni riesgosos.</li>
+        <li>Calificar de forma honesta.</li>
     </ul>
 
-    <h2>9. Calificaciones y reseñas</h2>
+    <h2 id="c8">8. Cómo funciona una solicitud</h2>
+    <ol>
+        <li><strong>Solicitud.</strong> El Cliente describe el Servicio, la ubicación y si lo necesita ahora o programado. Puede elegir a un Profesional o dejar que se asigne el primero disponible.</li>
+        <li><strong>Aceptación.</strong> El Profesional acepta o rechaza. La Solicitud no genera obligación hasta que un Profesional la acepta.</li>
+        <li><strong>Cotización.</strong> Cuando el Servicio se cotiza, el Profesional propone un precio. El Cliente puede aceptarla, negociarla por el chat o rechazarla. Una Cotización aceptada obliga a las dos partes.</li>
+        <li><strong>Pago y ejecución.</strong> El Cliente paga el valor total mostrado. En el seguimiento se muestran códigos de inicio y de finalización del Servicio, que sirven para confirmar que el Servicio se inició y se terminó.</li>
+        <li><strong>Cambios de alcance.</strong> Si el trabajo real es distinto al descrito, las partes deben acordar el cambio por la plataforma antes de ejecutarlo. Lo que se acuerde y pague por fuera de la plataforma no tiene las protecciones de estos términos.</li>
+        <li><strong>Materiales.</strong> Salvo que la Cotización diga otra cosa, los materiales no están incluidos y se acuerdan aparte con el Profesional.</li>
+    </ol>
+
+    <h2 id="c9">9. Precio, tarifa de servicio y pagos</h2>
     <ul>
-        <li>Ambas partes pueden calificar al otro después de completar un servicio.</li>
-        <li>Las calificaciones deben ser honestas y basadas en la experiencia real.</li>
-        <li>TalentHub se reserva el derecho de eliminar reseñas ofensivas o fraudulentas.</li>
+        <li><strong>Antes de pagar</strong> verás por separado: el Precio del Servicio, la Tarifa de Servicio y el total. El total es el único valor que pagas, en pesos colombianos.</li>
+        <li>La <strong>Tarifa de Servicio</strong> es lo que cobra TalentHub por el uso de la plataforma y cubre los costos de procesamiento del pago. Incluye los impuestos que correspondan.</li>
+        <li>El <strong>Precio del Servicio</strong> pertenece al Profesional. TalentHub lo recauda por cuenta del Profesional a través de la pasarela de pagos Wompi y se lo transfiere a su medio de pago registrado, sin descontarle la Tarifa de Servicio, dentro de los cinco (5) días hábiles siguientes a la confirmación de finalización del Servicio, salvo retrasos ajenos a TalentHub (por ejemplo, fallas de la pasarela o del banco) o retenciones que la ley exija.</li>
+        <li>Los medios de pago disponibles son los que ofrezca la pasarela en cada momento (por ejemplo Nequi, Daviplata, PSE o tarjetas). TalentHub no almacena números de tarjeta ni claves bancarias: se ingresan en la pasarela.</li>
+        <li>El Profesional es responsable de registrar un medio de pago correcto. TalentHub no responde por transferencias hechas a los datos que el Profesional haya registrado.</li>
+        <li>TalentHub emite el comprobante o documento correspondiente a su Tarifa de Servicio conforme a la ley.</li>
+        <li>Si un pago es rechazado, revertido o desconocido (por ejemplo por fraude), podemos suspender el Servicio, retener la transferencia al Profesional mientras se aclara y tomar las medidas necesarias.</li>
+        <li>Pagar por fuera de la plataforma un servicio que se contactó por ella está prohibido (ver sección 14) y deja al Cliente sin las protecciones de reembolso y atención de reclamaciones.</li>
     </ul>
 
-    <h2>10. Limitación de responsabilidad</h2>
+    <h2 id="c10">10. Cancelaciones y reembolsos</h2>
     <ul>
-        <li>TalentHub no se hace responsable por daños, lesiones o pérdidas ocurridas durante la prestación del servicio.</li>
-        <li>TalentHub no garantiza la calidad del trabajo realizado por los profesionales.</li>
-        <li>La plataforma se proporciona "tal cual" sin garantías de disponibilidad continua.</li>
-        <li>En caso de disputas entre cliente y trabajador, TalentHub podrá mediar pero no está obligado a resolver conflictos.</li>
+        <li><strong>Antes de que un Profesional acepte,</strong> el Cliente puede cancelar la Solicitud sin costo.</li>
+        <li><strong>Después de la aceptación,</strong> si el Profesional ya se desplazó o reservó su tiempo, la plataforma podrá aplicar un cargo razonable de compensación. Ese cargo, su valor y sus condiciones se mostrarán al Cliente antes de que confirme la Solicitud.</li>
+        <li>El Profesional puede rechazar una Solicitud sin penalización. Las cancelaciones reiteradas después de aceptar pueden afectar su cuenta.</li>
+        <li><strong>Reembolsos.</strong> Si pagaste y el Servicio no se presta por causas atribuibles al Profesional o a TalentHub, te devolvemos el 100% de lo pagado. La devolución se hace dentro de un máximo de quince (15) días calendario, por el medio de pago que prefieras, contados desde que nos entregues los datos necesarios para hacerla.</li>
+        <li>Si tienes un inconveniente con un Servicio ya prestado, repórtalo lo antes posible por el canal de la sección 16. Mientras más pronto lo hagas, más fácil es verificar lo ocurrido. Esto no limita los plazos que la ley te da para ejercer tus derechos.</li>
     </ul>
 
-    <h2>11. Propiedad intelectual</h2>
-    <p>Todo el contenido de la plataforma (diseño, código, logos, textos) es propiedad de TalentHub y está protegido por las leyes de propiedad intelectual de Colombia.</p>
+    <h2 id="c11">11. Derecho de retracto</h2>
+    <ul>
+        <li>Como los Servicios se contratan a distancia, cuando la ley lo permita tienes derecho de retracto (artículo 47 de la Ley 1480 de 2011): puedes arrepentirte dentro de los cinco (5) días hábiles siguientes a la celebración del contrato y pedir la devolución de lo pagado, sin dar explicaciones.</li>
+        <li>El retracto aplica a los Servicios que, por su naturaleza, no deban consumirse o no hayan comenzado a ejecutarse antes de esos cinco días, por ejemplo un Servicio programado para una fecha posterior.</li>
+        <li><strong>No aplica</strong> a los Servicios cuya prestación haya comenzado con tu acuerdo. Al pedir un Servicio "ahora" o al aceptar que el Profesional lo inicie, entiendes y aceptas que su ejecución comienza de inmediato.</li>
+        <li>Para ejercerlo, envía tu solicitud por el canal de la sección 16 eligiendo el tipo "Retracto o devolución". Te devolvemos el dinero en un máximo de quince (15) días calendario, por el medio de pago que prefieras, una vez hayas dado los datos necesarios.</li>
+    </ul>
 
-    <h2>12. Modificaciones</h2>
-    <p>TalentHub puede modificar estos términos en cualquier momento. Los cambios se publicarán en esta página. El uso continuo de la plataforma después de una modificación implica la aceptación de los nuevos términos.</p>
+    <h2 id="c12">12. Garantía y calidad del servicio</h2>
+    <ul>
+        <li>El Profesional, como proveedor, responde por la calidad e idoneidad del Servicio y por la garantía legal que establece el Estatuto del Consumidor, que no puedes perder por estos términos.</li>
+        <li>Si el Servicio tiene defectos o no cumple lo acordado, repórtalo por el canal de la sección 16. Intervendremos para ayudar a resolverlo: que el Profesional corrija el trabajo, vuelva a prestarlo o, si no es posible, que se devuelva el dinero que corresponda.</li>
+        <li>Las condiciones de garantía específicas que ofrezca un Profesional deben quedar escritas en la plataforma (por ejemplo en la Cotización o el chat).</li>
+    </ul>
 
-    <h2>13. Ley aplicable</h2>
-    <p>Estos términos se rigen por las leyes de la República de Colombia. Cualquier controversia se resolverá ante los tribunales competentes de la ciudad de Bogotá D.C.</p>
+    <h2 id="c13">13. Calificaciones, chat y contenido</h2>
+    <ul>
+        <li>Después de un Servicio, el Cliente puede calificar y comentar. Debe ser tu experiencia real, sin lenguaje ofensivo ni datos personales de terceros.</li>
+        <li>El chat existe para coordinar el Servicio. Por seguridad, el sistema detecta y bloquea el intercambio de teléfonos, enlaces y correos, y puede avisarnos de los intentos.</li>
+        <li>Podemos conservar los mensajes y revisarlos cuando haya una reclamación, una sospecha de fraude o una orden de autoridad.</li>
+        <li>Nos otorgas una licencia no exclusiva y gratuita para mostrar las calificaciones y el contenido que subas (como tu foto de perfil) dentro de la plataforma, mientras tu cuenta esté activa. Puedes pedir que lo retiremos.</li>
+        <li>Podemos eliminar calificaciones o contenido falso, ofensivo, ilegal o que infrinja derechos de terceros.</li>
+    </ul>
 
-    <h2>14. Contacto</h2>
-    <p>Para consultas sobre estos términos, escríbenos a:</p>
-    <p><strong>Email:</strong> jhoniercespedes32@gmail.com</p>
+    <h2 id="c14">14. Conducta prohibida</h2>
+    <ul>
+        <li>Dar información falsa, suplantar a otra persona o crear varias cuentas para manipular calificaciones.</li>
+        <li>Acoso, discriminación, amenazas, violencia o cualquier conducta sexual no consentida.</li>
+        <li>Pedir o prestar servicios ilegales, o que pongan en riesgo la vida o integridad de alguien.</li>
+        <li>Sacar la relación de la plataforma una vez conectados por ella (por ejemplo, para evitar la Tarifa de Servicio o para cobrar por fuera).</li>
+        <li>Usar la plataforma para fraude, lavado de activos, spam, ofrecer otros productos o recopilar datos de otros usuarios.</li>
+        <li>Intentar acceder sin autorización, vulnerar la seguridad, hacer ingeniería inversa o sobrecargar el servicio.</li>
+        <li>Grabar o publicar imágenes de personas o domicilios sin su consentimiento.</li>
+    </ul>
 
-    <a href="/" class="back-link">← Volver al inicio</a>
-</div>
+    <h2 id="c15">15. Seguridad personal y emergencias</h2>
+    <ul>
+        <li>TalentHub <strong>no es un servicio de emergencias</strong>. Ante una situación de peligro llama a la línea 123 u otra autoridad competente.</li>
+        <li>Recomendamos atender al Profesional en un lugar visible, verificar que la persona que llega corresponda con el perfil de la plataforma y no entregar dinero ni objetos fuera del acuerdo.</li>
+        <li>Si algo sale mal o te sientes inseguro, repórtalo por el canal de la sección 16 y, cuando corresponda, ante las autoridades. Colaboraremos con ellas dentro de lo que la ley exige.</li>
+    </ul>
+
+    <h2 id="c16">16. Peticiones, quejas y reclamos</h2>
+    <ul>
+        <li>Puedes enviarnos peticiones, quejas, reclamos, sugerencias, solicitudes de retracto y consultas o reclamos sobre datos personales en <a href="/pqrs">la sección "Peticiones, quejas y reclamos"</a> de la plataforma.</li>
+        <li>Al enviar, recibes un <strong>número de radicado</strong> con la fecha y la hora de recepción, y puedes consultar el estado en <a href="/pqrs/consulta">la página de consulta</a> con tu radicado y correo.</li>
+        <li>Respondemos dentro de los quince (15) días hábiles siguientes. Para consultas y reclamos sobre datos personales aplican los plazos de la <a href="/privacidad">Política de Tratamiento de Datos Personales</a>.</li>
+        <li>Si no estás conforme con nuestra respuesta, puedes acudir a la <strong>Superintendencia de Industria y Comercio (SIC)</strong>, autoridad de protección al consumidor y de datos personales: <a href="{{ legal.sic_url }}" target="_blank" rel="noopener">{{ legal.sic_url }}</a>.</li>
+        <li>También puedes escribirnos a {{ legal.email }}, pero el canal de la plataforma es el que garantiza radicado y seguimiento.</li>
+    </ul>
+
+    <h2 id="c17">17. Responsabilidad</h2>
+    <ul>
+        <li>TalentHub responde por sus propias obligaciones: operar la plataforma con diligencia, informar de forma clara, recaudar y transferir los pagos, y atender las reclamaciones.</li>
+        <li>Salvo lo que la ley no permita excluir, TalentHub no responde por la ejecución, calidad o resultado del Servicio, ni por daños o pérdidas que el Profesional o el Cliente causen a la otra parte o a terceros. La responsabilidad es de quien los causa, y el Cliente tiene frente al Profesional los derechos del consumidor.</li>
+        <li>La plataforma se ofrece según disponibilidad. No garantizamos que funcione sin interrupciones ni errores. Podemos suspenderla para mantenimiento, por seguridad o por causas ajenas a nuestra voluntad (fallas de internet, de proveedores o fuerza mayor).</li>
+        <li>Nada en estos términos limita la responsabilidad de TalentHub por dolo o culpa grave, ni los derechos irrenunciables que la ley reconoce a los consumidores. Si alguna cláusula contradijera esos derechos, no se aplicará en lo que los afecte.</li>
+        <li>Cada Usuario responde por los daños que cause por incumplir estos términos o la ley.</li>
+    </ul>
+
+    <h2 id="c18">18. Suspensión y terminación</h2>
+    <ul>
+        <li>Puedes cerrar tu cuenta cuando quieras ("Darme de baja" desde tu panel). Las obligaciones pendientes (por ejemplo, un Servicio en curso o un pago) deben cumplirse.</li>
+        <li>Podemos suspender o cerrar una cuenta, con aviso cuando sea posible, si incumples estos términos, hay riesgo para otros usuarios, sospecha de fraude, o una orden de autoridad. Te daremos oportunidad de explicar lo ocurrido salvo que haya un riesgo inmediato.</li>
+        <li>Al cerrarse la cuenta conservamos la información que la ley nos obliga o nos permite guardar, según la Política de Tratamiento de Datos Personales.</li>
+    </ul>
+
+    <h2 id="c19">19. Propiedad intelectual</h2>
+    <p>La marca TalentHub, el software, el diseño y los contenidos de la plataforma son de su titular o están licenciados a él, y están protegidos por las normas de propiedad intelectual. Te damos una licencia limitada, personal, revocable y no transferible para usar la plataforma según estos términos. No puedes copiarla, modificarla ni explotarla comercialmente sin autorización escrita.</p>
+
+    <h2 id="c20">20. Datos personales</h2>
+    <p>Tratamos tus datos conforme a la Ley 1581 de 2012 y sus normas reglamentarias. Para saber qué datos recolectamos, para qué, con quién los compartimos y cómo ejercer tus derechos de conocer, actualizar, rectificar y suprimir, lee nuestra <a href="/privacidad">Política de Tratamiento de Datos Personales</a>.</p>
+
+    <h2 id="c21">21. Cambios a estos términos</h2>
+    <ul>
+        <li>Podemos actualizar estos términos por cambios legales, de la plataforma o del negocio. Cada versión tiene un identificador y una fecha de vigencia.</li>
+        <li>Los cambios sustanciales se informarán con anticipación razonable por la plataforma o por correo. Si no estás de acuerdo, puedes cerrar tu cuenta antes de que entren en vigor. Usar la plataforma después implica aceptar la nueva versión; cuando la ley lo exija, te pediremos aceptarla de nuevo.</li>
+        <li>Los cambios no afectan los Servicios ya contratados ni los derechos adquiridos antes de la nueva versión.</li>
+    </ul>
+
+    <h2 id="c22">22. Ley aplicable y controversias</h2>
+    <ul>
+        <li>Estos términos se rigen por las leyes de la República de Colombia.</li>
+        <li>Intentaremos resolver primero cualquier diferencia de forma directa por el canal de la sección 16.</li>
+        <li>Si no se resuelve, los consumidores pueden acudir a la Superintendencia de Industria y Comercio o a los jueces competentes de Colombia, incluido el del lugar de su domicilio, conforme a la ley. Ninguna cláusula de estos términos limita ese derecho.</li>
+        <li>Las controversias entre Cliente y Profesional sobre la ejecución del Servicio son entre ellos; TalentHub podrá mediar sin que ello la haga parte del contrato de Servicio.</li>
+    </ul>
+
+    <h2 id="c23">23. Disposiciones generales</h2>
+    <ul>
+        <li><strong>Integralidad.</strong> Estos términos y la Política de Tratamiento de Datos Personales son el acuerdo completo entre tú y TalentHub sobre el uso de la plataforma.</li>
+        <li><strong>Divisibilidad.</strong> Si una cláusula se declara ineficaz o inválida, las demás siguen vigentes.</li>
+        <li><strong>No renuncia.</strong> Que no exijamos un derecho en algún momento no significa que renunciemos a él.</li>
+        <li><strong>Cesión.</strong> No puedes ceder tu cuenta ni tus derechos. TalentHub puede ceder su posición a quien continúe la operación de la plataforma, avisándote.</li>
+        <li><strong>Notificaciones.</strong> Te notificamos por la plataforma, por el correo o por el teléfono registrados. Mantén tus datos actualizados.</li>
+        <li><strong>Idioma.</strong> Estos términos están redactados en español.</li>
+    </ul>
+
+    <div class="links-legal">
+        <a href="/privacidad">Política de Tratamiento de Datos Personales</a>
+        <a href="/pqrs">Peticiones, quejas y reclamos</a>
+        <a href="{{ legal.sic_url }}" target="_blank" rel="noopener">Superintendencia de Industria y Comercio</a>
+    </div>
+    <a href="/" class="back-link">&larr; Volver al inicio</a>
+</main>
 </body>
 </html>
