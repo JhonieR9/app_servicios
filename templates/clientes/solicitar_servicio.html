@@ -2066,7 +2066,7 @@ async function cargarMapaProfesionales() {
                                     display:flex;align-items:center;justify-content:center;
                                     font-size:1rem;font-weight:800;color:white;overflow:hidden">
                             <img src="/trabajador/archivo/${t.id}/perfil" 
-                                 onerror="this.remove();this.parentElement.textContent='${iniciales}'"
+                                 onerror="var p=this.parentElement;this.remove();p.textContent='${iniciales}'"
                                  style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
                         </div>
                         <div style="flex:1;min-width:0">
@@ -2173,7 +2173,7 @@ function selProf(id, nombre, estrellas, distancia) {
         const iniciales = (nombre || 'P').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
         const avatarEl = document.getElementById('profSelAvatar');
         avatarEl.innerHTML = `<img src="/trabajador/archivo/${id}/perfil" 
-            onerror="this.remove();this.parentElement.textContent='${iniciales}'"
+            onerror="var p=this.parentElement;this.remove();p.textContent='${iniciales}'"
             style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
         document.getElementById('profSelNombre').textContent = nombre;
         document.getElementById('profSelMeta').textContent = (estrellas || '') + (distancia ? ' · ' + distancia + ' km' : '');

@@ -418,7 +418,7 @@
         document.getElementById('bsContent').innerHTML = `
             <div class="bs-header">
                 <div class="bs-avatar">
-                    <img src="/trabajador/archivo/${t.id}/perfil" onerror="this.remove();this.parentElement.textContent='${iniciales}'">
+                    <img src="/trabajador/archivo/${t.id}/perfil" onerror="var p=this.parentElement;this.remove();p.textContent='${iniciales}'">
                 </div>
                 <div style="flex:1;min-width:0">
                     <div class="bs-name">${t.nombre}</div>

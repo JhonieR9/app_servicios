@@ -56,7 +56,7 @@
         .tab-badge.show { display:inline; }
 
         /* CONTENT */
-        .content { max-width:600px;margin:0 auto;padding:16px; }
+        .content { max-width:600px;margin:0 auto;padding:16px 16px 110px; }
 
         /* EMPTY */
         .empty {
@@ -206,6 +206,42 @@
         }
         .btn-repetir:hover { transform:scale(1.05); }
 
+        /* HISTORIAL (v2): filtros, meses, tarjetas legibles en pantallas angostas */
+        .hist-filtros { display:flex; gap:8px; flex-wrap:wrap; margin:2px 0 4px; }
+        .hist-chip {
+            border:2px solid #e2e8f0; background:#fff; color:#64748b; border-radius:99px;
+            padding:7px 14px; font-size:0.8rem; font-weight:700; cursor:pointer; font-family:'Lato',sans-serif;
+        }
+        .hist-chip.on { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border-color:transparent; }
+        .hist-chip:focus-visible, .btn-vermas:focus-visible { outline:3px solid rgba(102,126,234,0.55); outline-offset:2px; }
+        .card-hist { align-items:flex-start; }
+        .hist-avatar {
+            width:48px; height:48px; border-radius:14px; flex-shrink:0; overflow:hidden;
+            display:flex; align-items:center; justify-content:center; font-size:1.4rem;
+        }
+        .hist-avatar.completada { background:linear-gradient(135deg,#dcfce7,#bbf7d0); }
+        .hist-avatar.cancelada { background:#f1f5f9; filter:grayscale(1); opacity:.8; }
+        .hist-avatar img { width:100%; height:100%; object-fit:cover; }
+        .hist-titulo {
+            white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+            overflow:hidden; line-height:1.3;
+        }
+        .hist-linea { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin-top:6px; }
+        .hist-fecha { font-size:0.78rem; color:#64748b; }
+        .hist-meta { font-size:0.8rem; color:#64748b; margin-top:4px; }
+        .hist-meta i { color:#94a3b8; }
+        .hist-badge { display:inline-flex; align-items:center; gap:5px; }
+        .hist-badge.completada { background:#dcfce7; color:#166534; }
+        .hist-badge.cancelada { background:#f1f5f9; color:#64748b; }
+        .hist-pro { font-size:0.8rem; color:#475569; margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+        .hist-acciones { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+        .btn-vermas {
+            display:block; width:100%; margin:6px 0 4px; padding:13px; border:2px solid #c7d2fe; background:#fff;
+            color:#4338ca; border-radius:14px; font-weight:700; font-size:0.88rem; cursor:pointer; font-family:'Lato',sans-serif;
+        }
+        .btn-vermas:hover { background:#eef2ff; }
+        body.vista-historial #cf-burbuja, body.vista-historial #cf-ventana { display:none !important; }
+
         /* Sección label */
         .section-label {
             font-size:0.72rem;font-weight:700;color:#94a3b8;
@@ -250,7 +286,7 @@
 <!-- TABS -->
 <div class="tabs">
     <button class="tab-btn active" id="tabActivas" onclick="mostrarTab('activas')">
-        <i class="bi bi-clock"></i> En curso
+        <i class="bi bi-activity"></i> En curso
         <span class="tab-badge" id="badgeActivas"></span>
     </button>
     <button class="tab-btn" id="tabHistorial" onclick="mostrarTab('historial')">
@@ -319,6 +355,7 @@
 
     function mostrarTab(tab) {
         tabActual = tab;
+        document.body.classList.toggle('vista-historial', tab === 'historial');
         ['activas','historial'].forEach(t => {
             document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
             document.getElementById('contenido' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? 'block' : 'none';
@@ -538,54 +575,128 @@
         </div>`;
     }
 
+    // ── HISTORIAL ─────────────────────────────────────────────────
+    const MESES_LARGO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const MESES_CORTO = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const HIST_PASO = 15;
+    let _hist = [], _histFiltro = null, _histVisibles = HIST_PASO;
+
+    function escH(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function parseFecha(f) {
+        if (!f) return null;
+        const d = new Date(String(f).replace(' ', 'T'));
+        return isNaN(d.getTime()) ? null : d;
+    }
+    function fmtFechaHist(f) {
+        const d = parseFecha(f);
+        if (!d) return '';
+        const h = d.getHours(), m = String(d.getMinutes()).padStart(2, '0');
+        const anio = d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : '';
+        return `${d.getDate()} ${MESES_CORTO[d.getMonth()]}${anio}, ${h % 12 || 12}:${m} ${h >= 12 ? 'p. m.' : 'a. m.'}`;
+    }
+    function tituloCiudad(c) {
+        if (!c) return '';
+        const peq = ['de', 'del', 'la', 'las', 'los', 'y'];
+        return String(c).trim().toLowerCase().split(/\s+/)
+            .map((w, i) => (i > 0 && peq.includes(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+    function mesClave(f) { const d = parseFecha(f); return d ? d.getFullYear() * 100 + d.getMonth() : 0; }
+    function mesTitulo(f) { const d = parseFecha(f); return d ? `${MESES_LARGO[d.getMonth()]} ${d.getFullYear()}` : 'Sin fecha'; }
+
     function renderHistorialCard(s) {
         const emoji = CAT_EMOJI[s.nombre_categoria] || '🔧';
-        const estado = s.estado || 'completada';
-        const trabajadorInfo = s.nombre_trabajador
-            ? `<div style="font-size:0.75rem;color:#64748b;margin-top:4px;display:flex;align-items:center;gap:6px">
-                   👷 <strong style="color:#374151">${s.nombre_trabajador}</strong>
-                   ${s.id_trabajador
-                       ? `<a href="/trabajador/perfil/${s.id_trabajador}"
-                             style="color:#667eea;font-weight:700;text-decoration:none;font-size:0.72rem">
-                              Ver perfil →
-                          </a>`
-                       : ''}
+        const ok = s.estado === 'completada';
+        const estado = ok ? 'completada' : 'cancelada';
+        const titulo = escH(s.titulo || s.nombre_categoria || 'Solicitud');
+        const ciudad = tituloCiudad(s.ciudad);
+        const fecha = fmtFechaHist(s.fecha_solicitud);
+        const precio = parseFloat(s.precio_final || 0);
+
+        // La foto del profesional solo se muestra en los servicios completados
+        const avatar = (ok && s.id_trabajador)
+            ? `<img src="/trabajador/archivo/${Number(s.id_trabajador)}/perfil" alt=""
+                    onerror="var p=this.parentElement;this.remove();p.textContent='${emoji}'">`
+            : emoji;
+
+        const pro = (ok && s.nombre_trabajador)
+            ? `<div class="hist-pro"><i class="bi bi-person-fill"></i> <strong style="color:#374151">${escH(s.nombre_trabajador)}</strong>
+                   ${s.id_trabajador ? `<a href="/trabajador/perfil/${Number(s.id_trabajador)}" style="color:#667eea;font-weight:700;text-decoration:none;font-size:0.78rem">Ver perfil →</a>` : ''}
                </div>`
             : '';
-        const precio = parseFloat(s.precio_final || 0);
         const precioHtml = precio > 0
-            ? `<div style="font-size:0.82rem;font-weight:800;color:#059669;margin-top:4px">💰 $${precio.toLocaleString('es-CO')}</div>`
+            ? `<div style="font-size:0.88rem;font-weight:800;color:#059669;margin-top:6px">$${precio.toLocaleString('es-CO')}</div>`
             : '';
+
+        let acciones = '';
+        if (ok) {
+            acciones = `<div class="hist-acciones">
+                <button class="btn-repetir" data-cat="${escH(encodeURIComponent(s.nombre_categoria || ''))}" onclick="repetir(this.dataset.cat)">↺ Repetir</button>
+                ${s.id_trabajador ? `<button class="btn-repetir" style="background:linear-gradient(135deg,#f59e0b,#d97706)"
+                        data-nombre="${escH(s.nombre_trabajador || '')}"
+                        onclick="abrirCalificar(${Number(s.id_solicitud)},${Number(s.id_trabajador)},this.dataset.nombre)">⭐ Calificar</button>` : ''}
+            </div>`;
+        }
+
         return `
-        <div class="card-hist">
-            <div style="width:48px;height:48px;border-radius:14px;
-                        background:${estado === 'completada' ? 'linear-gradient(135deg,#dcfce7,#bbf7d0)' : 'linear-gradient(135deg,#fee2e2,#fecaca)'};
-                        display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;overflow:hidden">
-                ${s.id_trabajador 
-                    ? `<img src="/trabajador/archivo/${s.id_trabajador}/perfil" 
-                           onerror="this.remove();this.parentElement.textContent='${emoji}'"
-                           style="width:100%;height:100%;object-fit:cover;border-radius:14px">`
-                    : emoji}
-            </div>
+        <div class="card-hist ${estado}">
+            <div class="hist-avatar ${estado}">${avatar}</div>
             <div class="hist-info">
-                <div class="hist-titulo">${s.titulo || s.nombre_categoria || 'Solicitud'}</div>
-                <div class="hist-meta">📍 ${s.ciudad || ''} · 📅 ${s.fecha_solicitud || ''}</div>
-                ${trabajadorInfo}
-                ${precioHtml}
-            </div>
-            <div class="hist-right">
-                <span class="hist-badge ${estado}">${estado === 'completada' ? '✅ Listo' : '❌ Cancelado'}</span>
-                ${estado === 'completada'
-                    ? `<button class="btn-repetir" onclick="repetir('${encodeURIComponent(s.nombre_categoria||'')}')">↺ Repetir</button>`
-                    : ''}
-                ${estado === 'completada' && s.id_trabajador
-                    ? `<button class="btn-repetir" style="background:linear-gradient(135deg,#f59e0b,#d97706)"
-                               onclick="abrirCalificar(${s.id_solicitud},${s.id_trabajador},'${(s.nombre_trabajador||'').replace(/'/g,"\\'")}')">
-                           ⭐ Calificar
-                       </button>`
-                    : ''}
+                <div class="hist-titulo">${titulo}</div>
+                <div class="hist-linea">
+                    <span class="hist-badge ${estado}"><i class="bi ${ok ? 'bi-check-circle-fill' : 'bi-x-circle'}"></i> ${ok ? 'Completado' : 'Cancelado'}</span>
+                    ${fecha ? `<span class="hist-fecha">${fecha}</span>` : ''}
+                </div>
+                ${ciudad ? `<div class="hist-meta"><i class="bi bi-geo-alt-fill"></i> ${escH(ciudad)}</div>` : ''}
+                ${pro}${precioHtml}${acciones}
             </div>
         </div>`;
+    }
+
+    function renderHistorial(lista) {
+        _hist = lista.slice().sort((x, y) => {
+            const a = parseFecha(x.fecha_solicitud), b = parseFecha(y.fecha_solicitud);
+            return (b ? b.getTime() : 0) - (a ? a.getTime() : 0);
+        });
+        // La primera vez se muestran los completados (lo que el cliente busca); si no hay, todos
+        if (_histFiltro === null) {
+            _histFiltro = _hist.some(s => s.estado === 'completada') ? 'completada' : 'todos';
+        }
+        pintarHistorial();
+    }
+
+    function filtrarHist(f) { _histFiltro = f; _histVisibles = HIST_PASO; pintarHistorial(); }
+    function verMasHist() { _histVisibles += HIST_PASO; pintarHistorial(); }
+
+    function pintarHistorial() {
+        const chEl = document.getElementById('contenidoHistorial');
+        const comp = _hist.filter(s => s.estado === 'completada').length;
+        const canc = _hist.length - comp;
+        const filtradas = _hist.filter(s => _histFiltro === 'todos' || s.estado === _histFiltro);
+        const visibles = filtradas.slice(0, _histVisibles);
+
+        const chip = (f, txt, n) =>
+            `<button type="button" class="hist-chip ${_histFiltro === f ? 'on' : ''}" aria-pressed="${_histFiltro === f}" onclick="filtrarHist('${f}')">${txt} (${n})</button>`;
+        let html = `<div class="hist-filtros">${chip('todos', 'Todos', _hist.length)}${chip('completada', 'Completados', comp)}${chip('cancelada', 'Cancelados', canc)}</div>`;
+
+        if (!visibles.length) {
+            html += `<div class="empty"><div class="empty-icon">📋</div><p>No hay solicitudes en esta vista</p></div>`;
+        } else {
+            let mesActual = null;
+            visibles.forEach(s => {
+                const clave = mesClave(s.fecha_solicitud);
+                if (clave !== mesActual) {
+                    mesActual = clave;
+                    html += `<div class="section-label">${mesTitulo(s.fecha_solicitud)}</div>`;
+                }
+                html += renderHistorialCard(s);
+            });
+            if (filtradas.length > visibles.length) {
+                html += `<button type="button" class="btn-vermas" onclick="verMasHist()">Ver más (${filtradas.length - visibles.length})</button>`;
+            }
+        }
+        chEl.innerHTML = html;
     }
 
     async function cargarSolicitudes() {
@@ -637,7 +748,7 @@
             document.getElementById('topSub').textContent =
                 (activas.length + pendPago.length) > 0
                     ? `${activas.length + pendPago.length} servicio${(activas.length + pendPago.length) > 1 ? 's' : ''} en curso`
-                    : `${historial.length} servicio${historial.length !== 1 ? 's' : ''} en historial`;
+                    : `${historial.length} solicitud${historial.length !== 1 ? 'es' : ''} en historial`;
 
             // Activas
             const caEl = document.getElementById('contenidoActivas');
@@ -673,11 +784,10 @@
                     <div class="empty">
                         <div class="empty-icon">📋</div>
                         <p>Sin historial aún</p>
-                        <p class="sub">Aquí aparecerán tus servicios completados</p>
+                        <p class="sub">Aquí aparecerán tus solicitudes terminadas o canceladas</p>
                     </div>`;
             } else {
-                chEl.innerHTML = `<div class="section-label">Completados · ${historial.length} servicios</div>` +
-                    historial.map(renderHistorialCard).join('');
+                renderHistorial(historial);
             }
 
         } catch(e) {

@@ -273,7 +273,7 @@
         <div class="avatar-wrap">
             <div class="avatar-circle" onclick="ampliarFoto()" style="cursor:pointer">
                 <img src="/trabajador/archivo/{{ perfil.id_persona }}/perfil"
-                     onerror="this.remove();this.parentElement.textContent='{{ iniciales }}'">
+                     onerror="var p=this.parentElement;this.remove();p.textContent='{{ iniciales }}'">
             </div>
             <div class="avatar-info">
                 <div class="worker-name">{{ perfil.nombre_completo }}</div>
