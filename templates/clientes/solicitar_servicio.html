@@ -859,6 +859,7 @@
     </form>
 </div>
 
+<script src="/static/js/catalogo-servicios.js"></script>
 <script>
 // STATE
 let currentStep = 1;
@@ -901,61 +902,7 @@ let selectedProblem = '';
     }
 })();
 
-// Iconos Bootstrap Icons + color de fondo por categoría
-const CAT_CONFIG = {
-    'Plomería':           { bg:'#dbeafe', color:'#2563eb', icon:'bi-droplet-fill' },
-    'Plomeria':           { bg:'#dbeafe', color:'#2563eb', icon:'bi-droplet-fill' },
-    'Electricidad':       { bg:'#fef9c3', color:'#ca8a04', icon:'bi-lightning-charge-fill' },
-    'Limpieza':           { bg:'#dcfce7', color:'#16a34a', icon:'bi-stars' },
-    'Carpintería':        { bg:'#ffedd5', color:'#ea580c', icon:'bi-hammer' },
-    'Carpinteria':        { bg:'#ffedd5', color:'#ea580c', icon:'bi-hammer' },
-    'Pintura':            { bg:'#fce7f3', color:'#db2777', icon:'bi-brush-fill' },
-    'Jardinería':         { bg:'#dcfce7', color:'#15803d', icon:'bi-tree-fill' },
-    'Jardineria':         { bg:'#dcfce7', color:'#15803d', icon:'bi-tree-fill' },
-    'Cerrajería':         { bg:'#f3e8ff', color:'#7c3aed', icon:'bi-key-fill' },
-    'Cerrajeria':         { bg:'#f3e8ff', color:'#7c3aed', icon:'bi-key-fill' },
-    'Mudanza':            { bg:'#fef3c7', color:'#d97706', icon:'bi-box-seam-fill' },
-    'Construcción':       { bg:'#ffedd5', color:'#c2410c', icon:'bi-building-fill' },
-    'Construccion':       { bg:'#ffedd5', color:'#c2410c', icon:'bi-building-fill' },
-    'Vidriería':          { bg:'#e0f2fe', color:'#0284c7', icon:'bi-window' },
-    'Vidrieria':          { bg:'#e0f2fe', color:'#0284c7', icon:'bi-window' },
-    'Impermeabilización': { bg:'#cffafe', color:'#0891b2', icon:'bi-shield-fill-check' },
-    'Impermeabilizacion': { bg:'#cffafe', color:'#0891b2', icon:'bi-shield-fill-check' },
-    'Lavandería':         { bg:'#ede9fe', color:'#6d28d9', icon:'bi-basket2-fill' },
-    'Lavanderia':         { bg:'#ede9fe', color:'#6d28d9', icon:'bi-basket2-fill' },
-    'Control de plagas':  { bg:'#fef9c3', color:'#a16207', icon:'bi-bug-fill' },
-    'Tecnología':         { bg:'#dbeafe', color:'#1d4ed8', icon:'bi-laptop-fill' },
-    'Tecnologia':         { bg:'#dbeafe', color:'#1d4ed8', icon:'bi-laptop-fill' },
-    'Electrodomésticos':  { bg:'#fce7f3', color:'#be185d', icon:'bi-plug-fill' },
-    'Electrodomesticos':  { bg:'#fce7f3', color:'#be185d', icon:'bi-plug-fill' },
-    'CCTV y Alarmas':     { bg:'#f1f5f9', color:'#475569', icon:'bi-camera-video-fill' },
-    'Transporte':         { bg:'#fef3c7', color:'#b45309', icon:'bi-truck-front-fill' },
-    'Mecánica':           { bg:'#f3f4f6', color:'#374151', icon:'bi-gear-fill' },
-    'Mecanica':           { bg:'#f3f4f6', color:'#374151', icon:'bi-gear-fill' },
-    'Salud':              { bg:'#fee2e2', color:'#dc2626', icon:'bi-heart-pulse-fill' },
-    'Belleza':            { bg:'#fdf2f8', color:'#c026d3', icon:'bi-scissors' },
-    'Gastronomía':        { bg:'#fff7ed', color:'#ea580c', icon:'bi-egg-fried' },
-    'Gastronomia':        { bg:'#fff7ed', color:'#ea580c', icon:'bi-egg-fried' },
-    'Eventos':            { bg:'#fdf4ff', color:'#a21caf', icon:'bi-balloon-fill' },
-    'Fotografía':         { bg:'#f0fdf4', color:'#15803d', icon:'bi-camera-fill' },
-    'Fotografia':         { bg:'#f0fdf4', color:'#15803d', icon:'bi-camera-fill' },
-    'Contabilidad':       { bg:'#ecfdf5', color:'#059669', icon:'bi-calculator-fill' },
-    'Diseño':             { bg:'#fdf4ff', color:'#9333ea', icon:'bi-palette-fill' },
-    'Diseno':             { bg:'#fdf4ff', color:'#9333ea', icon:'bi-palette-fill' },
-    'Mensajería':         { bg:'#eff6ff', color:'#3b82f6', icon:'bi-send-fill' },
-    'Mensajeria':         { bg:'#eff6ff', color:'#3b82f6', icon:'bi-send-fill' },
-    'Idiomas':            { bg:'#f0f9ff', color:'#0369a1', icon:'bi-translate' },
-    'Masajes':            { bg:'#fdf2f8', color:'#db2777', icon:'bi-person-arms-up' },
-    'Veterinaria':        { bg:'#f0fdf4', color:'#16a34a', icon:'bi-heart-pulse' },
-    'Mascotas':           { bg:'#fef9c3', color:'#92400e', icon:'bi-emoji-heart-eyes' },
-    'Educación':          { bg:'#fef9c3', color:'#854d0e', icon:'bi-book-fill' },
-    'Educacion':          { bg:'#fef9c3', color:'#854d0e', icon:'bi-book-fill' },
-    'Reparaciones Locativas': { bg:'#f0fdf4', color:'#166534', icon:'bi-house-gear-fill' },
-    'Psicología':         { bg:'#fce7f3', color:'#9333ea', icon:'bi-person-hearts' },
-    'Psicologia':         { bg:'#fce7f3', color:'#9333ea', icon:'bi-person-hearts' },
-    'Derecho':            { bg:'#ede9fe', color:'#4338ca', icon:'bi-bank2' },
-};
-const CAT_DEFAULT = { bg:'#f1f5f9', color:'#64748b', icon:'bi-tools' };
+// CAT_CONFIG y CHIPS viven ahora en /static/js/catalogo-servicios.js (compartido con el buscador del inicio)
 
 // Cargar categorías dinámicamente desde la base de datos
 async function cargarCategorias() {
@@ -1001,14 +948,26 @@ async function cargarCategorias() {
             document.getElementById('verMasTexto').textContent = `Ver más categorías (${extras.length})`;
         }
 
-        // Pre-seleccionar si viene de URL
-        const catURL = new URLSearchParams(window.location.search).get('categoria');
+        // Pre-seleccionar si viene de URL (buscador del inicio o categorias rapidas)
+        const qs = new URLSearchParams(window.location.search);
+        const catURL = qs.get('categoria');
         if (catURL) {
-            document.querySelectorAll('.cat-item').forEach(item => {
-                if (item.querySelector('.name').textContent === catURL) {
-                    item.click();
+            const objetivo = Catalogo.foldTexto(catURL).trim();
+            const item = Array.from(document.querySelectorAll('.cat-item'))
+                .find(el => Catalogo.foldTexto(el.querySelector('.name').textContent).trim() === objetivo);
+            if (item) {
+                if (item.closest('#catGridExtra')) toggleVerMas();   // que la categoria elegida quede a la vista
+                item.click();
+                const probURL = qs.get('problema');
+                if (probURL) {
+                    const buscado = Catalogo.foldTexto(probURL).trim();
+                    const chip = Array.from(document.querySelectorAll('#chipsContainer .chip'))
+                        .find(el => Catalogo.foldTexto(el.textContent).trim() === buscado);
+                    if (chip) { chip.click(); goStep(3); } else { goStep(2); }
+                } else if (qs.get('paso') === '2') {
+                    goStep(2);
                 }
-            });
+            }
         }
     } catch(e) {
         console.error('Error cargando categorías:', e);
@@ -1041,42 +1000,6 @@ function toggleVerMas() {
 // Cargar al iniciar
 cargarCategorias();
 
-// CHIPS PER CATEGORY
-const CHIPS = {
-    'Plomeria':              ['Tubería rota','Goteras','Instalación nueva','Baño tapado','Otro'],
-    'Electricidad':          ['Sin luz','Corto circuito','Instalación','Toma dañada','Otro'],
-    'Limpieza':              ['Casa completa','Oficina','Post-obra','Solo baños','Otro'],
-    'Carpinteria':           ['Mueble roto','Puerta dañada','Instalación','Closet','Otro'],
-    'Pintura':               ['Interior','Exterior','Retoques','Impermeabilizar','Otro'],
-    'Jardineria':            ['Corte de césped','Poda','Diseño de jardín','Fumigación','Otro'],
-    'Mecanica':              ['Carro no enciende','Cambio de aceite','Frenos','Llantas','Otro'],
-    'Tecnologia':            ['PC lento','Virus','Red/WiFi','Instalación software','Otro'],
-    'Construccion':          ['Remodelación','Fisuras','Pisos','Techo','Otro'],
-    'Educacion':             ['Matemáticas','Inglés','Refuerzo escolar','Universitario','Otro'],
-    'Salud':                 ['Enfermería','Fisioterapia','Cuidado adulto mayor','Primeros auxilios','Otro'],
-    'Belleza':               ['Corte de cabello','Manicure','Maquillaje','Depilación','Otro'],
-    'Gastronomia':           ['Almuerzo','Cena especial','Domicilio','Catering','Otro'],
-    // Transporte = llevar personas o carga. Los paquetes, documentos y mandados son de Mensajería,
-    // y los trasteos de casa o apartamento son de Mudanza.
-    'Transporte':            ['Traslado de personas','Traslado al aeropuerto','Viaje a otro municipio','Carga o mercancía','Otro'],
-    'Cerrajeria':            ['Puerta bloqueada','Cambio de chapa','Copia de llave','Caja fuerte','Otro'],
-    'Mudanza':               ['Apartamento','Casa','Solo muebles grandes','Embalaje','Otro'],
-    'Vidrieria':             ['Vidrio roto','Ventana nueva','Espejo','Vitrina','Otro'],
-    'Impermeabilizacion':    ['Techo con filtración','Terraza','Baño','Sótano','Otro'],
-    'Lavanderia':            ['Ropa general','Sábanas','Cortinas','Planchado','Otro'],
-    'Control de plagas':     ['Cucarachas','Ratas','Hormigas','Pulgas','Otro'],
-    'Electrodomesticos':     ['Nevera','Lavadora','Horno','Aire acondicionado','Otro'],
-    'CCTV y Alarmas':        ['Cámaras nuevas','Mantenimiento','Alarma','Control de acceso','Otro'],
-    'Idiomas':               ['Inglés','Francés','Alemán','Portugués','Otro'],
-    'Eventos':               ['Decoración','Organización','Sonido','Iluminación','Otro'],
-    'Fotografia':            ['Matrimonio','Quinces','Empresarial','Producto','Otro'],
-    'Contabilidad':          ['Declaración de renta','Nómina','Contabilidad mensual','Asesoría','Otro'],
-    'Diseno':                ['Logo','Redes sociales','Publicidad','Página web','Otro'],
-    'Mensajeria':            ['Documentos','Paquete pequeño','Paquete grande','Urgente','Otro'],
-    'Masajes':               ['Relajante','Terapéutico','Deportivo','Prenatal','Otro'],
-    'Veterinaria':           ['Consulta general','Vacunas','Desparasitación','Urgencia','Otro'],
-    'Mascotas':              ['Paseo de perros','Cuidador en casa','Guardería','Baño y peluquería','Adiestramiento','Otro'],
-};
 
 // STEP NAVIGATION
 function volverAtras() {
