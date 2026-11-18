@@ -832,11 +832,15 @@ def como_funciona(request: Request):
 
 @app.get("/privacidad", response_class=HTMLResponse)
 def privacidad(request: Request):
-    return templates.TemplateResponse("privacidad.html", {"request": request, "legal": legal.datos_legales()})
+    inicio_url, inicio_txt = legal.destino_inicio(request)
+    return templates.TemplateResponse("privacidad.html", {"request": request, "legal": legal.datos_legales(),
+                                                          "inicio_url": inicio_url, "inicio_txt": inicio_txt})
 
 @app.get("/terminos", response_class=HTMLResponse)
 def terminos(request: Request):
-    return templates.TemplateResponse("terminos.html", {"request": request, "legal": legal.datos_legales()})
+    inicio_url, inicio_txt = legal.destino_inicio(request)
+    return templates.TemplateResponse("terminos.html", {"request": request, "legal": legal.datos_legales(),
+                                                        "inicio_url": inicio_url, "inicio_txt": inicio_txt})
 
 @app.get("/inicio", response_class=HTMLResponse)
 def mostrar_solo_formulario(request: Request):

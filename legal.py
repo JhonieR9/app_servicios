@@ -259,3 +259,28 @@ def responder_pqrs(id_pqrs, estado, respuesta):
     cur.close()
     conn.close()
     return fila
+
+
+# ============================================
+# A DÓNDE LLEVA "VOLVER" EN LAS PÁGINAS PÚBLICAS
+# ============================================
+
+def destino_inicio(request):
+    """
+    Si quien mira la página tiene sesión de cliente o de trabajador, "volver" lo lleva a SU panel
+    y no a la portada pública. Sin sesión (o si algo falla) va a la portada.
+    """
+    try:
+        import auth
+        for nombre in ("session_token_cliente", "session_token"):
+            token = request.cookies.get(nombre)
+            if not token:
+                continue
+            sesion = auth.verificar_sesion(token)
+            if sesion and sesion.get("tipo_usuario") == "cliente":
+                return "/cliente/panel", "Volver a mi panel"
+            if sesion and sesion.get("tipo_usuario") == "trabajador":
+                return "/trabajador/panel", "Volver a mi panel"
+    except Exception:
+        pass
+    return "/", "Volver al inicio"

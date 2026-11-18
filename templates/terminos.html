@@ -255,7 +255,7 @@
         <a href="/pqrs">Peticiones, quejas y reclamos</a>
         <a href="{{ legal.sic_url }}" target="_blank" rel="noopener">Superintendencia de Industria y Comercio</a>
     </div>
-    <a href="/" class="back-link">&larr; Volver al inicio</a>
+    <a href="{{ inicio_url|default('/') }}" class="back-link">&larr; {{ inicio_txt|default('Volver al inicio') }}</a>
 </main>
 </body>
 </html>

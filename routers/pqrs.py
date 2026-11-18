@@ -41,9 +41,11 @@ def _correo_async(destino, asunto, cuerpo_html):
 
 @router.get("/pqrs", response_class=HTMLResponse)
 def pagina_pqrs(request: Request):
+    inicio_url, inicio_txt = legal.destino_inicio(request)
     return templates.TemplateResponse("pqrs.html", {
         "request": request, "legal": legal.datos_legales(), "tipos": legal.TIPOS_PQRS,
         "tipo_inicial": request.query_params.get("tipo", ""),
+        "inicio_url": inicio_url, "inicio_txt": inicio_txt,
     })
 
 
@@ -79,7 +81,9 @@ def enviar_pqrs(
 
 @router.get("/pqrs/consulta", response_class=HTMLResponse)
 def pagina_consulta(request: Request):
-    return templates.TemplateResponse("pqrs_consulta.html", {"request": request, "legal": legal.datos_legales()})
+    inicio_url, inicio_txt = legal.destino_inicio(request)
+    return templates.TemplateResponse("pqrs_consulta.html", {"request": request, "legal": legal.datos_legales(),
+                                                            "inicio_url": inicio_url, "inicio_txt": inicio_txt})
 
 
 @router.post("/pqrs/consulta")
