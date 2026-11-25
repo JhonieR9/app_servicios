@@ -1904,7 +1904,7 @@ async function cargarMapaProfesionales() {
             document.getElementById('step4Sub').textContent = '📍 Ubicación ajustada. Buscando profesionales...';
             // Recargar trabajadores con nueva posición
             try {
-                const res2 = await fetch(`/cliente/trabajadores-cercanos?lat=${userLat}&lng=${userLng}&radio=20&categoria=${encodeURIComponent(selectedCatName)}`);
+                const res2 = await fetch(`/cliente/trabajadores-cercanos?lat=${userLat}&lng=${userLng}&radio=50&categoria=${encodeURIComponent(selectedCatName)}`);
                 const data2 = await res2.json();
                 const t2 = data2.trabajadores || [];
                 document.getElementById('step4Sub').textContent = t2.length > 0
@@ -1921,7 +1921,7 @@ async function cargarMapaProfesionales() {
         setTimeout(() => { helpDiv.style.opacity = '0'; helpDiv.style.transition = 'opacity 1s'; setTimeout(() => helpDiv.remove(), 1000); }, 5000);
 
         try {
-            const res  = await fetch(`/cliente/trabajadores-cercanos?lat=${userLat}&lng=${userLng}&radio=20&categoria=${encodeURIComponent(selectedCatName)}`);
+            const res  = await fetch(`/cliente/trabajadores-cercanos?lat=${userLat}&lng=${userLng}&radio=50&categoria=${encodeURIComponent(selectedCatName)}`);
             const data = await res.json();
             const trabajadores = data.trabajadores || [];
 
