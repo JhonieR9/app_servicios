@@ -776,27 +776,45 @@ def historial_cliente(id_cliente: int):
     return {"historial": historial}
 
 @router.post("/solicitud/cancelar")
+@router.post("/solicitud/cancelar")
 def cancelar_solicitud(
+    request: Request,
     id_solicitud: int = Form(...),
     motivo: str = Form(...)
 ):
+    # Solo el cliente dueño de la solicitud puede cancelarla
+    token = request.cookies.get("session_token_cliente") or request.cookies.get("session_token")
+    sesion = auth.verificar_sesion(token) if token else None
+    if not sesion or sesion.get("tipo_usuario") != "cliente":
+        return JSONResponse({"error": "Tu sesión venció. Inicia sesión de nuevo."}, status_code=401)
+    id_cliente_sesion = int(sesion["id_usuario"])
+
+    ip = security._get_ip(request)
+    if security.esta_bloqueado(ip, "normal"):
+        security.log_rate_blocked(ip, "/cliente/solicitud/cancelar")
+        return security.respuesta_bloqueado()
+
     conexion = conectar_bd()
     cursor = conexion.cursor()
-    
+
+    # Solo cancela la solicitud si pertenece a este cliente
     sql = """
-    UPDATE solicitudes_servicio 
+    UPDATE solicitudes_servicio
     SET estado = 'cancelada', motivo_cancelacion = %s
-    WHERE id_solicitud = %s AND estado IN ('pendiente', 'aceptada', 'en_proceso')
+    WHERE id_solicitud = %s AND id_cliente = %s AND estado IN ('pendiente', 'aceptada', 'en_proceso')
     """
-    
-    cursor.execute(sql, (motivo, id_solicitud))
+    cursor.execute(sql, (motivo, id_solicitud, id_cliente_sesion))
     conexion.commit()
     afectadas = cursor.rowcount
     cursor.close()
     conexion.close()
-    
+
     if afectadas == 0:
-        return JSONResponse({"error": "No se pudo cancelar — la solicitud ya está completada o cancelada"}, status_code=400)
+        return JSONResponse({"error": "No se pudo cancelar — la solicitud ya está completada, cancelada o no te pertenece"},
+                            status_code=400)
+    security.security_logger.info(
+        f"SOLICITUD_CANCELADA id_solicitud={id_solicitud} id_cliente={id_cliente_sesion} ip={ip}"
+    )
     return {"mensaje": "Solicitud cancelada"}
 
 @router.post("/solicitud/completar")
