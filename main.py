@@ -1130,7 +1130,64 @@ def enviar_push_trabajadores(id_categoria: int, nombre_categoria: str, titulo_no
     threading.Thread(target=_enviar, daemon=True).start()
 
 
-def enviar_push_usuario(tipo_usuario: str, id_usuario: int, titulo: str, cuerpo: str, url_destino: str = "/"):
+@app.get("/health/push-test")
+def test_push(request: Request, tipo_usuario: str = "trabajador", id_usuario: int = 0):
+    """Diagnóstico de push — solo admin. Envía una notificación de prueba al usuario indicado."""
+    if not trabajadores.verificar_admin(request):
+        return {"error": "No autorizado"}
+
+    import json
+    # Verificar que las claves VAPID no son las de respaldo
+    es_vapid_por_defecto = (VAPID_PUBLIC == "BM66qRWQGKRktcIccA8tJ3k10D6Bslu8jjQufR89ATky-v9aKXacOD9IHxaxLR9ZdOO6A7wVxudhXCrONhZoOfo")
+
+    conn = conectar_bd()
+    cur = conn.cursor(dictionary=True)
+    # Suscripciones del usuario pedido (o todas si id=0)
+    if id_usuario:
+        cur.execute("SELECT tipo_usuario, id_usuario, endpoint, fecha_creacion FROM push_subscriptions "
+                    "WHERE tipo_usuario = %s AND id_usuario = %s", (tipo_usuario, id_usuario))
+    else:
+        cur.execute("SELECT tipo_usuario, id_usuario, endpoint, fecha_creacion FROM push_subscriptions "
+                    "ORDER BY fecha_creacion DESC LIMIT 20")
+    subs = cur.fetchall()
+    cur.close(); conn.close()
+
+    if not subs:
+        return {"status": "sin_suscripciones", "vapid_por_defecto": es_vapid_por_defecto,
+                "detalle": "El usuario nunca aceptó notificaciones o su suscripción expiró"}
+
+    if not id_usuario:
+        return {"status": "lista", "vapid_por_defecto": es_vapid_por_defecto,
+                "suscripciones": [{"tipo": s["tipo_usuario"], "id": s["id_usuario"],
+                                   "endpoint_fin": s["endpoint"][-30:] if s.get("endpoint") else "",
+                                   "fecha": str(s.get("fecha_creacion",""))} for s in subs]}
+
+    try:
+        from pywebpush import webpush, WebPushException
+    except ImportError:
+        return {"status": "error", "detalle": "pywebpush no instalado"}
+
+    enviados = 0; errores = []
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info={"endpoint": sub["endpoint"],
+                                   "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}}
+                if sub.get("p256dh") else {"endpoint": sub["endpoint"]},
+                data=json.dumps({"title": "Prueba TalentHub", "body": "Notificación de prueba del administrador",
+                                 "url": "/", "icon": "/static/icons/icon-192.png"}),
+                vapid_private_key=VAPID_PRIVATE,
+                vapid_claims=VAPID_CLAIMS
+            )
+            enviados += 1
+        except Exception as ex:
+            errores.append(str(ex)[:200])
+
+    return {"status": "ok" if enviados else "error", "enviados": enviados, "errores": errores,
+            "suscripciones_encontradas": len(subs), "vapid_por_defecto": es_vapid_por_defecto}
+
+
+
     """
     Envía una notificación push a TODOS los dispositivos suscritos de UN usuario
     concreto (cliente o trabajador). Reutilizable en cualquier evento de negocio.
